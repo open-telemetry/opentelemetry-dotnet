@@ -7,6 +7,10 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Fixed informational HTTP client logs not being suppressed by default when the
+  OTLP log exporter is registered using `OpenTelemetryLoggerOptions.AddOtlpExporter`.
+  ([#7959](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7959))
+
 * Reload OTLP export clients when named exporter options or `UseOtlpExporter`
   configuration changes, without recreating providers. Protocol, maximum request
   size, experimental/retry settings, processor/batch options, and metric reader

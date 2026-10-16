@@ -1,7 +1,6 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-using System.Diagnostics.CodeAnalysis;
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Tests;
@@ -11,20 +10,16 @@ internal sealed class TestSelfDiagnosticsConfigRefresher(Stream? stream = null) 
     private readonly Stream? stream = stream;
     private readonly int owningThreadId = Environment.CurrentManagedThreadId;
 
-    public bool TryGetLogStreamCalled { get; private set; }
+    public bool WriteLogCalled { get; private set; }
 
-    public override bool TryGetLogStream(int byteCount, [NotNullWhen(true)] out Stream? stream, out int availableByteCount)
+    public override void WriteLog(byte[] buffer, int byteCount)
     {
         if (Environment.CurrentManagedThreadId != this.owningThreadId)
         {
-            stream = null;
-            availableByteCount = 0;
-            return false;
+            return;
         }
 
-        this.TryGetLogStreamCalled = true;
-        stream = this.stream;
-        availableByteCount = 0;
-        return this.stream != null;
+        this.WriteLogCalled = true;
+        this.stream?.Write(buffer, 0, byteCount);
     }
 }

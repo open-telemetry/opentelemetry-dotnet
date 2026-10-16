@@ -40,7 +40,7 @@ not covered by the built-in exporters:
 * Exporters should use `Activity.TagObjects` collection instead of
   `Activity.Tags` to obtain the full set of attributes (tags). `Activity.Tags` only
    returns tags whose value are of type `string` ([source](https://source.dot.net/#System.Diagnostics.DiagnosticSource/System/Diagnostics/Activity.cs,74de547549e574e0,references)).
-  For improved performance, use [Activity.EnumerateTagObjects](https://learn.microsoft.com/en-us/dotnet/api/system.diagnostics.activity.enumeratetagobjects?view=net-8.0)
+  For improved performance, use [Activity.EnumerateTagObjects](https://learn.microsoft.com/dotnet/api/system.diagnostics.activity.enumeratetagobjects)
   if planning to enumerate over all TagObjects.
 * Exporters should use `ParentProvider.GetResource()` to get the `Resource`
   associated with the provider.
@@ -258,7 +258,7 @@ Custom processors can be implemented to cover more scenarios:
 * Processors should use `Activity.TagObjects` collection instead of
   `Activity.Tags` to obtain the full set of attributes (tags). `Activity.Tags` only
    returns tags whose value are of type `string` ([source](https://source.dot.net/#System.Diagnostics.DiagnosticSource/System/Diagnostics/Activity.cs,74de547549e574e0,references)).
-  For improved performance, use [Activity.EnumerateTagObjects](https://learn.microsoft.com/en-us/dotnet/api/system.diagnostics.activity.enumeratetagobjects?view=net-8.0)
+  For improved performance, use [Activity.EnumerateTagObjects](https://learn.microsoft.com/dotnet/api/system.diagnostics.activity.enumeratetagobjects)
   if planning to enumerate over all TagObjects.
 
 ```csharp
@@ -396,7 +396,7 @@ When providing registration extensions:
 > [!NOTE]
 > The SDK implementation of `TracerProviderBuilder` ensures that the
 [.NET
-Configuration](https://learn.microsoft.com/en-us/dotnet/core/extensions/configuration)
+Configuration](https://learn.microsoft.com/dotnet/core/extensions/configuration)
 engine is always available by creating a root `IConfiguration` from environment
 variables if it does not already exist in the `IServiceCollection` containing
 the `TracerProvider`. Library authors can rely on `IConfiguration` always being

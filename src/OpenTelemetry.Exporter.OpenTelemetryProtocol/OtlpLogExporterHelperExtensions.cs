@@ -58,6 +58,8 @@ public static class OtlpLogExporterHelperExtensions
         var finalOptionsName = name ?? Options.DefaultName;
 
 #pragma warning disable CA1062 // Validate arguments of public methods
+        loggerOptions.LoggerFilterConfigurations.Add(OtlpServiceCollectionExtensions.AddOtlpLogExporterHttpClientLoggerFilter);
+
         return loggerOptions.AddProcessor(sp =>
 #pragma warning restore CA1062 // Validate arguments of public methods
         {
@@ -106,6 +108,8 @@ public static class OtlpLogExporterHelperExtensions
         var finalOptionsName = name ?? Options.DefaultName;
 
 #pragma warning disable CA1062 // Validate arguments of public methods
+        loggerOptions.LoggerFilterConfigurations.Add(OtlpServiceCollectionExtensions.AddOtlpLogExporterHttpClientLoggerFilter);
+
         return loggerOptions.AddProcessor(sp =>
 #pragma warning restore CA1062 // Validate arguments of public methods
         {
