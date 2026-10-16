@@ -31,6 +31,10 @@ Notes](../../RELEASENOTES.md).
   or large value and idle metric points with a `NaN` value failing to be reclaimed.
   ([#7963](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7963))
 
+* Improve the assignment of values to exponential histogram buckets when the
+  value is near a bucket boundary by using a pre-computed lookup table.
+  ([#7911](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7911))
+
 * The self-diagnostics file sink now creates its log directory and log files
   so that only the owner can access them (`0700`/`0600`) on Linux and macOS,
   instead of inheriting the process umask.
