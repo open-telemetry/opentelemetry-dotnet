@@ -6,6 +6,10 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Fixed self-diagnostics preamble redaction of quoted or encoded PEM material
+  and prefixed JWTs.
+  ([#7955](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7955))
+
 ## 1.20.0
 
 Released 2026-Oct-15
