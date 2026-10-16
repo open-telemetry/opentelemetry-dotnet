@@ -18,6 +18,10 @@ Notes](../../RELEASENOTES.md).
   redirects.
   ([#7958](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7958))
 
+* Fixed reading the body of a failed export response for the exporter's
+  diagnostic log not being bounded by the export timeout.
+  ([#NNNN](https://github.com/open-telemetry/opentelemetry-dotnet/pull/NNNN))
+
 ## 1.20.0
 
 Released 2026-Oct-15

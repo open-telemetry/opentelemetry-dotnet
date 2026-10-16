@@ -86,6 +86,39 @@ internal abstract class OtlpExportClient : IExportClient
         HttpClientHelpers.TryGetResponseBodyAsString(httpResponse, maxResponseSizeBytes, cancellationToken);
 
     /// <summary>
+    /// Reads the body of a failed response so that it can be logged, giving up
+    /// once <paramref name="deadlineUtc"/> has passed.
+    /// </summary>
+    /// <remarks>
+    /// <see cref="HttpClient.Timeout"/> no longer applies once the response headers
+    /// have been received, so the export deadline is used to bound how long a server
+    /// that announces a body but does not send it can hold the exporting thread.
+    /// </remarks>
+    /// <param name="httpResponse">The response to read the body of.</param>
+    /// <param name="maxResponseSizeBytes">The maximum number of bytes to read.</param>
+    /// <param name="deadlineUtc">The deadline time in utc for the export request to finish.</param>
+    /// <param name="cancellationToken">The <see cref="CancellationToken"/> to use.</param>
+    /// <returns>The response body, or <see langword="null"/> if it could not be read in time.</returns>
+    protected internal static string? TryGetResponseBody(HttpResponseMessage? httpResponse, int maxResponseSizeBytes, DateTime deadlineUtc, CancellationToken cancellationToken)
+    {
+        var remaining = deadlineUtc - DateTime.UtcNow;
+
+        if (remaining <= TimeSpan.Zero)
+        {
+            return null;
+        }
+
+        using var deadlineCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+
+        if (remaining.TotalMilliseconds < int.MaxValue)
+        {
+            deadlineCts.CancelAfter(remaining);
+        }
+
+        return TryGetResponseBody(httpResponse, maxResponseSizeBytes, deadlineCts.Token);
+    }
+
+    /// <summary>
     /// Determines whether a response declares more content than <see
     /// cref="MaxResponseSizeBytes"/> (plus any <see cref="HeaderBytesSize"/>)
     /// allows, recording that it is being discarded.

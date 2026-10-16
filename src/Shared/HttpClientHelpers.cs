@@ -72,7 +72,7 @@ internal static class HttpClientHelpers
                 // Read raw bytes so the size limit applies to bytes rather than characters
                 while (totalRead < length && !cancellationToken.IsCancellationRequested)
                 {
-                    var bytesRead = stream.Read(buffer, totalRead, length - totalRead);
+                    var bytesRead = Read(stream, buffer, totalRead, length - totalRead, cancellationToken);
 
                     if (bytesRead is 0)
                     {
@@ -89,11 +89,7 @@ internal static class HttpClientHelpers
                     // We've read exactly length bytes. Check if there's more data.
                     var probe = new byte[1];
 
-#if NETFRAMEWORK || NETSTANDARD
-                    extra = stream.Read(probe, 0, 1) > 0;
-#else
-                    extra = stream.Read(probe) > 0;
-#endif
+                    extra = Read(stream, probe, 0, 1, cancellationToken) > 0;
 
                     if (extra && !allowTruncation)
                     {
@@ -129,6 +125,35 @@ internal static class HttpClientHelpers
         {
             return null;
         }
+    }
+
+    private static int Read(Stream stream, byte[] buffer, int offset, int count, CancellationToken cancellationToken)
+    {
+        // A synchronous read cannot be cancelled once it is waiting for data, so a server that stops
+        // sending part-way through the body would block it for as long as it keeps the connection open.
+        if (!cancellationToken.CanBeCanceled)
+        {
+            return stream.Read(buffer, offset, count);
+        }
+
+#if NET
+        return stream.ReadAsync(buffer.AsMemory(offset, count), cancellationToken).AsTask().GetAwaiter().GetResult();
+#else
+        var read = stream.ReadAsync(buffer, offset, count, cancellationToken);
+
+        // Not all streams observe the token once a read is in progress (e.g. on .NET Framework),
+        // so stop waiting for it. The pending read ends when the caller disposes of the stream.
+        Task.WhenAny(read, Task.Delay(Timeout.Infinite, cancellationToken)).GetAwaiter().GetResult();
+
+        if (cancellationToken.IsCancellationRequested)
+        {
+            // Observe the failure of the abandoned read once the stream is disposed.
+            _ = read.ContinueWith(static t => _ = t.Exception, CancellationToken.None, TaskContinuationOptions.OnlyOnFaulted, TaskScheduler.Default);
+            cancellationToken.ThrowIfCancellationRequested();
+        }
+
+        return read.GetAwaiter().GetResult();
+#endif
     }
 
     private static int GetBufferLength(Stream stream, int limit, long? contentLength)

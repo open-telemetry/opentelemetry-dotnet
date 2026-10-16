@@ -4,8 +4,11 @@
 #if NETFRAMEWORK
 using System.Net.Http;
 #endif
+using System.Diagnostics;
 using System.Diagnostics.Tracing;
 using System.IO.Compression;
+using System.Net;
+using System.Net.Sockets;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Transmission;
@@ -333,6 +336,82 @@ public class OtlpHttpExportClientTests
         var loggedException = (string)logged.Payload![1]!;
         Assert.DoesNotContain(FakeSecret, loggedException, StringComparison.Ordinal);
         Assert.Contains("Authorization", loggedException, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task SendExportRequest_ErrorResponseBodyNeverCompletes_ReturnsAtDeadline()
+    {
+        const int HttpRequestFailedEventId = 17;
+
+        var deadline = TimeSpan.FromMilliseconds(250);
+        var serverHold = TimeSpan.FromSeconds(30);
+
+        // The response body is only read when it is going to be logged.
+        using var listener = new TestEventListener(OpenTelemetryProtocolExporterEventSource.Log, EventLevel.Error);
+
+        using var exported = new ManualResetEventSlim();
+
+        var server = new TcpListener(IPAddress.Loopback, 0);
+
+        try
+        {
+            server.Start();
+
+            // Announce more content than is sent, then keep the connection open.
+            var serverTask = Task.Run(
+                () =>
+                {
+                    using var connection = server.AcceptTcpClient();
+                    using var stream = connection.GetStream();
+
+                    _ = stream.Read(new byte[4096], 0, 4096);
+
+                    var headersAndPartialBody = "HTTP/1.1 400 Bad Request\r\nContent-Length: 100\r\n\r\nxxx"u8.ToArray();
+                    stream.Write(headersAndPartialBody, 0, headersAndPartialBody.Length);
+
+                    exported.Wait(serverHold);
+                },
+                TestContext.Current.CancellationToken);
+
+            using var httpClient = new HttpClient();
+
+            var exportClient = new OtlpHttpExportClient(
+                new OtlpExporterOptions
+                {
+                    Endpoint = new Uri($"http://{server.LocalEndpoint}"),
+                    Protocol = OtlpExportProtocol.HttpProtobuf,
+                },
+                httpClient,
+                string.Empty);
+
+            var payload = "hello world"u8.ToArray();
+
+            var stopwatch = Stopwatch.StartNew();
+            var response = exportClient.SendExportRequest(payload, payload.Length, DateTime.UtcNow.Add(deadline), TestContext.Current.CancellationToken);
+            stopwatch.Stop();
+
+            exported.Set();
+            await serverTask;
+
+            Assert.False(response.Success);
+            Assert.Equal(HttpStatusCode.BadRequest, Assert.IsType<ExportClientHttpResponse>(response).StatusCode);
+
+            // The export must give up at the deadline rather than wait for the server to close the connection.
+            Assert.True(stopwatch.Elapsed < serverHold, $"Export took {stopwatch.Elapsed} against a deadline of {deadline}.");
+
+            // The failure is still logged, just without the body that never arrived.
+            var logged = Assert.Single(listener.Messages, e => e.EventId == HttpRequestFailedEventId);
+            Assert.Equal(string.Empty, logged.Payload![1]);
+        }
+        finally
+        {
+            exported.Set();
+#if NET
+            server.Dispose();
+#else
+            server.Stop();
+#endif
+        }
     }
 
     private static ExportClientResponse SendExportRequestThatThrows(Exception exception)
