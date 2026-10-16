@@ -127,40 +127,17 @@ public class OtlpExporterOptions : IOtlpExporterOptions
             }
 #endif
 
-            HttpClientHandler? handler = null;
-
-            try
-            {
-                handler = new HttpClientHandler
-                {
-                    AllowAutoRedirect = false,
-#if NETSTANDARD
-                    CheckCertificateRevocationList = true,
-#endif
-                };
-
-#if NET
-                if (!OperatingSystem.IsBrowser())
-                {
-                    handler.CheckCertificateRevocationList = true;
-                }
-#endif
-
 #pragma warning disable CA5399 // HttpClient is created without enabling CheckCertificateRevocationList
 #pragma warning disable CA5400 // HttpClient is created without enabling CheckCertificateRevocationList
-                return new HttpClient(handler, disposeHandler: true)
-                {
-                    MaxResponseContentBufferSize = this.MaxResponseSizeBytes,
-                    Timeout = timeout,
-                };
+            // CheckCertificateRevocationList is not explicitly enabled as it
+            // breaks TLS certificate validation in offline/air-gapped environments.
+            return new HttpClient(new HttpClientHandler { AllowAutoRedirect = false }, disposeHandler: true)
+            {
+                MaxResponseContentBufferSize = this.MaxResponseSizeBytes,
+                Timeout = timeout,
+            };
 #pragma warning restore CA5400 // HttpClient is created without enabling CheckCertificateRevocationList
 #pragma warning restore CA5399 // HttpClient is created without enabling CheckCertificateRevocationList
-            }
-            catch (Exception)
-            {
-                handler?.Dispose();
-                throw;
-            }
         };
 
         this.batchExportProcessorOptions = new(defaultBatchOptions);
