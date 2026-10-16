@@ -7,6 +7,10 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Fixed informational HTTP client logs not being suppressed by default when the
+  OTLP log exporter is registered using `OpenTelemetryLoggerOptions.AddOtlpExporter`.
+  ([#7959](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7959))
+
 ## 1.20.0
 
 Released 2026-Oct-15

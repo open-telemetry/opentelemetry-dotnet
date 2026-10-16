@@ -15,6 +15,10 @@ Notes](../../RELEASENOTES.md).
   and prefixed JWTs.
   ([#7955](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7955))
 
+* Fixed default HTTP client log filtering when registering the OTLP log exporter
+  through `OpenTelemetryLoggerOptions`.
+  ([#7959](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7959))
+
 ## 1.20.0
 
 Released 2026-Oct-15
