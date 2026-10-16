@@ -46,6 +46,43 @@ public class SelfDiagnosticsEnvironmentVariablePolicyTests
         Assert.Equal(Redacted, SelfDiagnosticsEnvironmentVariablePolicy.GetDisplayValue(name, Jwt));
     }
 
+    [Theory]
+    [InlineData("OTEL_EXPORTER_OTLP_CERTIFICATE", "\"")]
+    [InlineData("OTEL_EXPORTER_OTLP_CLIENT_CERTIFICATE", "\"")]
+    [InlineData("OTEL_EXPORTER_OTLP_CLIENT_KEY", "\"")]
+    [InlineData("OTEL_EXPORTER_OTLP_CERTIFICATE", "'")]
+    [InlineData("OTEL_EXPORTER_OTLP_CLIENT_CERTIFICATE", "'")]
+    [InlineData("OTEL_EXPORTER_OTLP_CLIENT_KEY", "'")]
+    public void QuotedInlineKeyMaterial_IsRedacted(string name, string quote)
+    {
+        const string Pem = "-----BEGIN PRIVATE KEY-----\\nMIIEvQIBADAN\\n-----END PRIVATE KEY-----";
+
+        Assert.Equal(Redacted, SelfDiagnosticsEnvironmentVariablePolicy.GetDisplayValue(name, $"{quote}{Pem}{quote}"));
+    }
+
+    [Theory]
+    [InlineData("prefix:-----BEGIN PRIVATE KEY-----\\nMIIEvQIBADAN\\n-----END PRIVATE KEY-----")]
+    [InlineData("LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tCk1JSUV2UUlCQURBTgo=")]
+    [InlineData("\"eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.signature\"")]
+    [InlineData("Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.signature")]
+    [InlineData("keyJar Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.signature")]
+    public void InlineSecretMaterial_IsRedactedWithPrefixesOrEncoding(string value) =>
+        Assert.Equal(Redacted, SelfDiagnosticsEnvironmentVariablePolicy.GetDisplayValue("OTEL_EXPORTER_OTLP_CLIENT_KEY", value));
+
+    [Fact]
+    public void InlineKeyMaterial_InSafeResourceAttribute_IsRedacted() =>
+        Assert.Equal(
+            Redacted,
+            SelfDiagnosticsEnvironmentVariablePolicy.GetDisplayValue(
+                "OTEL_RESOURCE_ATTRIBUTES",
+                "service.name=-----BEGIN PRIVATE KEY-----\\nMIIEvQIBADAN\\n-----END PRIVATE KEY-----"));
+
+    [Theory]
+    [InlineData("/opt/keyJar/client.key")]
+    [InlineData("/opt/keyJar/keyJar/client.key")]
+    public void PathsContainingJwtPrefix_KeepTheirValue(string path) =>
+        Assert.Equal(path, SelfDiagnosticsEnvironmentVariablePolicy.GetDisplayValue("OTEL_EXPORTER_OTLP_CLIENT_KEY", path));
+
     [Fact]
     public void MultiLineValue_IsRedacted() =>
         Assert.Equal(Redacted, SelfDiagnosticsEnvironmentVariablePolicy.GetDisplayValue("OTEL_SERVICE_NAME", "first\r\nsecond"));
