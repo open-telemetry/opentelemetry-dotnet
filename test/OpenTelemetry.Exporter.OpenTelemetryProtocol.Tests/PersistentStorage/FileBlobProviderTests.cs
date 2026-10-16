@@ -1,6 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Runtime.InteropServices;
 using OpenTelemetry.PersistentStorage.FileSystem;
 using OpenTelemetry.Tests;
 
@@ -373,6 +374,59 @@ public class FileBlobProviderTests
 
         Assert.Equal("data", File.ReadAllText(leasePath));
         Assert.Equal([7, 8, 9], File.ReadAllBytes(blobPath));
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(60_000)]
+    public void TryWrite_ExistingBlobThatCannotBeClaimed_DoesNotMoveNewContentIntoPlace(int leasePeriodMilliseconds)
+    {
+        // The existing file of a blob is claimed before its new content is moved into place, rather than being removed
+        // afterwards, as by then the new content could have been released to the name the existing file was found at.
+        // An open file can only be prevented from being moved on Windows, so the order is only observable there.
+        Assert.SkipUnless(RuntimeInformation.IsOSPlatform(OSPlatform.Windows), "Open files can only be prevented from being moved on Windows.");
+
+        using var temp = new TemporaryDirectory();
+        using var provider = new FileBlobProvider(temp.Path);
+
+        Assert.True(provider.TryCreateBlob([1, 2, 3], 60_000, out var blob));
+        var leasePath = ((FileBlob)blob).FullPath;
+
+        using (new FileStream(leasePath, FileMode.Open, FileAccess.Read, FileShare.Read))
+        {
+            Assert.False(blob.TryWrite([4, 5, 6], leasePeriodMilliseconds));
+        }
+
+        // The new content is left in a temporary file for the storage maintenance to remove, and the existing blob is unchanged.
+        var temporaryFile = Assert.Single(Directory.GetFiles(temp.Path, "*.tmp"));
+
+        Assert.Equal(leasePath, ((FileBlob)blob).FullPath);
+        Assert.Equal([leasePath, temporaryFile], Directory.GetFiles(temp.Path).OrderBy(path => path.EndsWith(".tmp", StringComparison.Ordinal)));
+        Assert.Equal([1, 2, 3], File.ReadAllBytes(leasePath));
+        Assert.Equal([4, 5, 6], File.ReadAllBytes(temporaryFile));
+    }
+
+    [Fact]
+    public void TryWrite_ExistingBlobWhoseNewContentCannotBeMovedIntoPlace_RestoresExistingBlob()
+    {
+        using var temp = new TemporaryDirectory();
+        using var provider = new FileBlobProvider(temp.Path);
+
+        Assert.True(provider.TryCreateBlob([1, 2, 3], 60_000, out var blob));
+        var leasePath = ((FileBlob)blob).FullPath;
+        var blobPath = leasePath.Substring(0, leasePath.LastIndexOf('@'));
+
+        // Make moving the new content into place fail after the existing file has been claimed
+        Directory.CreateDirectory(blobPath);
+
+        Assert.False(blob.TryWrite([4, 5, 6]));
+
+        // The claimed file is restored, so the blob's existing content is not lost and only the new content is left behind.
+        var temporaryFile = Assert.Single(Directory.GetFiles(temp.Path, "*.tmp"));
+
+        Assert.Equal(leasePath, ((FileBlob)blob).FullPath);
+        Assert.Equal([1, 2, 3], File.ReadAllBytes(leasePath));
+        Assert.Equal([4, 5, 6], File.ReadAllBytes(temporaryFile));
     }
 
     [Fact]

@@ -166,23 +166,36 @@ internal static class PersistentStorageHelper
     }
 
     /// <summary>
-    /// Removes the file of a blob.
+    /// Claims the file of a blob so that it can no longer be leased, released or removed by anything else.
     /// </summary>
     /// <remarks>
-    /// The file is claimed by atomically moving it to a new name before it is measured and removed. Otherwise the storage
-    /// maintenance could release its lease between it being measured and removed, and as removing a file that does not
-    /// exist succeeds, it would be reported as removed while still being left behind under its name without the lease.
-    /// The new name is that of a temporary file, so if it cannot be removed the storage maintenance will remove it later.
+    /// The file is claimed by atomically moving it to a new name. Otherwise the storage maintenance could release its
+    /// lease, or another reader could lease it, between it being found and acted upon. The new name is that of a
+    /// temporary file, so if the claimed file is not removed or restored, the storage maintenance will remove it later.
     /// </remarks>
-    /// <param name="filePath">The path of the file to remove.</param>
-    /// <returns>The size of the file that was removed, or zero if it was claimed but could not be removed.</returns>
+    /// <param name="filePath">The path of the file to claim.</param>
+    /// <returns>The path of the claimed file.</returns>
     /// <exception cref="FileNotFoundException">The file does not exist.</exception>
-    internal static long RemoveClaimedFile(string filePath)
+    internal static string ClaimFile(string filePath)
     {
         var claimedPath = GetUniqueFilePath(filePath, ".blob.tmp");
 
         File.Move(filePath, claimedPath);
 
+        return claimedPath;
+    }
+
+    /// <summary>
+    /// Removes a file that was claimed using <see cref="ClaimFile"/>.
+    /// </summary>
+    /// <remarks>
+    /// The file is measured and removed after it is claimed. As removing a file that does not exist succeeds, a file that
+    /// was not claimed first could be reported as removed while still being left behind with its lease released.
+    /// </remarks>
+    /// <param name="claimedPath">The path of the claimed file to remove.</param>
+    /// <returns>The size of the file that was removed, or zero if it could not be removed.</returns>
+    internal static long RemoveClaimedFile(string claimedPath)
+    {
         try
         {
             RemoveFile(claimedPath, out var fileSize);
@@ -191,57 +204,6 @@ internal static class PersistentStorageHelper
         catch (Exception ex)
         {
             PersistentStorageEventSource.Log.CouldNotDeleteFileBlob(claimedPath, ex);
-            return 0;
-        }
-    }
-
-    /// <summary>
-    /// Removes the file of a blob whose content has been replaced by a file with a different name.
-    /// </summary>
-    /// <param name="filePath">The path of the file that was replaced.</param>
-    /// <param name="destinationFilePath">The path of the file that replaced it.</param>
-    /// <returns>The size of the file that was removed, or zero if no file was removed.</returns>
-    internal static long RemoveReplacedFile(string filePath, string destinationFilePath)
-    {
-        try
-        {
-            return RemoveClaimedFile(filePath);
-        }
-        catch (FileNotFoundException)
-        {
-            // The lease may have expired and been released by the storage maintenance since the file was found, in which
-            // case it needs to be removed using its name with one or more leases removed so that it is not left behind.
-            // The leases are released one at a time and an existing file is never replaced when a lease is released,
-            // so the file cannot have been released to or beyond the name that the new content was moved to.
-            var destination = Path.GetFullPath(destinationFilePath);
-
-            foreach (var releasedPath in GetReleasedPaths(filePath))
-            {
-                if (string.Equals(Path.GetFullPath(releasedPath), destination, StringComparison.Ordinal))
-                {
-                    break;
-                }
-
-                try
-                {
-                    return RemoveClaimedFile(releasedPath);
-                }
-                catch (FileNotFoundException)
-                {
-                    // Try the name with the next lease removed
-                }
-                catch (Exception ex)
-                {
-                    PersistentStorageEventSource.Log.CouldNotDeleteFileBlob(releasedPath, ex);
-                    return 0;
-                }
-            }
-
-            return 0;
-        }
-        catch (Exception ex)
-        {
-            PersistentStorageEventSource.Log.CouldNotDeleteFileBlob(filePath, ex);
             return 0;
         }
     }

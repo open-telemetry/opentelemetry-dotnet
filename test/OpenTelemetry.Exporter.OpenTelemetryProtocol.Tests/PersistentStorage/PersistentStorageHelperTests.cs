@@ -488,86 +488,58 @@ public class PersistentStorageHelperTests
     }
 
     [Fact]
-    public void RemoveReplacedFile_RemovesLeasedFile()
+    public void ClaimFile_MovesFileToTemporaryFileThatIsTimedOut()
     {
         using var temp = new TemporaryDirectory();
 
         var utcNow = DateTime.UtcNow;
-        var blobPath = Path.Combine(temp.Path, BlobName(utcNow));
-        var leasePath = CreateFile(temp.Path, $"{Path.GetFileName(blobPath)}@{FormatTimestamp(utcNow.AddMinutes(1))}.lock");
+        var leasePath = CreateFile(temp.Path, $"{BlobName(new DateTime(2020, 1, 1, 0, 0, 0, DateTimeKind.Utc))}@{FormatTimestamp(utcNow.AddMinutes(1))}.lock");
 
-        Assert.Equal(4, PersistentStorageHelper.RemoveReplacedFile(leasePath, $"{blobPath}@{FormatTimestamp(utcNow.AddMinutes(2))}.lock"));
+        var claimedPath = PersistentStorageHelper.ClaimFile(leasePath);
+
+        // The claimed file can no longer be leased, released or removed using the name it had before it was claimed.
+        Assert.Equal([claimedPath], Directory.GetFiles(temp.Path));
+        Assert.EndsWith(".blob.tmp", claimedPath, StringComparison.Ordinal);
+        Assert.Equal("data", File.ReadAllText(claimedPath));
+        Assert.False(PersistentStorageHelper.RemoveExpiredLease(utcNow.AddHours(1), leasePath));
+
+        // If the claimed file is left behind, it is timed out relative to when it was claimed, not when the blob was created.
+        var timeoutDeadline = utcNow - TimeSpan.FromMilliseconds(DefaultWriteTimeoutMilliseconds);
+        Assert.False(PersistentStorageHelper.RemoveTimedOutTmpFiles(timeoutDeadline, claimedPath));
+        Assert.True(PersistentStorageHelper.RemoveTimedOutTmpFiles(utcNow.AddMinutes(5), claimedPath));
         Assert.Empty(Directory.GetFiles(temp.Path));
     }
 
     [Fact]
-    public void RemoveReplacedFile_RemovesFileWhoseLeaseWasReleased()
+    public void ClaimFile_ThrowsIfFileDoesNotExist()
     {
-        // The lease expired and was released by the storage maintenance after the blob's new content was moved into place.
         using var temp = new TemporaryDirectory();
 
-        var utcNow = DateTime.UtcNow;
-        var blobPath = CreateFile(temp.Path, BlobName(utcNow));
-        var leasePath = $"{blobPath}@{FormatTimestamp(utcNow.AddMinutes(1))}.lock";
+        var blobPath = Path.Combine(temp.Path, BlobName(DateTime.UtcNow));
 
-        Assert.Equal(4, PersistentStorageHelper.RemoveReplacedFile(leasePath, $"{blobPath}@{FormatTimestamp(utcNow.AddMinutes(2))}.lock"));
+        Assert.Throws<FileNotFoundException>(() => PersistentStorageHelper.ClaimFile(blobPath));
         Assert.Empty(Directory.GetFiles(temp.Path));
     }
 
     [Fact]
-    public void RemoveReplacedFile_RemovesFileWhoseNestedLeaseWasPartiallyReleased()
+    public void RemoveClaimedFile_RemovesFileAndReturnsItsSize()
     {
-        // Previous versions nested leases when a leased blob was written to with a new lease, and the storage
-        // maintenance releases the leases one at a time, so the file may have had only its last lease released.
         using var temp = new TemporaryDirectory();
 
-        var utcNow = DateTime.UtcNow;
-        var blobPath = Path.Combine(temp.Path, BlobName(utcNow));
-        var partiallyReleasedPath = CreateFile(temp.Path, $"{Path.GetFileName(blobPath)}@2020-01-01T000000.0000000Z.lock");
-        var nestedLeasePath = $"{partiallyReleasedPath}@2020-01-01T000500.0000000Z.lock";
+        var claimedPath = PersistentStorageHelper.ClaimFile(CreateFile(temp.Path, BlobName(DateTime.UtcNow)));
 
-        Assert.Equal(4, PersistentStorageHelper.RemoveReplacedFile(nestedLeasePath, $"{blobPath}@{FormatTimestamp(utcNow.AddMinutes(2))}.lock"));
+        Assert.Equal(4, PersistentStorageHelper.RemoveClaimedFile(claimedPath));
         Assert.Empty(Directory.GetFiles(temp.Path));
     }
 
     [Fact]
-    public void RemoveReplacedFile_DoesNotRemoveNewContentIfReplacedFileWasRemoved()
+    public void RemoveClaimedFile_ReturnsZeroIfFileDoesNotExist()
     {
         using var temp = new TemporaryDirectory();
 
-        var utcNow = DateTime.UtcNow;
-        var blobPath = CreateFile(temp.Path, BlobName(utcNow));
-        var leasePath = $"{blobPath}@{FormatTimestamp(utcNow.AddMinutes(1))}.lock";
+        var claimedPath = PersistentStorageHelper.GetUniqueFilePath(Path.Combine(temp.Path, BlobName(DateTime.UtcNow)), ".blob.tmp");
 
-        Assert.Equal(0, PersistentStorageHelper.RemoveReplacedFile(leasePath, blobPath));
-        Assert.Equal([blobPath], Directory.GetFiles(temp.Path));
-    }
-
-    [Fact]
-    public void RemoveReplacedFile_DoesNotLeaveFileBehindIfReleasedConcurrently()
-    {
-        using var temp = new TemporaryDirectory();
-
-        var utcNow = DateTime.UtcNow;
-        var blobPath = CreateFile(temp.Path, BlobName(utcNow));
-        var leasePath = $"{blobPath}@{FormatTimestamp(utcNow.AddMinutes(-1))}.lock";
-        var destination = $"{blobPath}@{FormatTimestamp(utcNow.AddMinutes(2))}.lock";
-
-        Assert.Equal(4, PersistentStorageHelper.RemoveReplacedFile(leasePath, destination));
-        Assert.Empty(Directory.GetFiles(temp.Path));
-    }
-
-    [Fact]
-    public void RemoveReplacedFile_ReturnsZeroIfFileDoesNotExist()
-    {
-        using var temp = new TemporaryDirectory();
-
-        var utcNow = DateTime.UtcNow;
-        var blobPath = Path.Combine(temp.Path, BlobName(utcNow));
-        var leasePath = $"{blobPath}@{FormatTimestamp(utcNow.AddMinutes(1))}.lock";
-
-        Assert.Equal(0, PersistentStorageHelper.RemoveReplacedFile(leasePath, $"{blobPath}@{FormatTimestamp(utcNow.AddMinutes(2))}.lock"));
-        Assert.Equal(0, PersistentStorageHelper.RemoveReplacedFile(blobPath, $"{blobPath}@{FormatTimestamp(utcNow.AddMinutes(2))}.lock"));
+        Assert.Equal(0, PersistentStorageHelper.RemoveClaimedFile(claimedPath));
     }
 
     [Theory]

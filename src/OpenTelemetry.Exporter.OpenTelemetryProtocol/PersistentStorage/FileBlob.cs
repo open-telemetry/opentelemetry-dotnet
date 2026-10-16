@@ -140,7 +140,7 @@ public class FileBlob : PersistentBlob
             // If the lease has expired and the blob has been released by the storage maintenance, it is no longer
             // removed, as it may now be leased by another reader, and the file is claimed before it is removed so
             // that the blob cannot be released between it being found and removed and then be left behind.
-            var fileSize = PersistentStorageHelper.RemoveClaimedFile(this.FullPath);
+            var fileSize = PersistentStorageHelper.RemoveClaimedFile(PersistentStorageHelper.ClaimFile(this.FullPath));
             this.directorySizeTracker?.FileRemoved(fileSize);
         }
         catch (Exception ex)
@@ -178,16 +178,38 @@ public class FileBlob : PersistentBlob
             return 0;
         }
 
-        var replacedSize = existing.Length;
-
         if (string.Equals(existing.FullName, Path.GetFullPath(destination), StringComparison.Ordinal))
         {
+            var replacedSize = existing.Length;
             File.Replace(path, destination, destinationBackupFileName: null);
             return replacedSize;
         }
 
-        File.Move(path, destination);
+        // The existing file is claimed before the new content is moved into place, rather than being removed afterwards.
+        // Once the new content has been moved into place with a lease, the existing file could be leased or removed by
+        // another reader, and the new lease could then expire and be released by the storage maintenance to the name the
+        // existing file was found at, so removing the file with that name afterwards could remove the new content instead.
+        var claimedPath = PersistentStorageHelper.ClaimFile(existing.FullName);
 
-        return PersistentStorageHelper.RemoveReplacedFile(existing.FullName, destination);
+        try
+        {
+            File.Move(path, destination);
+        }
+        catch (Exception)
+        {
+            // Restore the existing file so that the blob's content is not lost if the new content could not be moved into place
+            try
+            {
+                File.Move(claimedPath, existing.FullName);
+            }
+            catch (Exception ex)
+            {
+                PersistentStorageEventSource.Log.PersistentStorageException(nameof(FileBlob), $"Could not restore blob {existing.FullName} from {claimedPath}", ex);
+            }
+
+            throw;
+        }
+
+        return PersistentStorageHelper.RemoveClaimedFile(claimedPath);
     }
 }
