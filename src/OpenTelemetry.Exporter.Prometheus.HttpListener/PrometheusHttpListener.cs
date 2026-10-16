@@ -354,11 +354,23 @@ internal sealed class PrometheusHttpListener : IDisposable
                             },
                             context))
                         {
+                            // Write the shared response buffer in slices, awaiting each one, rather than
+                            // in a single write. The managed (non-Windows) HttpListener copies the content
+                            // of the first write into a new buffer together with the response headers, so
+                            // writing the whole buffer at once would make every client that does not read
+                            // its response pin a private copy of the entire payload.
+                            var offset = 0;
+
+                            while (offset < dataView.Count)
+                            {
+                                var count = Math.Min(dataView.Count - offset, PrometheusExporter.MaximumResponseWriteSize);
 #if NET
-                            await context.Response.OutputStream.WriteAsync(dataView.Array.AsMemory(0, dataView.Count), linkedCts.Token).ConfigureAwait(false);
+                                await context.Response.OutputStream.WriteAsync(dataView.Array.AsMemory(offset, count), linkedCts.Token).ConfigureAwait(false);
 #else
-                            await context.Response.OutputStream.WriteAsync(dataView.Array, 0, dataView.Count, linkedCts.Token).ConfigureAwait(false);
+                                await context.Response.OutputStream.WriteAsync(dataView.Array, offset, count, linkedCts.Token).ConfigureAwait(false);
 #endif
+                                offset += count;
+                            }
                         }
                     }
                     else
