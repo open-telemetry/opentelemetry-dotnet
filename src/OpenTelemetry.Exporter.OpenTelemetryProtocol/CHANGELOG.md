@@ -18,6 +18,11 @@ Notes](../../RELEASENOTES.md).
   redirects.
   ([#7958](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7958))
 
+* The value of `OTEL_EXPORTER_OTLP_ENDPOINT`, or of its signal-specific
+  variants, is no longer written to the exporter's diagnostic log when it is
+  not a valid URI.
+  ([#7971](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7971))
+
 * Hardened the experimental disk retry feature.
   * When running on .NET on non-Windows platforms, the retry directory and
     the blob files within it are now created accessible to the current user
