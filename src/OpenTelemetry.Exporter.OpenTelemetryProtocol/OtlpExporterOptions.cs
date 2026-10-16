@@ -127,7 +127,17 @@ public class OtlpExporterOptions : IOtlpExporterOptions
             }
 #endif
 
-            return new HttpClient
+            return new HttpClient(
+                new HttpClientHandler
+                {
+                    AllowAutoRedirect = false,
+#if NET
+#pragma warning disable CA1416 // Validate platform compatibility
+                    CheckCertificateRevocationList = !OperatingSystem.IsBrowser(),
+#pragma warning restore CA1416 // Validate platform compatibility
+#endif
+                },
+                disposeHandler: true)
             {
                 MaxResponseContentBufferSize = this.MaxResponseSizeBytes,
                 Timeout = timeout,

@@ -1,7 +1,9 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Collections.Concurrent;
 using System.Diagnostics.Tracing;
+using System.Net;
 #if NETFRAMEWORK
 using System.Net.Http;
 #endif
@@ -230,6 +232,34 @@ public class OtlpExporterOptionsExtensionsTests
         Assert.Empty(listener.CurrentMessages);
     }
 
+    [Fact]
+    public void DefaultHttpClientFactory_CreatesHttpClientThatDoesNotFollowRedirects()
+    {
+        var requestedPaths = new ConcurrentQueue<string>();
+
+        using var server = RunRedirectingServer(requestedPaths, out var host, out var port);
+
+        var options = new OtlpExporterOptions
+        {
+            Endpoint = new Uri($"http://{host}:{port}/v1/traces"),
+            Protocol = OtlpExportProtocol.HttpProtobuf,
+        };
+
+        using var httpClient = options.DefaultHttpClientFactory();
+
+        var exportClient = new OtlpHttpExportClient(options, httpClient, string.Empty);
+
+        var response = exportClient.SendExportRequest(
+            "hello world"u8.ToArray(),
+            11,
+            DateTime.UtcNow.AddMinutes(1),
+            TestContext.Current.CancellationToken);
+
+        Assert.False(response.Success);
+        Assert.Equal(HttpStatusCode.TemporaryRedirect, Assert.IsType<ExportClientHttpResponse>(response).StatusCode);
+        Assert.Equal(["/v1/traces"], requestedPaths);
+    }
+
     [Theory]
 #pragma warning disable CS0618 // Suppressing gRPC obsolete warning
     [InlineData(OtlpExportProtocol.Grpc, typeof(OtlpGrpcExportClient), false, 10000, null)]
@@ -442,6 +472,24 @@ public class OtlpExporterOptionsExtensionsTests
             Assert.Contains(headers, h => h.Key == std.Key && h.Value == std.Value);
         }
     }
+
+    private static IDisposable RunRedirectingServer(ConcurrentQueue<string> requestedPaths, out string host, out int port)
+        => TestHttpServer.RunServer(
+            context =>
+            {
+                requestedPaths.Enqueue(context.Request.Url!.AbsolutePath);
+                context.Request.InputStream.CopyTo(Stream.Null);
+
+                if (context.Request.Url.AbsolutePath != "/redirected")
+                {
+                    context.Response.StatusCode = (int)HttpStatusCode.TemporaryRedirect;
+                    context.Response.RedirectLocation = "/redirected";
+                }
+
+                context.Response.OutputStream.Close();
+            },
+            out host,
+            out port);
 
     private sealed class ThrowingHttpClientFactory(Exception exception) : IHttpClientFactory
     {

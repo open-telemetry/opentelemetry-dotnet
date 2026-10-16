@@ -72,6 +72,41 @@ public class OtlpSecureHttpClientFactoryTests
     }
 
     [Fact]
+    public void CreateHttpClient_DoesNotFollowRedirects()
+    {
+        var tempCertFile = Path.GetTempFileName();
+
+        try
+        {
+            using var cert = CreateSelfSignedCertificate();
+            File.WriteAllBytes(tempCertFile, cert.Export(X509ContentType.Pfx));
+
+            var options = new OtlpMtlsOptions
+            {
+                ClientCertificatePath = tempCertFile,
+                EnableCertificateChainValidation = false, // Ignore validation for test cert
+            };
+
+            using var httpClient = OpenTelemetryProtocol.Implementation.OtlpSecureHttpClientFactory.CreateSecureHttpClient(options);
+
+            var handlerField = typeof(HttpMessageInvoker).GetField(
+                "_handler",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+
+            var handler = Assert.IsType<HttpClientHandler>(handlerField?.GetValue(httpClient), exactMatch: false);
+
+            Assert.False(handler.AllowAutoRedirect);
+        }
+        finally
+        {
+            if (File.Exists(tempCertFile))
+            {
+                File.Delete(tempCertFile);
+            }
+        }
+    }
+
+    [Fact]
     public void CreateHttpClient_CapsResponseContentBuffering()
     {
         var tempCertFile = Path.GetTempFileName();

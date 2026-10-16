@@ -7,6 +7,13 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* **Breaking:** `HttpClient` instances created by the exporter directly no
+  longer follow HTTP redirects. A `3xx` response is now treated as a failed
+  export. See [Configure HttpClient](README.md#configure-httpclient)
+  to prevent `HttpClient` created by `IHttpClientFactory` from following
+  redirects.
+  ([#7958](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7958))
+
 ## 1.20.0
 
 Released 2026-Oct-15
