@@ -321,27 +321,11 @@ internal sealed class SelfDiagnosticsEventListener : EventListener
 
             buffer[pos++] = (byte)'\n';
             var byteCount = pos - 0;
-#pragma warning disable CA2000 // Dispose objects before losing scope
-            if (this.configRefresher.TryGetLogStream(byteCount, out var stream, out var availableByteCount))
-#pragma warning restore CA2000 // Dispose objects before losing scope
-            {
-                if (availableByteCount >= byteCount)
-                {
-                    stream.Write(buffer, 0, byteCount);
-                }
-                else
-                {
-                    stream.Write(buffer, 0, availableByteCount);
-                    stream.Seek(0, SeekOrigin.Begin);
-                    stream.Write(buffer, availableByteCount, byteCount - availableByteCount);
-                }
-            }
+            this.configRefresher.WriteLog(buffer, byteCount);
         }
         catch (Exception)
         {
-            // Fail to allocate memory for buffer, or
-            // A concurrent condition: memory mapped file is disposed in other thread after TryGetLogStream() finishes.
-            // In this case, silently fail.
+            // Drop the event if formatting or writing fails, including when the disk is full.
         }
     }
 
