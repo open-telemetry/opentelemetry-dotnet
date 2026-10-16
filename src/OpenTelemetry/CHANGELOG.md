@@ -15,6 +15,10 @@ Notes](../../RELEASENOTES.md).
   and prefixed JWTs.
   ([#7955](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7955))
 
+* Fixed delta double counters losing subsequent measurements after a non-finite
+  or large value and idle metric points with a `NaN` value failing to be reclaimed.
+  ([#7963](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7963))
+
 ## 1.20.0
 
 Released 2026-Oct-15
