@@ -394,6 +394,44 @@ public class PrometheusHttpListenerTests
     }
 
     [Fact]
+    public async Task ConfigureHttpListenerCanReplaceDefaultPrefix()
+    {
+        using var meter = new Meter(MeterName, MeterVersion);
+
+        string[]? prefixesSeenByCallback = null;
+        System.Net.HttpListener? configuredListener = null;
+
+        using var context = CreateMeterProvider(meter, configureListener: (options) =>
+        {
+            options.Port = GetRandomPort();
+            options.ConfigureHttpListener = (listenerOptions, listener) =>
+            {
+                prefixesSeenByCallback = [.. listener.Prefixes];
+                configuredListener = listener;
+
+                listener.Prefixes.Clear();
+                listener.Prefixes.Add($"http://localhost:{listenerOptions.Port}/custom-metrics/");
+            };
+
+            return options.Port;
+        });
+
+        // The callback runs after the exporter has added its default prefix,
+        // so clearing the prefixes replaces it rather than adding to it.
+        Assert.NotNull(prefixesSeenByCallback);
+        Assert.Equal([$"http://localhost:{context.Port}/metrics/"], prefixesSeenByCallback);
+        Assert.NotNull(configuredListener);
+        Assert.Equal([$"http://localhost:{context.Port}/custom-metrics/"], configuredListener.Prefixes);
+
+        meter.CreateCounter<int>("test_counter").Add(1);
+
+        using var client = new HttpClient { BaseAddress = context.BaseAddress };
+        using var response = await client.GetAsync(new Uri("custom-metrics", UriKind.Relative), TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+    }
+
+    [Fact]
     public void Host_DefaultValue_Is_Localhost()
         => Assert.Equal("localhost", new PrometheusHttpListenerOptions().Host);
 
