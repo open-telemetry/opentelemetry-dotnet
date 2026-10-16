@@ -42,7 +42,7 @@ public class FileBlob : PersistentBlob
     {
         try
         {
-            buffer = File.ReadAllBytes(this.FullPath);
+            buffer = PersistentStorageHelper.ReadAllBytes(this.FullPath, this.directorySizeTracker?.MaxSizeInBytes ?? int.MaxValue);
         }
         catch (Exception ex)
         {

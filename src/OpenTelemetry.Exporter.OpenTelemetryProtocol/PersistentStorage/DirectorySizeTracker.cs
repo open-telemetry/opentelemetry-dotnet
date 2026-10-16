@@ -19,6 +19,8 @@ internal sealed class DirectorySizeTracker
         this.directoryCurrentSizeInBytes = CalculateFolderSize(path);
     }
 
+    public long MaxSizeInBytes => this.maxSizeInBytes;
+
     public void FileAdded(long fileSizeInBytes) => Interlocked.Add(ref this.directoryCurrentSizeInBytes, fileSizeInBytes);
 
     public void FileRemoved(long fileSizeInBytes) => Interlocked.Add(ref this.directoryCurrentSizeInBytes, fileSizeInBytes * -1);

@@ -27,6 +27,9 @@ Notes](../../RELEASENOTES.md).
     removed or released when the storage was maintained.
   * A stored request whose lease has expired is no longer deleted after it has
     been retried, as it may have since been leased again for another retry.
+  * Stored blobs that are empty or that are larger than the maximum size of
+    the storage are no longer read. When running on .NET, stored blobs that
+    are symbolic links are also no longer read.
   ([#7857](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7857))
 
 ## 1.20.0

@@ -461,6 +461,43 @@ public class FileBlobProviderTests
         Assert.Equal([blobPath], Directory.GetFiles(temp.Path));
     }
 
+    [Fact]
+    public void TryRead_EmptyBlob_DoesNotReadIt()
+    {
+        using var temp = new TemporaryDirectory();
+        using var provider = new FileBlobProvider(temp.Path);
+
+        File.WriteAllBytes(Path.Combine(temp.Path, PersistentStorageHelper.GetUniqueFileName(".blob")), []);
+
+        Assert.True(provider.TryGetBlob(out var blob));
+        Assert.False(blob.TryRead(out var data));
+        Assert.Null(data);
+    }
+
+    [Fact]
+    public void TryRead_BlobLargerThanStorageLimit_DoesNotReadIt()
+    {
+        using var temp = new TemporaryDirectory();
+        using var provider = new FileBlobProvider(temp.Path, maxSizeInBytes: 4);
+
+        File.WriteAllBytes(Path.Combine(temp.Path, PersistentStorageHelper.GetUniqueFileName(".blob")), [1, 2, 3, 4, 5]);
+
+        Assert.True(provider.TryGetBlob(out var blob));
+        Assert.False(blob.TryRead(out var data));
+        Assert.Null(data);
+    }
+
+    [Fact]
+    public void TryRead_BlobWithinStorageLimit_ReadsIt()
+    {
+        using var temp = new TemporaryDirectory();
+        using var provider = new FileBlobProvider(temp.Path, maxSizeInBytes: 4);
+
+        Assert.True(provider.TryCreateBlob([1, 2, 3, 4], out var blob));
+        Assert.True(blob.TryRead(out var data));
+        Assert.Equal([1, 2, 3, 4], data);
+    }
+
 #if NET
     [Fact]
     public async Task MaintenanceEvent_RecreatesDeletedDirectoryWithOwnerOnlyPermissions()
@@ -518,6 +555,30 @@ public class FileBlobProviderTests
 
         Assert.Equal(UnixFileMode.None, File.GetUnixFileMode(path) & GroupAndOther);
         Assert.Equal(UnixFileMode.None, File.GetUnixFileMode(blobPath) & GroupAndOther);
+    }
+
+    [Fact]
+    public void TryRead_BlobThatIsSymbolicLink_DoesNotReadIt()
+    {
+        if (OperatingSystem.IsWindows())
+        {
+            Assert.Skip("Creating symbolic links on Windows requires elevation.");
+            return;
+        }
+
+        using var root = new TemporaryDirectory();
+
+        var secret = Path.Combine(root.Path, "secret.key");
+        File.WriteAllBytes(secret, [1, 2, 3]);
+
+        var path = Path.Combine(root.Path, "traces");
+        using var provider = new FileBlobProvider(path);
+
+        File.CreateSymbolicLink(Path.Combine(path, PersistentStorageHelper.GetUniqueFileName(".blob")), secret);
+
+        Assert.True(provider.TryGetBlob(out var blob));
+        Assert.False(blob.TryRead(out var data));
+        Assert.Null(data);
     }
 #endif
 }

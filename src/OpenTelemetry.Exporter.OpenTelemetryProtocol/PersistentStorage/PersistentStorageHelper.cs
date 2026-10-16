@@ -157,6 +157,62 @@ internal static class PersistentStorageHelper
 #endif
     }
 
+    /// <summary>
+    /// Reads the contents of a blob.
+    /// </summary>
+    /// <remarks>
+    /// The storage directory only ever contains regular files written by this component, and no blob is ever larger than
+    /// the maximum size of the storage or empty. Anything else, such as a symbolic link to a file elsewhere, or a device
+    /// or named pipe that may never stop being read from, or block when opened, is not read.
+    /// </remarks>
+    /// <param name="path">The path of the blob.</param>
+    /// <param name="maxLength">The maximum length of the blob.</param>
+    /// <returns>The contents of the blob.</returns>
+    /// <exception cref="IOException">The blob is not a regular file, is empty or is larger than <paramref name="maxLength"/>.</exception>
+    internal static byte[] ReadAllBytes(string path, long maxLength)
+    {
+        var file = new FileInfo(path);
+
+#if NET
+        // FileAttributes.ReparsePoint is not used, as it is also set for files that are not links, such as OneDrive files
+        if (file.LinkTarget != null)
+        {
+            throw new IOException($"The blob '{path}' is a link.");
+        }
+#endif
+
+        if (file.Length <= 0 || file.Length > maxLength)
+        {
+            throw new IOException($"The blob '{path}' has an invalid length of {file.Length} bytes.");
+        }
+
+        using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read);
+
+        var length = stream.Length;
+
+        if (length <= 0 || length > maxLength)
+        {
+            throw new IOException($"The blob '{path}' has an invalid length of {length} bytes.");
+        }
+
+        var buffer = new byte[length];
+        var offset = 0;
+
+        while (offset < buffer.Length)
+        {
+            var read = stream.Read(buffer, offset, buffer.Length - offset);
+
+            if (read == 0)
+            {
+                throw new EndOfStreamException($"The blob '{path}' was truncated while it was being read.");
+            }
+
+            offset += read;
+        }
+
+        return buffer;
+    }
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static void RemoveFile(string fileName, out long fileSize)
     {
