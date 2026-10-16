@@ -269,6 +269,23 @@ public sealed class OpenTelemetryLoggingExtensionsTests
         Assert.Throws<ArgumentNullException>(() => sp.GetRequiredService<LoggerProvider>() as LoggerProviderSdk);
     }
 
+    [Fact]
+    public void LoggerOptionsCanDependOnLoggerFilterOptions()
+    {
+        var invocations = 0;
+        var services = new ServiceCollection();
+        services.AddOptions<OpenTelemetryLoggerOptions>().Configure<IOptions<LoggerFilterOptions>>((options, filters) =>
+        {
+            invocations++;
+            Assert.NotNull(filters.Value);
+        });
+        services.AddLogging(builder => builder.AddOpenTelemetry());
+
+        using var serviceProvider = services.BuildServiceProvider();
+        Assert.NotNull(serviceProvider.GetRequiredService<ILoggerFactory>());
+        Assert.Equal(1, invocations);
+    }
+
     [Theory]
     [InlineData(true)]
     [InlineData(false)]
