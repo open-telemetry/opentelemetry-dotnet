@@ -35,7 +35,7 @@ Notes](../../RELEASENOTES.md).
   export when an exporter stops enumerating a single-item or array
   `Batch<LogRecord>` early which could cause a `BatchLogRecordExportProcessor`
   on the same provider to export missing or incorrect data.
-  ([#NNNN](https://github.com/open-telemetry/opentelemetry-dotnet/pull/NNNN))
+  ([#7965](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7965))
 
 ## 1.20.0
 
