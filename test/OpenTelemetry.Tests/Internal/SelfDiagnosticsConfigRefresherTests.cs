@@ -4,7 +4,6 @@
 using System.Diagnostics;
 using System.Diagnostics.Tracing;
 using System.Globalization;
-using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
 using OpenTelemetry.Tests;
@@ -17,9 +16,6 @@ public class SelfDiagnosticsConfigRefresherTests
     private const int CaptureAttempts = 5;
 
     private static readonly string MessageOnNewFileString = Encoding.UTF8.GetString(SelfDiagnosticsConfigRefresher.MessageOnNewFile);
-    private static readonly FieldInfo LogFileField = typeof(SelfDiagnosticsConfigRefresher)
-        .GetFields(BindingFlags.Instance | BindingFlags.NonPublic)
-        .Single(field => field.FieldType == typeof(FileStream));
 
     private readonly ITestOutputHelper output;
 
@@ -81,14 +77,17 @@ public class SelfDiagnosticsConfigRefresherTests
     public void SelfDiagnosticsConfigRefresher_CaptureAfterLogFileTruncated()
     {
         var logDirectory = Utils.GetCurrentMethodName();
-        using var configRefresher = CreateRefresher(logDirectory);
+        FileStream? file = null;
+        using var configRefresher = CreateRefresher(
+            logDirectory,
+            logFileFactory: path => file = new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.Read, 1, FileOptions.None));
+        Assert.NotNull(file);
         using var listener = new SelfDiagnosticsEventListener(EventLevel.Error, configRefresher);
         listener.WriteEvent("Before truncation", null);
 
         // Use the owning handle because Windows denies opening a second writer.
         // A memory mapping prevents shrinking this file on Windows and makes the
         // next log write fatal on Unix if another process truncates the file.
-        var file = GetLogFile(configRefresher);
         file.SetLength(0);
 
         const string ExpectedMessage = "After truncation";
@@ -101,23 +100,21 @@ public class SelfDiagnosticsConfigRefresherTests
     public void SelfDiagnosticsConfigRefresher_DropFailedWriteAndResume()
     {
         var logDirectory = Utils.GetCurrentMethodName();
-        using var configRefresher = CreateRefresher(logDirectory, EventLevel.Critical);
-        var file = GetLogFile(configRefresher);
-        var filePath = file.Name;
-        file.Dispose();
-
-        using var failingFile = new FailingFileStream(filePath);
-        LogFileField.SetValue(configRefresher, failingFile);
+        FailingFileStream? failingFile = null;
+        using var configRefresher = CreateRefresher(logDirectory, EventLevel.Critical, path => failingFile = new FailingFileStream(path));
+        Assert.NotNull(failingFile);
         using var listener = new SelfDiagnosticsEventListener(EventLevel.Critical, configRefresher);
 
         // Inject the IOException reported by ordinary file I/O on a full disk.
         // The listener must drop this event and still accept the next event.
+        failingFile.FailWrites = true;
+        var initialWriteAttempts = failingFile.WriteAttempts;
         listener.WriteEvent("Dropped event", null);
-        Assert.Equal(1, failingFile.WriteAttempts);
+        Assert.Equal(initialWriteAttempts + 1, failingFile.WriteAttempts);
 
         failingFile.FailWrites = false;
         listener.WriteEvent("Recovered event", null);
-        Assert.Equal(2, failingFile.WriteAttempts);
+        Assert.Equal(initialWriteAttempts + 2, failingFile.WriteAttempts);
 
         var logText = ReadLogFile(logDirectory);
         Assert.DoesNotContain("Dropped event", logText, StringComparison.Ordinal);
@@ -129,8 +126,8 @@ public class SelfDiagnosticsConfigRefresherTests
     {
         var logDirectory = Utils.GetCurrentMethodName();
         using var configRefresher = CreateRefresher(logDirectory, EventLevel.Critical);
-        var file = GetLogFile(configRefresher);
-        var fileSize = (int)file.Length;
+        var filePath = GetLogFilePath(logDirectory);
+        var fileSize = (int)new FileInfo(filePath).Length;
         var padding = new byte[fileSize - SelfDiagnosticsConfigRefresher.MessageOnNewFile.Length - 2];
         configRefresher.WriteLog(padding, padding.Length);
 
@@ -139,7 +136,7 @@ public class SelfDiagnosticsConfigRefresherTests
         configRefresher.WriteLog("z"u8.ToArray(), 1);
 
         var logText = ReadLogFile(logDirectory);
-        Assert.Equal(fileSize, file.Length);
+        Assert.Equal(fileSize, new FileInfo(filePath).Length);
         Assert.StartsWith("cdz", logText, StringComparison.Ordinal);
         Assert.EndsWith("ab", logText, StringComparison.Ordinal);
     }
@@ -170,8 +167,7 @@ public class SelfDiagnosticsConfigRefresherTests
     {
         var logDirectory = Utils.GetCurrentMethodName();
         using var configRefresher = CreateRefresher(logDirectory, EventLevel.Critical);
-        var file = GetLogFile(configRefresher);
-        var filePath = file.Name;
+        var filePath = GetLogFilePath(logDirectory);
 
         configRefresher.Dispose();
         configRefresher.WriteLog("After disposal"u8.ToArray(), 14);
@@ -190,7 +186,7 @@ public class SelfDiagnosticsConfigRefresherTests
 
         var logDirectory = Utils.GetCurrentMethodName();
         using var configRefresher = CreateRefresher(logDirectory, EventLevel.Critical);
-        var filePath = GetLogFile(configRefresher).Name;
+        var filePath = GetLogFilePath(logDirectory);
 
         using var reader = File.Open(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
         Assert.Throws<IOException>(() =>
@@ -199,20 +195,22 @@ public class SelfDiagnosticsConfigRefresherTests
         });
     }
 
-    private static FileStream GetLogFile(SelfDiagnosticsConfigRefresher configRefresher)
-        => Assert.IsType<FileStream>(LogFileField.GetValue(configRefresher));
-
     /// <summary>
     /// Creates a refresher configured to write to <paramref name="logDirectory"/> and removes
     /// the configuration file again as soon as it has been read.
     /// </summary>
-    private static SelfDiagnosticsConfigRefresher CreateRefresher(string logDirectory, EventLevel logLevel = EventLevel.Error)
+    private static SelfDiagnosticsConfigRefresher CreateRefresher(
+        string logDirectory,
+        EventLevel logLevel = EventLevel.Error,
+        Func<string, FileStream>? logFileFactory = null)
     {
         CreateConfigFile(logDirectory, logLevel);
 
         try
         {
-            return new SelfDiagnosticsConfigRefresher();
+            return logFileFactory == null
+                ? new SelfDiagnosticsConfigRefresher()
+                : new SelfDiagnosticsConfigRefresher(logFileFactory);
         }
         finally
         {
@@ -247,16 +245,20 @@ public class SelfDiagnosticsConfigRefresherTests
         return logLine.Substring(timestampPrefixLength);
     }
 
-    private static string ReadLogFile(string logDirectory)
+    private static string GetLogFilePath(string logDirectory)
     {
-        var outputFileName = Path.GetFileName(Process.GetCurrentProcess().MainModule?.FileName) + "."
+        var outputFileName = Path.GetFileName(Process.GetCurrentProcess().MainModule?.FileName ?? "OpenTelemetrySdk") + "."
 #if NET
                 + Environment.ProcessId + ".log";
 #else
                 + Process.GetCurrentProcess().Id + ".log";
 #endif
-        var outputFilePath = Path.Combine(logDirectory, outputFileName);
-        using var file = File.Open(outputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+        return Path.Combine(logDirectory, outputFileName);
+    }
+
+    private static string ReadLogFile(string logDirectory)
+    {
+        using var file = File.Open(GetLogFilePath(logDirectory), FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
 
         var actualBytes = new byte[file.Length];
 
@@ -298,9 +300,9 @@ public class SelfDiagnosticsConfigRefresherTests
     }
 
     private sealed class FailingFileStream(string path)
-        : FileStream(path, FileMode.Open, FileAccess.Write, FileShare.Read, 1, FileOptions.None)
+        : FileStream(path, FileMode.Create, FileAccess.Write, FileShare.Read, 1, FileOptions.None)
     {
-        public bool FailWrites { get; set; } = true;
+        public bool FailWrites { get; set; }
 
         public int WriteAttempts { get; private set; }
 

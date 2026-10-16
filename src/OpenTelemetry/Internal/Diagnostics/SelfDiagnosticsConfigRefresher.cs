@@ -24,6 +24,7 @@ internal class SelfDiagnosticsConfigRefresher : IDisposable
     private readonly CancellationTokenSource cancellationTokenSource;
     private readonly Task worker;
     private readonly SelfDiagnosticsConfigParser configParser;
+    private readonly Func<string, FileStream> logFileFactory;
 
     private readonly Lock logFileLock = new();
     private bool disposedValue;
@@ -38,7 +39,13 @@ internal class SelfDiagnosticsConfigRefresher : IDisposable
     private bool formatMessage;
 
     public SelfDiagnosticsConfigRefresher()
+        : this(static path => new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.Read, 1, FileOptions.None))
     {
+    }
+
+    internal SelfDiagnosticsConfigRefresher(Func<string, FileStream> logFileFactory)
+    {
+        this.logFileFactory = logFileFactory;
         this.configParser = new SelfDiagnosticsConfigParser();
         this.UpdateLogFileFromConfiguration();
         this.cancellationTokenSource = new CancellationTokenSource();
@@ -144,7 +151,7 @@ internal class SelfDiagnosticsConfigRefresher : IDisposable
             // Ordinary file I/O reports a full disk as an exception. Writing to an
             // unbacked memory-mapped page can instead terminate the process.
             // Disable buffering so write errors are caught when the event is logged.
-            newLogFile = new FileStream(filePath, FileMode.Create, FileAccess.Write, FileShare.Read, 1, FileOptions.None);
+            newLogFile = this.logFileFactory(filePath);
             newLogFile.SetLength(newFileSize);
             newLogFile.Write(MessageOnNewFile, 0, MessageOnNewFile.Length);
 
