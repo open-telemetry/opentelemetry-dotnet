@@ -48,6 +48,11 @@ Notes](../../RELEASENOTES.md).
     are symbolic links are also no longer read.
   ([#7857](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7857))
 
+* Only the first 4 KiB of the body of an unsuccessful response is now read and
+  written to the exporter's diagnostic log, instead of up to
+  `MaxResponseSizeBytes`.
+  ([#7969](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7969))
+
 * Fixed reading the body of a failed export response for the exporter's
   diagnostic log not being bounded by the export timeout.
   ([#7970](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7970))

@@ -56,7 +56,7 @@ internal sealed class OtlpHttpExportClient : OtlpExportClient
 
                 if (OpenTelemetryProtocolExporterEventSource.Log.IsEnabled(EventLevel.Error, EventKeywords.All))
                 {
-                    var response = TryGetResponseBody(httpResponse, this.MaxResponseSizeBytes, deadlineUtc, cancellationToken);
+                    var response = TryGetResponseBody(httpResponse, Math.Min(this.MaxResponseSizeBytes, MaxLoggedResponseSizeBytes), deadlineUtc, cancellationToken);
                     OpenTelemetryProtocolExporterEventSource.Log.HttpRequestFailed(this.Endpoint, response, ex);
                 }
 

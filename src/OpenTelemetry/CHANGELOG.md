@@ -41,6 +41,20 @@ Notes](../../RELEASENOTES.md).
   on the same provider to export missing or incorrect data.
   ([#7965](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7965))
 
+* Fixed a `SuppressInstrumentationScope.Enter()` reference count never being
+  released when the `Activity` it was entered for is not recorded, which caused
+  all subsequent telemetry in that execution context to be suppressed.
+  ([#7966](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7966))
+
+* Self-diagnostics log files, whether configured through `OTEL_DIAGNOSTICS.json`
+  or `SelfDiagnosticsOptions`, are now always created as new files.
+  ([#7968](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7968))
+
+* Self-diagnostics messages written to the sinks configured by
+  `SelfDiagnosticsOptions` are now truncated to 16,384 characters so that the
+  memory used by entries waiting to be written is bounded.
+  ([#7969](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7969))
+
 ## 1.20.0
 
 Released 2026-Oct-15

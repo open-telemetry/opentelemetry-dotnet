@@ -11,6 +11,12 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClie
 
 internal abstract class OtlpExportClient : IExportClient
 {
+    /// <summary>
+    /// The maximum size, in bytes, of the body of an unsuccessful
+    /// response to include in the diagnostic log (4 KiB).
+    /// </summary>
+    internal const int MaxLoggedResponseSizeBytes = 4 * 1024;
+
     private static readonly Version Http2RequestVersion = new(2, 0);
 
 #if NET
