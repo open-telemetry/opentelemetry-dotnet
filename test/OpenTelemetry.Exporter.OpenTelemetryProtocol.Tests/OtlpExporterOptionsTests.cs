@@ -1,7 +1,10 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Diagnostics.Tracing;
 using Microsoft.Extensions.Configuration;
+using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
+using OpenTelemetry.Tests;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests;
 
@@ -125,6 +128,31 @@ public sealed class OtlpExporterOptionsTests : IDisposable
         Assert.Equal(OtlpExporterOptions.DefaultOtlpExportProtocol, options.Protocol);
         Assert.Null(options.Headers);
         Assert.Equal(OtlpExportCompression.None, options.Compression);
+    }
+
+    [Theory]
+    [InlineData("https://user:p@ssw0rd@localhost:4318")]
+    [InlineData("\"https://localhost:4318/v1/traces?api-key=p@ssw0rd\"")]
+    [InlineData("https//localhost:4318?api-key=p@ssw0rd")]
+    public void OtlpExporterOptions_InvalidEndpointValueIsNotLogged(string endpoint)
+    {
+        var values = new Dictionary<string, string?>
+        {
+            [OtlpSpecConfigDefinitions.DefaultEndpointEnvVarName] = endpoint,
+        };
+
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(values)
+            .Build();
+
+        using var listener = new TestEventListener(OpenTelemetryProtocolExporterEventSource.Log, EventLevel.Warning);
+
+        _ = new OtlpExporterOptions(configuration, OtlpExporterOptionsConfigurationType.Default, new());
+
+        var invalidValueEvent = Assert.Single(listener.Messages, e => e.EventName == nameof(OpenTelemetryProtocolExporterEventSource.InvalidConfigurationValue));
+
+        Assert.NotNull(invalidValueEvent.Payload);
+        Assert.Equal([OtlpSpecConfigDefinitions.DefaultEndpointEnvVarName, "[REDACTED]"], invalidValueEvent.Payload);
     }
 
     [Fact]

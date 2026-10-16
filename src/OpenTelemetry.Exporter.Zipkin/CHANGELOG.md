@@ -6,6 +6,10 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* The value of `OTEL_EXPORTER_ZIPKIN_ENDPOINT` is no longer written to the
+  exporter's diagnostic log when it is not a valid URI.
+  ([#7971](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7971))
+
 * **Breaking Change** Dropped support for `net8.0` and `net9.0`.
   ([#6899](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6899))
 

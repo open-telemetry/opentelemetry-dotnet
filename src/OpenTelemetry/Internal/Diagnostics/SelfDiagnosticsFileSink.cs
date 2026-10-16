@@ -324,8 +324,12 @@ internal sealed class SelfDiagnosticsFileSink : ISelfDiagnosticsSink
             var fileName = $"otel-dotnet-{ProcessIdentity}-{this.fileIndex}.log";
             var filePath = Path.Combine(this.logDirectory, fileName);
 
+            // The index is always past any file already in the series, so the name is expected to
+            // be free; an existing entry is most likely a symbolic link planted by another user of
+            // the log directory. FileMode.CreateNew fails instead of following it (and writing into
+            // its target), and the next attempt moves on to the next index.
             // FileShare.Read lets external tools tail the log while it's open.
-            var stream = new FileStream(filePath, FileMode.Append, FileAccess.Write, FileShare.Read);
+            var stream = new FileStream(filePath, FileMode.CreateNew, FileAccess.Write, FileShare.Read);
             var newWriter = new StreamWriter(stream, Utf8NoBom) { AutoFlush = false };
 
             this.CurrentFilePath = filePath;

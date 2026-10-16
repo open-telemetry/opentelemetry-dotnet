@@ -179,12 +179,12 @@ internal sealed class TracerProviderSdk : TracerProvider
                         }
                     }
 
-                    if (!activity.IsAllDataRequested)
-                    {
-                        return;
-                    }
-
-                    if (SuppressInstrumentationScope.IncrementIfTriggered() == 0)
+                    // The suppression reference count is updated for every
+                    // activity, recorded or not, so that a count taken by
+                    // SuppressInstrumentationScope.Enter is always released
+                    // when the activity stops. IsAllDataRequested only
+                    // decides whether the processor is notified.
+                    if (SuppressInstrumentationScope.IncrementIfTriggered() == 0 && activity.IsAllDataRequested)
                     {
                         this.Processor?.OnStart(activity);
                     }
@@ -200,11 +200,6 @@ internal sealed class TracerProviderSdk : TracerProvider
                         return;
                     }
 
-                    if (!activity.IsAllDataRequested)
-                    {
-                        return;
-                    }
-
                     // Spec says IsRecording must be false once span ends.
                     // https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/api.md#isrecording
                     // However, Activity has slightly different semantic
@@ -213,7 +208,7 @@ internal sealed class TracerProviderSdk : TracerProvider
                     // Intentionally commenting the following line.
                     // activity.IsAllDataRequested = false;
 
-                    if (SuppressInstrumentationScope.DecrementIfTriggered() == 0)
+                    if (SuppressInstrumentationScope.DecrementIfTriggered() == 0 && activity.IsAllDataRequested)
                     {
                         this.Processor?.OnEnd(activity);
                     }
@@ -303,7 +298,12 @@ internal sealed class TracerProviderSdk : TracerProvider
     {
         OpenTelemetrySdkEventSource.Log.ActivityStarted(activity);
 
-        if (activity.IsAllDataRequested && SuppressInstrumentationScope.IncrementIfTriggered() == 0)
+        // The suppression reference count is updated for every
+        // activity, recorded or not, so that a count taken by
+        // SuppressInstrumentationScope.Enter is always released
+        // when the activity stops. IsAllDataRequested only
+        // decides whether the processor is notified.
+        if (SuppressInstrumentationScope.IncrementIfTriggered() == 0 && activity.IsAllDataRequested)
         {
             this.Processor?.OnStart(activity);
         }
@@ -313,11 +313,6 @@ internal sealed class TracerProviderSdk : TracerProvider
     {
         OpenTelemetrySdkEventSource.Log.ActivityStopped(activity);
 
-        if (!activity.IsAllDataRequested)
-        {
-            return;
-        }
-
         // Spec says IsRecording must be false once span ends.
         // https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/api.md#isrecording
         // However, Activity has slightly different semantic
@@ -326,7 +321,7 @@ internal sealed class TracerProviderSdk : TracerProvider
         // Intentionally commenting the following line.
         // activity.IsAllDataRequested = false;
 
-        if (SuppressInstrumentationScope.DecrementIfTriggered() == 0)
+        if (SuppressInstrumentationScope.DecrementIfTriggered() == 0 && activity.IsAllDataRequested)
         {
             this.Processor?.OnEnd(activity);
         }

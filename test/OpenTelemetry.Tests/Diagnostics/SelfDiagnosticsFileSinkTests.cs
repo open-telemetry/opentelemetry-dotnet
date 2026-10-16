@@ -55,6 +55,38 @@ public sealed class SelfDiagnosticsFileSinkTests : IDisposable
         }
     }
 
+#if NET
+    [Fact]
+    public void RollOver_DoesNotFollowLink()
+    {
+        Assert.SkipWhen(OperatingSystem.IsWindows(), "Creating symbolic links requires elevated privileges on Windows.");
+
+        var linkTarget = Path.Combine(this.tempDirectory.Path, "target.txt");
+        File.WriteAllText(linkTarget, "target content");
+
+        using (var sink = this.CreateSink(fileSizeLimitKilobytes: 1))
+        {
+            var firstPath = sink.CurrentFilePath;
+            Assert.NotNull(firstPath);
+            Assert.EndsWith("-1.log", firstPath, StringComparison.Ordinal);
+
+            File.CreateSymbolicLink(firstPath[..^"-1.log".Length] + "-2.log", linkTarget);
+
+            WriteLine(sink, new string('x', 1_100));
+            Assert.False(sink.IsActive, "expected the rollover to fail on the name taken by the link");
+
+            // The retry interval is zero, so the next write moves on to the next index.
+            WriteLine(sink, "after the rollover");
+            sink.Flush();
+
+            Assert.True(sink.IsActive, "expected sink to recover by skipping the name taken by the link");
+            Assert.EndsWith("-3.log", sink.CurrentFilePath, StringComparison.Ordinal);
+        }
+
+        Assert.Equal("target content", File.ReadAllText(linkTarget));
+    }
+#endif
+
     [Fact]
     public void FirstOpen_WritesStartupMessageToStderr()
     {
