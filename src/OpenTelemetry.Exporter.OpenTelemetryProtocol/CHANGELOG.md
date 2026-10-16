@@ -18,6 +18,36 @@ Notes](../../RELEASENOTES.md).
   redirects.
   ([#7958](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7958))
 
+* The value of `OTEL_EXPORTER_OTLP_ENDPOINT`, or of its signal-specific
+  variants, is no longer written to the exporter's diagnostic log when it is
+  not a valid URI.
+  ([#7971](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7971))
+
+* Hardened the experimental disk retry feature.
+  * When running on .NET on non-Windows platforms, the retry directory and
+    the blob files within it are now created accessible to the current user
+    only, including when the directory is recreated after being deleted.
+  * Directory size accounting no longer follows subdirectories, avoiding
+    a symbolic-link/junction walk.
+  * Expired lease-file cleanup now correctly locates the lease timestamp
+    delimiter within the file name rather than the whole path.
+  * Storage maintenance no longer deletes or renames files with a `.blob`,
+    `.tmp` or `.lock` extension that the exporter did not create when the
+    retry directory is shared with other files. Only files named the way the
+    exporter names its blobs, and the temporary and lease files derived from
+    them, are now removed or renamed, and only blobs named that way are now
+    retried.
+  * Timestamps in blob and lease file names are now always written using the
+    Gregorian calendar. Previously, when the current culture used a different
+    calendar, files were given timestamps that caused them never to be
+    removed or released when the storage was maintained.
+  * A stored request whose lease has expired is no longer deleted after it has
+    been retried, as it may have since been leased again for another retry.
+  * Stored blobs that are empty or that are larger than the maximum size of
+    the storage are no longer read. When running on .NET, stored blobs that
+    are symbolic links are also no longer read.
+  ([#7857](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7857))
+
 * Only the first 4 KiB of the body of an unsuccessful response is now read and
   written to the exporter's diagnostic log, instead of up to
   `MaxResponseSizeBytes`.
