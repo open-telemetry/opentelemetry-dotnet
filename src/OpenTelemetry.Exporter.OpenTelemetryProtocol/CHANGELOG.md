@@ -57,7 +57,7 @@ Notes](../../RELEASENOTES.md).
     the current user or by root, and those directories must not be writable
     by their group or by other users unless they have the sticky bit set (such
     as `/tmp`).
-  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+  ([#7964](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7964))
 
 ## 1.20.0
 
