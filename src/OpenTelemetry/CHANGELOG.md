@@ -31,6 +31,11 @@ Notes](../../RELEASENOTES.md).
   or large value and idle metric points with a `NaN` value failing to be reclaimed.
   ([#7963](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7963))
 
+* Self-diagnostics messages written to the sinks configured by
+  `SelfDiagnosticsOptions` are now truncated to 16,384 characters so that the
+  memory used by entries waiting to be written is bounded.
+  ([#NNNN](https://github.com/open-telemetry/opentelemetry-dotnet/pull/NNNN))
+
 ## 1.20.0
 
 Released 2026-Oct-15

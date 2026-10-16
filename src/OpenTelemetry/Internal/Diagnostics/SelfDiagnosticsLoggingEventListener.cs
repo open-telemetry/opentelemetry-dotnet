@@ -26,6 +26,11 @@ internal sealed class SelfDiagnosticsLoggingEventListener : EventListener
 {
     internal const string OpenTelemetryEventSourceNamePrefix = "OpenTelemetry-";
 
+    // The dispatcher bounds its queue by the number of entries, so the length of each
+    // message must be bounded too for the queue to bound the memory it can retain.
+    internal const int MaxMessageLength = 16 * 1024;
+    internal const string TruncationSuffix = "[TRUNCATED]";
+
     private static readonly WaitCallback ProcessReconciliationCallback = static state =>
     {
         var workItem = (SourceReconciliationWorkItem?)state!;
@@ -274,6 +279,13 @@ internal sealed class SelfDiagnosticsLoggingEventListener : EventListener
         var builder = StringBuilderCache.Acquire();
         builder.Append(eventData.EventSource.Name).Append(": ");
         AppendEventBody(builder, eventData);
+
+        if (builder.Length > MaxMessageLength)
+        {
+            // Do not cut a surrogate pair in half.
+            builder.Length = char.IsHighSurrogate(builder[MaxMessageLength - 1]) ? MaxMessageLength - 1 : MaxMessageLength;
+            builder.Append(TruncationSuffix);
+        }
 
         var message = StringBuilderCache.GetStringAndRelease(builder);
 
