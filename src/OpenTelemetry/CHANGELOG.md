@@ -6,6 +6,10 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* **Experimental (pre-release builds only):** Fixed `Logger.EmitLog` ignoring
+  instrumentation suppression, which could cause recursive exports or deadlocks.
+  ([#7961](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7961))
+
 ## 1.20.0
 
 Released 2026-Oct-15
