@@ -50,12 +50,10 @@ internal sealed class OtlpHttpExportClient : OtlpExportClient
                     exception: responseTooLarge);
             }
 
-            try
+            if (!httpResponse.IsSuccessStatusCode)
             {
-                httpResponse.EnsureSuccessStatusCode();
-            }
-            catch (HttpRequestException ex)
-            {
+                var ex = CreateStatusCodeException(httpResponse);
+
                 if (OpenTelemetryProtocolExporterEventSource.Log.IsEnabled(EventLevel.Error, EventKeywords.All))
                 {
                     var response = TryGetResponseBody(httpResponse, this.MaxResponseSizeBytes, deadlineUtc, cancellationToken);

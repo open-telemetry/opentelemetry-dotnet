@@ -52,6 +52,10 @@ Notes](../../RELEASENOTES.md).
   diagnostic log not being bounded by the export timeout.
   ([#7970](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7970))
 
+* Fixed the body of a failed export response never being written to the
+  exporter's diagnostic log when running on .NET Framework.
+  ([#7970](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7970))
+
 ## 1.20.0
 
 Released 2026-Oct-15

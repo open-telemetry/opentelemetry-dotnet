@@ -19,10 +19,11 @@ internal abstract class OtlpExportClient : IExportClient
     [System.Runtime.Versioning.UnsupportedOSPlatformGuard("browser")]
     [System.Runtime.Versioning.UnsupportedOSPlatformGuard("ios")]
     [System.Runtime.Versioning.UnsupportedOSPlatformGuard("tvos")]
-    private static readonly bool SynchronousSendSupportedByCurrentPlatform = !OperatingSystem.IsAndroid()
-            && !OperatingSystem.IsIOS()
-            && !OperatingSystem.IsTvOS()
-            && !OperatingSystem.IsBrowser();
+    private static readonly bool SynchronousSendSupportedByCurrentPlatform =
+        !OperatingSystem.IsAndroid() &&
+        !OperatingSystem.IsIOS() &&
+        !OperatingSystem.IsTvOS() &&
+        !OperatingSystem.IsBrowser();
 #endif
 
     protected OtlpExportClient(OtlpExporterOptions options, HttpClient httpClient, string signalPath)
@@ -123,6 +124,28 @@ internal abstract class OtlpExportClient : IExportClient
         deadlineCts.CancelAfter(remaining);
 
         return TryGetResponseBody(httpResponse, maxResponseSizeBytes, deadlineCts.Token);
+    }
+
+    /// <summary>
+    /// Creates the exception that <see cref="HttpResponseMessage.EnsureSuccessStatusCode"/>
+    /// would throw for a response whose status code does not indicate success.
+    /// </summary>
+    /// <remarks>
+    /// On .NET Framework <see cref="HttpResponseMessage.EnsureSuccessStatusCode"/> disposes
+    /// of the response content before throwing, which would prevent the body from being read
+    /// for the exporter's diagnostic log, so the exception is created without calling it.
+    /// </remarks>
+    /// <param name="httpResponse">The response whose status code does not indicate success.</param>
+    /// <returns>The <see cref="HttpRequestException"/> describing the failure.</returns>
+    protected static HttpRequestException CreateStatusCodeException(HttpResponseMessage httpResponse)
+    {
+        var message = $"Response status code does not indicate success: {(int)httpResponse.StatusCode} ({httpResponse.ReasonPhrase}).";
+
+#if NET
+        return new HttpRequestException(message, inner: null, httpResponse.StatusCode);
+#else
+        return new HttpRequestException(message);
+#endif
     }
 
     /// <summary>

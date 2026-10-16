@@ -339,6 +339,42 @@ public class OtlpHttpExportClientTests
     }
 
     [Fact]
+    public void SendExportRequest_ErrorResponse_LogsResponseBody()
+    {
+        const int HttpRequestFailedEventId = 17;
+        const string ResponseBody = "{\"error\":\"invalid payload\"}";
+
+        using var listener = new TestEventListener(OpenTelemetryProtocolExporterEventSource.Log, EventLevel.Error);
+
+        using var testHandler = new StatusCodeHttpMessageHandler(HttpStatusCode.BadRequest, System.Text.Encoding.UTF8.GetBytes(ResponseBody));
+        using var httpClient = new HttpClient(testHandler, disposeHandler: false);
+
+        var exportClient = new OtlpHttpExportClient(
+            new OtlpExporterOptions
+            {
+                Endpoint = new Uri("http://localhost:4318"),
+                Protocol = OtlpExportProtocol.HttpProtobuf,
+            },
+            httpClient,
+            string.Empty);
+
+        var payload = "hello world"u8.ToArray();
+        var response = exportClient.SendExportRequest(payload, payload.Length, DateTime.UtcNow.AddSeconds(10), TestContext.Current.CancellationToken);
+
+        Assert.False(response.Success);
+        Assert.Equal(HttpStatusCode.BadRequest, Assert.IsType<ExportClientHttpResponse>(response).StatusCode);
+
+        var exception = Assert.IsType<HttpRequestException>(response.Exception);
+        Assert.Contains("400", exception.Message, StringComparison.Ordinal);
+#if NET
+        Assert.Equal(HttpStatusCode.BadRequest, exception.StatusCode);
+#endif
+
+        var logged = Assert.Single(listener.Messages, e => e.EventId == HttpRequestFailedEventId);
+        Assert.Equal(ResponseBody, logged.Payload![1]);
+    }
+
+    [Fact]
     public async Task SendExportRequest_ErrorResponseBodyNeverCompletes_ReturnsAtDeadline()
     {
         const int HttpRequestFailedEventId = 17;
@@ -460,5 +496,32 @@ public class OtlpHttpExportClientTests
         protected override HttpResponseMessage Send(HttpRequestMessage request, CancellationToken cancellationToken)
             => throw this.exception;
 #endif
+    }
+
+    private sealed class StatusCodeHttpMessageHandler : HttpMessageHandler
+    {
+        private readonly HttpStatusCode statusCode;
+        private readonly byte[] body;
+
+        public StatusCodeHttpMessageHandler(HttpStatusCode statusCode, byte[] body)
+        {
+            this.statusCode = statusCode;
+            this.body = body;
+        }
+
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+            => Task.FromResult(this.CreateResponse(request));
+
+#if NET
+        protected override HttpResponseMessage Send(HttpRequestMessage request, CancellationToken cancellationToken)
+            => this.CreateResponse(request);
+#endif
+
+        private HttpResponseMessage CreateResponse(HttpRequestMessage request)
+            => new(this.statusCode)
+            {
+                RequestMessage = request,
+                Content = new ByteArrayContent(this.body),
+            };
     }
 }
