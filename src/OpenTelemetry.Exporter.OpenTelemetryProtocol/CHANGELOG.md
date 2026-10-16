@@ -11,6 +11,13 @@ Notes](../../RELEASENOTES.md).
   OTLP log exporter is registered using `OpenTelemetryLoggerOptions.AddOtlpExporter`.
   ([#7959](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7959))
 
+* **Breaking:** `HttpClient` instances created by the exporter directly no
+  longer follow HTTP redirects. A `3xx` response is now treated as a failed
+  export. See [Configure HttpClient](README.md#configure-httpclient)
+  to prevent `HttpClient` created by `IHttpClientFactory` from following
+  redirects.
+  ([#7958](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7958))
+
 * Hardened the experimental disk retry feature.
   * When running on .NET on non-Windows platforms, the retry directory and
     the blob files within it are now created accessible to the current user
