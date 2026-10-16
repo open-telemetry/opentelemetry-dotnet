@@ -31,6 +31,10 @@ Notes](../../RELEASENOTES.md).
   or large value and idle metric points with a `NaN` value failing to be reclaimed.
   ([#7963](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7963))
 
+* Self-diagnostics log files, whether configured through `OTEL_DIAGNOSTICS.json`
+  or `SelfDiagnosticsOptions`, are now always created as new files.
+  ([#NNNN](https://github.com/open-telemetry/opentelemetry-dotnet/pull/NNNN))
+
 ## 1.20.0
 
 Released 2026-Oct-15
