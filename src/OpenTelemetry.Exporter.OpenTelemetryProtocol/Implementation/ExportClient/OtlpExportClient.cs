@@ -96,10 +96,14 @@ internal abstract class OtlpExportClient : IExportClient
     /// </remarks>
     /// <param name="httpResponse">The response to read the body of.</param>
     /// <param name="maxResponseSizeBytes">The maximum number of bytes to read.</param>
-    /// <param name="deadlineUtc">The deadline time in utc for the export request to finish.</param>
+    /// <param name="deadlineUtc">The deadline time in UTC for the export request to finish.</param>
     /// <param name="cancellationToken">The <see cref="CancellationToken"/> to use.</param>
     /// <returns>The response body, or <see langword="null"/> if it could not be read in time.</returns>
-    protected internal static string? TryGetResponseBody(HttpResponseMessage? httpResponse, int maxResponseSizeBytes, DateTime deadlineUtc, CancellationToken cancellationToken)
+    protected internal static string? TryGetResponseBody(
+        HttpResponseMessage? httpResponse,
+        int maxResponseSizeBytes,
+        DateTime deadlineUtc,
+        CancellationToken cancellationToken)
     {
         var remaining = deadlineUtc - DateTime.UtcNow;
 
