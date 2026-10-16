@@ -344,7 +344,10 @@ public class OtlpHttpExportClientTests
         const int HttpRequestFailedEventId = 17;
 
         var deadline = TimeSpan.FromMilliseconds(250);
-        var serverHold = TimeSpan.FromSeconds(30);
+
+        // Generous enough for a slow CI machine, but far short of how long the server holds the connection.
+        var tolerance = TimeSpan.FromSeconds(10);
+        var serverHold = TimeSpan.FromSeconds(60);
 
         // The response body is only read when it is going to be logged.
         using var listener = new TestEventListener(OpenTelemetryProtocolExporterEventSource.Log, EventLevel.Error);
@@ -352,13 +355,14 @@ public class OtlpHttpExportClientTests
         using var exported = new ManualResetEventSlim();
 
         var server = new TcpListener(IPAddress.Loopback, 0);
+        Task? serverTask = null;
 
         try
         {
             server.Start();
 
             // Announce more content than is sent, then keep the connection open.
-            var serverTask = Task.Run(
+            serverTask = Task.Run(
                 () =>
                 {
                     using var connection = server.AcceptTcpClient();
@@ -397,7 +401,7 @@ public class OtlpHttpExportClientTests
             Assert.Equal(HttpStatusCode.BadRequest, Assert.IsType<ExportClientHttpResponse>(response).StatusCode);
 
             // The export must give up at the deadline rather than wait for the server to close the connection.
-            Assert.True(stopwatch.Elapsed < serverHold, $"Export took {stopwatch.Elapsed} against a deadline of {deadline}.");
+            Assert.True(stopwatch.Elapsed < deadline + tolerance, $"Export took {stopwatch.Elapsed} against a deadline of {deadline}.");
 
             // The failure is still logged, just without the body that never arrived.
             var logged = Assert.Single(listener.Messages, e => e.EventId == HttpRequestFailedEventId);
@@ -411,6 +415,12 @@ public class OtlpHttpExportClientTests
 #else
             server.Stop();
 #endif
+
+            if (serverTask is not null)
+            {
+                // Let the server stop waiting on the event before it is disposed.
+                await Task.WhenAny(serverTask);
+            }
         }
     }
 

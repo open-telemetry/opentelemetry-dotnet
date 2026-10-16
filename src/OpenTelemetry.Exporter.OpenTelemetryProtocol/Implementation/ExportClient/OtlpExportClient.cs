@@ -112,12 +112,15 @@ internal abstract class OtlpExportClient : IExportClient
             return null;
         }
 
+        if (remaining.TotalMilliseconds >= int.MaxValue)
+        {
+            // The deadline is too far away to schedule, so only the caller's token applies.
+            return TryGetResponseBody(httpResponse, maxResponseSizeBytes, cancellationToken);
+        }
+
         using var deadlineCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
 
-        if (remaining.TotalMilliseconds < int.MaxValue)
-        {
-            deadlineCts.CancelAfter(remaining);
-        }
+        deadlineCts.CancelAfter(remaining);
 
         return TryGetResponseBody(httpResponse, maxResponseSizeBytes, deadlineCts.Token);
     }

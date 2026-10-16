@@ -13,40 +13,22 @@ internal static class HttpClientHelpers
     // See https://github.com/open-telemetry/opentelemetry-proto/pull/781
     internal const int DefaultMessageSizeLimit = 4 * 1024 * 1024; // 4MiB
 
-    internal static string? TryGetResponseBodyAsString(HttpResponseMessage? httpResponse, CancellationToken cancellationToken)
-        => GetResponseBodyAsString(allowTruncation: true, DefaultMessageSizeLimit, httpResponse, cancellationToken);
-
+    /// <summary>
+    /// Reads up to <paramref name="limit"/> bytes of a response body as a string,
+    /// marking it as truncated if there was more.
+    /// </summary>
+    /// <param name="httpResponse">The response to read the body of.</param>
+    /// <param name="limit">The maximum number of bytes to read.</param>
+    /// <param name="cancellationToken">The <see cref="CancellationToken"/> to use.</param>
+    /// <returns>
+    /// The response body, or <see langword="null"/> if there is no body or it could not be
+    /// read before <paramref name="cancellationToken"/> was cancelled.
+    /// </returns>
     internal static string? TryGetResponseBodyAsString(HttpResponseMessage? httpResponse, int limit, CancellationToken cancellationToken)
-        => GetResponseBodyAsString(allowTruncation: true, limit, httpResponse, cancellationToken);
-
-    internal static string? GetResponseBodyAsString(HttpResponseMessage? httpResponse, CancellationToken cancellationToken)
-        => GetResponseBodyAsString(allowTruncation: false, DefaultMessageSizeLimit, httpResponse, cancellationToken);
-
-    private static string? GetResponseBodyAsString(
-        bool allowTruncation,
-        int limit,
-        HttpResponseMessage? httpResponse,
-        CancellationToken cancellationToken)
     {
-        if (httpResponse?.Content is null)
+        if (httpResponse?.Content is null || cancellationToken.IsCancellationRequested)
         {
             return null;
-        }
-
-        // Check Content-Length before reading if the header is present.
-        if (!allowTruncation && httpResponse.Content.Headers.ContentLength > limit)
-        {
-            throw new InvalidOperationException($"Response body exceeded the size limit of {limit} bytes.");
-        }
-
-        if (cancellationToken.IsCancellationRequested)
-        {
-            if (allowTruncation)
-            {
-                return null;
-            }
-
-            cancellationToken.ThrowIfCancellationRequested();
         }
 
         try
@@ -56,6 +38,12 @@ internal static class HttpClientHelpers
 #else
             using var stream = httpResponse.Content.ReadAsStreamAsync().GetAwaiter().GetResult();
 #endif
+
+            // A synchronous read cannot be cancelled once it is waiting for data, so a server that stops
+            // sending part-way through the body would block it for as long as it keeps the connection open.
+            // Not all streams observe the token once a read is in progress either (e.g. on .NET Framework,
+            // or a custom HttpMessageHandler), so each read is raced against the token being cancelled.
+            using var cancelled = cancellationToken.CanBeCanceled ? new CancellationWaiter(cancellationToken) : null;
 
             var length = GetBufferLength(stream, limit, httpResponse.Content.Headers.ContentLength);
 
@@ -72,7 +60,7 @@ internal static class HttpClientHelpers
                 // Read raw bytes so the size limit applies to bytes rather than characters
                 while (totalRead < length && !cancellationToken.IsCancellationRequested)
                 {
-                    var bytesRead = Read(stream, buffer, totalRead, length - totalRead, cancellationToken);
+                    var bytesRead = Read(stream, buffer, totalRead, length - totalRead, cancelled, cancellationToken);
 
                     if (bytesRead is 0)
                     {
@@ -89,18 +77,7 @@ internal static class HttpClientHelpers
                     // We've read exactly length bytes. Check if there's more data.
                     var probe = new byte[1];
 
-                    extra = Read(stream, probe, 0, 1, cancellationToken) > 0;
-
-                    if (extra && !allowTruncation)
-                    {
-                        // + 1: we read exactly MaxMessageSize bytes and confirmed at least one more byte exists.
-                        throw new InvalidOperationException($"Response body exceeded the size limit of {limit} bytes.");
-                    }
-                }
-
-                if (!allowTruncation)
-                {
-                    cancellationToken.ThrowIfCancellationRequested();
+                    extra = Read(stream, probe, 0, 1, cancelled, cancellationToken) > 0;
                 }
 
                 // Decode using the charset from the response content headers, if available
@@ -121,39 +98,35 @@ internal static class HttpClientHelpers
 #endif
             }
         }
-        catch (Exception) when (allowTruncation)
+        catch (Exception)
         {
+            // The body is only used for diagnostics, so it is not worth failing over.
             return null;
         }
     }
 
-    private static int Read(Stream stream, byte[] buffer, int offset, int count, CancellationToken cancellationToken)
+    private static int Read(Stream stream, byte[] buffer, int offset, int count, CancellationWaiter? cancelled, CancellationToken cancellationToken)
     {
-        // A synchronous read cannot be cancelled once it is waiting for data, so a server that stops
-        // sending part-way through the body would block it for as long as it keeps the connection open.
-        if (!cancellationToken.CanBeCanceled)
+        if (cancelled is null)
         {
             return stream.Read(buffer, offset, count);
         }
 
 #if NET
-        return stream.ReadAsync(buffer.AsMemory(offset, count), cancellationToken).AsTask().GetAwaiter().GetResult();
+        var read = stream.ReadAsync(buffer.AsMemory(offset, count), cancellationToken).AsTask();
 #else
         var read = stream.ReadAsync(buffer, offset, count, cancellationToken);
+#endif
 
-        // Not all streams observe the token once a read is in progress (e.g. on .NET Framework),
-        // so stop waiting for it. The pending read ends when the caller disposes of the stream.
-        Task.WhenAny(read, Task.Delay(Timeout.Infinite, cancellationToken)).GetAwaiter().GetResult();
-
-        if (cancellationToken.IsCancellationRequested)
+        if (!read.IsCompleted && Task.WhenAny(read, cancelled.Task).GetAwaiter().GetResult() != read)
         {
-            // Observe the failure of the abandoned read once the stream is disposed.
+            // Stop waiting for the read. It ends when the caller disposes of the stream,
+            // so observe its failure then rather than leaving it unobserved.
             _ = read.ContinueWith(static t => _ = t.Exception, CancellationToken.None, TaskContinuationOptions.OnlyOnFaulted, TaskScheduler.Default);
-            cancellationToken.ThrowIfCancellationRequested();
+            throw new OperationCanceledException(cancellationToken);
         }
 
         return read.GetAwaiter().GetResult();
-#endif
     }
 
     private static int GetBufferLength(Stream stream, int limit, long? contentLength)
@@ -192,5 +165,26 @@ internal static class HttpClientHelpers
         }
 
         return encoding;
+    }
+
+    /// <summary>
+    /// A task that completes when a <see cref="CancellationToken"/> is cancelled, created
+    /// once per response so that each read of its body does not need to register for it.
+    /// </summary>
+    private sealed class CancellationWaiter : IDisposable
+    {
+        private readonly TaskCompletionSource<bool> completion = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        private readonly CancellationTokenRegistration registration;
+
+        public CancellationWaiter(CancellationToken cancellationToken)
+        {
+            this.registration = cancellationToken.Register(
+                static state => ((TaskCompletionSource<bool>)state!).TrySetResult(true),
+                this.completion);
+        }
+
+        public Task Task => this.completion.Task;
+
+        public void Dispose() => this.registration.Dispose();
     }
 }
