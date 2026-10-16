@@ -21,7 +21,7 @@ Notes](../../RELEASENOTES.md).
 * The value of `OTEL_EXPORTER_OTLP_ENDPOINT`, or of its signal-specific
   variants, is no longer written to the exporter's diagnostic log when it is
   not a valid URI.
-  ([#NNNN](https://github.com/open-telemetry/opentelemetry-dotnet/pull/NNNN))
+  ([#7971](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7971))
 
 ## 1.20.0
 
