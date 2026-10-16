@@ -27,6 +27,14 @@ Notes](../../RELEASENOTES.md).
   instrumentation suppression, which could cause recursive exports or deadlocks.
   ([#7961](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7961))
 
+* Fixed delta double counters losing subsequent measurements after a non-finite
+  or large value and idle metric points with a `NaN` value failing to be reclaimed.
+  ([#7963](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7963))
+
+* Improve the assignment of values to exponential histogram buckets when the
+  value is near a bucket boundary by using a pre-computed lookup table.
+  ([#7911](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7911))
+
 ## 1.20.0
 
 Released 2026-Oct-15
