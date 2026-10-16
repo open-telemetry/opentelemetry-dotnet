@@ -712,6 +712,17 @@ want to solicit feedback from the community.
     `OTEL_DOTNET_EXPERIMENTAL_OTLP_DISK_RETRY_DIRECTORY_PATH` to a dedicated
     directory location.
 
+      Every file stored in the directory is sent with the exporter's headers
+      and credentials, so only the application's user must be able to write
+      to it. When running on .NET on non-Windows platforms, the exporter creates
+      the `traces`, `metrics` and `logs` subdirectories accessible to the current
+      user only. Creating the exporter fails if one of them is not owned by the
+      current user or is writable by its group or by other users, or if any
+      directory in its path is not owned by the current user or by root, or is
+      writable by its group or by other users without having the sticky bit
+      set. On Windows and .NET Framework, ensure that the access control list of
+      the directory only allows the application's user to write to it.
+
       The OTLP exporter utilizes a forked version of the
       [OpenTelemetry.PersistentStorage.FileSystem](https://github.com/open-telemetry/opentelemetry-dotnet-contrib/tree/main/src/OpenTelemetry.PersistentStorage.FileSystem)
       library to store telemetry data on disk. When a transient failure occurs,

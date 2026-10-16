@@ -43,6 +43,17 @@ Notes](../../RELEASENOTES.md).
     are symbolic links are also no longer read.
   ([#7857](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7857))
 
+* Hardened the experimental disk retry feature.
+  * **Breaking:** When running on .NET on non-Windows platforms, creating the
+    exporter now throws an `UnauthorizedAccessException` if the retry
+    directory could be changed by another user. The retry directory must be
+    owned by the current user and must not be writable by its group or by
+    other users. Each directory and symbolic link in its path must be owned by
+    the current user or by root, and those directories must not be writable
+    by their group or by other users unless they have the sticky bit set (such
+    as `/tmp`).
+  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+
 ## 1.20.0
 
 Released 2026-Oct-15

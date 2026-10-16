@@ -60,7 +60,8 @@ public class FileBlobProvider : PersistentBlobProvider, IDisposable
     /// path exceeds system defined maximum length.
     /// </exception>
     /// <exception cref="UnauthorizedAccessException">
-    /// insufficient privileges for provided path.
+    /// insufficient privileges for provided path, or, on .NET on non-Windows platforms, the
+    /// path is not owned by the current user or its contents could be changed by another user.
     /// </exception>
     /// <exception cref="NotSupportedException">
     /// path contains a colon character (:) that is not part of a drive label ("C:\").
