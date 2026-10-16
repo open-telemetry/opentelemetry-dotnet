@@ -309,7 +309,12 @@ internal static class PersistentStorageHelper
         }
 
         var name = fileName.Substring(0, fileName.Length - BlobExtension.Length);
+
+#if NET11_0_OR_GREATER
+        var dashIndex = name.LastIndexOf('-', StringComparison.Ordinal);
+#else
         var dashIndex = name.LastIndexOf('-');
+#endif
 
         // Guid.TryParseExact() ignores leading and trailing whitespace and accepts uppercase hexadecimal digits,
         // so the GUID is matched exactly against the lowercase format that GetUniqueFileName() uses instead.
@@ -534,7 +539,12 @@ internal static class PersistentStorageHelper
         }
 
         var name = fileName.Substring(0, fileName.Length - LeaseExtension.Length);
+
+#if NET11_0_OR_GREATER
+        var atSignIndex = name.LastIndexOf('@', StringComparison.Ordinal);
+#else
         var atSignIndex = name.LastIndexOf('@');
+#endif
 
         if (atSignIndex <= 0 || !IsTimestamp(name.Substring(atSignIndex + 1)))
         {
