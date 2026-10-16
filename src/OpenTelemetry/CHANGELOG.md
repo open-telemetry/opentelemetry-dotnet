@@ -15,6 +15,10 @@ Notes](../../RELEASENOTES.md).
   and prefixed JWTs.
   ([#7955](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7955))
 
+* Fixed default HTTP client log filtering when registering the OTLP log exporter
+  through `OpenTelemetryLoggerOptions`.
+  ([#7959](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7959))
+
 * Fixed legacy self-diagnostics logging terminating the process when the log
   file is truncated or the log volume runs out of space.
   ([#7956](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7956))
