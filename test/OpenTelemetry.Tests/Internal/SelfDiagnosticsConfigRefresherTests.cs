@@ -2,6 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics;
+using System.Diagnostics.Tracing;
+using System.Globalization;
+using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Text;
 using OpenTelemetry.Tests;
 
@@ -13,6 +17,9 @@ public class SelfDiagnosticsConfigRefresherTests
     private const int CaptureAttempts = 5;
 
     private static readonly string MessageOnNewFileString = Encoding.UTF8.GetString(SelfDiagnosticsConfigRefresher.MessageOnNewFile);
+    private static readonly FieldInfo LogFileField = typeof(SelfDiagnosticsConfigRefresher)
+        .GetFields(BindingFlags.Instance | BindingFlags.NonPublic)
+        .Single(field => field.FieldType == typeof(FileStream));
 
     private readonly ITestOutputHelper output;
 
@@ -70,13 +77,138 @@ public class SelfDiagnosticsConfigRefresherTests
         Assert.StartsWith(expectedMessage, logMessage, StringComparison.Ordinal);
     }
 
+    [Fact]
+    public void SelfDiagnosticsConfigRefresher_CaptureAfterLogFileTruncated()
+    {
+        var logDirectory = Utils.GetCurrentMethodName();
+        using var configRefresher = CreateRefresher(logDirectory);
+        using var listener = new SelfDiagnosticsEventListener(EventLevel.Error, configRefresher);
+        listener.WriteEvent("Before truncation", null);
+
+        // Use the owning handle because Windows denies opening a second writer.
+        // A memory mapping prevents shrinking this file on Windows and makes the
+        // next log write fatal on Unix if another process truncates the file.
+        var file = GetLogFile(configRefresher);
+        file.SetLength(0);
+
+        const string ExpectedMessage = "After truncation";
+        listener.WriteEvent(ExpectedMessage, null);
+
+        Assert.Contains(ExpectedMessage + "\n", ReadLogFile(logDirectory), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void SelfDiagnosticsConfigRefresher_DropFailedWriteAndResume()
+    {
+        var logDirectory = Utils.GetCurrentMethodName();
+        using var configRefresher = CreateRefresher(logDirectory, EventLevel.Critical);
+        var file = GetLogFile(configRefresher);
+        var filePath = file.Name;
+        file.Dispose();
+
+        using var failingFile = new FailingFileStream(filePath);
+        LogFileField.SetValue(configRefresher, failingFile);
+        using var listener = new SelfDiagnosticsEventListener(EventLevel.Critical, configRefresher);
+
+        // Inject the IOException reported by ordinary file I/O on a full disk.
+        // The listener must drop this event and still accept the next event.
+        listener.WriteEvent("Dropped event", null);
+        Assert.Equal(1, failingFile.WriteAttempts);
+
+        failingFile.FailWrites = false;
+        listener.WriteEvent("Recovered event", null);
+        Assert.Equal(2, failingFile.WriteAttempts);
+
+        var logText = ReadLogFile(logDirectory);
+        Assert.DoesNotContain("Dropped event", logText, StringComparison.Ordinal);
+        Assert.Contains("Recovered event\n", logText, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void SelfDiagnosticsConfigRefresher_WrapAtConfiguredSize()
+    {
+        var logDirectory = Utils.GetCurrentMethodName();
+        using var configRefresher = CreateRefresher(logDirectory, EventLevel.Critical);
+        var file = GetLogFile(configRefresher);
+        var fileSize = (int)file.Length;
+        var padding = new byte[fileSize - SelfDiagnosticsConfigRefresher.MessageOnNewFile.Length - 2];
+        configRefresher.WriteLog(padding, padding.Length);
+
+        var buffer = "abcd"u8.ToArray();
+        configRefresher.WriteLog(buffer, buffer.Length);
+        configRefresher.WriteLog("z"u8.ToArray(), 1);
+
+        var logText = ReadLogFile(logDirectory);
+        Assert.Equal(fileSize, file.Length);
+        Assert.StartsWith("cdz", logText, StringComparison.Ordinal);
+        Assert.EndsWith("ab", logText, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void SelfDiagnosticsConfigRefresher_ConcurrentWrites()
+    {
+        var logDirectory = Utils.GetCurrentMethodName();
+        using var configRefresher = CreateRefresher(logDirectory, EventLevel.Critical);
+        var expected = Enumerable.Range(0, 256)
+            .Select(value => value.ToString("D4", CultureInfo.InvariantCulture))
+            .ToArray();
+
+        Parallel.ForEach(expected, message =>
+        {
+            var buffer = Encoding.UTF8.GetBytes(message + "\n");
+            configRefresher.WriteLog(buffer, buffer.Length);
+        });
+
+        var actual = ReadLogFile(logDirectory).Substring(MessageOnNewFileString.Length)
+            .Split(['\n'], StringSplitOptions.RemoveEmptyEntries)
+            .OrderBy(message => message, StringComparer.Ordinal);
+        Assert.Equal(expected, actual);
+    }
+
+    [Fact]
+    public void SelfDiagnosticsConfigRefresher_DisposeReleasesLogFile()
+    {
+        var logDirectory = Utils.GetCurrentMethodName();
+        using var configRefresher = CreateRefresher(logDirectory, EventLevel.Critical);
+        var file = GetLogFile(configRefresher);
+        var filePath = file.Name;
+
+        configRefresher.Dispose();
+        configRefresher.WriteLog("After disposal"u8.ToArray(), 14);
+
+        using var exclusiveFile = File.Open(filePath, FileMode.Open, FileAccess.ReadWrite, FileShare.None);
+        Assert.Equal(1024 * 1024, exclusiveFile.Length);
+    }
+
+    [Fact]
+    public void SelfDiagnosticsConfigRefresher_PreserveWindowsFileSharing()
+    {
+        if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+        {
+            return;
+        }
+
+        var logDirectory = Utils.GetCurrentMethodName();
+        using var configRefresher = CreateRefresher(logDirectory, EventLevel.Critical);
+        var filePath = GetLogFile(configRefresher).Name;
+
+        using var reader = File.Open(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+        Assert.Throws<IOException>(() =>
+        {
+            using var writer = File.Open(filePath, FileMode.Open, FileAccess.Write, FileShare.ReadWrite);
+        });
+    }
+
+    private static FileStream GetLogFile(SelfDiagnosticsConfigRefresher configRefresher)
+        => Assert.IsType<FileStream>(LogFileField.GetValue(configRefresher));
+
     /// <summary>
     /// Creates a refresher configured to write to <paramref name="logDirectory"/> and removes
     /// the configuration file again as soon as it has been read.
     /// </summary>
-    private static SelfDiagnosticsConfigRefresher CreateRefresher(string logDirectory)
+    private static SelfDiagnosticsConfigRefresher CreateRefresher(string logDirectory, EventLevel logLevel = EventLevel.Error)
     {
-        CreateConfigFile(logDirectory);
+        CreateConfigFile(logDirectory, logLevel);
 
         try
         {
@@ -141,12 +273,12 @@ public class SelfDiagnosticsConfigRefresherTests
         return Encoding.UTF8.GetString(actualBytes, 0, totalBytesRead).TrimEnd('\0');
     }
 
-    private static void CreateConfigFile(string logDirectory)
+    private static void CreateConfigFile(string logDirectory, EventLevel logLevel)
     {
         var configJson = $@"{{
                     ""LogDirectory"": ""{logDirectory}"",
                     ""FileSize"": 1024,
-                    ""LogLevel"": ""Error""
+                    ""LogLevel"": ""{logLevel}""
                     }}";
         using var file = File.Open(ConfigFilePath, FileMode.Create, FileAccess.Write);
         var configBytes = Encoding.UTF8.GetBytes(configJson);
@@ -162,6 +294,25 @@ public class SelfDiagnosticsConfigRefresherTests
         catch
         {
             // ignore any exceptions while removing files
+        }
+    }
+
+    private sealed class FailingFileStream(string path)
+        : FileStream(path, FileMode.Open, FileAccess.Write, FileShare.Read, 1, FileOptions.None)
+    {
+        public bool FailWrites { get; set; } = true;
+
+        public int WriteAttempts { get; private set; }
+
+        public override void Write(byte[] buffer, int offset, int count)
+        {
+            this.WriteAttempts++;
+            if (this.FailWrites)
+            {
+                throw new IOException("Simulated full disk.");
+            }
+
+            base.Write(buffer, offset, count);
         }
     }
 }
