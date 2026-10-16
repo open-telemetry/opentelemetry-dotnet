@@ -158,7 +158,7 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
             // Handle non-retryable HTTP errors.
             if (OpenTelemetryProtocolExporterEventSource.Log.IsEnabled(EventLevel.Error, EventKeywords.All))
             {
-                var response = TryGetResponseBody(httpResponse, this.MaxResponseSizeBytes, cancellationToken);
+                var response = TryGetResponseBody(httpResponse, Math.Min(this.MaxResponseSizeBytes, MaxLoggedResponseSizeBytes), cancellationToken);
                 OpenTelemetryProtocolExporterEventSource.Log.HttpRequestFailed(this.Endpoint, response, ex);
             }
 

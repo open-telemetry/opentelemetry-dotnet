@@ -50,6 +50,11 @@ Notes](../../RELEASENOTES.md).
   or `SelfDiagnosticsOptions`, are now always created as new files.
   ([#7968](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7968))
 
+* Self-diagnostics messages written to the sinks configured by
+  `SelfDiagnosticsOptions` are now truncated to 16,384 characters so that the
+  memory used by entries waiting to be written is bounded.
+  ([#7969](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7969))
+
 ## 1.20.0
 
 Released 2026-Oct-15
