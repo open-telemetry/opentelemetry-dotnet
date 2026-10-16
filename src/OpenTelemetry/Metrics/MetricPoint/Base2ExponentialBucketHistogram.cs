@@ -29,6 +29,7 @@ internal sealed partial class Base2ExponentialBucketHistogram
     private readonly int maxScale;
     private int scale;
     private double scalingFactor; // 2 ^ scale / log(2)
+    private PositiveScaleIndexTable? indexTable;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="Base2ExponentialBucketHistogram"/> class.
@@ -107,6 +108,10 @@ internal sealed partial class Base2ExponentialBucketHistogram
 
             // A subset of Math.ScaleB(Math.Log2(Math.E), value)
             this.scalingFactor = BitConverter.Int64BitsToDouble(0x71547652B82FEL | ((0x3FFL + value) << 52 /* fraction width */));
+
+            // Positive scales up to PositiveScaleIndexTable.MaxScale map values exactly with
+            // a lookup table; larger positive scales fall back to the logarithm function.
+            this.indexTable = PositiveScaleIndexTable.GetOrCreate(value);
         }
     }
 
@@ -150,6 +155,16 @@ internal sealed partial class Base2ExponentialBucketHistogram
             {
                 var exp = (int)((bits & 0x7FF0000000000000L /* exponent mask */) >> 52 /* fraction width */);
                 return ((exp - 1023 /* exponent bias */) << this.Scale) - 1;
+            }
+
+            // Scales with a lookup table are mapped exactly by comparing the mantissa against
+            // precomputed bucket boundaries. See "Scale > 0: Use a Lookup Table" in
+            // https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/data-model.md#exponentialhistogram-producer-recommendations.
+            var indexTable = this.indexTable;
+
+            if (indexTable != null)
+            {
+                return indexTable.MapToIndex(value, bits, fraction);
             }
 
             // Math.Log is not guaranteed to be exactly correct near bucket boundaries, so values
