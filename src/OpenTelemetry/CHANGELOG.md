@@ -41,6 +41,11 @@ Notes](../../RELEASENOTES.md).
   on the same provider to export missing or incorrect data.
   ([#7965](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7965))
 
+* Fixed a `SuppressInstrumentationScope.Enter()` reference count never being
+  released when the `Activity` it was entered for is not recorded, which caused
+  all subsequent telemetry in that execution context to be suppressed.
+  ([#7966](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7966))
+
 ## 1.20.0
 
 Released 2026-Oct-15
