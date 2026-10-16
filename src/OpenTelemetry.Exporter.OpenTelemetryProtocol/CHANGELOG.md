@@ -20,7 +20,7 @@ Notes](../../RELEASENOTES.md).
 
 * Fixed reading the body of a failed export response for the exporter's
   diagnostic log not being bounded by the export timeout.
-  ([#NNNN](https://github.com/open-telemetry/opentelemetry-dotnet/pull/NNNN))
+  ([#7970](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7970))
 
 ## 1.20.0
 
