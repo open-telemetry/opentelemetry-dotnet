@@ -191,6 +191,66 @@ public sealed class StrictModeMaskTests
     }
 
     [Fact]
+    public void EarlierReservedSection_IsMasked_AndHiddenFromEnumeration()
+    {
+        using var yamlFile = DeclarativeYamlTestFile.CreateDeclarativeYaml(disabled: false);
+
+        var config = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?> { ["OpenTelemetry:Exporters:Console:Targets"] = "Debug" })
+            .AddOpenTelemetryDeclarativeConfiguration(yamlFile.Path)
+            .Build();
+
+        Assert.Null(config["OpenTelemetry:Exporters:Console:Targets"]);
+        Assert.False(config.GetSection("OpenTelemetry:Exporters:Console").Exists(), "Expected the masked reserved section not to exist.");
+        Assert.DoesNotContain(config.GetSection("OpenTelemetry").GetChildren(), section => section.Key == "Console");
+    }
+
+    [Fact]
+    public void EarlierReservedSection_EnvironmentSpelling_IsAlsoMasked()
+    {
+        const string envVarName = "OpenTelemetry__Exporters__Console__Targets";
+        using var yamlFile = DeclarativeYamlTestFile.CreateDeclarativeYaml(disabled: false);
+
+        Environment.SetEnvironmentVariable(envVarName, "Debug");
+        try
+        {
+            var config = new ConfigurationBuilder()
+                .AddEnvironmentVariables()
+                .AddOpenTelemetryDeclarativeConfiguration(yamlFile.Path)
+                .Build();
+
+            Assert.Null(config["OpenTelemetry:Exporters:Console:Targets"]);
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable(envVarName, null);
+        }
+    }
+
+    [Fact]
+    public void EarlierAppOwnedOpenTelemetryKeys_StayVisible()
+    {
+        using var yamlFile = DeclarativeYamlTestFile.CreateDeclarativeYaml(disabled: false);
+
+        var config = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["OpenTelemetry:ServiceName"] = "my-service",
+                ["OpenTelemetry:Enabled"] = "true",
+                ["OpenTelemetry:Exporters:ConsoleFoo:Bar"] = "value",
+                ["OpenTelemetryFoo:Bar"] = "value",
+            })
+            .AddOpenTelemetryDeclarativeConfiguration(yamlFile.Path)
+            .Build();
+
+        Assert.Equal("my-service", config["OpenTelemetry:ServiceName"]);
+        Assert.Equal("true", config["OpenTelemetry:Enabled"]);
+        Assert.Equal("value", config["OpenTelemetry:Exporters:ConsoleFoo:Bar"]);
+        Assert.Equal("value", config["OpenTelemetryFoo:Bar"]);
+        Assert.Contains(config.GetSection("OpenTelemetry").GetChildren(), section => section.Key == "ServiceName");
+    }
+
+    [Fact]
     public void LaterSource_StillOverridesDeclarativeConfiguration()
     {
         using var yamlFile = DeclarativeYamlTestFile.CreateDeclarativeYaml(disabled: false);
