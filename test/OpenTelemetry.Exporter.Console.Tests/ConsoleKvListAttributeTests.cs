@@ -333,6 +333,15 @@ public class ConsoleKvListAttributeTests
         Assert.Equal(toStringValue, fakeElement.GetString());
     }
 
+#if NET
+    [Fact]
+    public void Utf8SpanFormattableIsWrittenUsingToString()
+    {
+        Assert.True(this.tagWriter.TryTransformTag("key", new Utf8ValueWithToString("value"), out var result));
+        Assert.Equal("value", result.Value);
+    }
+
+#endif
     private static IEnumerable<KeyValuePair<string, object?>> FaultyKvList()
     {
         yield return new KeyValuePair<string, object?>("key1", "value1");
@@ -366,4 +375,17 @@ public class ConsoleKvListAttributeTests
         public override string ToString()
             => this.toStringValue ?? throw new InvalidOperationException("simulated failure");
     }
+
+#if NET
+    private sealed class Utf8ValueWithToString(string value) : IUtf8SpanFormattable
+    {
+        public bool TryFormat(Span<byte> utf8Destination, out int bytesWritten, ReadOnlySpan<char> format, IFormatProvider? provider)
+        {
+            bytesWritten = 0;
+            return true;
+        }
+
+        public override string ToString() => value;
+    }
+#endif
 }
