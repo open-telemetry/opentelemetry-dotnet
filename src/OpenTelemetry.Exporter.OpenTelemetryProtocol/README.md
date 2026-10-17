@@ -349,9 +349,10 @@ existing pipeline. Common configuration registered by options name still applies
 to all exporters using that name.
 
 Reloading lets requests already using a replaced client finish. `Shutdown` cancels
-pending requests from both current and replaced clients and rejects new sends.
-Subsequent export attempts through these reloadable registrations return failure.
-Caller-provided HTTP clients remain owned by the caller.
+the exporter's pending requests, including those using replaced clients, and
+rejects new sends. Subsequent export attempts through these reloadable registrations
+return failure. Caller-provided HTTP clients remain owned by the caller; requests
+from other consumers sharing those clients are not canceled by exporter shutdown.
 
 ### OtlpExporterOptions
 

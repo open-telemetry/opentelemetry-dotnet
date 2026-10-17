@@ -82,6 +82,8 @@ public sealed class ReloadableExportClientTests
         configuration["Headers"] = "invalid";
         configuration.Reload();
         var warning = Assert.Single(listener.Messages, message => message.EventId == 44);
+        Assert.NotNull(warning.Message);
+        Assert.DoesNotContain("The previous client remains active", warning.Message, StringComparison.Ordinal);
         Assert.NotNull(warning.Payload);
         Assert.Equal("Metrics", warning.Payload[0]);
         Assert.Equal("reload-fails", warning.Payload[1]);
@@ -145,13 +147,9 @@ public sealed class ReloadableExportClientTests
             if (previousClientDisposed)
             {
                 httpClients[0].Dispose();
-                Assert.Throws<ObjectDisposedException>(() => client.Shutdown(0));
-            }
-            else
-            {
-                Assert.True(client.Shutdown(0));
             }
 
+            Assert.True(client.Shutdown(0));
             Assert.Equal(generations, handler.CancellationCount);
             Assert.All(httpClients.Skip(previousClientDisposed ? 1 : 0), httpClient => Assert.Equal(0, httpClient.DisposeCount));
             release.Set();
@@ -176,6 +174,41 @@ public sealed class ReloadableExportClientTests
             var httpClient = new TrackingHttpClient(handler);
             httpClients.Add(httpClient);
             return httpClient;
+        }
+    }
+
+    [Fact]
+    public async Task ShutdownDoesNotCancelAnotherExporterUsingTheSameHttpClient()
+    {
+        var cancellationToken = TestContext.Current.CancellationToken;
+        using var entered = new SemaphoreSlim(0);
+        using var release = new ManualResetEventSlim();
+        using var handler = new CancellationTrackingHandler(entered, release, cancellationToken);
+        using var httpClient = new TrackingHttpClient(handler);
+        var services = new ServiceCollection();
+        services.AddOptions<OtlpExporterOptions>();
+        using var serviceProvider = services.BuildServiceProvider();
+        using var first = CreateClient(serviceProvider, httpClient);
+        using var second = CreateClient(serviceProvider, httpClient);
+        var firstSend = Task.Run(
+            () => Assert.ThrowsAny<OperationCanceledException>(() => first.SendExportRequest([], 0, DateTime.UtcNow.AddSeconds(30), cancellationToken)),
+            cancellationToken);
+        var secondSend = Task.Run(
+            () => second.SendExportRequest([], 0, DateTime.UtcNow.AddSeconds(30), cancellationToken),
+            cancellationToken);
+        try
+        {
+            Assert.True(await entered.WaitAsync(TimeSpan.FromSeconds(10), cancellationToken).ConfigureAwait(true));
+            Assert.True(await entered.WaitAsync(TimeSpan.FromSeconds(10), cancellationToken).ConfigureAwait(true));
+            Assert.True(first.Shutdown(0));
+            Assert.Equal(1, handler.CancellationCount);
+            Assert.Equal(0, httpClient.DisposeCount);
+        }
+        finally
+        {
+            release.Set();
+            await firstSend.ConfigureAwait(true);
+            Assert.True((await secondSend.ConfigureAwait(true)).Success);
         }
     }
 
@@ -442,12 +475,11 @@ public sealed class ReloadableExportClientTests
             for (var generation = 0; generation < 2; generation++)
             {
                 var created = registration.CreateExportClient();
-                Assert.NotNull(created);
-                Assert.False(created.Value.OwnsHttpClient);
+                Assert.False(created.OwnsHttpClient);
                 Assert.Equal($"test=common,signal={signal}", snapshots[generation].Headers);
                 Assert.Equal(options.BatchExportProcessorOptions.ScheduledDelayMilliseconds + 1, snapshots[generation].BatchExportProcessorOptions.ScheduledDelayMilliseconds);
                 Assert.Equal("test=common", options.Headers);
-                created.Value.Client.Shutdown(0);
+                created.Client.Shutdown(0);
             }
 
             Assert.NotSame(snapshots[0], snapshots[1]);

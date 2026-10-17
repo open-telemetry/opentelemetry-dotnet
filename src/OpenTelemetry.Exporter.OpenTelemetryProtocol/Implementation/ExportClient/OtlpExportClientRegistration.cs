@@ -75,7 +75,7 @@ internal sealed class OtlpExportClientRegistration : IDisposable
             usesHttpClientFactory,
             deferCreation: usesHttpClientFactory && this.signalType == OtlpSignalType.Logs);
 
-    internal (IExportClient Client, bool OwnsHttpClient, double TimeoutMilliseconds)? CreateExportClient()
+    internal (IExportClient Client, bool OwnsHttpClient, double TimeoutMilliseconds) CreateExportClient()
     {
         var options = this.GetOptions();
         this.configureOnReload?.Invoke(options);
