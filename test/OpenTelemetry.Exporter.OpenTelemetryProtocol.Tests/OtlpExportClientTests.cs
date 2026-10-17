@@ -4,10 +4,13 @@
 #if NETFRAMEWORK
 using System.Net.Http;
 #endif
+using System.Diagnostics.Tracing;
 using System.IO.Compression;
 using System.Net;
 using System.Text;
+using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
+using OpenTelemetry.Tests;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests;
 
@@ -228,6 +231,61 @@ public class OtlpExportClientTests
 
         // Assert
         Assert.Equal(expected, actual);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void SendExportRequest_UnsuccessfulResponse_LimitsResponseBodyInDiagnosticLog(bool useGrpc)
+    {
+        // Arrange
+        const int HttpRequestFailedEventId = 17;
+
+        using var listener = new TestEventListener(OpenTelemetryProtocolExporterEventSource.Log, EventLevel.Error);
+
+        // The body is as large as the exporter accepts, but only a prefix of it belongs in a log message.
+        using var testHandler = new UnsuccessfulResponseHttpMessageHandler(new string('E', OtlpExporterOptions.DefaultMaxResponseSizeBytes));
+        using var httpClient = new HttpClient(testHandler, disposeHandler: false);
+
+        var options = new OtlpExporterOptions { Endpoint = new Uri("http://localhost:4317") };
+
+        OtlpExportClient exportClient = useGrpc
+            ? new OtlpGrpcExportClient(options, httpClient, string.Empty)
+            : new OtlpHttpExportClient(options, httpClient, string.Empty);
+
+        var payload = "hello world"u8.ToArray();
+
+        // Act
+        var response = exportClient.SendExportRequest(payload, payload.Length, DateTime.UtcNow.AddSeconds(10), TestContext.Current.CancellationToken);
+
+        // Assert
+        Assert.False(response.Success);
+
+        var logged = Assert.Single(listener.Messages, e => e.EventId == HttpRequestFailedEventId);
+        var loggedResponse = (string)logged.Payload![1]!;
+
+        Assert.Equal(new string('E', OtlpExportClient.MaxLoggedResponseSizeBytes) + TruncationSuffix, loggedResponse);
+    }
+
+    private sealed class UnsuccessfulResponseHttpMessageHandler : HttpMessageHandler
+    {
+        private readonly string body;
+
+        public UnsuccessfulResponseHttpMessageHandler(string body)
+        {
+            this.body = body;
+        }
+
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+            => Task.FromResult(this.CreateResponse());
+
+#if NET
+        protected override HttpResponseMessage Send(HttpRequestMessage request, CancellationToken cancellationToken)
+            => this.CreateResponse();
+#endif
+
+        private HttpResponseMessage CreateResponse()
+            => new(HttpStatusCode.BadRequest) { Content = new StringContent(this.body) };
     }
 
     private sealed class ThrowingHttpContent : HttpContent

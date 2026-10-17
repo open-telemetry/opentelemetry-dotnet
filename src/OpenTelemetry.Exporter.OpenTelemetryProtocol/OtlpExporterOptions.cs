@@ -438,11 +438,19 @@ public class OtlpExporterOptions : IOtlpExporterOptions
         }
 #endif
 
-        return new HttpClient
+#pragma warning disable CA5399 // HttpClient is created without enabling CheckCertificateRevocationList
+#pragma warning disable CA5400 // HttpClient is created without enabling CheckCertificateRevocationList
+#pragma warning disable CA2000 // HttpClient owns and disposes its handler.
+        // CheckCertificateRevocationList is not explicitly enabled as it
+        // breaks TLS certificate validation in offline/air-gapped environments.
+        return new HttpClient(new HttpClientHandler { AllowAutoRedirect = false }, disposeHandler: true)
         {
             MaxResponseContentBufferSize = this.MaxResponseSizeBytes,
             Timeout = timeout,
         };
+#pragma warning restore CA2000 // HttpClient owns and disposes its handler.
+#pragma warning restore CA5400 // HttpClient is created without enabling CheckCertificateRevocationList
+#pragma warning restore CA5399 // HttpClient is created without enabling CheckCertificateRevocationList
     }
 
     private void ApplyConfiguration(

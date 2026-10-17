@@ -665,6 +665,21 @@ services.AddHttpClient(
         client.DefaultRequestHeaders.Add("X-MyCustomHeader", "value"));
 ```
 
+> [!NOTE]
+> The `HttpClient` the exporter creates itself does not follow HTTP redirects,
+  so the configured `Headers` and the telemetry are only sent to the configured
+  `Endpoint`, and a `3xx` response is treated as a failed export. An
+  `HttpClient` supplied through the `HttpClientFactory` option or created by
+  `IHttpClientFactory` uses its own redirect policy, which by default follows
+  redirects. To prevent the named `HttpClient` from following redirects,
+  configure its primary handler:
+
+```csharp
+services.AddHttpClient("OtlpTraceExporter")
+    .ConfigurePrimaryHttpMessageHandler(
+        () => new HttpClientHandler { AllowAutoRedirect = false });
+```
+
 > [!IMPORTANT]
 > Applications that use custom [`DelegatingHandler`](https://learn.microsoft.com/dotnet/api/system.net.http.delegatinghandler)
 > implementations when targeting .NET 5 or later must override both the

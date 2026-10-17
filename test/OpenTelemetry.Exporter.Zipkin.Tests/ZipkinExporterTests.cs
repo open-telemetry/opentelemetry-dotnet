@@ -3,6 +3,7 @@
 
 using System.Collections.Concurrent;
 using System.Diagnostics;
+using System.Diagnostics.Tracing;
 using System.Globalization;
 using System.Net;
 #if NETFRAMEWORK
@@ -184,6 +185,30 @@ public sealed class ZipkinExporterTests : IDisposable
         {
             Environment.SetEnvironmentVariable(ZipkinExporterOptions.ZipkinEndpointEnvVar, null);
         }
+    }
+
+    [Fact]
+    public void InvalidEndpointValueIsNotLogged()
+    {
+        var values = new Dictionary<string, string>()
+        {
+            [ZipkinExporterOptions.ZipkinEndpointEnvVar] = "https://user:p@ssw0rd@localhost:9411/api/v2/spans",
+        };
+
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(values!)
+            .Build();
+
+        using var listener = new TestEventListener(ZipkinExporterEventSource.Log, EventLevel.Warning);
+
+        var options = new ZipkinExporterOptions(configuration, new());
+
+        Assert.Equal(new(ZipkinExporterOptions.DefaultZipkinEndpoint), options.Endpoint);
+
+        var invalidValueEvent = Assert.Single(listener.Messages, e => e.EventName == nameof(ZipkinExporterEventSource.InvalidConfigurationValue));
+
+        Assert.NotNull(invalidValueEvent.Payload);
+        Assert.Equal([ZipkinExporterOptions.ZipkinEndpointEnvVar, "[REDACTED]"], invalidValueEvent.Payload);
     }
 
     [Fact]

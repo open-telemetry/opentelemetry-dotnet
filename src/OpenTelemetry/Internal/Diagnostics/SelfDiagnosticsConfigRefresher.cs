@@ -39,7 +39,7 @@ internal class SelfDiagnosticsConfigRefresher : IDisposable
     private bool formatMessage;
 
     public SelfDiagnosticsConfigRefresher()
-        : this(static path => new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.Read, 1, FileOptions.None))
+        : this(static path => new FileStream(path, FileMode.CreateNew, FileAccess.Write, FileShare.Read, 1, FileOptions.None))
     {
     }
 
@@ -147,6 +147,13 @@ internal class SelfDiagnosticsConfigRefresher : IDisposable
                 + Process.GetCurrentProcess().Id + ".log";
 #endif
             var filePath = Path.Combine(newLogDirectory, fileName);
+
+            // The file name is predictable (executable name + process id), so an entry that already
+            // exists under it may be a symbolic link planted by another user of the log directory and
+            // must never be opened for writing. Deleting it removes a stale log of an earlier process
+            // with the same id, or the link itself but not its target, and FileMode.CreateNew then
+            // fails instead of following a link that was (re)created in between.
+            File.Delete(filePath);
 
             // Ordinary file I/O reports a full disk as an exception. Writing to an
             // unbacked memory-mapped page can instead terminate the process.
