@@ -55,6 +55,11 @@ Notes](../../RELEASENOTES.md).
   memory used by entries waiting to be written is bounded.
   ([#7969](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7969))
 
+* The self-diagnostics file sink now creates its log directory and log files
+  so that only the owner can access them (`0700`/`0600`) on Linux and macOS,
+  instead of inheriting the process umask.
+  ([#7967](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7967))
+
 * **Breaking Change** Dropped support for `net8.0` and `net9.0`.
   ([#6899](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6899))
 

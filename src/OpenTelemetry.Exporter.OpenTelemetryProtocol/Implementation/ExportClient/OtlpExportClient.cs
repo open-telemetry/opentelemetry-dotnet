@@ -25,10 +25,11 @@ internal abstract class OtlpExportClient : IExportClient
     [System.Runtime.Versioning.UnsupportedOSPlatformGuard("browser")]
     [System.Runtime.Versioning.UnsupportedOSPlatformGuard("ios")]
     [System.Runtime.Versioning.UnsupportedOSPlatformGuard("tvos")]
-    private static readonly bool SynchronousSendSupportedByCurrentPlatform = !OperatingSystem.IsAndroid()
-            && !OperatingSystem.IsIOS()
-            && !OperatingSystem.IsTvOS()
-            && !OperatingSystem.IsBrowser();
+    private static readonly bool SynchronousSendSupportedByCurrentPlatform =
+        !OperatingSystem.IsAndroid() &&
+        !OperatingSystem.IsIOS() &&
+        !OperatingSystem.IsTvOS() &&
+        !OperatingSystem.IsBrowser();
 #endif
 
     protected OtlpExportClient(OtlpExporterOptions options, HttpClient httpClient, string signalPath)
@@ -90,6 +91,68 @@ internal abstract class OtlpExportClient : IExportClient
 
     protected internal static string? TryGetResponseBody(HttpResponseMessage? httpResponse, int maxResponseSizeBytes, CancellationToken cancellationToken) =>
         HttpClientHelpers.TryGetResponseBodyAsString(httpResponse, maxResponseSizeBytes, cancellationToken);
+
+    /// <summary>
+    /// Reads the body of a failed response so that it can be logged, giving up
+    /// once <paramref name="deadlineUtc"/> has passed.
+    /// </summary>
+    /// <remarks>
+    /// <see cref="HttpClient.Timeout"/> no longer applies once the response headers
+    /// have been received, so the export deadline is used to bound how long a server
+    /// that announces a body but does not send it can hold the exporting thread.
+    /// </remarks>
+    /// <param name="httpResponse">The response to read the body of.</param>
+    /// <param name="maxResponseSizeBytes">The maximum number of bytes to read.</param>
+    /// <param name="deadlineUtc">The deadline time in UTC for the export request to finish.</param>
+    /// <param name="cancellationToken">The <see cref="CancellationToken"/> to use.</param>
+    /// <returns>The response body, or <see langword="null"/> if it could not be read in time.</returns>
+    protected internal static string? TryGetResponseBody(
+        HttpResponseMessage? httpResponse,
+        int maxResponseSizeBytes,
+        DateTime deadlineUtc,
+        CancellationToken cancellationToken)
+    {
+        var remaining = deadlineUtc - DateTime.UtcNow;
+
+        if (remaining <= TimeSpan.Zero)
+        {
+            return null;
+        }
+
+        if (remaining.TotalMilliseconds >= int.MaxValue)
+        {
+            // The deadline is too far away to schedule, so only the caller's token applies.
+            return TryGetResponseBody(httpResponse, maxResponseSizeBytes, cancellationToken);
+        }
+
+        using var deadlineCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+
+        deadlineCts.CancelAfter(remaining);
+
+        return TryGetResponseBody(httpResponse, maxResponseSizeBytes, deadlineCts.Token);
+    }
+
+    /// <summary>
+    /// Creates the exception that <see cref="HttpResponseMessage.EnsureSuccessStatusCode"/>
+    /// would throw for a response whose status code does not indicate success.
+    /// </summary>
+    /// <remarks>
+    /// On .NET Framework <see cref="HttpResponseMessage.EnsureSuccessStatusCode"/> disposes
+    /// of the response content before throwing, which would prevent the body from being read
+    /// for the exporter's diagnostic log, so the exception is created without calling it.
+    /// </remarks>
+    /// <param name="httpResponse">The response whose status code does not indicate success.</param>
+    /// <returns>The <see cref="HttpRequestException"/> describing the failure.</returns>
+    protected static HttpRequestException CreateStatusCodeException(HttpResponseMessage httpResponse)
+    {
+        var message = $"Response status code does not indicate success: {(int)httpResponse.StatusCode} ({httpResponse.ReasonPhrase}).";
+
+#if NET
+        return new HttpRequestException(message, inner: null, httpResponse.StatusCode);
+#else
+        return new HttpRequestException(message);
+#endif
+    }
 
     /// <summary>
     /// Determines whether a response declares more content than <see
