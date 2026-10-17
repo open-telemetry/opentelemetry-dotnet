@@ -61,6 +61,12 @@ Notes](../../RELEASENOTES.md).
   exporter's diagnostic log when running on .NET Framework.
   ([#7970](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7970))
 
+* Fixed attributes whose value is converted with `ToString()` (for example
+  enums, `Uri` or `StringValues`) being dropped as unsupported, and for metric
+  data points omitted from every later export, when the export buffer had to
+  be resized while the attribute was being written.
+  ([#7973](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7973))
+
 ## 1.20.0
 
 Released 2026-Oct-15

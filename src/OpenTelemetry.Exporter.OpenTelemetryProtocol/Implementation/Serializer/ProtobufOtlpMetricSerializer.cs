@@ -516,10 +516,20 @@ internal static class ProtobufOtlpMetricSerializer
         }
 
         var startPosition = writePosition;
+        var allTagsWritten = true;
 
         foreach (var tag in tags)
         {
-            writePosition = WriteTag(buffer, writePosition, tag, fieldNumber);
+            writePosition = WriteTag(buffer, writePosition, tag, fieldNumber, out var written);
+            allTagsWritten &= written;
+        }
+
+        if (!allTagsWritten)
+        {
+            // A dropped tag is not necessarily dropped for good (for example a
+            // ToString() which throws only sometimes), so an incomplete set of
+            // attributes must not be replayed by every later export.
+            return writePosition;
         }
 
         var bytes = new byte[writePosition - startPosition];
@@ -536,6 +546,9 @@ internal static class ProtobufOtlpMetricSerializer
     }
 
     private static int WriteTag(byte[] buffer, int writePosition, KeyValuePair<string, object?> tag, int fieldNumber)
+        => WriteTag(buffer, writePosition, tag, fieldNumber, out _);
+
+    private static int WriteTag(byte[] buffer, int writePosition, KeyValuePair<string, object?> tag, int fieldNumber, out bool written)
     {
         var otlpTagWriterState = new ProtobufOtlpTagWriter.OtlpTagWriterState
         {
@@ -543,7 +556,7 @@ internal static class ProtobufOtlpMetricSerializer
             WritePosition = writePosition,
         };
 
-        _ = ProtobufOtlpTagWriter.WriteKeyValue(ref otlpTagWriterState, fieldNumber, tag.Key, tag.Value);
+        written = ProtobufOtlpTagWriter.WriteKeyValue(ref otlpTagWriterState, fieldNumber, tag.Key, tag.Value);
 
         return otlpTagWriterState.WritePosition;
     }
