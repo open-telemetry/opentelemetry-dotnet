@@ -597,7 +597,7 @@ internal static class ProtobufOtlpMetricSerializer
 
     private static int WriteHistogramBuckets(byte[] buffer, int writePosition, HistogramBuckets buckets, ref ExplicitBoundsCache explicitBoundsCache)
     {
-        writePosition = WriteBucketCounts(buffer, writePosition, buckets.BucketCounts);
+        writePosition = WriteBucketCounts(buffer, writePosition, buckets.SnapshotBucketCounts);
 
         if (buckets.ExplicitBounds is { } explicitBounds)
         {
@@ -622,7 +622,7 @@ internal static class ProtobufOtlpMetricSerializer
 
         return writePosition;
 
-        static int WriteBucketCounts(byte[] buffer, int writePosition, HistogramBuckets.HistogramBucketValues[] values)
+        static int WriteBucketCounts(byte[] buffer, int writePosition, long[] values)
         {
             var length = values.Length;
 
@@ -637,7 +637,7 @@ internal static class ProtobufOtlpMetricSerializer
                 writePosition = ProtobufSerializer.WriteFixed64LittleEndianFormat(
                     buffer,
                     writePosition,
-                    (ulong)values[i].SnapshotValue);
+                    (ulong)values[i]);
             }
 
             return writePosition;
