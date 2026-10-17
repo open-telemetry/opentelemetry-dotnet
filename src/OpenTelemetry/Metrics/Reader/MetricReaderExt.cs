@@ -13,7 +13,7 @@ namespace OpenTelemetry.Metrics;
 /// </summary>
 public abstract partial class MetricReader
 {
-    private readonly Dictionary<string, int> metricStreamNames = new(StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<string, int> metricStreamNames = [with(StringComparer.OrdinalIgnoreCase)];
     private readonly ConcurrentDictionary<MetricStreamIdentity, Metric?> instrumentIdentityToMetric = new();
     private readonly Lock instrumentCreationLock = new();
     private readonly ConcurrentQueue<int> availableMetricIndices = new();

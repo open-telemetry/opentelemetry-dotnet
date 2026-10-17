@@ -4,6 +4,9 @@
 using System.Diagnostics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+#if NET11_0_OR_GREATER
+using Microsoft.Extensions.Diagnostics.Tracing;
+#endif
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using OpenTelemetry.Extensions.Hosting.Implementation;
@@ -188,7 +191,11 @@ public class OpenTelemetryServicesExtensionsTests
                 deferredTracerProviderBuilder.Configure((sp, builder) =>
                 {
                     innerTestExecuted = true;
+#if NET10_0
                     Assert.Throws<NotSupportedException>(() => sp.GetService<TracerProvider>());
+#else
+                    Assert.Throws<InvalidOperationException>(() => sp.GetService<TracerProvider>());
+#endif
                 });
             }
         });
@@ -197,6 +204,260 @@ public class OpenTelemetryServicesExtensionsTests
         var resolvedProvider = serviceProvider.GetRequiredService<TracerProvider>();
         Assert.True(innerTestExecuted);
     }
+
+#if NET11_0_OR_GREATER
+    [Theory]
+    [InlineData(true, false, 1)]
+    [InlineData(false, false, 0)]
+    [InlineData(true, true, 1)]
+    public void AddOpenTelemetry_WithTracing_ActivitySourcesEnabledUsingTracingBuilderTest(
+        bool enableSource,
+        bool alsoAddSource,
+        int expectedActivities)
+    {
+        var sourceName = Utils.GetCurrentMethodName();
+        List<Activity> exportedItems = [];
+
+        var services = new ServiceCollection();
+
+        services.AddTracing(builder =>
+        {
+            if (enableSource)
+            {
+                builder.EnableTracing(sourceName);
+            }
+        });
+
+        services.AddOpenTelemetry().WithTracing(builder =>
+        {
+            builder.AddInMemoryExporter(exportedItems);
+
+            if (alsoAddSource)
+            {
+                // Enabling the same source both ways must not process each Activity twice
+                builder.AddSource(sourceName);
+            }
+        });
+
+        using var serviceProvider = services.BuildServiceProvider();
+
+        var tracerProvider = serviceProvider.GetRequiredService<TracerProvider>();
+
+        using var source = new ActivitySource(sourceName);
+
+        using (var activity = source.StartActivity("TestActivity"))
+        {
+            Assert.Equal(expectedActivities > 0, activity?.IsAllDataRequested ?? false);
+        }
+
+        tracerProvider.ForceFlush();
+
+        Assert.Equal(expectedActivities, exportedItems.Count);
+    }
+
+    [Fact]
+    public void AddOpenTelemetry_WithTracing_ActivitySourcesEnabledUsingTracingBuilderHonorsSamplerTest()
+    {
+        var sourceName = Utils.GetCurrentMethodName();
+        List<Activity> exportedItems = [];
+
+        var services = new ServiceCollection();
+
+        services.AddTracing(builder => builder.EnableTracing(sourceName));
+
+        services.AddOpenTelemetry().WithTracing(builder => builder
+            .SetSampler(new AlwaysOffSampler())
+            .AddInMemoryExporter(exportedItems));
+
+        using var serviceProvider = services.BuildServiceProvider();
+
+        var tracerProvider = serviceProvider.GetRequiredService<TracerProvider>();
+
+        using var source = new ActivitySource(sourceName);
+
+        using (var activity = source.StartActivity("TestActivity"))
+        {
+            Assert.False(activity?.IsAllDataRequested ?? false);
+        }
+
+        tracerProvider.ForceFlush();
+
+        Assert.Empty(exportedItems);
+    }
+
+    [Fact]
+    public void AddOpenTelemetry_WithTracing_ActivitySourcesEnabledUsingConfigurationTest()
+    {
+        var sourceName = Utils.GetCurrentMethodName();
+        List<Activity> exportedItems = [];
+
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["Tracing:EnabledTracing:Default"] = "false",
+                [$"Tracing:EnabledTracing:{sourceName}"] = "true",
+            })
+            .Build();
+
+        var services = new ServiceCollection();
+
+        services.AddSingleton<IConfiguration>(configuration);
+        services.AddTracing(builder => builder.AddConfiguration(configuration.GetSection("Tracing")));
+        services.AddOpenTelemetry().WithTracing(builder => builder.AddInMemoryExporter(exportedItems));
+
+        using var serviceProvider = services.BuildServiceProvider();
+
+        var tracerProvider = serviceProvider.GetRequiredService<TracerProvider>();
+
+        using var enabledSource = new ActivitySource(sourceName);
+        using var disabledSource = new ActivitySource("Disabled." + sourceName);
+
+        using (var activity = enabledSource.StartActivity("Enabled"))
+        {
+            Assert.NotNull(activity);
+        }
+
+        Assert.Null(disabledSource.StartActivity("Disabled"));
+
+        tracerProvider.ForceFlush();
+
+        var exported = Assert.Single(exportedItems);
+        Assert.Equal("Enabled", exported.OperationName);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void AddOpenTelemetry_WithTracing_ActivitySourcesEnabledUsingTracingBuilderProcessorDependingOnFactoryTest(bool resolveFactoryFirst)
+    {
+        var sourceName = Utils.GetCurrentMethodName();
+
+        var services = new ServiceCollection();
+
+        services.AddTracing(builder => builder.EnableTracing(sourceName));
+        services.AddOpenTelemetry().WithTracing(builder => builder.AddProcessor<FactoryDependentProcessor>());
+
+        using var serviceProvider = services.BuildServiceProvider();
+
+        if (resolveFactoryFirst)
+        {
+            _ = serviceProvider.GetRequiredService<ActivitySourceFactory>();
+        }
+
+        _ = serviceProvider.GetRequiredService<TracerProvider>();
+
+        var processor = serviceProvider.GetRequiredService<FactoryDependentProcessor>();
+
+        using var source = new ActivitySource(sourceName);
+
+        using (var activity = source.StartActivity("TestActivity"))
+        {
+            Assert.NotNull(activity);
+        }
+
+        Assert.Equal(1, processor.Started);
+        Assert.Equal(1, processor.Ended);
+    }
+
+    [Fact]
+    public void AddOpenTelemetry_WithTracing_ActivitySourcesEnabledUsingTracingBuilderDetachesWhenFactoryFailsTest()
+    {
+        var sourceName = Utils.GetCurrentMethodName();
+
+        var services = new ServiceCollection();
+
+        services.AddTracing(builder => builder.EnableTracing(sourceName));
+        services.AddSingleton<ActivitySourceFactory>(static _ => throw new InvalidOperationException("The factory failed."));
+        services.AddOpenTelemetry().WithTracing(builder => builder.AddSource(sourceName + ".Other"));
+
+        using var serviceProvider = services.BuildServiceProvider();
+
+        Assert.Throws<InvalidOperationException>(() => serviceProvider.GetRequiredService<TracerProvider>());
+
+        var bridge = serviceProvider.GetRequiredService<OpenTelemetryTracingListener.TracerProviderBridge>();
+
+        using var source = new ActivitySource(sourceName);
+
+        Assert.Null(bridge.GetProviderFor(source));
+    }
+
+    [Fact]
+    public void AddOpenTelemetry_WithTracing_ActivitySourcesEnabledUsingTracingBuilderDoesNotProcessLegacyActivitiesTest()
+    {
+        var sourceName = Utils.GetCurrentMethodName();
+        using var processor = new CountingProcessor();
+
+        var services = new ServiceCollection();
+
+        // Enable all sources, which includes the (unnamed) source used by legacy activities
+        services.AddTracing(builder => builder.EnableTracing());
+        services.AddOpenTelemetry().WithTracing(builder => builder
+            .SetSampler(new AlwaysOffSampler())
+            .AddProcessor(processor));
+
+        using var serviceProvider = services.BuildServiceProvider();
+
+        _ = serviceProvider.GetRequiredService<TracerProvider>();
+
+        using var legacy = new Activity(sourceName);
+        legacy.Start();
+        legacy.Stop();
+
+        Assert.Equal(0, processor.Started);
+        Assert.Equal(0, processor.Ended);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void AddOpenTelemetry_WithTracing_ActivitySourcesEnabledUsingTracingBuilderStopsWhenProviderIsStoppedTest(bool dispose)
+    {
+        var sourceName = Utils.GetCurrentMethodName();
+        List<Activity> exportedItems = [];
+        using var sampler = new CountingSampler();
+
+        var services = new ServiceCollection();
+
+        services.AddTracing(builder => builder.EnableTracing(sourceName));
+        services.AddOpenTelemetry().WithTracing(builder => builder
+            .SetSampler(sampler)
+            .AddInMemoryExporter(exportedItems));
+
+        using var serviceProvider = services.BuildServiceProvider();
+
+        var tracerProvider = serviceProvider.GetRequiredService<TracerProvider>();
+
+        // Keep the factory (and so its listener) alive for the remainder of the test
+        _ = serviceProvider.GetRequiredService<ActivitySourceFactory>();
+
+        using var source = new ActivitySource(sourceName);
+
+        using (var activity = source.StartActivity("Before"))
+        {
+            Assert.NotNull(activity);
+        }
+
+        Assert.Single(exportedItems);
+        Assert.Equal(1, sampler.Calls);
+
+        if (dispose)
+        {
+            tracerProvider.Dispose();
+        }
+        else
+        {
+            Assert.True(tracerProvider.Shutdown());
+        }
+
+        using (var activity = source.StartActivity("After"))
+        {
+            Assert.Null(activity);
+        }
+
+        Assert.Single(exportedItems);
+        Assert.Equal(1, sampler.Calls);
+    }
+#endif
 
     [Fact]
     public void AddOpenTelemetry_WithMetrics_SingleProviderForServiceCollectionTest()
@@ -311,7 +572,11 @@ public class OpenTelemetryServicesExtensionsTests
                 deferredMeterProviderBuilder.Configure((sp, builder) =>
                 {
                     innerTestExecuted = true;
+#if NET10_0
                     Assert.Throws<NotSupportedException>(() => sp.GetService<MeterProvider>());
+#else
+                    Assert.Throws<InvalidOperationException>(() => sp.GetService<MeterProvider>());
+#endif
                 });
             }
         });
@@ -428,7 +693,11 @@ public class OpenTelemetryServicesExtensionsTests
                 deferredLoggerProviderBuilder.Configure((sp, builder) =>
                 {
                     innerTestExecuted = true;
+#if NET10_0
                     Assert.Throws<NotSupportedException>(() => sp.GetService<LoggerProvider>());
+#else
+                    Assert.Throws<InvalidOperationException>(() => sp.GetService<LoggerProvider>());
+#endif
                 });
             }
         });
@@ -566,6 +835,42 @@ public class OpenTelemetryServicesExtensionsTests
             return Task.CompletedTask;
         }
     }
+
+#if NET11_0_OR_GREATER
+    private class CountingProcessor : BaseProcessor<Activity>
+    {
+        public int Started { get; private set; }
+
+        public int Ended { get; private set; }
+
+        public override void OnStart(Activity data) => this.Started++;
+
+        public override void OnEnd(Activity data) => this.Ended++;
+    }
+
+#pragma warning disable CA1812 // Avoid uninstantiated internal classes
+    private sealed class FactoryDependentProcessor(ActivitySourceFactory factory) : CountingProcessor
+#pragma warning restore CA1812 // Avoid uninstantiated internal classes
+    {
+        public ActivitySourceFactory Factory { get; } = factory;
+    }
+
+    private sealed class CountingSampler : Sampler, IDisposable
+    {
+        private bool disposed;
+
+        public int Calls { get; private set; }
+
+        public override SamplingResult ShouldSample(in SamplingParameters samplingParameters)
+        {
+            Assert.False(this.disposed);
+            this.Calls++;
+            return new SamplingResult(SamplingDecision.RecordAndSample);
+        }
+
+        public void Dispose() => this.disposed = true;
+    }
+#endif
 
     private sealed class CustomTelemetryHostInitializer : ITelemetryHostInitializer
     {

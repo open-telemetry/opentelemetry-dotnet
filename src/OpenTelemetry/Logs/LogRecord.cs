@@ -26,7 +26,7 @@ public sealed class LogRecord
 
     private static readonly Action<object?, LogRecord> AddScopeToRecord = static (scope, record) =>
     {
-        (record.ScopeStorage ??= new List<object?>(LogRecordPoolHelper.DefaultMaxNumberOfScopes)).Add(scope);
+        (record.ScopeStorage ??= [with(LogRecordPoolHelper.DefaultMaxNumberOfScopes)]).Add(scope);
     };
 
     internal LogRecord()
@@ -501,7 +501,7 @@ public sealed class LogRecord
         List<KeyValuePair<string, object?>>? attributeData = null;
         if (this.AttributeData is { } attributes)
         {
-            attributeData = new List<KeyValuePair<string, object?>>(attributes.Count);
+            attributeData = [with(attributes.Count)];
             CopyAttributes(attributes, attributeData);
         }
 
@@ -547,7 +547,7 @@ public sealed class LogRecord
             return;
         }
 
-        var attributeStorage = this.AttributeStorage ??= new List<KeyValuePair<string, object?>>(attributes.Count);
+        var attributeStorage = this.AttributeStorage ??= [with(attributes.Count)];
 
         // Copying the KeyValuePairs from attributes to AttributeStorage
         // "captures" the state and fixes issues where the values are generated
@@ -614,7 +614,7 @@ public sealed class LogRecord
                 // that can make the code up to 10x slower. See:
                 // https://github.com/dotnet/runtime/issues/133784
                 // https://github.com/dotnet/runtime/issues/134723
-                List<object?> scopes = new(bufferedScopes.Count);
+                List<object?> scopes = [with(bufferedScopes.Count)];
 
                 foreach (var scope in bufferedScopes)
                 {

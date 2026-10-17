@@ -18,12 +18,13 @@ internal static class DeclarativeConfigurationReader
         [YamlKeys.FileFormat, YamlKeys.Disabled, YamlKeys.Resource],
         StringComparer.Ordinal);
 #else
-    private static readonly HashSet<string> KnownTopLevelKeys = new(StringComparer.Ordinal)
-    {
+    private static readonly HashSet<string> KnownTopLevelKeys =
+    [
+        with(StringComparer.Ordinal),
         YamlKeys.FileFormat,
         YamlKeys.Disabled,
         YamlKeys.Resource,
-    };
+    ];
 #endif
 
     /// <summary>
