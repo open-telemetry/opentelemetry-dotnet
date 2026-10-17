@@ -106,13 +106,16 @@ public sealed class DeclarativeConfigurationDocumentPropertiesTests
             file_format: "1.0"
             propagator:
               composite: [tracecontext, baggage]
-              weights: [1, 2, 3]
+            distribution:
+              vendor:
+                weights: [1, 2, 3]
             """);
 
         var propagator = AssertPresent(properties.GetMapping("propagator"));
+        var vendor = AssertPresent(AssertPresent(properties.GetMapping("distribution")).GetMapping("vendor"));
 
         Assert.Equal(["tracecontext", "baggage"], AssertPresent(propagator.GetStringList("composite")));
-        Assert.Equal([1L, 2L, 3L], AssertPresent(propagator.GetLongList("weights")));
+        Assert.Equal([1L, 2L, 3L], AssertPresent(vendor.GetLongList("weights")));
     }
 
     // The specification's worked example: absent, present-null and present must stay distinguishable

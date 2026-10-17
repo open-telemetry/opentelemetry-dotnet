@@ -20,7 +20,7 @@ internal static partial class FileFormatValidator
     /// <summary>
     /// The highest minor version this implementation has been built against.
     /// </summary>
-    internal const int MaxSupportedMinorVersion = 1;
+    internal const int MaxSupportedMinorVersion = 2;
 
     // Structural pattern: major.minor with optional -rc.N suffix.
     // Range check is done in code after parsing.
@@ -34,16 +34,16 @@ internal static partial class FileFormatValidator
 #endif
 
     /// <summary>
-    /// Validates <paramref name="fileFormat"/> and returns the accepted value.
+    /// Validates <paramref name="fileFormat"/> and returns the accepted version.
     /// </summary>
     /// <param name="fileFormat">The value of the <c>file_format</c> YAML field.</param>
     /// <param name="warn">Called with a warning message when the format is accepted but has a compatibility concern.</param>
-    /// <returns>The validated <c>file_format</c> value.</returns>
+    /// <returns>The validated <c>file_format</c> version.</returns>
     /// <exception cref="DeclarativeConfigurationException">
     /// Thrown when <paramref name="fileFormat"/> is null, whitespace, structurally invalid,
     /// or has an unsupported major version.
     /// </exception>
-    internal static string Validate(string? fileFormat, Action<string> warn)
+    internal static FileFormatVersion Validate(string? fileFormat, Action<string> warn)
     {
         Guard.ThrowIfNull(warn);
 
@@ -82,7 +82,7 @@ internal static partial class FileFormatValidator
                  $"Features introduced in newer minor versions may not take effect.");
         }
 
-        return validatedFileFormat;
+        return new(validatedFileFormat, major, minor);
     }
 
 #if NET

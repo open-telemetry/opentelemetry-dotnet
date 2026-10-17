@@ -12,6 +12,8 @@ internal sealed class ConfigPropertiesBuilder
 {
     private readonly Dictionary<string, ConfigValue> values = new(StringComparer.Ordinal);
 
+    private Dictionary<string, ConfigValuePosition>? keyPositions;
+
     /// <summary>
     /// Adds a null value.
     /// </summary>
@@ -126,7 +128,7 @@ internal sealed class ConfigPropertiesBuilder
     /// </summary>
     /// <returns>A new <see cref="ConfigProperties"/> containing the entries added so far.</returns>
     public ConfigProperties Build()
-        => ConfigProperties.Create(this.values);
+        => ConfigProperties.Create(this.values, this.keyPositions);
 
     /// <summary>
     /// Adds <paramref name="key"/> with an internal configuration value.
@@ -138,6 +140,22 @@ internal sealed class ConfigPropertiesBuilder
     /// <exception cref="ArgumentException">Thrown when <paramref name="key"/> already exists in this builder.</exception>
     internal ConfigPropertiesBuilder Add(string key, ConfigValue value)
         => this.AddValue(key, value);
+
+    /// <summary>
+    /// Adds a value and records where its key was authored.
+    /// </summary>
+    /// <param name="key">The key to add.</param>
+    /// <param name="value">The value to associate with the key.</param>
+    /// <param name="keyPosition">The position of the key in its source document.</param>
+    /// <returns>This builder, for chaining.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="key"/> is <see langword="null"/>.</exception>
+    /// <exception cref="ArgumentException">Thrown when <paramref name="key"/> already exists in this builder.</exception>
+    internal ConfigPropertiesBuilder Add(string key, ConfigValue value, ConfigValuePosition keyPosition)
+    {
+        this.AddValue(key, value);
+        (this.keyPositions ??= new(StringComparer.Ordinal))[key] = keyPosition;
+        return this;
+    }
 
     private static ConfigValue ToScalarValue<T>(T value)
         => value switch
