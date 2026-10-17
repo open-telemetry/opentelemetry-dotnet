@@ -39,5 +39,5 @@ This host project:
 ## Running
 
 ```shell
-dotnet test test/OpenTelemetry.Apple.Tests/OpenTelemetry.Apple.Tests.csproj
+dotnet test --project test/OpenTelemetry.Apple.Tests/OpenTelemetry.Apple.Tests.csproj
 ```

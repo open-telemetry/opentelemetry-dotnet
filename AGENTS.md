@@ -11,25 +11,32 @@ dotnet build OpenTelemetry.slnx --configuration Release
 **Test all:**
 
 ```sh
-dotnet test
+dotnet test --solution OpenTelemetry.slnx
 ```
 
 **Test a single project:**
 
 ```sh
-dotnet test test/OpenTelemetry.Tests/OpenTelemetry.Tests.csproj
+dotnet test --project test/OpenTelemetry.Tests/OpenTelemetry.Tests.csproj
 ```
 
 **Test a single test by name:**
 
 ```sh
-dotnet test test/OpenTelemetry.Tests/OpenTelemetry.Tests.csproj --filter "FullyQualifiedName~MyTestName"
+dotnet test --project test/OpenTelemetry.Tests/OpenTelemetry.Tests.csproj --filter "FullyQualifiedName~MyTestName"
 ```
 
 **Test for a specific TFM** (Windows also supports `net472`):
 
 ```sh
-dotnet test --framework net10.0
+dotnet test --project test/OpenTelemetry.Tests/OpenTelemetry.Tests.csproj --framework net10.0
+```
+
+**Test all projects for a specific TFM** (as CI does, skipping the projects
+which do not target it):
+
+```sh
+dotnet build ./build/OpenTelemetry.proj -t:Test -p:Configuration=Release -p:TargetFramework=net10.0
 ```
 
 **Check code formatting:**
@@ -65,6 +72,12 @@ python3 ./build/scripts/sanitycheck.py
 - Tests run **serially** by default
   (`build/xunit.runner.json`: `maxParallelThreads: 1`).
 - `net472` tests only run on Windows.
+- Tests use [Microsoft Testing Platform](https://aka.ms/dotnet-test/mtp) (the
+  `test.runner` setting in `global.json`), not VSTest. Use `--project` or
+  `--solution` with `dotnet test`. The test executables can also be run
+  directly (e.g. `dotnet OpenTelemetry.Tests.dll --filter "..."`).
+- `dotnet test --solution ... --framework <tfm>` fails if any test project does
+  not target `<tfm>`; use the `Test` target shown above instead.
 
 ---
 
