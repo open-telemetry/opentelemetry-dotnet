@@ -53,6 +53,14 @@ Notes](../../RELEASENOTES.md).
   `MaxResponseSizeBytes`.
   ([#7969](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7969))
 
+* Fixed reading the body of a failed export response for the exporter's
+  diagnostic log not being bounded by the export timeout.
+  ([#7970](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7970))
+
+* Fixed the body of a failed export response never being written to the
+  exporter's diagnostic log when running on .NET Framework.
+  ([#7970](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7970))
+
 * Fixed attributes whose value is converted with `ToString()` (for example
   enums, `Uri` or `StringValues`) being dropped as unsupported, and for metric
   data points omitted from every later export, when the export buffer had to
