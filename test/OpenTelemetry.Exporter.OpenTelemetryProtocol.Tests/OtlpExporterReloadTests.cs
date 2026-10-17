@@ -18,6 +18,7 @@ using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Transmission;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.PersistentStorage.Abstractions;
+using OpenTelemetry.Tests;
 using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests;
@@ -385,20 +386,35 @@ public sealed class OtlpExporterReloadTests
         Assert.Same(provider, serviceProvider.GetRequiredService<LoggerProvider>());
     }
 
-    [Fact]
-    public void UseOtlpExporterReloadsEndpointWithoutRecreatingProvider()
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void UseOtlpExporterReloadsEndpointWithoutRecreatingProvider(bool useBuilderOptions)
     {
+        var prefix = useBuilderOptions ? "DefaultOptions:" : string.Empty;
         var configuration = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
         {
-            ["DefaultOptions:Endpoint"] = "http://localhost:4318/first",
-            ["DefaultOptions:Protocol"] = "HttpProtobuf",
+            [$"{prefix}Endpoint"] = "http://localhost:4318/first",
+            [$"{prefix}Protocol"] = "HttpProtobuf",
         }).Build();
         var requests = new ConcurrentQueue<(Uri Uri, string Header)>();
+        using var handler = new RecordingHandler(requests);
+        using var httpClient = new HttpClient(handler, disposeHandler: false);
         var services = new ServiceCollection();
-        services.AddHttpClient("OtlpTraceExporter").ConfigurePrimaryHttpMessageHandler(() => new RecordingHandler(requests));
-        services.AddOpenTelemetry()
-            .UseOtlpExporter("otlp", configuration, configure: null)
-            .WithTracing(builder => builder.AddSource("reload-test"));
+        var builder = services.AddOpenTelemetry();
+        if (useBuilderOptions)
+        {
+            services.AddHttpClient("OtlpTraceExporter").ConfigurePrimaryHttpMessageHandler(() => new RecordingHandler(requests));
+            builder.UseOtlpExporter("otlp", configuration, configure: null);
+        }
+        else
+        {
+            services.Configure<OtlpExporterOptions>(configuration);
+            services.Configure<OtlpExporterOptions>(options => options.HttpClientFactory = () => httpClient);
+            builder.UseOtlpExporter();
+        }
+
+        builder.WithTracing(tracing => tracing.AddSource("reload-test"));
 
         using var serviceProvider = services.BuildServiceProvider();
         var provider = serviceProvider.GetRequiredService<TracerProvider>();
@@ -407,7 +423,7 @@ public sealed class OtlpExporterReloadTests
         Export();
         Assert.Contains(requests, r => r.Uri.AbsolutePath == "/first/v1/traces");
 
-        configuration["DefaultOptions:Endpoint"] = "http://localhost:4318/second";
+        configuration[$"{prefix}Endpoint"] = "http://localhost:4318/second";
         configuration.Reload();
         Export();
         Assert.Contains(requests, r => r.Uri.AbsolutePath == "/second/v1/traces");
@@ -415,50 +431,13 @@ public sealed class OtlpExporterReloadTests
 
         void Export()
         {
-            using (source.StartActivity("test"))
+            using (var activity = source.StartActivity("test"))
             {
+                Assert.NotNull(activity);
             }
 
             Assert.True(provider.ForceFlush());
         }
-    }
-
-    [Fact]
-    public void UseOtlpExporterReloadsDefaultExporterOptions()
-    {
-        var configuration = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
-        {
-            ["Endpoint"] = "http://localhost:4318/first",
-            ["Protocol"] = "HttpProtobuf",
-        }).Build();
-        var requests = new ConcurrentQueue<(Uri Uri, string Header)>();
-        var services = new ServiceCollection();
-        services.Configure<OtlpExporterOptions>(configuration);
-        services.Configure<OtlpExporterOptions>(options => options.HttpClientFactory = () => new HttpClient(new RecordingHandler(requests)));
-        services.AddOpenTelemetry()
-            .UseOtlpExporter()
-            .WithTracing(builder => builder.AddSource("reload-default-test"));
-
-        using var serviceProvider = services.BuildServiceProvider();
-        var provider = serviceProvider.GetRequiredService<TracerProvider>();
-        using var source = new ActivitySource(new ActivitySourceOptions("reload-default-test"));
-
-        using (var activity = source.StartActivity("first"))
-        {
-            Assert.NotNull(activity);
-        }
-
-        Assert.True(provider.ForceFlush());
-        Assert.Contains(requests, r => r.Uri.AbsolutePath == "/first/v1/traces");
-
-        configuration["Endpoint"] = "http://localhost:4318/second";
-        configuration.Reload();
-        using (source.StartActivity("second"))
-        {
-        }
-
-        Assert.True(provider.ForceFlush());
-        Assert.Contains(requests, r => r.Uri.AbsolutePath == "/second/v1/traces");
     }
 
     [Fact]
@@ -470,9 +449,11 @@ public sealed class OtlpExporterReloadTests
             ["Protocol"] = "Grpc",
         }).Build();
         var requests = new ConcurrentQueue<(Uri Uri, string Header)>();
+        using var handler = new RecordingHandler(requests);
+        using var httpClient = new HttpClient(handler, disposeHandler: false);
         var services = new ServiceCollection();
         services.Configure<OtlpExporterOptions>("trace", configuration);
-        services.Configure<OtlpExporterOptions>("trace", options => options.HttpClientFactory = () => new HttpClient(new RecordingHandler(requests)));
+        services.Configure<OtlpExporterOptions>("trace", options => options.HttpClientFactory = () => httpClient);
         services.AddOpenTelemetry().WithTracing(builder => builder
             .AddSource("grpc-reload-test")
             .AddOtlpExporter("trace", configure: null));
@@ -509,7 +490,7 @@ public sealed class OtlpExporterReloadTests
         var services = new ServiceCollection();
         services.AddOptions<OtlpExporterOptions>();
         using var serviceProvider = services.BuildServiceProvider();
-        using var httpClient = new ConstructionHttpClient();
+        using var httpClient = new TrackingHttpClient();
         var options = CreateOptions();
         options.HttpClientFactory = () => httpClient;
         Assert.True(Enum.TryParse<OtlpSignalType>(signal, out var signalType));
@@ -607,22 +588,33 @@ public sealed class OtlpExporterReloadTests
     [InlineData("Traces", true)]
     [InlineData("Metrics", true)]
     [InlineData("Logs", true)]
-    public void DisposeCancelsDiskRetryBeforeReleasingResources(string signal, bool shutdownFirst)
+    public async Task DisposeCancelsDiskRetryBeforeReleasingResources(string signal, bool shutdownFirst)
     {
         using var client = new ControlledExportClient();
         using var blobs = new RetryBlobProvider();
         using var handler = new OtlpExporterPersistentStorageTransmissionHandler(blobs, client, 10000);
         using var exporter = CreateExporter(signal, handler);
         Assert.False(handler.InitiateAndWaitForRetryProcess(0));
+        var stop = Task.CompletedTask;
         try
         {
             Assert.True(client.Entered.Wait(TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken));
-            if (shutdownFirst)
-            {
-                Assert.True(ShutdownExporter(signal, exporter));
-            }
+            stop = Task.Run(
+                () =>
+                {
+                    if (shutdownFirst)
+                    {
+                        Assert.True(ShutdownExporter(signal, exporter));
+                    }
 
-            exporter.Dispose();
+                    exporter.Dispose();
+                },
+                TestContext.Current.CancellationToken);
+
+            var timeout = Task.Delay(TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken);
+            Assert.Same(stop, await Task.WhenAny(stop, timeout).ConfigureAwait(true));
+            await stop.ConfigureAwait(true);
+
             Assert.Equal(0, client.ActiveSends);
             Assert.Equal(1, client.DisposeCount);
             Assert.True(blobs.Disposed);
@@ -631,6 +623,7 @@ public sealed class OtlpExporterReloadTests
         finally
         {
             client.Shutdown(0);
+            await stop.ConfigureAwait(true);
         }
     }
 
@@ -644,7 +637,7 @@ public sealed class OtlpExporterReloadTests
     public void NamedExporterFailureReleasesOwnedClientsAndSubscriptions(string signal, bool failConfiguration)
     {
         var monitor = new TrackingOptionsMonitor<OtlpExporterOptions>(CreateOptions);
-        var factory = new ConstructionHttpClientFactory();
+        var factory = new TrackingHttpClientFactory();
         var services = new ServiceCollection();
         services.AddSingleton<IOptionsMonitor<OtlpExporterOptions>>(monitor);
         services.AddSingleton<IHttpClientFactory>(factory);
@@ -665,7 +658,7 @@ public sealed class OtlpExporterReloadTests
     [InlineData("Logs")]
     public void NamedExporterFailureKeepsCustomHttpClientOwnedByCaller(string signal)
     {
-        using var client = new ConstructionHttpClient();
+        using var client = new TrackingHttpClient();
         var monitor = new TrackingOptionsMonitor<OtlpExporterOptions>(() => new()
         {
             Protocol = OtlpExportProtocol.HttpProtobuf,
@@ -692,7 +685,7 @@ public sealed class OtlpExporterReloadTests
         bool builderSubscriptionFails,
         bool ownsHttpClient)
     {
-        using var customHttpClient = new ConstructionHttpClient();
+        using var customHttpClient = new TrackingHttpClient();
         var monitor = new TrackingOptionsMonitor<OtlpExporterOptions>(CreateOptions)
         {
             ThrowOnSubscribe = !builderSubscriptionFails,
@@ -702,7 +695,7 @@ public sealed class OtlpExporterReloadTests
         {
             ThrowOnSubscribe = builderSubscriptionFails,
         };
-        var factory = new ConstructionHttpClientFactory();
+        var factory = new TrackingHttpClientFactory();
         var services = new ServiceCollection();
         services.AddSingleton<IOptionsMonitor<OtlpExporterOptions>>(monitor);
         services.AddSingleton<IOptionsMonitor<OtlpExporterBuilderOptions>>(builderMonitor);
@@ -748,32 +741,23 @@ public sealed class OtlpExporterReloadTests
     [InlineData("Traces")]
     [InlineData("Metrics")]
     [InlineData("Logs")]
-    public void NamedExporterConfigurationFailureStopsDiskRetry(string signal)
+    public void NamedExporterConfigurationFailureReleasesClientsAndSubscriptionsWithDiskRetry(string signal)
     {
-        var directory = Path.Combine(Path.GetTempPath(), $"otlp-construction-{Guid.NewGuid():N}");
+        using var directory = new TemporaryDirectory();
         var monitor = new TrackingOptionsMonitor<OtlpExporterOptions>(CreateOptions);
-        var factory = new ConstructionHttpClientFactory();
+        var factory = new TrackingHttpClientFactory();
         var services = new ServiceCollection();
         services.AddSingleton<IOptionsMonitor<OtlpExporterOptions>>(monitor);
         services.AddSingleton<IHttpClientFactory>(factory);
         using var serviceProvider = services.BuildServiceProvider();
 
-        try
-        {
-            AssertConstructionFailure(serviceProvider, CreateOptions(), signal, failConfiguration: true, directory);
-            Assert.Empty(monitor.Listeners);
-            Assert.All(factory.Clients, client => Assert.Equal(1, client.DisposeCount));
-        }
-        finally
-        {
-            if (Directory.Exists(directory))
-            {
-                Assert.Equal(
-                    Path.GetFullPath(Path.GetTempPath()).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar),
-                    Path.GetDirectoryName(Path.GetFullPath(directory)));
-                Directory.Delete(directory, recursive: true);
-            }
-        }
+        AssertConstructionFailure(serviceProvider, CreateOptions(), signal, failConfiguration: true, directory.Path);
+        Assert.Empty(monitor.Listeners);
+        Assert.All(factory.Clients, client => Assert.Equal(1, client.DisposeCount));
+        Assert.Equal(
+            Path.GetFullPath(Path.GetTempPath()).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar),
+            Path.GetDirectoryName(Path.GetFullPath(directory.Path)));
+        Directory.Delete(directory.Path, recursive: true);
     }
 
     private static OtlpExporterOptions CreateOptions() => new() { Protocol = OtlpExportProtocol.HttpProtobuf };
@@ -859,7 +843,7 @@ public sealed class OtlpExporterReloadTests
         }
     }
 
-    private sealed class TrackingHttpClientFactory(HttpMessageHandler handler) : IHttpClientFactory
+    private sealed class TrackingHttpClientFactory(HttpMessageHandler? handler = null) : IHttpClientFactory
     {
         internal List<TrackingHttpClient> Clients { get; } = [];
 
@@ -867,15 +851,24 @@ public sealed class OtlpExporterReloadTests
 
         public HttpClient CreateClient(string name)
         {
-            var client = new TrackingHttpClient(handler);
+            var client = handler is null ? new TrackingHttpClient() : new TrackingHttpClient(handler);
             this.Clients.Add(client);
             this.Names.Add(name);
             return client;
         }
     }
 
-    private sealed class TrackingHttpClient(HttpMessageHandler handler) : HttpClient(handler, disposeHandler: false)
+    private sealed class TrackingHttpClient : HttpClient
     {
+        internal TrackingHttpClient()
+        {
+        }
+
+        internal TrackingHttpClient(HttpMessageHandler handler)
+            : base(handler, disposeHandler: false)
+        {
+        }
+
         internal int DisposeCount { get; private set; }
 
         protected override void Dispose(bool disposing)
@@ -1090,33 +1083,6 @@ public sealed class OtlpExporterReloadTests
         private sealed class Subscription(List<Action<T, string?>> listeners, Action<T, string?> listener) : IDisposable
         {
             public void Dispose() => listeners.Remove(listener);
-        }
-    }
-
-    private sealed class ConstructionHttpClientFactory : IHttpClientFactory
-    {
-        internal List<ConstructionHttpClient> Clients { get; } = [];
-
-        public HttpClient CreateClient(string name)
-        {
-            var client = new ConstructionHttpClient();
-            this.Clients.Add(client);
-            return client;
-        }
-    }
-
-    private sealed class ConstructionHttpClient : HttpClient
-    {
-        internal int DisposeCount { get; private set; }
-
-        protected override void Dispose(bool disposing)
-        {
-            if (disposing)
-            {
-                this.DisposeCount++;
-            }
-
-            base.Dispose(disposing);
         }
     }
 }
