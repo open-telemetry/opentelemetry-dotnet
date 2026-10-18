@@ -82,6 +82,11 @@ jobs:
       shell: pwsh
       run: dotnet build ${env:PROJECT_NAME} --configuration Release --no-restore ${env:PROJECT_BUILD_COMMANDS}
 
+    - name: Increase inotify instance limit
+      if: runner.os == 'Linux'
+      shell: bash
+      run: sudo sysctl -w fs.inotify.max_user_instances=8192
+
     - name: dotnet test ${{ inputs.project-name }}
       shell: pwsh
       timeout-minutes: 20
