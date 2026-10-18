@@ -31,6 +31,35 @@ Notes](../../RELEASENOTES.md).
   or large value and idle metric points with a `NaN` value failing to be reclaimed.
   ([#7963](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7963))
 
+* Improve the assignment of values to exponential histogram buckets when the
+  value is near a bucket boundary by using a pre-computed lookup table.
+  ([#7911](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7911))
+
+* Fixed `LogRecord`s being returned to the shared pool while still queued for
+  export when an exporter stops enumerating a single-item or array
+  `Batch<LogRecord>` early which could cause a `BatchLogRecordExportProcessor`
+  on the same provider to export missing or incorrect data.
+  ([#7965](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7965))
+
+* Fixed a `SuppressInstrumentationScope.Enter()` reference count never being
+  released when the `Activity` it was entered for is not recorded, which caused
+  all subsequent telemetry in that execution context to be suppressed.
+  ([#7966](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7966))
+
+* Self-diagnostics log files, whether configured through `OTEL_DIAGNOSTICS.json`
+  or `SelfDiagnosticsOptions`, are now always created as new files.
+  ([#7968](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7968))
+
+* Self-diagnostics messages written to the sinks configured by
+  `SelfDiagnosticsOptions` are now truncated to 16,384 characters so that the
+  memory used by entries waiting to be written is bounded.
+  ([#7969](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7969))
+
+* The self-diagnostics file sink now creates its log directory and log files
+  so that only the owner can access them (`0700`/`0600`) on Linux and macOS,
+  instead of inheriting the process umask.
+  ([#7967](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7967))
+
 ## 1.20.0
 
 Released 2026-Oct-15

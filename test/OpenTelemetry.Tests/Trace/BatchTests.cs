@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using OpenTelemetry.Internal;
+using OpenTelemetry.Logs;
 
 namespace OpenTelemetry.Trace.Tests;
 
@@ -145,6 +146,48 @@ public class BatchTests
         Assert.Equal(1, batch.Count);
 
         ValidateEnumerator(batch.GetEnumerator(), "b");
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void LogRecordOwnedByCallerIsNotReturnedToSharedPoolTest(bool useArray)
+    {
+        var logRecord = LogRecordSharedPool.Current.Rent();
+
+        var batch = useArray
+            ? new Batch<LogRecord>([logRecord], 1)
+            : new Batch<LogRecord>(logRecord);
+
+        foreach (var item in batch)
+        {
+            Assert.Same(logRecord, item);
+            break;
+        }
+
+        Assert.Equal(1, logRecord.PoolReferenceCount);
+
+        batch.GetEnumerator().Dispose();
+
+        Assert.Equal(1, logRecord.PoolReferenceCount);
+    }
+
+    [Fact]
+    public void LogRecordOwnedByBatchIsReturnedToSharedPoolTest()
+    {
+        var logRecord = LogRecordSharedPool.Current.Rent();
+        logRecord.AddReference();
+
+        var circularBuffer = new CircularBuffer<LogRecord>(1);
+        circularBuffer.Add(logRecord);
+
+        foreach (var item in new Batch<LogRecord>(circularBuffer, 1))
+        {
+            Assert.Same(logRecord, item);
+            break;
+        }
+
+        Assert.Equal(1, logRecord.PoolReferenceCount);
     }
 
     private static void ValidateEnumerator(Batch<string>.Enumerator enumerator, string expected)
