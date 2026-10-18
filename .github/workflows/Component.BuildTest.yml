@@ -86,8 +86,8 @@ jobs:
       shell: pwsh
       timeout-minutes: 20
       # Note: The Test target (see build/Tests.targets) runs `dotnet test` with
-      # the Microsoft.Testing.Platform runner for each test project which
-      # targets the requested framework, skipping the ones which do not.
+      # the Microsoft.Testing.Platform runner once per target framework, in
+      # parallel, for each test project which targets that framework.
       run: dotnet build ${env:PROJECT_NAME} -t:Test --no-restore -p:Configuration=Release ${env:PROJECT_BUILD_COMMANDS}
 
     - name: Upload hang dumps and test platform logs

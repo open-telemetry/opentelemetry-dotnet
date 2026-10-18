@@ -29,15 +29,24 @@
       No TargetFramework requested: run every distinct TFM found across
       @(TestProjects), each as its own nested build so the single-TFM logic
       below still applies per iteration.
+
+      One @(_TestEntryProjects) item is created per TFM (same project, different
+      AdditionalProperties) and they are all handed to a single MSBuild task
+      with BuildInParallel so the TFMs run concurrently (subject to the
+      -maxcpucount of the build) rather than one after another.
     -->
     <ItemGroup Condition="'$(TargetFramework)' == ''">
       <_DistinctTestProjectTargetFramework Include="@(_AllTestProjectTargetFrameworks->Distinct())" />
+      <_TestEntryProjects Include="$(_TestEntryProject)" Condition="'%(_DistinctTestProjectTargetFramework.Identity)' != ''">
+        <AdditionalProperties>TargetFramework=%(_DistinctTestProjectTargetFramework.Identity);Configuration=$(Configuration)</AdditionalProperties>
+      </_TestEntryProjects>
     </ItemGroup>
 
-    <MSBuild Projects="$(_TestEntryProject)"
+    <MSBuild Projects="@(_TestEntryProjects)"
       Targets="Test"
-      Properties="TargetFramework=%(_DistinctTestProjectTargetFramework.Identity);Configuration=$(Configuration)"
-      Condition="'$(TargetFramework)' == '' AND '@(_DistinctTestProjectTargetFramework)' != ''" />
+      BuildInParallel="true"
+      ContinueOnError="ErrorAndStop"
+      Condition="'$(TargetFramework)' == '' AND '@(_TestEntryProjects)' != ''" />
 
     <ItemGroup Condition="'$(TargetFramework)' != ''">
       <_MatchingTestProjectTargetFramework Include="@(_AllTestProjectTargetFrameworks)" Condition="'%(Identity)' == '$(TargetFramework)'" />
@@ -65,8 +74,10 @@
       %(_SupportedTestProjects.Identity) below triggers MSBuild task batching -
       one invocation per project - so each test project gets its own
       report/coverage filename, rather than trying to write to the same one file.
+      The filenames also include the TFM because the per-TFM runs share one
+      results directory and may be running at the same time.
     -->
-    <Exec Command="&quot;$(_DotNetHostPath)&quot; test --project &quot;%(_SupportedTestProjects.Identity)&quot; --framework $(TargetFramework) --configuration $(Configuration) --no-build --results-directory &quot;$(TestResultsDirectory)&quot; --diagnostic --diagnostic-output-directory &quot;$(_TestDiagnosticsDirectory)&quot; --hangdump --hangdump-timeout 10m --hangdump-type full --report-github --report-github-summary-include-passed false --report-xunit-junit --report-xunit-junit-filename &quot;junit-%(_SupportedTestProjects.Filename).xml&quot; --coverage --coverage-output-format cobertura --coverage-output &quot;Cobertura-%(_SupportedTestProjects.Filename).xml&quot; $(_TestFilterArgument)"
+    <Exec Command="&quot;$(_DotNetHostPath)&quot; test --project &quot;%(_SupportedTestProjects.Identity)&quot; --framework $(TargetFramework) --configuration $(Configuration) --no-build --results-directory &quot;$(TestResultsDirectory)&quot; --diagnostic --diagnostic-output-directory &quot;$(_TestDiagnosticsDirectory)&quot; --hangdump --hangdump-timeout 10m --hangdump-type full --report-github --report-github-summary-include-passed false --report-xunit-junit --report-xunit-junit-filename &quot;junit-%(_SupportedTestProjects.Filename)-$(TargetFramework).xml&quot; --coverage --coverage-output-format cobertura --coverage-output &quot;Cobertura-%(_SupportedTestProjects.Filename)-$(TargetFramework).xml&quot; $(_TestFilterArgument)"
       ContinueOnError="ErrorAndStop"
       Condition="'$(TargetFramework)' != '' AND '@(_SupportedTestProjects)' != ''" />
   </Target>
