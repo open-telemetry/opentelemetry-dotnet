@@ -6,15 +6,10 @@
     <_TestDiagnosticsDirectory>$([System.IO.Path]::Combine('$(TestResultsDirectory)', 'diag'))</_TestDiagnosticsDirectory>
     <_DotNetHostPath Condition="'$(DOTNET_HOST_PATH)' != ''">$(DOTNET_HOST_PATH)</_DotNetHostPath>
     <_DotNetHostPath Condition="'$(_DotNetHostPath)' == ''">dotnet</_DotNetHostPath>
-    <!--
-      The project to re-enter for the nested per-TFM builds run by the Test
-      target when no TargetFramework is requested. When this file is imported
-      into a solution build (see Directory.Solution.targets) the current project
-      is an in-memory metaproject (eg: OpenTelemetry.slnx.metaproj) which does
-      not exist on disk, so the solution file itself has to be used instead.
-    -->
-    <_TestEntryProject Condition="'$(SolutionPath)' != '' AND '$(SolutionPath)' != '*Undefined*'">$(SolutionPath)</_TestEntryProject>
-    <_TestEntryProject Condition="'$(_TestEntryProject)' == ''">$(MSBuildProjectFullPath)</_TestEntryProject>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(TargetFramework)' != ''">
+    <_TestFrameworkArgument>--framework $(TargetFramework)</_TestFrameworkArgument>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(TestFilter)' != ''">
@@ -26,42 +21,30 @@
 
   <Target Name="Test" DependsOnTargets="_GetAllTestProjectTargetFrameworks">
     <!--
-      No TargetFramework requested: run every distinct TFM found across
-      @(TestProjects), each as its own nested build so the single-TFM logic
-      below still applies per iteration.
-
-      One @(_TestEntryProjects) item is created per TFM (same project, different
-      AdditionalProperties) and they are all handed to a single MSBuild task
-      with BuildInParallel so the TFMs run concurrently (subject to the
-      -maxcpucount of the build) rather than one after another.
+      When a TargetFramework is requested, only the test projects which target
+      it are built and run, for that framework only. Otherwise every test
+      project is built and run for all of its target frameworks in one
+      `dotnet test` invocation per project, which runs the frameworks in
+      parallel (see the max-parallel-test-modules option of `dotnet test`).
     -->
-    <ItemGroup Condition="'$(TargetFramework)' == ''">
-      <_DistinctTestProjectTargetFramework Include="@(_AllTestProjectTargetFrameworks->Distinct())" />
-      <_TestEntryProjects Include="$(_TestEntryProject)" Condition="'%(_DistinctTestProjectTargetFramework.Identity)' != ''">
-        <AdditionalProperties>TargetFramework=%(_DistinctTestProjectTargetFramework.Identity);Configuration=$(Configuration)</AdditionalProperties>
-      </_TestEntryProjects>
-    </ItemGroup>
-
-    <MSBuild Projects="@(_TestEntryProjects)"
-      Targets="Test"
-      BuildInParallel="true"
-      ContinueOnError="ErrorAndStop"
-      Condition="'$(TargetFramework)' == '' AND '@(_TestEntryProjects)' != ''" />
-
     <ItemGroup Condition="'$(TargetFramework)' != ''">
       <_MatchingTestProjectTargetFramework Include="@(_AllTestProjectTargetFrameworks)" Condition="'%(Identity)' == '$(TargetFramework)'" />
       <_SupportedTestProjects Include="@(_MatchingTestProjectTargetFramework->'%(MSBuildSourceProjectFile)')" />
       <_SkippedTestProjects Include="@(TestProjects)" Exclude="@(_SupportedTestProjects)" />
     </ItemGroup>
 
+    <ItemGroup Condition="'$(TargetFramework)' == ''">
+      <_SupportedTestProjects Include="@(TestProjects)" />
+    </ItemGroup>
+
     <Message Importance="high"
               Text="Skipping test execution for '%(_SkippedTestProjects.Identity)' because it does not contain the '$(TargetFramework)' target."
-              Condition="'$(TargetFramework)' != '' AND '@(_SkippedTestProjects)' != ''" />
+              Condition="'@(_SkippedTestProjects)' != ''" />
 
     <MSBuild Projects="@(_SupportedTestProjects)"
       Targets="Build"
       ContinueOnError="ErrorAndStop"
-      Condition="'$(TargetFramework)' != '' AND '@(_SupportedTestProjects)' != ''" />
+      Condition="'@(_SupportedTestProjects)' != ''" />
 
     <!--
       Tests are run with `dotnet test` (the Microsoft.Testing.Platform runner
@@ -74,12 +57,13 @@
       %(_SupportedTestProjects.Identity) below triggers MSBuild task batching -
       one invocation per project - so each test project gets its own
       report/coverage filename, rather than trying to write to the same one file.
-      The filenames also include the TFM because the per-TFM runs share one
-      results directory and may be running at the same time.
+      The per-module results directory layout then puts each target framework's
+      reports in their own '<project>/<tfm>_<runtime>' subdirectory, so the
+      frameworks of one project do not overwrite each other's files either.
     -->
-    <Exec Command="&quot;$(_DotNetHostPath)&quot; test --project &quot;%(_SupportedTestProjects.Identity)&quot; --framework $(TargetFramework) --configuration $(Configuration) --no-build --results-directory &quot;$(TestResultsDirectory)&quot; --diagnostic --diagnostic-output-directory &quot;$(_TestDiagnosticsDirectory)&quot; --hangdump --hangdump-timeout 10m --hangdump-type full --report-github --report-github-summary-include-passed false --report-xunit-junit --report-xunit-junit-filename &quot;junit-%(_SupportedTestProjects.Filename)-$(TargetFramework).xml&quot; --coverage --coverage-output-format cobertura --coverage-output &quot;Cobertura-%(_SupportedTestProjects.Filename)-$(TargetFramework).xml&quot; $(_TestFilterArgument)"
+    <Exec Command="&quot;$(_DotNetHostPath)&quot; test --project &quot;%(_SupportedTestProjects.Identity)&quot; $(_TestFrameworkArgument) --configuration $(Configuration) --no-build --results-directory &quot;$(TestResultsDirectory)&quot; --results-directory-layout per-module --diagnostic --diagnostic-output-directory &quot;$(_TestDiagnosticsDirectory)&quot; --hangdump --hangdump-timeout 10m --hangdump-type full --report-github --report-github-summary-include-passed false --report-xunit-junit --report-xunit-junit-filename &quot;junit-%(_SupportedTestProjects.Filename).xml&quot; --coverage --coverage-output-format cobertura --coverage-output &quot;Cobertura-%(_SupportedTestProjects.Filename).xml&quot; $(_TestFilterArgument)"
       ContinueOnError="ErrorAndStop"
-      Condition="'$(TargetFramework)' != '' AND '@(_SupportedTestProjects)' != ''" />
+      Condition="'@(_SupportedTestProjects)' != ''" />
   </Target>
 
   <Target Name="_GetAllTestProjectTargetFrameworks" Returns="@(_AllTestProjectTargetFrameworks)">
