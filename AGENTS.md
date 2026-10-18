@@ -73,9 +73,8 @@ python3 ./build/scripts/sanitycheck.py
   (`build/xunit.runner.json`: `maxParallelThreads: 1`).
 - `net472` tests only run on Windows.
 - Tests use [Microsoft Testing Platform](https://aka.ms/dotnet-test/mtp) (the
-  `test.runner` setting in `global.json`), not VSTest. Use `--project` or
-  `--solution` with `dotnet test`. The test executables can also be run
-  directly (e.g. `dotnet OpenTelemetry.Tests.dll --filter "..."`).
+  `test.runner` setting in `global.json`), not VSTest. The test executables can
+  also be run directly (e.g. `dotnet OpenTelemetry.Tests.dll --filter "..."`).
 - `dotnet test ... --framework <tfm>` fails if any test project does
   not target `<tfm>`; use the `Test` target shown above instead.
 
