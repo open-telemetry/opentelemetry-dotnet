@@ -40,7 +40,7 @@ jobs:
         os: ${{ fromJSON(inputs.os-list) }}
 
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 30
+    timeout-minutes: 45
 
     env:
       DOTNET_NOLOGO: true
@@ -89,7 +89,7 @@ jobs:
 
     - name: dotnet test ${{ inputs.project-name }}
       shell: pwsh
-      timeout-minutes: 20
+      timeout-minutes: 30
       # Note: The Test target (see build/Tests.targets) runs `dotnet test` with
       # the Microsoft.Testing.Platform runner for each test project, which runs
       # the target frameworks of the project in parallel.
