@@ -6,6 +6,15 @@
     <_TestDiagnosticsDirectory>$([System.IO.Path]::Combine('$(TestResultsDirectory)', 'diag'))</_TestDiagnosticsDirectory>
     <_DotNetHostPath Condition="'$(DOTNET_HOST_PATH)' != ''">$(DOTNET_HOST_PATH)</_DotNetHostPath>
     <_DotNetHostPath Condition="'$(_DotNetHostPath)' == ''">dotnet</_DotNetHostPath>
+    <!--
+      The project to re-enter for the nested per-TFM builds run by the Test
+      target when no TargetFramework is requested. When this file is imported
+      into a solution build (see Directory.Solution.targets) the current project
+      is an in-memory metaproject (eg: OpenTelemetry.slnx.metaproj) which does
+      not exist on disk, so the solution file itself has to be used instead.
+    -->
+    <_TestEntryProject Condition="'$(SolutionPath)' != '' AND '$(SolutionPath)' != '*Undefined*'">$(SolutionPath)</_TestEntryProject>
+    <_TestEntryProject Condition="'$(_TestEntryProject)' == ''">$(MSBuildProjectFullPath)</_TestEntryProject>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(TestFilter)' != ''">
@@ -25,7 +34,7 @@
       <_DistinctTestProjectTargetFramework Include="@(_AllTestProjectTargetFrameworks->Distinct())" />
     </ItemGroup>
 
-    <MSBuild Projects="$(MSBuildProjectFullPath)"
+    <MSBuild Projects="$(_TestEntryProject)"
       Targets="Test"
       Properties="TargetFramework=%(_DistinctTestProjectTargetFramework.Identity);Configuration=$(Configuration)"
       Condition="'$(TargetFramework)' == '' AND '@(_DistinctTestProjectTargetFramework)' != ''" />
