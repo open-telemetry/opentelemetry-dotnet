@@ -33,13 +33,24 @@
       <_SkippedTestProjects Include="@(TestProjects)" Exclude="@(_SupportedTestProjects)" />
     </ItemGroup>
 
+    <!--
+      @(TestProjects) can contain projects which are not test projects
+      (benchmarks, stress tests, AOT test apps), for which the
+      GetTestProjectTargetFrameworks target returns nothing, so only the
+      projects which reported at least one target framework are run.
+    -->
     <ItemGroup Condition="'$(TargetFramework)' == ''">
-      <_SupportedTestProjects Include="@(TestProjects)" />
+      <_SupportedTestProjects Include="@(_AllTestProjectTargetFrameworks->'%(MSBuildSourceProjectFile)'->Distinct())" />
+      <_SkippedTestProjects Include="@(TestProjects)" Exclude="@(_SupportedTestProjects)" />
     </ItemGroup>
 
     <Message Importance="high"
               Text="Skipping test execution for '%(_SkippedTestProjects.Identity)' because it does not contain the '$(TargetFramework)' target."
-              Condition="'@(_SkippedTestProjects)' != ''" />
+              Condition="'$(TargetFramework)' != '' AND '@(_SkippedTestProjects)' != ''" />
+
+    <Message Importance="high"
+              Text="Skipping test execution for '%(_SkippedTestProjects.Identity)' because it is not a test project."
+              Condition="'$(TargetFramework)' == '' AND '@(_SkippedTestProjects)' != ''" />
 
     <MSBuild Projects="@(_SupportedTestProjects)"
       Targets="Build"
