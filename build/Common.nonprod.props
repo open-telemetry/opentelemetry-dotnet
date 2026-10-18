@@ -19,6 +19,13 @@
   <PropertyGroup Condition="$(MSBuildProjectName.EndsWith('.Tests')) OR $(MSBuildProjectName.EndsWith('.FuzzTests'))">
     <IsTestProject>true</IsTestProject>
     <OutputType>Exe</OutputType>
+    <!--
+      Use the Microsoft.Testing.Platform command line (rather than the native
+      xunit.net one) when the test executable is run directly, so that the same
+      options work for `dotnet test` and for the integration tests which run
+      the published test assembly inside a container.
+    -->
+    <UseMicrosoftTestingPlatformRunner>true</UseMicrosoftTestingPlatformRunner>
   </PropertyGroup>
 
   <ItemGroup Condition="$(MSBuildProjectName.EndsWith('.Tests'))">
@@ -29,11 +36,10 @@
 
   <ItemGroup Condition="'$(IsTestProject)' == 'true'">
     <PackageReference Include="GitHubActionsTestLogger" />
-    <PackageReference Include="JunitXml.TestLogger" />
-    <PackageReference Include="Microsoft.NET.Test.Sdk" />
-    <PackageReference Include="Microsoft.Testing.Platform" Condition="'$(EnableMSTestRunner)' != 'true'" ExcludeAssets="build;buildMultiTargeting;buildTransitive" />
-    <PackageReference Include="xunit.runner.visualstudio" PrivateAssets="All" />
-    <PackageReference Include="xunit.v3.mtp-off" />
+    <PackageReference Include="Microsoft.Testing.Extensions.CodeCoverage" />
+    <PackageReference Include="Microsoft.Testing.Extensions.HangDump" />
+    <PackageReference Include="Microsoft.Testing.Platform" />
+    <PackageReference Include="xunit.v3.mtp-v2" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(IsTestProject)' == 'true'">
@@ -50,18 +56,19 @@
     <Service Include="{82A7F48D-3B50-4B1E-B82E-3ADA8210C358}" />
   </ItemGroup>
 
-  <Target Name="SkipVSTestForInvalidTargetFramework" BeforeTargets="VSTest" Condition="'$(IsTestProject)' == 'true'">
-    <!-- Note: When running dotnet test from CLI with the framework parameter
-    errors will be generated for projects which do not implement the requested
-    target. In order to enable running tests for a given framework across a
-    solution/project with mixed targets (eg: dotnet test OpenTelemetry.slnx -f
-    net472) we convert this into a skip message only. -->
-    <PropertyGroup Condition="$(TargetFrameworks.Contains($(TargetFramework))) != 'true'">
-      <_SkipTests>true</_SkipTests>
-      <IsTestProject>false</IsTestProject>
-    </PropertyGroup>
-
-    <Message Importance="high" Text="Skipping test execution for '$(TargetPath)' because it does not contain the '$(TargetFramework)' target." Condition="'$(_SkipTests)' == 'true'" />
+  <!--
+    Note: Called (at the outer/cross-targeting level, with TargetFramework
+    cleared) by the aggregator .proj files' Test targets (see Tests.targets) to
+    work out which of this project's TFMs are actually available, so that
+    running the tests for a given framework across projects with mixed targets
+    (eg: dotnet build ./build/OpenTelemetry.proj -t:Test -p:TargetFramework=net472)
+    skips the projects which do not implement the requested target.
+  -->
+  <Target Name="GetTestProjectTargetFrameworks" Condition="'$(IsTestProject)' == 'true'" Returns="@(_TestProjectTargetFramework)">
+    <ItemGroup>
+      <_TestProjectTargetFramework Include="$(TargetFrameworks)" Condition="'$(TargetFrameworks)' != ''" />
+      <_TestProjectTargetFramework Include="$(TargetFramework)" Condition="'$(TargetFrameworks)' == ''" />
+    </ItemGroup>
   </Target>
 
   <Target Name="ResolveExposedExperimentalFeatures" BeforeTargets="CoreCompile">
