@@ -38,5 +38,5 @@ This host project:
 With an emulator already running:
 
 ```shell
-dotnet test --project test/OpenTelemetry.Android.Tests/OpenTelemetry.Android.Tests.csproj
+dotnet test test/OpenTelemetry.Android.Tests/OpenTelemetry.Android.Tests.csproj
 ```

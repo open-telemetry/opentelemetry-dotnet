@@ -45,5 +45,5 @@ This host project:
 With an emulator already running:
 
 ```shell
-dotnet test --project test/OpenTelemetry.Maui.Tests/OpenTelemetry.Maui.Tests.csproj
+dotnet test test/OpenTelemetry.Maui.Tests/OpenTelemetry.Maui.Tests.csproj
 ```

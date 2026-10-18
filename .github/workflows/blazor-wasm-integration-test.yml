@@ -62,7 +62,7 @@ jobs:
     - name: Run Blazor WASM end-to-end tests
       shell: pwsh
       run: >
-        dotnet test --project test/OpenTelemetry.BlazorWasm.Tests/OpenTelemetry.BlazorWasm.Tests.csproj
+        dotnet test test/OpenTelemetry.BlazorWasm.Tests/OpenTelemetry.BlazorWasm.Tests.csproj
         --configuration Release
         --framework ${env:TARGET_FRAMEWORK}
         --report-github

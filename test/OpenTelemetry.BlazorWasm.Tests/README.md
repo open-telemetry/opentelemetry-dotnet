@@ -42,7 +42,7 @@ Then run the tests. The Playwright browser is installed automatically by the tes
 fixture on first run:
 
 ```shell
-dotnet test --project test/OpenTelemetry.BlazorWasm.Tests/OpenTelemetry.BlazorWasm.Tests.csproj
+dotnet test test/OpenTelemetry.BlazorWasm.Tests/OpenTelemetry.BlazorWasm.Tests.csproj
 ```
 
 On failure a screenshot, a Playwright trace (`.zip`, viewable at

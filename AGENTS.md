@@ -11,25 +11,25 @@ dotnet build OpenTelemetry.slnx --configuration Release
 **Test all:**
 
 ```sh
-dotnet test --solution OpenTelemetry.slnx
+dotnet test OpenTelemetry.slnx
 ```
 
 **Test a single project:**
 
 ```sh
-dotnet test --project test/OpenTelemetry.Tests/OpenTelemetry.Tests.csproj
+dotnet test test/OpenTelemetry.Tests/OpenTelemetry.Tests.csproj
 ```
 
 **Test a single test by name:**
 
 ```sh
-dotnet test --project test/OpenTelemetry.Tests/OpenTelemetry.Tests.csproj --filter "FullyQualifiedName~MyTestName"
+dotnet test test/OpenTelemetry.Tests/OpenTelemetry.Tests.csproj --filter "FullyQualifiedName~MyTestName"
 ```
 
 **Test for a specific TFM** (Windows also supports `net472`):
 
 ```sh
-dotnet test --project test/OpenTelemetry.Tests/OpenTelemetry.Tests.csproj --framework net10.0
+dotnet test test/OpenTelemetry.Tests/OpenTelemetry.Tests.csproj --framework net10.0
 ```
 
 **Test all projects for a specific TFM** (as CI does, skipping the projects
@@ -76,7 +76,7 @@ python3 ./build/scripts/sanitycheck.py
   `test.runner` setting in `global.json`), not VSTest. Use `--project` or
   `--solution` with `dotnet test`. The test executables can also be run
   directly (e.g. `dotnet OpenTelemetry.Tests.dll --filter "..."`).
-- `dotnet test --solution ... --framework <tfm>` fails if any test project does
+- `dotnet test ... --framework <tfm>` fails if any test project does
   not target `<tfm>`; use the `Test` target shown above instead.
 
 ---
