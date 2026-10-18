@@ -23,10 +23,6 @@ on:
         default: '[ "windows-2025", "windows-11-arm", "ubuntu-26.04", "ubuntu-26.04-arm" ]'
         required: false
         type: string
-      tfm-list:
-        default: '[ "net472", "net8.0", "net9.0", "net10.0" ]'
-        required: false
-        type: string
       trigger:
         required: true
         type: string
@@ -42,14 +38,11 @@ jobs:
       fail-fast: ${{ inputs.trigger == 'merge_group' }}
       matrix:
         os: ${{ fromJSON(inputs.os-list) }}
-        version: ${{ fromJSON(inputs.tfm-list) }}
         exclude:
         # renovate: datasource=github-runners depType=github-runner
         - os: ubuntu-26.04
-          version: net472
         # renovate: datasource=github-runners depType=github-runner
         - os: ubuntu-26.04-arm
-          version: net472
 
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
@@ -62,7 +55,6 @@ jobs:
       TERM: xterm
       PROJECT_NAME: ${{ inputs.project-name }}
       PROJECT_BUILD_COMMANDS: ${{ inputs.project-build-commands }}
-      TARGET_FRAMEWORK: ${{ matrix.version }}
       # HACK Workaround for https://github.com/dotnet/runtime/issues/131636 - GCgen0size is a hex value: 4000000 = 64 MiB.
       DOTNET_GCgen0size: ${{ matrix.os == 'windows-11-arm' && '4000000' || '' }}
 
@@ -101,14 +93,14 @@ jobs:
       # Note: The Test target (see build/Tests.targets) runs `dotnet test` with
       # the Microsoft.Testing.Platform runner for each test project which
       # targets the requested framework, skipping the ones which do not.
-      run: dotnet build ${env:PROJECT_NAME} -t:Test --no-restore -p:Configuration=Release -p:TargetFramework=${env:TARGET_FRAMEWORK} ${env:PROJECT_BUILD_COMMANDS}
+      run: dotnet build ${env:PROJECT_NAME} -t:Test --no-restore -p:Configuration=Release ${env:PROJECT_BUILD_COMMANDS}
 
     - name: Upload hang dumps and test platform logs
       if: ${{ failure() || cancelled() }}
       uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
       with:
         if-no-files-found: ignore
-        name: hang-dumps-${{ inputs.code-cov-prefix }}-${{ inputs.code-cov-name }}-${{ matrix.os }}-${{ matrix.version }}-attempt-${{ github.run_attempt }}
+        name: hang-dumps-${{ inputs.code-cov-prefix }}-${{ inputs.code-cov-name }}-${{ matrix.os }}-attempt-${{ github.run_attempt }}
         retention-days: 7
         path: |
           **/TestResults/**/*.log
@@ -123,14 +115,13 @@ jobs:
       timeout-minutes: 5
       env:
         OS: ${{ matrix.os }}
-        TFM: ${{ matrix.version }}
       with:
         disable_search: true
         disable_telem: true
-        env_vars: OS,TFM
+        env_vars: OS
         files: TestResults/Cobertura-*.xml
         flags: ${{ inputs.code-cov-prefix }}-${{ inputs.code-cov-name }}
-        name: Code Coverage for ${{ inputs.code-cov-prefix }}-${{ inputs.code-cov-name }} on [${{ matrix.os }}.${{ matrix.version }}]
+        name: Code Coverage for ${{ inputs.code-cov-prefix }}-${{ inputs.code-cov-name }} on [${{ matrix.os }}]
         codecov_yml_path: .github/codecov.yml
         token: ${{ secrets.CODECOV_TOKEN }}
 
@@ -142,9 +133,9 @@ jobs:
       with:
         disable_search: true
         disable_telem: true
-        env_vars: OS,TFM
+        env_vars: OS
         files: TestResults/junit-*.xml
         flags: ${{ inputs.code-cov-prefix }}-${{ inputs.code-cov-name }}
-        name: Test results for ${{ inputs.code-cov-prefix }}-${{ inputs.code-cov-name }} on [${{ matrix.os }}.${{ matrix.version }}]
+        name: Test results for ${{ inputs.code-cov-prefix }}-${{ inputs.code-cov-name }} on [${{ matrix.os }}]
         report_type: test_results
         token: ${{ secrets.CODECOV_TOKEN }}
