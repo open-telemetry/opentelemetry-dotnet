@@ -428,6 +428,20 @@ public class OtlpAttributeTests
         }
     }
 
+    [Fact]
+    public void DroppedTagWithOneByteRemainingRestoresPosition()
+    {
+        var state = new ProtobufOtlpTagWriter.OtlpTagWriterState
+        {
+            Buffer = new byte[16],
+            WritePosition = 15,
+        };
+
+        Assert.False(ProtobufOtlpTagWriter.WriteKeyValue(ref state, ProtobufOtlpTraceFieldNumberConstants.Span_Attributes, "key", new MyToStringMethodThrowsAnException()));
+
+        Assert.Equal(15, state.WritePosition);
+    }
+
 #if NET
     [Fact]
     public void Utf8SpanFormattableIsWrittenAsString()
