@@ -7,6 +7,18 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Fixed scrape responses being handed to the server in a single write, which
+  on Linux and macOS made the listener allocate and hold a full copy of the
+  response for each client that did not read it until the request completed or
+  timed out. Responses are now written in bounded slices.
+  ([#7957](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7957))
+
+* Fixed scrape requests that announce a request body holding a thread pool
+  thread after their response had been sent on Linux and macOS for as long as
+  the client kept trickling in the body. The connection is now closed after
+  responding to a request with a body instead of being kept alive.
+  ([#7962](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7962))
+
 ## 1.20.0-beta.1
 
 Released 2026-Oct-15

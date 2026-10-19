@@ -636,6 +636,21 @@ services.AddHttpClient(
         client.DefaultRequestHeaders.Add("X-MyCustomHeader", "value"));
 ```
 
+> [!NOTE]
+> The `HttpClient` the exporter creates itself does not follow HTTP redirects,
+  so the configured `Headers` and the telemetry are only sent to the configured
+  `Endpoint`, and a `3xx` response is treated as a failed export. An
+  `HttpClient` supplied through the `HttpClientFactory` option or created by
+  `IHttpClientFactory` uses its own redirect policy, which by default follows
+  redirects. To prevent the named `HttpClient` from following redirects,
+  configure its primary handler:
+
+```csharp
+services.AddHttpClient("OtlpTraceExporter")
+    .ConfigurePrimaryHttpMessageHandler(
+        () => new HttpClientHandler { AllowAutoRedirect = false });
+```
+
 > [!IMPORTANT]
 > Applications that use custom [`DelegatingHandler`](https://learn.microsoft.com/dotnet/api/system.net.http.delegatinghandler)
 > implementations when targeting .NET 5 or later must override both the
@@ -706,6 +721,14 @@ want to solicit feedback from the community.
       telemetry every 60 seconds. For more details on how these files are
       managed on disk, refer to the [File
       details](https://github.com/open-telemetry/opentelemetry-dotnet-contrib/tree/main/src/OpenTelemetry.PersistentStorage.FileSystem#file-details).
+
+      Files are stored in a `<signal>/<destination>` subdirectory of the
+      specified directory path, where `<destination>` is derived from the
+      `Protocol`, `Endpoint` and `Headers` of the exporter. An exporter only
+      resends telemetry which was stored for its own destination. Exporters
+      which only differ in the `HttpClient` they use (for example one which adds
+      credentials to the requests) share a subdirectory and may resend each
+      other's telemetry.
 
       Added in **TBD** (Unreleased).
 

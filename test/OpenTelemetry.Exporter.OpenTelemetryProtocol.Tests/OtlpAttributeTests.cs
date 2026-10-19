@@ -342,6 +342,20 @@ public class OtlpAttributeTests
         Assert.False(TryTransformTag(kvp, out _));
     }
 
+    [Fact]
+    public void BufferTooSmallForToStringValueIsNotCaught()
+    {
+        var otlpTagWriterState = new ProtobufOtlpTagWriter.OtlpTagWriterState
+        {
+            Buffer = new byte[16],
+            WritePosition = 0,
+        };
+
+        var value = new Uri("http://localhost/" + new string('a', 64));
+
+        Assert.Throws<ArgumentException>(() => ProtobufOtlpTagWriter.Instance.TryWriteTag(ref otlpTagWriterState, "key", value));
+    }
+
     [Theory]
     [InlineData(1)]
     [InlineData(100)]

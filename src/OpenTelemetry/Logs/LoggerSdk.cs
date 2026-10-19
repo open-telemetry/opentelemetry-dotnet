@@ -26,6 +26,11 @@ internal sealed class LoggerSdk : Logger
     /// <inheritdoc />
     public override void EmitLog(in LogRecordData data, in LogRecordAttributeList attributes)
     {
+        if (Sdk.SuppressInstrumentation)
+        {
+            return;
+        }
+
         var provider = this.loggerProvider;
         var processor = provider.Processor;
         if (processor != null)
