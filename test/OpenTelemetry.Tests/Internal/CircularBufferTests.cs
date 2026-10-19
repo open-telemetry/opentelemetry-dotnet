@@ -124,7 +124,10 @@ public class CircularBufferTests
     {
         Assert.SkipWhen(Environment.ProcessorCount < 2, "This machine does not have enough processors to run this test.");
 
-        var circularBuffer = new CircularBuffer<string>(1_000_000);
+        // Small, so that draining it is cheap and the reader spends its time attempting
+        // TryAdd() rather than reading: on a busy machine the reader and the writers only
+        // run at the same time for short stretches, and the contention has to be hit then.
+        var circularBuffer = new CircularBuffer<string>(1_024);
 
         // The writers stop adding at this fill level, so the buffer can never be full and
         // a failed TryAdd() below can only mean the spin count was exceeded. (TryAdd() also
