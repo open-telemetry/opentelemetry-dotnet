@@ -247,16 +247,23 @@ public class PrometheusHttpListenerTests
         using var meter = new Meter(MeterName, MeterVersion);
 
         var host = "127.0.0.1";
+        var port = 0;
 
-        using var context = CreateMeterProvider(meter, configureListener: (options) =>
-        {
-            options.Host = host;
-            return options.Port;
-        });
+        // Binds the default port, so cannot run at the same time as the other tests which do
+        using var portLock = DefaultPortLock.Acquire();
 
-        Assert.Equal(9464, context.Port);
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddPrometheusHttpListener((options) =>
+            {
+                options.Host = host;
+                port = options.Port;
+            })
+            .Build();
 
-        using var client = new HttpClient { BaseAddress = context.BaseAddress };
+        Assert.Equal(9464, port);
+
+        using var client = new HttpClient { BaseAddress = new UriBuilder(Uri.UriSchemeHttp, host, port).Uri };
         using var response = await client.GetAsync(new Uri("metrics", UriKind.Relative), TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -970,11 +977,7 @@ public class PrometheusHttpListenerTests
         var maximumAttempts = 5;
         var attemptsLeft = maximumAttempts;
 
-        configureListener ??= static (options) =>
-        {
-            options.Port = GetRandomPort();
-            return options.Port;
-        };
+        configureListener ??= static (options) => options.Port;
 
         while (attemptsLeft-- > 0)
         {
@@ -993,6 +996,7 @@ public class PrometheusHttpListenerTests
                 })
                 .AddPrometheusHttpListener((options) =>
                 {
+                    options.Port = GetRandomPort();
                     port = configureListener(options);
                 });
 

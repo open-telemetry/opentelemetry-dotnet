@@ -5,8 +5,6 @@
     <TargetFrameworks>$(TargetFrameworksForTests)</TargetFrameworks>
     <DefineConstants>$(DefineConstants);PROMETHEUS_HTTP_LISTENER</DefineConstants>
     <NoWarn>$(NoWarn);CA1019;CA1062;CA1515</NoWarn>
-    <!-- Avoid conflicting port registrations if TFMs tested in parallel -->
-    <TestTfmsInParallel>false</TestTfmsInParallel>
   </PropertyGroup>
 
   <ItemGroup>
