@@ -25,8 +25,8 @@ internal static class SamplerConfigurationTestHelper
         var configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
             {
-                [TracerProviderSdk.TracesSamplerConfigKey] = samplerConfigValue,
-                [TracerProviderSdk.TracesSamplerArgConfigKey] = samplerArgConfigValue,
+                [SamplerOptions.TracesSamplerConfigKey] = samplerConfigValue,
+                [SamplerOptions.TracesSamplerArgConfigKey] = samplerArgConfigValue,
             })
             .Build();
 
