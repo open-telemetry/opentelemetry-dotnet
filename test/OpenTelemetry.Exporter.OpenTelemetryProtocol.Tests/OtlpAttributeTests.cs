@@ -522,6 +522,20 @@ public class OtlpAttributeTests
 
         Assert.All(state.Buffer.Skip(state.WritePosition), b => Assert.Equal(0, b));
     }
+
+    [Fact]
+    public void TruncatedUtf8SpanFormattableLeavesNoDroppedBytesInBuffer()
+    {
+        var state = new ProtobufOtlpTagWriter.OtlpTagWriterState
+        {
+            Buffer = new byte[1024],
+            WritePosition = 0,
+        };
+
+        Assert.True(ProtobufOtlpTagWriter.WriteKeyValue(ref state, ProtobufOtlpTraceFieldNumberConstants.Span_Attributes, "key", new Utf8Value(new string('a', 20)), tagValueMaxLength: 10));
+
+        Assert.All(state.Buffer.Skip(state.WritePosition), b => Assert.Equal(0, b));
+    }
 #endif
 
     private static bool TryTransformTag(KeyValuePair<string, object?> tag, [NotNullWhen(true)] out OtlpCommon.KeyValue? attribute, int? tagValueMaxLength = null)
