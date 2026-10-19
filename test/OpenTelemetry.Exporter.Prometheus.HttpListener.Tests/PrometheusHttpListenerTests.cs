@@ -974,7 +974,19 @@ public class PrometheusHttpListenerTests
 
             configureMeterProvider?.Invoke(builder);
 
-            var provider = builder.Build();
+            MeterProvider provider;
+
+            try
+            {
+                provider = builder.Build();
+            }
+            catch (InvalidOperationException ex) when (ex.InnerException is HttpListenerException && attemptsLeft > 0)
+            {
+                // The port was free when it was picked, but another process (for example the
+                // same tests running for another target framework) bound it before the listener
+                // did. Try again with a different port.
+                continue;
+            }
 
             return new(provider, port);
         }
