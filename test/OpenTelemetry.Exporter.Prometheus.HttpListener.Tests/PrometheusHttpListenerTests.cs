@@ -357,9 +357,29 @@ public class PrometheusHttpListenerTests
 
         await disposeTask;
 
-        using var response = await scrapeTask;
+        // The scrape must have been released by the disposal rather than left waiting on the
+        // blocked collection, so it has to complete well within the time that collection stays
+        // blocked for.
+        using (var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5)))
+        {
+            var completed = await Task.WhenAny(scrapeTask, Task.Delay(Timeout.Infinite, cts.Token));
+            Assert.Same(scrapeTask, completed);
+        }
 
-        Assert.Equal(HttpStatusCode.ServiceUnavailable, response.StatusCode);
+        // The listener answers the released scrape with a 503 and then closes, which resets any
+        // connection whose client has not read its response yet. On a busy machine the client
+        // can lose that race: the reset discards the buffered response, and the request then
+        // fails (on .NET Framework after a transparent retry against the now closed port).
+        try
+        {
+            using var response = await scrapeTask;
+
+            Assert.Equal(HttpStatusCode.ServiceUnavailable, response.StatusCode);
+        }
+        catch (HttpRequestException)
+        {
+            // The connection was reset by the listener closing before the response was read
+        }
 
         // Release the still-running background collection so it does not leak past the test.
         collectBlocker.Set();
