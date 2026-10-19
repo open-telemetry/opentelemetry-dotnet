@@ -75,6 +75,10 @@ Notes](../../RELEASENOTES.md).
   not resent.
   ([#7972](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7972))
 
+* Exponential histogram bucket counts are now serialized in the packed
+  encoding, which reduces the size of the exported payload.
+  ([#7897](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7897))
+
 * Fixed inline certificate or private key material being included in OTLP
   diagnostic events and exceptions when supplied instead of a file path.
   ([#7981](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7981))
@@ -134,10 +138,6 @@ Released 2026-Oct-15
   while the `IServiceProvider` is being disposed. The exporter now falls back
   to the default `HttpClient` instead of failing the export.
   ([#7916](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7916))
-
-* Exponential histogram bucket counts are now serialized in the packed
-  encoding, which reduces the size of the exported payload.
-  ([#7897](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7897))
 
 ## 1.19.1
 
