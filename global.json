@@ -5,6 +5,9 @@
       ".dotnet",
       "$host$"
     ],
-    "version": "10.0.401"
+    "version": "10.0.402"
+  },
+  "test": {
+    "runner": "Microsoft.Testing.Platform"
   }
 }

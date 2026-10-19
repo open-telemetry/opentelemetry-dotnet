@@ -9,6 +9,7 @@ using System.Net;
 #if NETFRAMEWORK
 using System.Net.Http;
 #endif
+using System.Runtime.InteropServices;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Tests;
@@ -241,13 +242,7 @@ public class PrometheusHttpListenerTests
     [Fact]
     public async Task HostOnly_Set_Port_DefaultsTo9464()
     {
-#if NET
-        if (OperatingSystem.IsLinux())
-        {
-            // Linux does not like binding to 127.0.0.1 for some reason
-            return;
-        }
-#endif
+        Assert.SkipWhen(RuntimeInformation.IsOSPlatform(OSPlatform.Linux), "Linux does not like binding to 127.0.0.1 for some reason.");
 
         using var meter = new Meter(MeterName, MeterVersion);
 
@@ -384,6 +379,44 @@ public class PrometheusHttpListenerTests
             options.ScrapeEndpointPath = "custom-metrics";
             return options.Port;
         });
+
+        meter.CreateCounter<int>("test_counter").Add(1);
+
+        using var client = new HttpClient { BaseAddress = context.BaseAddress };
+        using var response = await client.GetAsync(new Uri("custom-metrics", UriKind.Relative), TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task ConfigureHttpListenerCanReplaceDefaultPrefix()
+    {
+        using var meter = new Meter(MeterName, MeterVersion);
+
+        string[]? prefixesSeenByCallback = null;
+        System.Net.HttpListener? configuredListener = null;
+
+        using var context = CreateMeterProvider(meter, configureListener: (options) =>
+        {
+            options.Port = GetRandomPort();
+            options.ConfigureHttpListener = (listenerOptions, listener) =>
+            {
+                prefixesSeenByCallback = [.. listener.Prefixes];
+                configuredListener = listener;
+
+                listener.Prefixes.Clear();
+                listener.Prefixes.Add($"http://localhost:{listenerOptions.Port}/custom-metrics/");
+            };
+
+            return options.Port;
+        });
+
+        // The callback runs after the exporter has added its default prefix,
+        // so clearing the prefixes replaces it rather than adding to it.
+        Assert.NotNull(prefixesSeenByCallback);
+        Assert.Equal([$"http://localhost:{context.Port}/metrics/"], prefixesSeenByCallback);
+        Assert.NotNull(configuredListener);
+        Assert.Equal([$"http://localhost:{context.Port}/custom-metrics/"], configuredListener.Prefixes);
 
         meter.CreateCounter<int>("test_counter").Add(1);
 
@@ -737,6 +770,196 @@ public class PrometheusHttpListenerTests
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
+
+    [Fact]
+    public async Task ScrapeWithRequestBodyThatIsTrickledInDoesNotKeepTheConnectionAlive()
+    {
+        using var meter = new Meter(MeterName, MeterVersion);
+        using var context = CreateMeterProvider(meter);
+
+        var counter = meter.CreateCounter<long>("counter_long");
+        counter.Add(1);
+
+        using var client = new System.Net.Sockets.TcpClient();
+
+#if NET
+        await client.ConnectAsync(context.BaseAddress.Host, context.Port, TestContext.Current.CancellationToken);
+#else
+        await client.ConnectAsync(context.BaseAddress.Host, context.Port);
+#endif
+
+        // Announce a request body that is never sent in full
+        var request = System.Text.Encoding.ASCII.GetBytes(
+            $"GET /metrics HTTP/1.1\r\nHost: localhost:{context.Port}\r\nContent-Length: 1000000000\r\n\r\n");
+
+        var stream = client.GetStream();
+
+#if NET
+        await stream.WriteAsync(request, TestContext.Current.CancellationToken);
+#else
+        await stream.WriteAsync(request, 0, request.Length, TestContext.Current.CancellationToken);
+#endif
+
+        await stream.FlushAsync(TestContext.Current.CancellationToken);
+
+        using var cts = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
+        cts.CancelAfter(MaxCollectWait);
+
+        var buffer = new byte[4096];
+        var received = new List<byte>();
+        var headersLength = -1;
+        var contentLength = -1;
+
+        // Read the whole response, which is still served
+        while (headersLength < 0 || received.Count < headersLength + contentLength)
+        {
+#if NET
+            var read = await stream.ReadAsync(buffer, cts.Token);
+#else
+            var read = await stream.ReadAsync(buffer, 0, buffer.Length, cts.Token);
+#endif
+            Assert.True(read > 0, "The connection was closed before the response was received.");
+
+            received.AddRange(buffer.Take(read));
+
+            if (headersLength < 0)
+            {
+                var text = System.Text.Encoding.ASCII.GetString([.. received]);
+                var end = text.IndexOf("\r\n\r\n", StringComparison.Ordinal);
+
+                if (end >= 0)
+                {
+                    headersLength = end + 4;
+
+                    var headers = text.Substring(0, end).Split(["\r\n"], StringSplitOptions.None);
+
+                    Assert.StartsWith("HTTP/1.1 200", headers[0], StringComparison.Ordinal);
+                    Assert.Contains("Connection: close", headers, StringComparer.OrdinalIgnoreCase);
+
+                    var contentLengthHeader = Assert.Single(headers, (p) => p.StartsWith("Content-Length:", StringComparison.OrdinalIgnoreCase));
+                    contentLength = int.Parse(contentLengthHeader.Substring("Content-Length:".Length).Trim(), CultureInfo.InvariantCulture);
+                }
+            }
+        }
+
+        // Keep trickling in the body, a byte at a time and faster than the listener's one second wait for each read
+        // of it. If the connection were kept alive, closing the response would drain the body on a thread pool thread
+        // until all of it had arrived; instead the server should close the connection.
+#if NET
+        var pendingRead = stream.ReadAsync(buffer, cts.Token).AsTask();
+#else
+        var pendingRead = stream.ReadAsync(buffer, 0, buffer.Length, cts.Token);
+#endif
+
+        var deadline = Stopwatch.StartNew();
+        var closed = false;
+
+        while (!closed && deadline.Elapsed < TimeSpan.FromSeconds(10))
+        {
+            try
+            {
+#if NET
+                await stream.WriteAsync("x"u8.ToArray(), cts.Token);
+#else
+                await stream.WriteAsync([(byte)'x'], 0, 1, cts.Token);
+#endif
+            }
+            catch (IOException)
+            {
+                closed = true;
+                break;
+            }
+
+            if (await Task.WhenAny(pendingRead, Task.Delay(TimeSpan.FromMilliseconds(100), cts.Token)) == pendingRead)
+            {
+                try
+                {
+                    closed = await pendingRead == 0;
+                }
+                catch (IOException)
+                {
+                    closed = true;
+                }
+
+                Assert.True(closed, "Unexpected data was received after the response.");
+            }
+        }
+
+        Assert.True(closed, "The server did not close the connection while the unread request body was trickled in.");
+    }
+
+#if NET
+    [Fact]
+    public async Task ScrapeDoesNotAllocateACopyOfTheResponseBody()
+    {
+        using var meter = new Meter(MeterName, MeterVersion);
+
+        using var context = CreateMeterProvider(
+            meter,
+            configureListener: options =>
+            {
+                options.Port = GetRandomPort();
+
+                // Serve every scrape from the cached response so measuring one does not include the collection
+                options.ScrapeResponseCacheDurationMilliseconds = 60_000;
+                return options.Port;
+            });
+
+        // Roughly 12 MB of exposition text, far larger than a single response write
+        var padding = new string('x', 24_576);
+        for (var i = 0; i < 500; i++)
+        {
+            var counter = meter.CreateCounter<long>("counter_long_" + i.ToString(CultureInfo.InvariantCulture));
+            counter.Add(1, new KeyValuePair<string, object?>("key", padding));
+        }
+
+        using var client = new HttpClient { BaseAddress = context.BaseAddress };
+        var buffer = new byte[PrometheusExporter.MaximumResponseWriteSize];
+
+        // Warm up the collection, the response cache and the connection
+        var expectedLength = await ScrapeAsync();
+
+        Assert.True(expectedLength > padding.Length * 400, $"Expected a large response, but it was {expectedLength} bytes.");
+
+        var allocatedBefore = GC.GetTotalAllocatedBytes(precise: true);
+
+        var actualLength = await ScrapeAsync();
+
+        var allocated = GC.GetTotalAllocatedBytes(precise: true) - allocatedBefore;
+
+        Assert.Equal(expectedLength, actualLength);
+
+        // The response is written from a buffer shared by all scrapes. The managed (non-Windows)
+        // HttpListener copies the content of the first write into a new buffer with the response
+        // headers, so writing it in one call allocates (and, for a client that does not read the
+        // response, retains) a copy of the entire body per scrape.
+        Assert.True(
+            allocated < expectedLength / 4,
+            $"Expected serving a cached {expectedLength} byte response not to allocate a copy of it, but {allocated} bytes were allocated.");
+
+        async Task<long> ScrapeAsync()
+        {
+            using var response = await client.GetAsync(
+                new Uri("metrics", UriKind.Relative),
+                HttpCompletionOption.ResponseHeadersRead,
+                TestContext.Current.CancellationToken);
+
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+            using var stream = await response.Content.ReadAsStreamAsync(TestContext.Current.CancellationToken);
+
+            long length = 0;
+            int read;
+
+            while ((read = await stream.ReadAsync(buffer, TestContext.Current.CancellationToken)) > 0)
+            {
+                length += read;
+            }
+
+            return length;
+        }
+    }
+#endif
 
     internal static MeterProviderTestContext CreateMeterProvider(
         Meter meter,

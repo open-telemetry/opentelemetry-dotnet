@@ -6,6 +6,18 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Fixed `TracerProvider.GetTracer` caching a new tracer for each call with equal
+  array-valued scope tags.
+  ([#7960](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7960))
+
+## 1.20.0
+
+Released 2026-Oct-15
+
+## 1.20.0-rc.1
+
+Released 2026-Oct-15
+
 * Added `Logger.SchemaUrl` and a `LoggerProvider.GetLogger` overload accepting
   a schema URL parameter using the new `LoggerOptions` type.
   ([#7727](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7727))
@@ -17,6 +29,10 @@ Notes](../../RELEASENOTES.md).
   previous overload must update to override the new one; the old overload is
   no longer called.
   ([#7727](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7727))
+
+* Optimize performance of `BaggagePropagator.Inject` on .NET Framework using
+  lookup tables.
+  ([#7947](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7947))
 
 ## 1.19.1
 
