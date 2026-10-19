@@ -431,7 +431,9 @@ internal abstract class TagWriter<TTagState, TArrayState>
         {
             if (value.TryFormat(buffer, out var bytesWritten, format: default, CultureInfo.InvariantCulture))
             {
-                this.EndUtf8StringTag(ref state, TruncateUtf8String(buffer[..bytesWritten], tagValueMaxLength));
+                var truncated = TruncateUtf8String(buffer[..bytesWritten], tagValueMaxLength);
+                buffer[truncated.Length..bytesWritten].Clear();
+                this.EndUtf8StringTag(ref state, truncated);
                 return true;
             }
         }
