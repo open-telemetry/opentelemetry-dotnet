@@ -665,14 +665,27 @@ public struct MetricPoint
                 {
                     if (outputDelta)
                     {
-                        var initValue = InterlockedHelper.Read(ref this.runningValue.AsDouble);
-                        this.snapshotValue.AsDouble = initValue - this.deltaLastValue.AsDouble;
-                        this.deltaLastValue.AsDouble = initValue;
+                        double initValue;
+                        if (this.aggType == AggregationType.DoubleSumIncomingDelta)
+                        {
+                            // Reset synchronous sums each interval to avoid carrying non-finite values
+                            // or losing precision when subtracting large process-lifetime totals.
+                            // deltaLastValue stays zero for HasUnexportedData.
+                            initValue = 0;
+                            this.snapshotValue.AsDouble = Interlocked.Exchange(ref this.runningValue.AsDouble, initValue);
+                        }
+                        else
+                        {
+                            initValue = InterlockedHelper.Read(ref this.runningValue.AsDouble);
+                            this.snapshotValue.AsDouble = initValue - this.deltaLastValue.AsDouble;
+                            this.deltaLastValue.AsDouble = initValue;
+                        }
+
                         this.MetricPointStatus = MetricPointStatus.NoCollectPending;
 
                         // Check again if value got updated, if yes reset status.
                         // This ensures no Updates get Lost.
-                        if (initValue != InterlockedHelper.Read(ref this.runningValue.AsDouble))
+                        if (!InterlockedHelper.AreSame(initValue, InterlockedHelper.Read(ref this.runningValue.AsDouble)))
                         {
                             this.MetricPointStatus = MetricPointStatus.CollectPending;
                         }
@@ -714,7 +727,7 @@ public struct MetricPoint
 
                     // Check again if value got updated, if yes reset status.
                     // This ensures no Updates get Lost.
-                    if (this.snapshotValue.AsDouble != InterlockedHelper.Read(ref this.runningValue.AsDouble))
+                    if (!InterlockedHelper.AreSame(this.snapshotValue.AsDouble, InterlockedHelper.Read(ref this.runningValue.AsDouble)))
                     {
                         this.MetricPointStatus = MetricPointStatus.CollectPending;
                     }
@@ -912,13 +925,13 @@ public struct MetricPoint
 
             case AggregationType.DoubleSumIncomingDelta:
             case AggregationType.DoubleSumIncomingCumulative:
-                return InterlockedHelper.Read(ref this.runningValue.AsDouble) != this.deltaLastValue.AsDouble;
+                return !InterlockedHelper.AreSame(InterlockedHelper.Read(ref this.runningValue.AsDouble), this.deltaLastValue.AsDouble);
 
             case AggregationType.LongGauge:
                 return Interlocked.Read(ref this.runningValue.AsLong) != this.snapshotValue.AsLong;
 
             case AggregationType.DoubleGauge:
-                return InterlockedHelper.Read(ref this.runningValue.AsDouble) != this.snapshotValue.AsDouble;
+                return !InterlockedHelper.AreSame(InterlockedHelper.Read(ref this.runningValue.AsDouble), this.snapshotValue.AsDouble);
 
             case AggregationType.Base2ExponentialHistogram:
             case AggregationType.Base2ExponentialHistogramWithMinMax:
@@ -949,6 +962,18 @@ public struct MetricPoint
     {
         var histogramBuckets = this.mpComponents!.HistogramBuckets!;
 
+        // Offer the exemplar before the value is added. The status below is set in the same critical
+        // section as the value, so TakeSnapshot (which takes the same lock) can never observe the
+        // value without the flag, which would export an empty data point in the next collection.
+        // Offering the exemplar after that instead would let a racing collection clear the flag, and
+        // leave the exemplar unexported until another measurement is recorded.
+        //
+        // The exemplar and the value are still not updated atomically, as that would require running
+        // the (potentially user-defined) reservoir while holding the lock. A collection that happens
+        // between the two can export the exemplar one interval before the measurement it was offered
+        // for is aggregated, but neither is lost or exported twice, and no empty data point is exported.
+        this.UpdateExemplar(number, tags, offerExemplar);
+
         this.mpComponents.AcquireLock();
 
         unchecked
@@ -957,16 +982,20 @@ public struct MetricPoint
             histogramBuckets.RunningSum += number;
         }
 
+        // Set while still holding the lock, see above.
+        this.MetricPointStatus = MetricPointStatus.CollectPending;
+
         this.mpComponents.ReleaseLock();
 
-        this.UpdateExemplar(number, tags, offerExemplar);
-
-        this.CompleteUpdate();
+        this.CompleteUpdateWithoutMeasurement();
     }
 
     private void UpdateHistogramWithMinMax(double number, ReadOnlySpan<KeyValuePair<string, object?>> tags = default, bool offerExemplar = false)
     {
         var histogramBuckets = this.mpComponents!.HistogramBuckets!;
+
+        // Offer the exemplar before the update, as for UpdateHistogram().
+        this.UpdateExemplar(number, tags, offerExemplar);
 
         this.mpComponents.AcquireLock();
 
@@ -979,11 +1008,11 @@ public struct MetricPoint
         histogramBuckets.RunningMin = Math.Min(histogramBuckets.RunningMin, number);
         histogramBuckets.RunningMax = Math.Max(histogramBuckets.RunningMax, number);
 
+        this.MetricPointStatus = MetricPointStatus.CollectPending;
+
         this.mpComponents.ReleaseLock();
 
-        this.UpdateExemplar(number, tags, offerExemplar);
-
-        this.CompleteUpdate();
+        this.CompleteUpdateWithoutMeasurement();
     }
 
     private void UpdateHistogramWithBuckets(double number, ReadOnlySpan<KeyValuePair<string, object?>> tags = default, bool offerExemplar = false)
@@ -992,6 +1021,9 @@ public struct MetricPoint
 
         var bucketIndex = histogramBuckets.FindBucketIndex(number);
 
+        // Offer the exemplar before the update, as for UpdateHistogram().
+        this.UpdateExemplar(number, tags, offerExemplar, bucketIndex);
+
         this.mpComponents.AcquireLock();
 
         unchecked
@@ -1001,11 +1033,11 @@ public struct MetricPoint
             histogramBuckets.BucketCounts[bucketIndex].RunningValue++;
         }
 
+        this.MetricPointStatus = MetricPointStatus.CollectPending;
+
         this.mpComponents.ReleaseLock();
 
-        this.UpdateExemplar(number, tags, offerExemplar, bucketIndex);
-
-        this.CompleteUpdate();
+        this.CompleteUpdateWithoutMeasurement();
     }
 
     private void UpdateHistogramWithBucketsAndMinMax(double number, ReadOnlySpan<KeyValuePair<string, object?>> tags = default, bool offerExemplar = false)
@@ -1013,6 +1045,9 @@ public struct MetricPoint
         var histogramBuckets = this.mpComponents!.HistogramBuckets!;
 
         var bucketIndex = histogramBuckets.FindBucketIndex(number);
+
+        // Offer the exemplar before the update, as for UpdateHistogram().
+        this.UpdateExemplar(number, tags, offerExemplar, bucketIndex);
 
         this.mpComponents.AcquireLock();
 
@@ -1026,11 +1061,11 @@ public struct MetricPoint
         histogramBuckets.RunningMin = Math.Min(histogramBuckets.RunningMin, number);
         histogramBuckets.RunningMax = Math.Max(histogramBuckets.RunningMax, number);
 
+        this.MetricPointStatus = MetricPointStatus.CollectPending;
+
         this.mpComponents.ReleaseLock();
 
-        this.UpdateExemplar(number, tags, offerExemplar, bucketIndex);
-
-        this.CompleteUpdate();
+        this.CompleteUpdateWithoutMeasurement();
     }
 
     private void UpdateBase2ExponentialHistogram(double number, ReadOnlySpan<KeyValuePair<string, object?>> tags = default, bool offerExemplar = false)
@@ -1043,6 +1078,9 @@ public struct MetricPoint
 
         var histogram = this.mpComponents!.Base2ExponentialBucketHistogram!;
 
+        // Offer the exemplar before the update, as for UpdateHistogram().
+        this.UpdateExemplar(number, tags, offerExemplar);
+
         this.mpComponents.AcquireLock();
 
         unchecked
@@ -1052,11 +1090,11 @@ public struct MetricPoint
             histogram.Record(number);
         }
 
+        this.MetricPointStatus = MetricPointStatus.CollectPending;
+
         this.mpComponents.ReleaseLock();
 
-        this.UpdateExemplar(number, tags, offerExemplar);
-
-        this.CompleteUpdate();
+        this.CompleteUpdateWithoutMeasurement();
     }
 
     private void UpdateBase2ExponentialHistogramWithMinMax(double number, ReadOnlySpan<KeyValuePair<string, object?>> tags = default, bool offerExemplar = false)
@@ -1068,6 +1106,9 @@ public struct MetricPoint
         }
 
         var histogram = this.mpComponents!.Base2ExponentialBucketHistogram!;
+
+        // Offer the exemplar before the update, as for UpdateHistogram().
+        this.UpdateExemplar(number, tags, offerExemplar);
 
         this.mpComponents.AcquireLock();
 
@@ -1081,11 +1122,11 @@ public struct MetricPoint
         histogram.RunningMin = Math.Min(histogram.RunningMin, number);
         histogram.RunningMax = Math.Max(histogram.RunningMax, number);
 
+        this.MetricPointStatus = MetricPointStatus.CollectPending;
+
         this.mpComponents.ReleaseLock();
 
-        this.UpdateExemplar(number, tags, offerExemplar);
-
-        this.CompleteUpdate();
+        this.CompleteUpdateWithoutMeasurement();
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1146,8 +1187,11 @@ public struct MetricPoint
         // In the absence of any new Update call until next Snapshot,
         // this results in exporting an Update even though
         // it had no update.
-        // TODO: For Delta, this can be mitigated
-        // by ignoring Zero points
+        // This only applies to the lock-free aggregations (sums and gauges), as
+        // the histograms set the status while holding the lock that Snapshot takes.
+        // It cannot be closed without making every Update pay for an additional
+        // atomic operation. For Delta sums the extra point has a value of zero, and
+        // for gauges it repeats the last recorded value.
         this.MetricPointStatus = MetricPointStatus.CollectPending;
 
         this.CompleteUpdateWithoutMeasurement();

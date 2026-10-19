@@ -87,14 +87,41 @@ internal abstract class OpenMetricsSerializer : TextFormatSerializer
         Metric metric,
         PrometheusMetric prometheusMetric,
         in MetricPoint metricPoint,
-        in TextFormatSerializerOptions options)
+        in TextFormatSerializerOptions options,
+        ReadOnlySpan<byte> seriesAndTags)
     {
-        if (prometheusMetric.Type == PrometheusType.Counter)
+        if (prometheusMetric.Type != PrometheusType.Counter)
         {
-            cursor = this.WriteCreatedMetric(buffer, cursor, metric, prometheusMetric, metricPoint, options);
+            return cursor;
         }
 
-        return cursor;
+        var startTime = metricPoint.StartTime;
+        Debug.Assert(startTime != default, "Metric points must have a valid start time.");
+
+        if (startTime == default)
+        {
+            return cursor;
+        }
+
+        // The series of a counter sample is its name followed by the braced tags, and the '_created'
+        // series has the same tags, so copy them instead of serializing them a second time. A counter
+        // that needs a quoted name starts with the brace, as the name is embedded within it.
+        var tagsStart = seriesAndTags.IndexOf(unchecked((byte)'{'));
+
+        if (tagsStart > 0)
+        {
+            cursor = this.WriteMetricNameWithSuffix(buffer, cursor, prometheusMetric, "_created");
+
+            var tags = seriesAndTags.Slice(tagsStart);
+            tags.CopyTo(new Span<byte>(buffer, cursor, tags.Length));
+            cursor += tags.Length;
+        }
+        else
+        {
+            cursor = this.WriteSeriesAndTags(buffer, cursor, metric, prometheusMetric, metricPoint.Tags, options, "_created", reservedOutputKeys: null);
+        }
+
+        return WriteCreatedValue(buffer, cursor, startTime);
     }
 
     protected override int WriteHistogramBucketExemplar(byte[] buffer, int cursor, in MetricPoint metricPoint, double lowerBoundExclusive, double upperBoundInclusive)
@@ -107,8 +134,20 @@ internal abstract class OpenMetricsSerializer : TextFormatSerializer
         return cursor;
     }
 
-    protected override int WriteHistogramCreated(byte[] buffer, int cursor, Metric metric, PrometheusMetric prometheusMetric, in MetricPoint metricPoint, in TextFormatSerializerOptions options)
-        => this.WriteCreatedMetric(buffer, cursor, metric, prometheusMetric, metricPoint, options, ReservedHistogramLabelNames);
+    protected override int WriteHistogramCreated(byte[] buffer, int cursor, PrometheusMetric prometheusMetric, in MetricPoint metricPoint, ReadOnlySpan<byte> serializedTags)
+    {
+        var startTime = metricPoint.StartTime;
+        Debug.Assert(startTime != default, "Metric points must have a valid start time.");
+
+        if (startTime == default)
+        {
+            return cursor;
+        }
+
+        cursor = this.WriteSeriesNameAndSerializedTags(buffer, cursor, prometheusMetric, "_created", serializedTags);
+
+        return WriteCreatedValue(buffer, cursor, startTime);
+    }
 
     private static bool TryGetLatestExemplar(in MetricPoint metricPoint, out Exemplar exemplar)
     {
@@ -122,7 +161,7 @@ internal abstract class OpenMetricsSerializer : TextFormatSerializer
 
         var found = false;
 
-        foreach (var candidate in exemplars)
+        foreach (ref readonly var candidate in exemplars)
         {
             if (!found || ShouldPreferExemplar(exemplar.Timestamp, candidate.Timestamp))
             {
@@ -155,7 +194,7 @@ internal abstract class OpenMetricsSerializer : TextFormatSerializer
 
         var found = false;
 
-        foreach (var candidate in exemplars)
+        foreach (ref readonly var candidate in exemplars)
         {
             if (IsHistogramBucketExemplarMatch(candidate.DoubleValue, lowerBoundExclusive, upperBoundInclusive) &&
                 (!found || ShouldPreferExemplar(exemplar.Timestamp, candidate.Timestamp)))
@@ -168,25 +207,8 @@ internal abstract class OpenMetricsSerializer : TextFormatSerializer
         return found;
     }
 
-    private int WriteCreatedMetric(
-        byte[] buffer,
-        int cursor,
-        Metric metric,
-        PrometheusMetric prometheusMetric,
-        in MetricPoint metricPoint,
-        in TextFormatSerializerOptions options,
-        IReadOnlyCollection<string>? reservedOutputKeys = null)
+    private static int WriteCreatedValue(byte[] buffer, int cursor, DateTimeOffset startTime)
     {
-        var startTime = metricPoint.StartTime;
-        Debug.Assert(startTime != default, "Metric points must have a valid start time.");
-
-        if (startTime == default)
-        {
-            return cursor;
-        }
-
-        cursor = this.WriteSeriesAndTags(buffer, cursor, metric, prometheusMetric, metricPoint.Tags, options, "_created", reservedOutputKeys);
-
         buffer[cursor++] = unchecked((byte)' ');
 
         cursor = WriteUnixTimeSeconds(buffer, cursor, startTime);

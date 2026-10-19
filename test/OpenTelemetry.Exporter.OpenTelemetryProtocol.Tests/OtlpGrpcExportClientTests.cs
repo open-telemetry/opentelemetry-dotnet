@@ -56,6 +56,43 @@ public class OtlpGrpcExportClientTests
     }
 
     [Fact]
+    public void SendExportRequest_ErrorResponse_LogsResponseBody()
+    {
+        const int HttpRequestFailedEventId = 17;
+        const string ResponseBody = "no such service";
+
+        using var listener = new TestEventListener(OpenTelemetryProtocolExporterEventSource.Log, EventLevel.Error);
+
+        using var testHandler = new StatusCodeHttpMessageHandler(System.Net.HttpStatusCode.NotFound, System.Text.Encoding.UTF8.GetBytes(ResponseBody));
+        using var httpClient = new HttpClient(testHandler, disposeHandler: false);
+
+        var exportClient = new OtlpGrpcExportClient(
+            new OtlpExporterOptions
+            {
+                Endpoint = new Uri("http://localhost:4317"),
+            },
+            httpClient,
+            string.Empty);
+
+        var payload = "hello world"u8.ToArray();
+        var response = exportClient.SendExportRequest(payload, payload.Length, DateTime.UtcNow.AddSeconds(10), TestContext.Current.CancellationToken);
+
+        Assert.False(response.Success);
+
+        var grpcResponse = Assert.IsType<ExportClientGrpcResponse>(response);
+        Assert.Null(grpcResponse.Status);
+
+        var exception = Assert.IsType<HttpRequestException>(response.Exception);
+        Assert.Contains("404", exception.Message, StringComparison.Ordinal);
+#if NET
+        Assert.Equal(System.Net.HttpStatusCode.NotFound, exception.StatusCode);
+#endif
+
+        var logged = Assert.Single(listener.Messages, e => e.EventId == HttpRequestFailedEventId);
+        Assert.Equal(ResponseBody, logged.Payload![1]);
+    }
+
+    [Fact]
     public void SendExportRequest_ResponseAtMaxResponseSizeBytesBoundary_IsNotDiscardedForSize()
     {
         const int MaxResponseSizeBytes = 4096;
@@ -389,6 +426,24 @@ public class OtlpGrpcExportClientTests
         protected override HttpResponseMessage Send(HttpRequestMessage request, CancellationToken cancellationToken)
             => throw this.exception;
 #endif
+    }
+
+    private sealed class StatusCodeHttpMessageHandler(System.Net.HttpStatusCode statusCode, byte[] body) : HttpMessageHandler
+    {
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+            => Task.FromResult(this.CreateResponse(request));
+
+#if NET
+        protected override HttpResponseMessage Send(HttpRequestMessage request, CancellationToken cancellationToken)
+            => this.CreateResponse(request);
+#endif
+
+        private HttpResponseMessage CreateResponse(HttpRequestMessage request)
+            => new(statusCode)
+            {
+                RequestMessage = request,
+                Content = new ByteArrayContent(body),
+            };
     }
 
     private sealed class OversizedResponseHandler(long totalBytes) : HttpMessageHandler

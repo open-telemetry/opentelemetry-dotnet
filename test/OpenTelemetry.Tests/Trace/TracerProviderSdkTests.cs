@@ -607,6 +607,107 @@ public sealed class TracerProviderSdkTests : IDisposable
         Assert.False(endCalled);
     }
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void TracerSdkReleasesSuppressInstrumentationScopeEnterWhenNotRecordedActivityStops(bool addLegacySource)
+    {
+        var activitySourceName = Utils.GetCurrentMethodName();
+        using var activitySource = new ActivitySource(activitySourceName);
+
+        var builder = Sdk.CreateTracerProviderBuilder()
+            .AddSource(activitySourceName);
+
+        if (addLegacySource)
+        {
+            builder.AddLegacySource($"{activitySourceName}.Legacy");
+        }
+
+        using var tracerProvider = builder.Build();
+
+        var notSampledRemoteParent = new ActivityContext(
+            ActivityTraceId.CreateRandom(),
+            ActivitySpanId.CreateRandom(),
+            ActivityTraceFlags.None,
+            isRemote: true);
+
+        using (var activity = activitySource.StartActivity("notRecorded", ActivityKind.Consumer, notSampledRemoteParent))
+        {
+            Assert.NotNull(activity);
+            Assert.False(activity.IsAllDataRequested);
+
+            Assert.Equal(1, SuppressInstrumentationScope.Enter());
+            Assert.True(Sdk.SuppressInstrumentation);
+        }
+
+        Assert.False(Sdk.SuppressInstrumentation);
+
+        using var nextActivity = activitySource.StartActivity("recorded");
+        Assert.NotNull(nextActivity);
+        Assert.True(nextActivity.IsAllDataRequested);
+    }
+
+    [Fact]
+    public void TracerSdkReleasesSuppressInstrumentationScopeEnterWhenNotRecordedLegacyActivityStops()
+    {
+        var operationNameForLegacyActivity = Utils.GetCurrentMethodName();
+
+        using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+            .AddLegacySource(operationNameForLegacyActivity)
+            .SetSampler(new AlwaysOffSampler())
+            .Build();
+
+        using (var activity = new Activity(operationNameForLegacyActivity))
+        {
+            activity.Start();
+            Assert.False(activity.IsAllDataRequested);
+
+            Assert.Equal(1, SuppressInstrumentationScope.Enter());
+            Assert.True(Sdk.SuppressInstrumentation);
+        }
+
+        Assert.False(Sdk.SuppressInstrumentation);
+    }
+
+    [Fact]
+    public void TracerSdkKeepsSuppressInstrumentationScopeEnterUntilOwningActivityStops()
+    {
+        var activitySourceName = Utils.GetCurrentMethodName();
+        var operationNameForLegacyActivity = $"{activitySourceName}.Legacy";
+        var endedActivities = new List<Activity>();
+
+        using var testActivityProcessor = new TestActivityProcessor
+        {
+            EndAction = endedActivities.Add,
+        };
+
+        using var activitySource = new ActivitySource(activitySourceName);
+        using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+            .AddSource(activitySourceName)
+            .AddLegacySource(operationNameForLegacyActivity)
+            .AddProcessor(testActivityProcessor)
+            .Build();
+
+        var activity = activitySource.StartActivity("recorded");
+        Assert.NotNull(activity);
+        Assert.True(activity.IsAllDataRequested);
+
+        Assert.Equal(1, SuppressInstrumentationScope.Enter());
+
+        using (var suppressedActivity = new Activity(operationNameForLegacyActivity))
+        {
+            suppressedActivity.Start();
+            Assert.False(suppressedActivity.IsAllDataRequested);
+        }
+
+        Assert.True(Sdk.SuppressInstrumentation);
+
+        activity.Dispose();
+
+        Assert.False(Sdk.SuppressInstrumentation);
+        Assert.Same(activity, Assert.Single(endedActivities));
+    }
+
     [Fact]
     public void ProcessorDoesNotReceiveNotRecordDecisionSpan()
     {
@@ -1554,8 +1655,7 @@ public sealed class TracerProviderSdkTests : IDisposable
             activity?.AddLink(link2);
         }
 
-        Assert.Single(exportedItems);
-        var exportedActivity = exportedItems[0];
+        var exportedActivity = Assert.Single(exportedItems);
         Assert.Equal(2, exportedActivity.Links.Count());
 
         // verify that the links retain the order as they were added.

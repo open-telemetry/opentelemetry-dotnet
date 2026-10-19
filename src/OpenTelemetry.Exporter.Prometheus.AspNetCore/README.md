@@ -26,7 +26,7 @@ to scrape.
 >
 > Refer to the
 > [Prometheus Security model](https://prometheus.io/docs/operating/security/) and
-> [ASP.NET Core security](https://learn.microsoft.com/en-us/aspnet/core/security/)
+> [ASP.NET Core security](https://learn.microsoft.com/aspnet/core/security/)
 > documentation for more information and guidance on securing the Prometheus
 > scraping endpoint to ensure only authorized users can access the information
 > exposed by it.

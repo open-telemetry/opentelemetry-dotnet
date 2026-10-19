@@ -151,6 +151,7 @@ internal static class OtlpSecureHttpClientFactory
             this.caCertificateData = caCertificateData;
             this.clientCertificate = clientCertificate;
 
+            this.AllowAutoRedirect = false;
             this.CheckCertificateRevocationList = true;
 
             if (this.clientCertificate != null)

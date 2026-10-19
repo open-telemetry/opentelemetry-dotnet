@@ -37,7 +37,7 @@ jobs:
         SOURCE_DATE_EPOCH: ${{ steps.get-commit-timestamp.outputs.epoch }}
 
     - name: Publish stable NuGet packages to Artifacts
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
       with:
         name: packages-stable
         path: ./artifacts/package/release
@@ -73,7 +73,7 @@ jobs:
         SOURCE_DATE_EPOCH: ${{ steps.get-commit-timestamp.outputs.epoch }}
 
     - name: Publish experimental NuGet packages to Artifacts
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
       with:
         name: packages-experimental
         path: ./artifacts/package/release
