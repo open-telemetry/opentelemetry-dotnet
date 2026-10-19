@@ -691,7 +691,9 @@ public class PrometheusHttpListenerTests
     {
         using var meter = new Meter(MeterName, MeterVersion);
 
-        const int ScrapeTimeoutMilliseconds = 10_000;
+        // Generous, because the same timeout also bounds the healthy scrape at the end of the
+        // test, which has to stream the ~12 MB body while the rest of the suite runs in parallel.
+        const int ScrapeTimeoutMilliseconds = 20_000;
 
         using var context = CreateMeterProvider(
             meter,
@@ -766,7 +768,7 @@ public class PrometheusHttpListenerTests
         // Wait past the server-side timeout so the stalled request has cancelled its write and
         // released the reader slot while the stalled client is still connected and still not
         // reading: recovery must come from the server timeout, not from the client disconnecting.
-        await Task.Delay(TimeSpan.FromMilliseconds((ScrapeTimeoutMilliseconds * 2) + 1000), TestContext.Current.CancellationToken);
+        await Task.Delay(TimeSpan.FromMilliseconds(ScrapeTimeoutMilliseconds + 5000), TestContext.Current.CancellationToken);
 
         Assert.True(stalledClient.Connected);
 
