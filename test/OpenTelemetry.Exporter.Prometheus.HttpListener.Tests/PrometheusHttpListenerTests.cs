@@ -512,7 +512,18 @@ public class PrometheusHttpListenerTests
 
         var secondRequestTask = client.GetAsync(requestUri, TestContext.Current.CancellationToken);
 
-        await Task.Delay(100, TestContext.Current.CancellationToken);
+        // Only release the first collection once the second scrape has joined it. A fixed
+        // delay is not enough: when the machine is busy the second request can reach the
+        // listener after the first collection has completed, and then starts its own.
+        var collectionManager = context.Exporter.CollectionManager;
+        var joinStopwatch = Stopwatch.StartNew();
+
+        while (collectionManager.ActiveReaderCount < 2)
+        {
+            Assert.True(joinStopwatch.Elapsed < timeout, "Timed out waiting for the second scrape to join the in-flight collection.");
+
+            await Task.Delay(10, TestContext.Current.CancellationToken);
+        }
 
         allowFirstCollectToComplete.Set();
 

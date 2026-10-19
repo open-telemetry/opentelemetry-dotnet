@@ -58,6 +58,26 @@ internal sealed class PrometheusCollectionManager
 
     internal Func<TimeSpan> GetElapsedTime { get; set; }
 
+    /// <summary>
+    /// Gets the number of scrapes which have entered a collection and not yet
+    /// exited it, across all protocols. Exposed for tests, which use it to tell
+    /// when a scrape has joined an in-flight collection.
+    /// </summary>
+    internal int ActiveReaderCount
+    {
+        get
+        {
+            var count = 0;
+
+            foreach (var state in this.protocolStates.Values)
+            {
+                count += state.ReaderCount;
+            }
+
+            return count;
+        }
+    }
+
 #if NET
     public ValueTask<CollectionResponse> EnterCollect(in PrometheusProtocol protocol, CancellationToken cancellationToken = default)
 #else
@@ -1095,6 +1115,9 @@ internal sealed class PrometheusCollectionManager
 
         public TimeSpan? GeneratedAtElapsed { get; private set; }
 
+        public int ReaderCount
+            => Interlocked.CompareExchange(ref this.readerCount, 0, 0);
+
         public int DecrementReaderCount()
         {
             var readerCount = Interlocked.Decrement(ref this.readerCount);
@@ -1117,7 +1140,7 @@ internal sealed class PrometheusCollectionManager
         }
 
         public bool HasActiveReaders()
-            => Interlocked.CompareExchange(ref this.readerCount, 0, 0) != 0;
+            => this.ReaderCount != 0;
 
         public void IncrementReaderCount()
             => Interlocked.Increment(ref this.readerCount);
