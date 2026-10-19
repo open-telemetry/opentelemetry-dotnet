@@ -63,6 +63,10 @@ Notes](../../RELEASENOTES.md).
 * Fixed pooled log records retaining completed log data until reused.
   ([#7978](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7978))
 
+* Fixed slow metric recording when distinct wide tag values, such as `long` or
+  `Guid`, share the same built-in hash code.
+  ([#7979](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7979))
+
 ## 1.20.0
 
 Released 2026-Oct-15
