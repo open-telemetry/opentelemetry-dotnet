@@ -15,6 +15,15 @@ Notes](../../RELEASENOTES.md).
   is denied.
   ([#8070](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8070))
 
+* Attribute values implementing `IUtf8SpanFormattable` (.NET 8+) that are not
+  already handled as a built-in type are now formatted directly into the
+  export buffer with `TryFormat` and exported as string attributes, instead of
+  through `ToString()`. This avoids allocating a string for each value. If
+  `TryFormat` throws, only that attribute is dropped. When an attribute value
+  length limit is set, a value is formatted into a capped buffer; a value that
+  does not fit falls back to a truncated `ToString()` instead.
+  ([#7929](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7929))
+
 ## 1.21.0-rc.1
 
 Released 2026-Oct-28
@@ -198,15 +207,6 @@ Released 2026-Oct-15
   while the `IServiceProvider` is being disposed. The exporter now falls back
   to the default `HttpClient` instead of failing the export.
   ([#7916](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7916))
-
-* Attribute values implementing `IUtf8SpanFormattable` (.NET 8+) that are not
-  already handled as a built-in type are now formatted directly into the
-  export buffer with `TryFormat` and exported as string attributes, instead of
-  through `ToString()`. This avoids allocating a string for each value. If
-  `TryFormat` throws, only that attribute is dropped. When an attribute value
-  length limit is set, a value is formatted into a capped buffer; a value that
-  does not fit falls back to a truncated `ToString()` instead.
-  ([#7929](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7929))
 
 ## 1.19.1
 
