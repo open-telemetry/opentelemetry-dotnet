@@ -67,6 +67,14 @@ Notes](../../RELEASENOTES.md).
   be resized while the attribute was being written.
   ([#7973](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7973))
 
+* **Breaking:** Fixed telemetry stored by the experimental disk retry feature
+  for one exporter being resent by another exporter for the same signal to its
+  own endpoint and with its own headers. Disk retry storage is now additionally
+  separated by a subdirectory derived from the exporter's `Protocol`,
+  `Endpoint` and `Headers`. Telemetry stored on disk by earlier versions is
+  not resent.
+  ([#7972](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7972))
+
 * Fixed experimental in-memory retries exceeding the export timeout when a
   retried request stalls.
   ([#7977](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7977))
