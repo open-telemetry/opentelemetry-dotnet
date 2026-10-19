@@ -700,6 +700,8 @@ public class PrometheusHttpListenerTests
     [Fact]
     public async Task ScrapeClientThatStopsReadingTheResponseBodyDoesNotBlockOtherScrapesIndefinitely()
     {
+        EnsureThreadPoolWorkerThreadsAvailable();
+
         using var meter = new Meter(MeterName, MeterVersion);
 
         // Generous, because the same timeout also bounds the healthy scrape at the end of the
