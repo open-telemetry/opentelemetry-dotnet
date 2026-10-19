@@ -2,7 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using Microsoft.Extensions.Logging;
+using OpenTelemetry.Exporter;
 
 namespace OpenTelemetry.Logs.Tests;
 
@@ -150,6 +152,131 @@ public sealed class LogRecordSharedPoolTests
 
         Assert.Null(logRecord1.AttributeStorage);
         Assert.Null(logRecord1.ScopeStorage);
+    }
+
+    [Theory]
+    [InlineData(1, 1)]
+    [InlineData(LogRecordPoolHelper.DefaultMaxNumberOfAttributes, LogRecordPoolHelper.DefaultMaxNumberOfScopes)]
+    [InlineData(LogRecordPoolHelper.DefaultMaxNumberOfAttributes + 1, LogRecordPoolHelper.DefaultMaxNumberOfScopes)]
+    [InlineData(LogRecordPoolHelper.DefaultMaxNumberOfAttributes, LogRecordPoolHelper.DefaultMaxNumberOfScopes + 1)]
+    [InlineData(LogRecordPoolHelper.DefaultMaxNumberOfAttributes + 1, LogRecordPoolHelper.DefaultMaxNumberOfScopes + 1)]
+    public void ExportedRecordReleasesLogContent(int numberOfAttributes, int numberOfScopes)
+    {
+        LogRecordSharedPool.Resize(LogRecordSharedPool.DefaultMaxPoolSize);
+        var pool = LogRecordSharedPool.Current;
+
+        List<KeyValuePair<string, object?>> state = [];
+        for (var i = 0; i < numberOfAttributes; i++)
+        {
+            state.Add(new("key", new object()));
+        }
+
+        // Keep the actual pooled record so cleanup can be checked before reuse.
+        List<LogRecord> exportedRecords = [];
+        using var exporter = new InMemoryExporter<LogRecord>(exportedRecords);
+        using var processor = new BatchLogRecordExportProcessor(exporter);
+        using var activity = new Activity("TestActivity");
+        activity.Start();
+        activity.TraceStateString = "key=value";
+
+        using (var loggerFactory = LoggerFactory.Create(builder => builder
+            .AddOpenTelemetry(options =>
+            {
+                options.IncludeFormattedMessage = true;
+                options.IncludeScopes = true;
+                options.IncludeTraceState = true;
+                options.AddProcessor(processor);
+            })))
+        {
+            var logger = loggerFactory.CreateLogger("TestLogger");
+            Stack<IDisposable?> scopes = new();
+            try
+            {
+                for (var i = 0; i < numberOfScopes; i++)
+                {
+                    scopes.Push(logger.BeginScope(new object()));
+                }
+
+                logger.Log(
+                    LogLevel.Error,
+                    new EventId(1, "TestEvent"),
+                    state,
+                    new InvalidOperationException(),
+                    (s, e) => "message");
+            }
+            finally
+            {
+                foreach (var scope in scopes)
+                {
+                    scope?.Dispose();
+                }
+            }
+
+            Assert.True(processor.Shutdown(10_000));
+        }
+
+        var logRecord = Assert.Single(exportedRecords);
+        Assert.Equal(1, pool.Count);
+        Assert.Equal(0, logRecord.PoolReferenceCount);
+        Assert.Null(logRecord.Body);
+        Assert.Null(logRecord.SeverityText);
+        Assert.Null(logRecord.FormattedMessage);
+        Assert.Null(logRecord.Exception);
+        Assert.Null(logRecord.TraceState);
+        Assert.Null(logRecord.EventId.Name);
+        Assert.Null(logRecord.Attributes);
+        Assert.Null(logRecord.ILoggerData.State);
+        Assert.Null(logRecord.ILoggerData.ScopeProvider);
+        Assert.Null(logRecord.ILoggerData.BufferedScopes);
+
+        if (numberOfAttributes > LogRecordPoolHelper.DefaultMaxNumberOfAttributes)
+        {
+            Assert.Null(logRecord.AttributeStorage);
+        }
+        else
+        {
+            Assert.NotNull(logRecord.AttributeStorage);
+            Assert.Empty(logRecord.AttributeStorage);
+        }
+
+        if (numberOfScopes > LogRecordPoolHelper.DefaultMaxNumberOfScopes)
+        {
+            Assert.Null(logRecord.ScopeStorage);
+        }
+        else
+        {
+            Assert.NotNull(logRecord.ScopeStorage);
+            Assert.Empty(logRecord.ScopeStorage);
+        }
+    }
+
+    [Fact]
+    public void ReturnPreservesLogContentWhileReferenced()
+    {
+        LogRecordSharedPool.Resize(LogRecordSharedPool.DefaultMaxPoolSize);
+        var pool = LogRecordSharedPool.Current;
+        var logRecord = pool.Rent();
+        logRecord.Body = "body";
+        logRecord.Exception = new InvalidOperationException();
+        logRecord.Attributes = [new("key", new object())];
+        logRecord.ILoggerData.State = logRecord.Attributes;
+        logRecord.AddReference();
+
+        pool.Return(logRecord);
+
+        Assert.Equal(0, pool.Count);
+        Assert.Equal("body", logRecord.Body);
+        Assert.NotNull(logRecord.Exception);
+        Assert.Single(logRecord.Attributes!);
+        Assert.Same(logRecord.Attributes, logRecord.ILoggerData.State);
+
+        pool.Return(logRecord);
+
+        Assert.Equal(1, pool.Count);
+        Assert.Null(logRecord.Body);
+        Assert.Null(logRecord.Exception);
+        Assert.Null(logRecord.Attributes);
+        Assert.Null(logRecord.ILoggerData.State);
     }
 
     [Theory]
