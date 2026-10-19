@@ -60,6 +60,9 @@ Notes](../../RELEASENOTES.md).
   instead of inheriting the process umask.
   ([#7967](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7967))
 
+* Fixed pooled log records retaining completed log data until reused.
+  ([#7978](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7978))
+
 ## 1.20.0
 
 Released 2026-Oct-15

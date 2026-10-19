@@ -131,6 +131,10 @@ Released 2026-Oct-15
   to the default `HttpClient` instead of failing the export.
   ([#7916](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7916))
 
+* Exponential histogram bucket counts are now serialized in the packed
+  encoding, which reduces the size of the exported payload.
+  ([#7897](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7897))
+
 ## 1.19.1
 
 Released 2026-Sep-21
