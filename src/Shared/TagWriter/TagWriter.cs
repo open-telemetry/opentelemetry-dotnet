@@ -399,7 +399,13 @@ internal abstract class TagWriter<TTagState, TArrayState>
         try
         {
             // We don't want to grow the buffer indefinitely- just convert to string and truncate this
-            var bytesWritten = Encoding.UTF8.GetBytes(TruncateString(Convert.ToString(value, CultureInfo.InvariantCulture).AsSpan(), tagValueMaxLength), buffer);
+            var stringValue = Convert.ToString(value, CultureInfo.InvariantCulture);
+            if (stringValue == null)
+            {
+                return this.LogUnsupportedTagTypeAndReturnFalse(key, value);
+            }
+
+            var bytesWritten = Encoding.UTF8.GetBytes(TruncateString(stringValue.AsSpan(), tagValueMaxLength), buffer);
             this.EndUtf8StringTag(ref state, buffer[..bytesWritten]);
             return true;
         }
