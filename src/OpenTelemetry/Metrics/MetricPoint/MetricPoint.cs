@@ -1030,7 +1030,7 @@ public struct MetricPoint
         {
             this.runningValue.AsLong++;
             histogramBuckets.RunningSum += number;
-            histogramBuckets.BucketCounts[bucketIndex].RunningValue++;
+            histogramBuckets.RunningBucketCounts[bucketIndex]++;
         }
 
         this.MetricPointStatus = MetricPointStatus.CollectPending;
@@ -1055,7 +1055,7 @@ public struct MetricPoint
         {
             this.runningValue.AsLong++;
             histogramBuckets.RunningSum += number;
-            histogramBuckets.BucketCounts[bucketIndex].RunningValue++;
+            histogramBuckets.RunningBucketCounts[bucketIndex]++;
         }
 
         histogramBuckets.RunningMin = Math.Min(histogramBuckets.RunningMin, number);

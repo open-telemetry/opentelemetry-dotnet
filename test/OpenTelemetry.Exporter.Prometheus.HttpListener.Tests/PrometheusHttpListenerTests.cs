@@ -9,6 +9,7 @@ using System.Net;
 #if NETFRAMEWORK
 using System.Net.Http;
 #endif
+using System.Runtime.InteropServices;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Tests;
@@ -241,13 +242,7 @@ public class PrometheusHttpListenerTests
     [Fact]
     public async Task HostOnly_Set_Port_DefaultsTo9464()
     {
-#if NET
-        if (OperatingSystem.IsLinux())
-        {
-            // Linux does not like binding to 127.0.0.1 for some reason
-            return;
-        }
-#endif
+        Assert.SkipWhen(RuntimeInformation.IsOSPlatform(OSPlatform.Linux), "Linux does not like binding to 127.0.0.1 for some reason.");
 
         using var meter = new Meter(MeterName, MeterVersion);
 

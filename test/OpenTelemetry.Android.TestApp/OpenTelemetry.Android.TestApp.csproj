@@ -42,9 +42,9 @@
   -->
   <ItemGroup>
     <PackageReference Remove="GitHubActionsTestLogger" />
-    <PackageReference Remove="Microsoft.NET.Test.Sdk" />
-    <PackageReference Remove="xunit.runner.visualstudio" />
-    <PackageReference Remove="xunit.v3" />
+    <PackageReference Remove="Microsoft.Testing.Extensions.CodeCoverage" />
+    <PackageReference Remove="Microsoft.Testing.Extensions.HangDump" />
+    <PackageReference Remove="xunit.v3.mtp-v2" />
   </ItemGroup>
 
   <ItemGroup>

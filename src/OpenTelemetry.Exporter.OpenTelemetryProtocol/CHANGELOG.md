@@ -61,6 +61,28 @@ Notes](../../RELEASENOTES.md).
   exporter's diagnostic log when running on .NET Framework.
   ([#7970](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7970))
 
+* Fixed attributes whose value is converted with `ToString()` (for example
+  enums, `Uri` or `StringValues`) being dropped as unsupported, and for metric
+  data points omitted from every later export, when the export buffer had to
+  be resized while the attribute was being written.
+  ([#7973](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7973))
+
+* **Breaking:** Fixed telemetry stored by the experimental disk retry feature
+  for one exporter being resent by another exporter for the same signal to its
+  own endpoint and with its own headers. Disk retry storage is now additionally
+  separated by a subdirectory derived from the exporter's `Protocol`,
+  `Endpoint` and `Headers`. Telemetry stored on disk by earlier versions is
+  not resent.
+  ([#7972](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7972))
+
+* Exponential histogram bucket counts are now serialized in the packed
+  encoding, which reduces the size of the exported payload.
+  ([#7897](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7897))
+
+* Fixed inline certificate or private key material being included in OTLP
+  diagnostic events and exceptions when supplied instead of a file path.
+  ([#7981](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7981))
+
 * Hardened the experimental disk retry feature.
   * **Breaking:** When running on .NET on non-Windows platforms, creating the
     exporter now throws an `UnauthorizedAccessException` if the retry

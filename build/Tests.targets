@@ -1,0 +1,73 @@
+<Project>
+
+  <PropertyGroup>
+    <RepoRoot Condition="'$(RepoRoot)' == ''">$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..'))</RepoRoot>
+    <TestResultsDirectory Condition="'$(TestResultsDirectory)' == ''">$(RepoRoot)\TestResults</TestResultsDirectory>
+    <_TestDiagnosticsDirectory>$([System.IO.Path]::Combine('$(TestResultsDirectory)', 'diag'))</_TestDiagnosticsDirectory>
+    <_DotNetHostPath Condition="'$(DOTNET_HOST_PATH)' != ''">$(DOTNET_HOST_PATH)</_DotNetHostPath>
+    <_DotNetHostPath Condition="'$(_DotNetHostPath)' == ''">dotnet</_DotNetHostPath>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(TestFilter)' != ''">
+    <!--
+      Ignoring exit code 8 stops dotnet test failing if a filter does not match any tests.
+    -->
+    <_TestFilterArgument>--filter &quot;$(TestFilter)&quot; --ignore-exit-code 8</_TestFilterArgument>
+  </PropertyGroup>
+
+  <Target Name="Test" DependsOnTargets="_GetAllTestProjectTargetFrameworks">
+    <!--
+      No TargetFramework requested: run every distinct TFM found across
+      @(TestProjects), each as its own nested build so the single-TFM logic
+      below still applies per iteration.
+    -->
+    <ItemGroup Condition="'$(TargetFramework)' == ''">
+      <_DistinctTestProjectTargetFramework Include="@(_AllTestProjectTargetFrameworks->Distinct())" />
+    </ItemGroup>
+
+    <MSBuild Projects="$(MSBuildProjectFullPath)"
+      Targets="Test"
+      Properties="TargetFramework=%(_DistinctTestProjectTargetFramework.Identity);Configuration=$(Configuration)"
+      Condition="'$(TargetFramework)' == '' AND '@(_DistinctTestProjectTargetFramework)' != ''" />
+
+    <ItemGroup Condition="'$(TargetFramework)' != ''">
+      <_MatchingTestProjectTargetFramework Include="@(_AllTestProjectTargetFrameworks)" Condition="'%(Identity)' == '$(TargetFramework)'" />
+      <_SupportedTestProjects Include="@(_MatchingTestProjectTargetFramework->'%(MSBuildSourceProjectFile)')" />
+      <_SkippedTestProjects Include="@(TestProjects)" Exclude="@(_SupportedTestProjects)" />
+    </ItemGroup>
+
+    <Message Importance="high"
+              Text="Skipping test execution for '%(_SkippedTestProjects.Identity)' because it does not contain the '$(TargetFramework)' target."
+              Condition="'$(TargetFramework)' != '' AND '@(_SkippedTestProjects)' != ''" />
+
+    <MSBuild Projects="@(_SupportedTestProjects)"
+      Targets="Build"
+      ContinueOnError="ErrorAndStop"
+      Condition="'$(TargetFramework)' != '' AND '@(_SupportedTestProjects)' != ''" />
+
+    <!--
+      Tests are run with `dotnet test` (the Microsoft.Testing.Platform runner
+      configured in global.json) rather than the InvokeTestingPlatform MSBuild
+      target. Driving the tests through MSBuild is not the supported way to run
+      Microsoft.Testing.Platform tests with the .NET 10 SDK, and it fails with
+      Microsoft.Testing.Platform.MSBuild 2.5.1 whenever an out-of-process
+      extension such as code coverage is enabled.
+
+      %(_SupportedTestProjects.Identity) below triggers MSBuild task batching -
+      one invocation per project - so each test project gets its own
+      report/coverage filename, rather than trying to write to the same one file.
+    -->
+    <Exec Command="&quot;$(_DotNetHostPath)&quot; test --project &quot;%(_SupportedTestProjects.Identity)&quot; --framework $(TargetFramework) --configuration $(Configuration) --no-build --results-directory &quot;$(TestResultsDirectory)&quot; --diagnostic --diagnostic-output-directory &quot;$(_TestDiagnosticsDirectory)&quot; --hangdump --hangdump-timeout 10m --hangdump-type full --report-github --report-github-summary-include-passed false --report-xunit-junit --report-xunit-junit-filename &quot;junit-%(_SupportedTestProjects.Filename).xml&quot; --coverage --coverage-output-format cobertura --coverage-output &quot;Cobertura-%(_SupportedTestProjects.Filename).xml&quot; $(_TestFilterArgument)"
+      ContinueOnError="ErrorAndStop"
+      Condition="'$(TargetFramework)' != '' AND '@(_SupportedTestProjects)' != ''" />
+  </Target>
+
+  <Target Name="_GetAllTestProjectTargetFrameworks" Returns="@(_AllTestProjectTargetFrameworks)">
+    <MSBuild Projects="@(TestProjects)"
+      Targets="GetTestProjectTargetFrameworks"
+      Properties="TargetFramework=;Configuration=$(Configuration)">
+      <Output TaskParameter="TargetOutputs" ItemName="_AllTestProjectTargetFrameworks" />
+    </MSBuild>
+  </Target>
+
+</Project>

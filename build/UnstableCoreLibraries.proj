@@ -21,7 +21,5 @@
     <MSBuild Projects="@(SolutionProjects)" Targets="Restore" ContinueOnError="ErrorAndStop" />
   </Target>
 
-  <Target Name="VSTest">
-    <MSBuild Projects="@(TestProjects)" Targets="VSTest" ContinueOnError="ErrorAndStop" />
-  </Target>
+  <Import Project="$(MSBuildThisFileDirectory)Tests.targets" />
 </Project>
