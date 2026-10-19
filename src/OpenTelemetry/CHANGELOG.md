@@ -60,6 +60,10 @@ Notes](../../RELEASENOTES.md).
   instead of inheriting the process umask.
   ([#7967](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7967))
 
+* Added `Sdk.CreateDefaultTextMapPropagator` to create a new instance of the
+  SDK default propagator for W3C Trace Context and Baggage.
+  ([#7930](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7930))
+
 ## 1.20.0
 
 Released 2026-Oct-15
