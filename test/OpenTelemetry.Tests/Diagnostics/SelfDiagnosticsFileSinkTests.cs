@@ -55,6 +55,38 @@ public sealed class SelfDiagnosticsFileSinkTests : IDisposable
         }
     }
 
+#if NET
+    [Fact]
+    public void RollOver_DoesNotFollowLink()
+    {
+        Assert.SkipWhen(OperatingSystem.IsWindows(), "Creating symbolic links requires elevated privileges on Windows.");
+
+        var linkTarget = Path.Combine(this.tempDirectory.Path, "target.txt");
+        File.WriteAllText(linkTarget, "target content");
+
+        using (var sink = this.CreateSink(fileSizeLimitKilobytes: 1))
+        {
+            var firstPath = sink.CurrentFilePath;
+            Assert.NotNull(firstPath);
+            Assert.EndsWith("-1.log", firstPath, StringComparison.Ordinal);
+
+            File.CreateSymbolicLink(firstPath[..^"-1.log".Length] + "-2.log", linkTarget);
+
+            WriteLine(sink, new string('x', 1_100));
+            Assert.False(sink.IsActive, "expected the rollover to fail on the name taken by the link");
+
+            // The retry interval is zero, so the next write moves on to the next index.
+            WriteLine(sink, "after the rollover");
+            sink.Flush();
+
+            Assert.True(sink.IsActive, "expected sink to recover by skipping the name taken by the link");
+            Assert.EndsWith("-3.log", sink.CurrentFilePath, StringComparison.Ordinal);
+        }
+
+        Assert.Equal("target content", File.ReadAllText(linkTarget));
+    }
+#endif
+
     [Fact]
     public void FirstOpen_WritesStartupMessageToStderr()
     {
@@ -339,9 +371,9 @@ public sealed class SelfDiagnosticsFileSinkTests : IDisposable
         WriteLine(sink, "the entry that fails");
 
         Assert.False(sink.IsActive, "expected write failure to mark the sink inactive");
-        Assert.Single(errors);
-        Assert.Contains("write to", errors[0], StringComparison.Ordinal);
-        Assert.Contains("Entries will be dropped", errors[0], StringComparison.Ordinal);
+        var error = Assert.Single(errors);
+        Assert.Contains("write to", error, StringComparison.Ordinal);
+        Assert.Contains("Entries will be dropped", error, StringComparison.Ordinal);
 
         // The retry interval has not elapsed, so further entries are dropped without a reopen
         // attempt: no second report and no second file.
@@ -378,8 +410,8 @@ public sealed class SelfDiagnosticsFileSinkTests : IDisposable
         sink.Flush();
 
         Assert.False(sink.IsActive, "expected flush failure to mark the sink inactive");
-        Assert.Single(errors);
-        Assert.Contains("flush of", errors[0], StringComparison.Ordinal);
+        var error = Assert.Single(errors);
+        Assert.Contains("flush of", error, StringComparison.Ordinal);
 
         // A broken sink stays quiet: Flush short-circuits on the inactive writer instead of
         // reporting the same outage again.
@@ -407,8 +439,8 @@ public sealed class SelfDiagnosticsFileSinkTests : IDisposable
         WriteLine(sink, new string('x', 1_024));
 
         Assert.False(sink.IsActive, "expected rollover flush failure to mark the sink inactive");
-        Assert.Single(errors);
-        Assert.Contains("rollover of", errors[0], StringComparison.Ordinal);
+        var error = Assert.Single(errors);
+        Assert.Contains("rollover of", error, StringComparison.Ordinal);
         Assert.Single(Directory.GetFiles(this.tempDirectory.Path));
     }
 
@@ -510,6 +542,40 @@ public sealed class SelfDiagnosticsFileSinkTests : IDisposable
         Assert.DoesNotContain("after disposal", content, StringComparison.Ordinal);
         Assert.Single(Directory.GetFiles(this.tempDirectory.Path));
     }
+
+#if NET
+    [Fact]
+    public void NewDirectoryAndFile_AreOwnerOnlyOnUnix()
+    {
+        if (OperatingSystem.IsWindows())
+        {
+            Assert.Skip("Unix file modes do not apply.");
+            return;
+        }
+
+        var logDirectory = Path.Combine(this.tempDirectory.Path, "created-by-sink");
+        string? filePath;
+
+        using (var sink = new SelfDiagnosticsFileSink(
+            logDirectory,
+            fileSizeLimitKilobytes: 10_240,
+            maxRetainedFiles: 3,
+            preambleFactory: null,
+            retryInterval: TimeSpan.Zero))
+        {
+            Assert.True(sink.IsActive);
+            filePath = sink.CurrentFilePath;
+        }
+
+        Assert.NotNull(filePath);
+
+        const UnixFileMode ownerOnlyDirectory = UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute;
+        const UnixFileMode ownerOnlyFile = UnixFileMode.UserRead | UnixFileMode.UserWrite;
+
+        Assert.Equal(ownerOnlyDirectory, File.GetUnixFileMode(logDirectory));
+        Assert.Equal(ownerOnlyFile, File.GetUnixFileMode(filePath));
+    }
+#endif
 
     private static void WriteLine(SelfDiagnosticsFileSink sink, string message)
     {

@@ -168,10 +168,17 @@ public static class OpenTelemetryLoggingExtensions
             services.Configure(configureOptions);
         }
 
+        // Filter options must not depend on OpenTelemetryLoggerOptions: user
+        // options configuration can itself depend on LoggerFilterOptions.
+        services.TryAddSingleton<OpenTelemetryLoggerFilterOptions>();
+        services.AddOptions<LoggerFilterOptions>().Configure<OpenTelemetryLoggerFilterOptions>(
+            static (options, filters) => filters.Configure(options));
+
         var loggingBuilder = new LoggerProviderBuilderBase(services).ConfigureBuilder(
             (sp, logging) =>
             {
                 var options = sp.GetRequiredService<IOptions<OpenTelemetryLoggerOptions>>().Value;
+                sp.GetRequiredService<OpenTelemetryLoggerFilterOptions>().SetConfigurations(options.LoggerFilterConfigurations);
 
                 if (options.ResourceBuilder != null)
                 {
@@ -195,6 +202,8 @@ public static class OpenTelemetryLoggingExtensions
                 sp =>
                 {
                     var state = sp.GetRequiredService<LoggerProviderBuilderSdk>();
+                    var options = sp.GetRequiredService<IOptions<OpenTelemetryLoggerOptions>>().Value;
+                    sp.GetRequiredService<OpenTelemetryLoggerFilterOptions>().SetConfigurations(options.LoggerFilterConfigurations);
 
                     return new OpenTelemetryLoggerProvider(
                         () =>
@@ -231,7 +240,7 @@ public static class OpenTelemetryLoggingExtensions
                             Debug.Assert(provider == state.Provider, "state.Provider did not match resolved LoggerProvider.");
                             return provider;
                         },
-                        sp.GetRequiredService<IOptions<OpenTelemetryLoggerOptions>>().Value,
+                        options,
                         disposeProvider: false);
                 }));
 
