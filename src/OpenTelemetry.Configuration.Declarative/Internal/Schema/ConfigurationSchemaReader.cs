@@ -25,6 +25,12 @@ internal static class ConfigurationSchemaReader
 {
     private const string DefinitionReferencePrefix = "#/$defs/";
 
+#if NET
+    private static readonly FrozenDictionary<string, SchemaValueTypes> ValueTypesByName = CreateValueTypesByName();
+#else
+    private static readonly Dictionary<string, SchemaValueTypes> ValueTypesByName = CreateValueTypesByName();
+#endif
+
     /// <summary>
     /// Reads a schema from <paramref name="stream"/>.
     /// </summary>
@@ -94,17 +100,34 @@ internal static class ConfigurationSchemaReader
         return types;
     }
 
-    private static SchemaValueTypes ParseValueType(string name) => name switch
+#if NET
+    private static FrozenDictionary<string, SchemaValueTypes> CreateValueTypesByName()
+#else
+    private static Dictionary<string, SchemaValueTypes> CreateValueTypesByName()
+#endif
     {
-        "array" => SchemaValueTypes.Array,
-        "boolean" => SchemaValueTypes.Boolean,
-        "integer" => SchemaValueTypes.Integer,
-        "null" => SchemaValueTypes.Null,
-        "number" => SchemaValueTypes.Number,
-        "object" => SchemaValueTypes.Object,
-        "string" => SchemaValueTypes.String,
-        _ => throw Unsupported($"type '{name}' is not recognized."),
-    };
+        var values = new Dictionary<string, SchemaValueTypes>(StringComparer.Ordinal)
+        {
+            ["array"] = SchemaValueTypes.Array,
+            ["boolean"] = SchemaValueTypes.Boolean,
+            ["integer"] = SchemaValueTypes.Integer,
+            ["null"] = SchemaValueTypes.Null,
+            ["number"] = SchemaValueTypes.Number,
+            ["object"] = SchemaValueTypes.Object,
+            ["string"] = SchemaValueTypes.String,
+        };
+
+#if NET
+        return values.ToFrozenDictionary(StringComparer.Ordinal);
+#else
+        return values;
+#endif
+    }
+
+    private static SchemaValueTypes ParseValueType(string name) =>
+        ValueTypesByName.TryGetValue(name, out var type)
+            ? type
+            : throw Unsupported($"type '{name}' is not recognized.");
 
     private sealed class GraphBuilder
     {

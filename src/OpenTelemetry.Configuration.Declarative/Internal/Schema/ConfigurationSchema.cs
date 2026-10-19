@@ -34,7 +34,7 @@ internal sealed class ConfigurationSchema
     internal const string ResourceName = "OpenTelemetry.Configuration.Declarative.Schema.opentelemetry_configuration.json";
 
     private static readonly Lazy<ConfigurationSchema> PinnedSchema =
-        new(() => new(ConfigurationSchemaReader.Read(OpenPinnedResource())), LazyThreadSafetyMode.ExecutionAndPublication);
+        new(() => new(ConfigurationSchemaReader.Read(OpenResource(ResourceName))), LazyThreadSafetyMode.ExecutionAndPublication);
 
     private ConfigurationSchema(SchemaNode root)
     {
@@ -64,7 +64,7 @@ internal sealed class ConfigurationSchema
         || name.EndsWith("/alpha", StringComparison.Ordinal)
         || name.EndsWith("/beta", StringComparison.Ordinal);
 
-    private static Stream OpenPinnedResource() =>
-        typeof(ConfigurationSchema).Assembly.GetManifestResourceStream(ResourceName)
-        ?? throw new InvalidOperationException($"The embedded resource '{ResourceName}' was not found.");
+    internal static Stream OpenResource(string resourceName) =>
+        typeof(ConfigurationSchema).Assembly.GetManifestResourceStream(resourceName)
+        ?? throw new InvalidOperationException($"The embedded resource '{resourceName}' was not found.");
 }

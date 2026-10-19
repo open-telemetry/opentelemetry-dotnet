@@ -125,6 +125,14 @@ public sealed class ConfigurationSchemaTests
         Assert.Equal(expected, ConfigurationSchema.IsExperimentalPropertyName(name));
 
     [Fact]
+    public void OpenResource_MissingResource_Throws()
+    {
+        var exception = Assert.Throws<InvalidOperationException>(() => ConfigurationSchema.OpenResource("Missing.json"));
+
+        Assert.Equal("The embedded resource 'Missing.json' was not found.", exception.Message);
+    }
+
+    [Fact]
     public void Version_MinorMatchesMaxSupportedMinorVersion()
     {
         var version = Version.Parse(ConfigurationSchema.Version);

@@ -81,6 +81,9 @@ public sealed class ConfigurationSchemaReaderTests
     [InlineData("""{"additionalProperties":!!str false}""")]
     [InlineData("""{"additionalProperties":!!str true}""")]
     [InlineData("""{"additionalProperties":!!bool false}""")]
+    [InlineData("""{"additionalProperties":maybe}""")]
+    [InlineData("""{"additionalProperties":null}""")]
+    [InlineData("""{"additionalProperties":1}""")]
     public void Read_MalformedConstraint_Throws(string schema) => AssertUnsupported(schema);
 
     [Theory]
