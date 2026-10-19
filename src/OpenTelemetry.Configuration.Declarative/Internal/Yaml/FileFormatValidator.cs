@@ -67,7 +67,9 @@ internal static partial class FileFormatValidator
                 $"(for example: \"{SupportedMajorVersion}.{MaxSupportedMinorVersion}\").");
         }
 
-        if (major != SupportedMajorVersion)
+        var version = new FileFormatVersion(validatedFileFormat, major, minor);
+
+        if (!version.IsSupportedMajorVersion)
         {
             throw new DeclarativeConfigurationException(
                 $"Unsupported file_format '{validatedFileFormat}': major version {major} is not supported " +
@@ -75,14 +77,14 @@ internal static partial class FileFormatValidator
         }
 
         // Minor is newer than this SDK knows about: accept but warn (some features may not take effect).
-        if (minor > MaxSupportedMinorVersion)
+        if (version.IsNewerMinorVersion)
         {
             warn($"Configuration file_format '{validatedFileFormat}' is newer than the maximum version " +
                  $"supported by this SDK implementation ({SupportedMajorVersion}.{MaxSupportedMinorVersion}). " +
                  $"Features introduced in newer minor versions may not take effect.");
         }
 
-        return new(validatedFileFormat, major, minor);
+        return version;
     }
 
 #if NET

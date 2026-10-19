@@ -12,7 +12,14 @@ namespace OpenTelemetry.Configuration.Declarative;
 internal readonly record struct FileFormatVersion(string Value, int Major, int Minor)
 {
     /// <summary>
-    /// Gets a value indicating whether the minor version is newer than the schema this package understands.
+    /// Gets a value indicating whether the major version is the one this package supports.
     /// </summary>
-    internal bool IsNewerMinorVersion => this.Minor > FileFormatValidator.MaxSupportedMinorVersion;
+    internal bool IsSupportedMajorVersion => this.Major == FileFormatValidator.SupportedMajorVersion;
+
+    /// <summary>
+    /// Gets a value indicating whether the version is a newer minor version of the supported major
+    /// version than the schema this package understands.
+    /// </summary>
+    internal bool IsNewerMinorVersion =>
+        this.IsSupportedMajorVersion && this.Minor > FileFormatValidator.MaxSupportedMinorVersion;
 }

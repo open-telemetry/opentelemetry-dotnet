@@ -249,6 +249,21 @@ public sealed class SchemaPropertyNameValidatorTests
         Assert.Equal([new UndefinedProperty($"resource.{key}", (UndefinedPropertyKind)expected)], retained);
     }
 
+    [Theory]
+    [InlineData(-1)]
+    [InlineData(1)]
+    public void Validate_NewerMinorOfAnotherMajorVersion_RejectsUndefinedKeys(int majorOffset)
+    {
+        var major = FileFormatValidator.SupportedMajorVersion + majorOffset;
+        var minor = FileFormatValidator.MaxSupportedMinorVersion + 1;
+        var root = ObjectNode(AdditionalPropertiesKind.Allowed, ("resource", ObjectNode(AdditionalPropertiesKind.Forbidden)));
+
+        var exception = Assert.Throws<DeclarativeConfigurationException>(() =>
+            SchemaPropertyNameValidator.Validate(Mapping("resource", Typo()), new($"{major}.{minor}", major, minor), root));
+
+        Assert.StartsWith("Property 'resource.typo'", exception.Message, StringComparison.Ordinal);
+    }
+
     [Fact]
     public void Validate_UndefinedKeyAtTheRoot_IsRetainedAsRoot()
     {

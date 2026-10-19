@@ -1,7 +1,6 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-using System.Globalization;
 using YamlDotNet.Core;
 using YamlDotNet.RepresentationModel;
 
@@ -43,9 +42,8 @@ internal static class YamlDepthValidator
         if (depth > MaximumDepth)
         {
             throw new DeclarativeConfigurationException(
-                $"YAML collection nesting exceeds the maximum depth of {MaximumDepth.ToString(CultureInfo.InvariantCulture)} " +
-                $"(line {position.Line.ToString(CultureInfo.InvariantCulture)}, " +
-                $"column {position.Column.ToString(CultureInfo.InvariantCulture)}). The document root has depth 0.");
+                FormattableString.Invariant(
+                    $"YAML collection nesting exceeds the maximum depth of {MaximumDepth} (line {position.Line}, column {position.Column}). The document root has depth 0."));
         }
     }
 

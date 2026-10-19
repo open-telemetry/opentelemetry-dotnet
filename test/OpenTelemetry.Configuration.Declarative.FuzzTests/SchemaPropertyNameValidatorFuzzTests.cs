@@ -48,8 +48,7 @@ public class SchemaPropertyNameValidatorFuzzTests
                     .Classify(expanded is not null, "rejected");
             });
 
-    // Guards the generator: both outcomes must be reachable, otherwise the property above
-    // could pass vacuously.
+    // The property above is only meaningful if the generator produces documents that both load and fail.
     [Fact]
     public void GeneratorProducesLoadingAndRejectedDocuments()
     {

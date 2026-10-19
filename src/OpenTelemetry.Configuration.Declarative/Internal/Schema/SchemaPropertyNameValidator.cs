@@ -1,8 +1,6 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-using System.Globalization;
-
 namespace OpenTelemetry.Configuration.Declarative;
 
 /// <summary>
@@ -173,16 +171,14 @@ internal static class SchemaPropertyNameValidator
             }
 
             var (firstPath, firstPosition) = this.rejected[0];
-            var message =
-                $"Property '{firstPath}' (line {firstPosition.Line.ToString(CultureInfo.InvariantCulture)}, " +
-                $"column {firstPosition.Column.ToString(CultureInfo.InvariantCulture)}) is not defined by " +
-                $"OpenTelemetry configuration schema {ConfigurationSchema.Version} and is not permitted at this location.";
+            var message = FormattableString.Invariant(
+                $"Property '{firstPath}' (line {firstPosition.Line}, column {firstPosition.Column}) is not defined by OpenTelemetry configuration schema {ConfigurationSchema.Version} and is not permitted at this location.");
 
             var others = this.rejected.Count - 1;
             if (others > 0)
             {
-                message += $" {others.ToString(CultureInfo.InvariantCulture)} more undefined " +
-                    $"{(others == 1 ? "property was" : "properties were")} reported through EventSource.";
+                message += FormattableString.Invariant(
+                    $" {others} more undefined {(others == 1 ? "property was" : "properties were")} reported through EventSource.");
             }
 
             throw new DeclarativeConfigurationException(message);

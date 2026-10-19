@@ -18,6 +18,7 @@ public sealed partial class SchemaConformanceFixtureTests
     private const string UndefinedKeyName = "zz_undefined_property";
     private const string UndefinedKey = UndefinedKeyName + ": 1";
     private const string TopLevelKeyPattern = @"^([A-Za-z_][A-Za-z0-9_/.\-]*):";
+    private const string FixtureResourcePrefix = "Schema/v1.2.0/";
 
     private static readonly string[] ExpectedExamples =
     [
@@ -29,8 +30,6 @@ public sealed partial class SchemaConformanceFixtureTests
 #if !NET
     private static readonly Regex TopLevelKey = new(TopLevelKeyPattern, RegexOptions.Compiled | RegexOptions.CultureInvariant);
 #endif
-
-    private static readonly string FixtureDirectory = Path.Combine(AppContext.BaseDirectory, "TestAssets", "Schema", "v1.2.0");
 
     // Pin every snippet, but mutate only one representative of each path and outcome.
     // Paths and outcomes are independent of the schema reader and validator under test.
@@ -138,7 +137,7 @@ public sealed partial class SchemaConformanceFixtureTests
         foreach (var group in Expectations.OrderBy(row => row.Key, StringComparer.Ordinal).GroupBy(row => row.Value))
         {
             var row = group.First();
-            data.Add(Path.Combine("snippets", row.Key + ".yaml"), row.Value.ParentPath, row.Value.Outcome);
+            data.Add("snippets/" + row.Key + ".yaml", row.Value.ParentPath, row.Value.Outcome);
         }
 
         return data;
@@ -163,7 +162,7 @@ public sealed partial class SchemaConformanceFixtureTests
     public void Read_Fixture_LoadsWithoutUndefinedPropertyErrors(string relativePath)
     {
         using var listener = CreateListener();
-        var yaml = File.ReadAllText(Path.Combine(FixtureDirectory, relativePath));
+        var yaml = ReadFixture(relativePath);
 
         var document = Read(yaml);
 
@@ -184,7 +183,7 @@ public sealed partial class SchemaConformanceFixtureTests
             ("OTEL_SERVICE_NAME", "123"),
             ("OTEL_RESOURCE_ATTRIBUTES", "123"));
         using var listener = CreateListener();
-        var yaml = File.ReadAllText(Path.Combine(FixtureDirectory, "examples", "otel-sdk-migration-config.yaml"));
+        var yaml = ReadFixture("examples/otel-sdk-migration-config.yaml");
 
         var document = Read(yaml);
 
@@ -209,7 +208,7 @@ public sealed partial class SchemaConformanceFixtureTests
     {
         using var listener = CreateListener();
         var (yaml, line, column) = InsertUndefinedKey(
-            File.ReadAllText(Path.Combine(FixtureDirectory, relativePath)),
+            ReadFixture(relativePath),
             parentPath);
         var path = parentPath + "." + UndefinedKeyName;
 
@@ -259,7 +258,7 @@ public sealed partial class SchemaConformanceFixtureTests
     public void Read_SnippetWithACustomSampler_RetainsTheComponentAndItsOptionsSilently()
     {
         using var listener = CreateListener();
-        var lines = File.ReadAllLines(Path.Combine(FixtureDirectory, "snippets", "Sampler_parent_based_typical.yaml"));
+        var lines = ReadFixture("snippets/Sampler_parent_based_typical.yaml").Split(["\r\n", "\n"], StringSplitOptions.None);
         var selector = Array.FindIndex(
             lines,
             line => string.Equals(line, "    parent_based:", StringComparison.Ordinal));
@@ -277,9 +276,18 @@ public sealed partial class SchemaConformanceFixtureTests
     }
 
     private static List<string> EnumerateFixtures(string directory) =>
-        [.. Directory.GetFiles(Path.Combine(FixtureDirectory, directory), "*.yaml")
-            .Select(path => Path.Combine(directory, Path.GetFileName(path)))
+        [.. typeof(SchemaConformanceFixtureTests).Assembly.GetManifestResourceNames()
+            .Where(name => name.StartsWith(FixtureResourcePrefix + directory + "/", StringComparison.Ordinal))
+            .Select(name => name.Substring(FixtureResourcePrefix.Length))
             .OrderBy(path => path, StringComparer.Ordinal)];
+
+    private static string ReadFixture(string relativePath)
+    {
+        using var stream = typeof(SchemaConformanceFixtureTests).Assembly.GetManifestResourceStream(FixtureResourcePrefix + relativePath);
+        Assert.NotNull(stream);
+        using var reader = new StreamReader(stream);
+        return reader.ReadToEnd();
+    }
 
 #if NET
     [GeneratedRegex(TopLevelKeyPattern, RegexOptions.CultureInvariant)]
