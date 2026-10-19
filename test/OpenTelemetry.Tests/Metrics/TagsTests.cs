@@ -178,6 +178,106 @@ public class TagsTests
         Assert.True(hashes.Count >= 99, $"Only {hashes.Count} distinct hashes for 100 distinct keys.");
     }
 
+    [Theory]
+    [InlineData(typeof(long))]
+    [InlineData(typeof(ulong))]
+    [InlineData(typeof(double))]
+    [InlineData(typeof(decimal))]
+    [InlineData(typeof(Guid))]
+    [InlineData(typeof(DateTime))]
+    [InlineData(typeof(DateTimeOffset))]
+    [InlineData(typeof(TimeSpan))]
+    public void Lookup_DoesNotConcentrateCollidingWideValuesInOneBucket(Type type)
+    {
+        const int CardinalityLimit = 2000;
+
+        var values = Enumerable.Range(1, CardinalityLimit + 1)
+            .Select(i => CreateCollidingWideValue(type, (uint)i))
+            .ToArray();
+
+        Assert.Equal(values.Length, values.Distinct().Count());
+        Assert.Single(values.Select(value => value.GetHashCode()).Distinct());
+
+        var comparer = new CountingTagsComparer();
+        var lookup = new System.Collections.Concurrent.ConcurrentDictionary<Tags, int>(comparer);
+
+        for (var i = 0; i < CardinalityLimit; i++)
+        {
+            Assert.True(lookup.TryAdd(new Tags([new("customer", values[i])]), i));
+        }
+
+        comparer.EqualsCalls = 0;
+        Assert.False(lookup.TryGetValue(new Tags([new("customer", values[CardinalityLimit])]), out _));
+
+        Assert.True(
+            comparer.EqualsCalls <= 8,
+            $"A lookup with {type} values performed {comparer.EqualsCalls} comparisons.");
+
+        for (var i = 0; i < CardinalityLimit; i++)
+        {
+            Assert.True(lookup.TryGetValue(new Tags([new("customer", values[i])]), out var index));
+            Assert.Equal(i, index);
+        }
+    }
+
+    [Fact]
+    public void ComputeHashCode_WideValuesWhoseHalvesCancelOutInSystemHashCodeAreDistributed()
+    {
+        // Adding the 32-bit halves separately to System.HashCode still allows
+        // collisions: the contribution from one word can cancel the next one.
+        const uint InversePrime3 = 2828982549U;
+        const uint Prime4 = 668265263U;
+
+        var hashes = new HashSet<int>();
+
+        for (uint i = 0; i < 2048; i++)
+        {
+            var bits = unchecked(((ulong)(0U - (i * 64U * Prime4 * InversePrime3)) << 32)
+                | ((i << 21) * InversePrime3));
+            hashes.Add(Tags.ComputeHashCode([new("customer", unchecked((long)bits))]));
+        }
+
+        Assert.True(hashes.Count >= 2040, $"Only {hashes.Count} distinct hashes for 2048 distinct values.");
+    }
+
+    [Fact]
+    public void ComputeHashCode_EqualWideValuesShareAHashCode()
+    {
+        var ticks = new DateTime(2026, 10, 19, 12, 0, 0, DateTimeKind.Utc).Ticks;
+        object[][] equalValues =
+        [
+            [0.0, -0.0],
+            [double.NaN, -double.NaN, BitConverter.Int64BitsToDouble(0x7FF0000000000001)],
+            [0m, 0.00m, new decimal(0, 0, 0, true, 0), new decimal(0, 0, 0, true, 28)],
+            [1m, 1.0m, 1.0000000000000000000000000000m],
+            [-120m, -120.0m, -120.000m],
+            [0.5m, 0.50m, 0.5000000000000000000000000000m],
+            [7922816251426433759354395033m, 7922816251426433759354395033.0m],
+            [new decimal(0, 0, 10, false, 0), new decimal(0, 0, 100, false, 1)],
+            [new DateTime(ticks, DateTimeKind.Utc), new DateTime(ticks, DateTimeKind.Local)],
+            [new DateTimeOffset(ticks, TimeSpan.Zero),
+                new DateTimeOffset(ticks + TimeSpan.FromHours(2).Ticks, TimeSpan.FromHours(2))],
+        ];
+
+        foreach (var values in equalValues)
+        {
+            var expected = new Tags([new("key", values[0])]);
+
+            foreach (var value in values)
+            {
+                var actual = new Tags([new("key", value)]);
+
+                Assert.Equal(values[0], value);
+                Assert.True(
+                    expected.GetHashCode() == actual.GetHashCode(),
+                    $"Equal {value.GetType()} values {values[0]} and {value} have different tag hashes.");
+                Assert.Equal(expected.GetHashCode(), Tags.ComputeHashCode([new("key", value)]));
+                Assert.True(expected.Equals(actual));
+                Assert.True(expected.Equals([new("key", value)]));
+            }
+        }
+    }
+
 #if NETFRAMEWORK
     [Fact]
     public void ComputeHashCode_LegacyCollidingStringValuesDoNotShareAHashCode()
@@ -250,6 +350,34 @@ public class TagsTests
 
     private static string[] CreateLegacyCollidingValues(int count)
         => [.. Enumerable.Range(0, count).Select(i => "\0" + new string('A', 64) + i.ToString("D5", CultureInfo.InvariantCulture))];
+#endif
+
+    private static object CreateCollidingWideValue(Type type, uint i)
+    {
+        // These types fold their words with XOR in GetHashCode. Equal words
+        // cancel, even though the values themselves are distinct.
+        var bits = ((ulong)i << 32) | i;
+
+        return type switch
+        {
+            _ when type == typeof(long) => (long)bits,
+            _ when type == typeof(ulong) => bits,
+            _ when type == typeof(double) => BitConverter.Int64BitsToDouble((long)bits),
+#if NETFRAMEWORK
+            // Framework hashes decimals through double, which loses these low bits,
+            // and combines a different subset of a Guid's fields.
+            _ when type == typeof(decimal) => new decimal((int)i, 0, 1, false, 0),
+            _ when type == typeof(Guid) => new Guid((int)i, 0, (short)i, 0, 0, 0, 0, 0, 0, 0, 0),
+#else
+            _ when type == typeof(decimal) => new decimal((int)i, (int)i, 0, false, 0),
+            _ when type == typeof(Guid) => new Guid((int)i, 0, 0, (byte)i, (byte)(i >> 8), 0, 0, 0, 0, 0, 0),
+#endif
+            _ when type == typeof(DateTime) => new DateTime((long)bits),
+            _ when type == typeof(DateTimeOffset) => new DateTimeOffset((long)bits, TimeSpan.Zero),
+            _ when type == typeof(TimeSpan) => new TimeSpan((long)bits),
+            _ => throw new NotSupportedException(),
+        };
+    }
 
     private sealed class CountingTagsComparer : IEqualityComparer<Tags>
     {
@@ -263,5 +391,4 @@ public class TagsTests
 
         public int GetHashCode(Tags obj) => TagsComparer.Instance.GetHashCode(obj);
     }
-#endif
 }
