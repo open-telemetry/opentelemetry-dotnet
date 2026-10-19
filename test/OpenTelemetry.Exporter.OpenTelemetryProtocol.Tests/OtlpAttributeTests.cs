@@ -479,6 +479,13 @@ public class OtlpAttributeTests
         Assert.False(TryTransformTag(kvp, out _, tagValueMaxLength: 1));
     }
 
+    [Fact]
+    public void NullUtf8ToStringFallbackIsDropped()
+    {
+        var kvp = new KeyValuePair<string, object?>("key", new Utf8ValueThatDoesNotFitAndReturnsNullFromToString());
+        Assert.False(TryTransformTag(kvp, out _, tagValueMaxLength: 1));
+    }
+
     [Theory]
     [InlineData(typeof(InvalidOperationException))]
     [InlineData(typeof(ArgumentException))]
@@ -600,6 +607,17 @@ public class OtlpAttributeTests
         }
 
         public override string ToString() => throw new InvalidOperationException("Nope.");
+    }
+
+    private sealed class Utf8ValueThatDoesNotFitAndReturnsNullFromToString : IUtf8SpanFormattable
+    {
+        public bool TryFormat(Span<byte> utf8Destination, out int bytesWritten, ReadOnlySpan<char> format, IFormatProvider? provider)
+        {
+            bytesWritten = 0;
+            return false;
+        }
+
+        public override string? ToString() => null;
     }
 
     private sealed class Utf8ValueThatFillsBufferAndThrows : IUtf8SpanFormattable
