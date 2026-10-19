@@ -15,7 +15,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests;
 /// Most tests use a random free port and do not need this. It is only for the
 /// tests whose purpose is to verify what happens when no specific port is configured.
 /// </remarks>
-internal sealed class DefaultPortLock(FileStream lockFile) : IDisposable
+internal sealed class DefaultPortLock : IDisposable
 {
     private static readonly string LockFilePath = Path.Combine(
         Path.GetTempPath(),
@@ -24,13 +24,24 @@ internal sealed class DefaultPortLock(FileStream lockFile) : IDisposable
     private static readonly TimeSpan RetryDelay = TimeSpan.FromMilliseconds(50);
     private static readonly TimeSpan AcquireTimeout = TimeSpan.FromMinutes(2);
 
-    private readonly FileStream lockFile = lockFile;
+    private readonly FileStream lockFile;
+
+    private DefaultPortLock()
+    {
+        this.lockFile = OpenLockFile();
+    }
 
     /// <summary>
     /// Acquires the lock, waiting for any other process which holds it to release it.
     /// </summary>
     /// <returns>An <see cref="IDisposable"/> which releases the lock when disposed.</returns>
     public static DefaultPortLock Acquire()
+        => new();
+
+    public void Dispose()
+        => this.lockFile.Dispose();
+
+    private static FileStream OpenLockFile()
     {
         var stopwatch = Stopwatch.StartNew();
 
@@ -42,14 +53,12 @@ internal sealed class DefaultPortLock(FileStream lockFile) : IDisposable
                 // which the operating system releases when the file is closed, which
                 // includes the process exiting, so a crashed test run cannot leave the
                 // lock held.
-                var stream = new FileStream(
+                return new FileStream(
                     LockFilePath,
                     FileMode.OpenOrCreate,
                     FileAccess.ReadWrite,
                     FileShare.None,
                     bufferSize: 1);
-
-                return new(stream);
             }
             catch (IOException) when (stopwatch.Elapsed < AcquireTimeout)
             {
@@ -57,7 +66,4 @@ internal sealed class DefaultPortLock(FileStream lockFile) : IDisposable
             }
         }
     }
-
-    public void Dispose()
-        => this.lockFile.Dispose();
 }
