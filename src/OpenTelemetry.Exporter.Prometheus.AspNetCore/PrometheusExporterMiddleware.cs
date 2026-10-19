@@ -364,7 +364,26 @@ internal sealed class PrometheusExporterMiddleware
         }
         else
         {
-            await response.BodyWriter.WriteAsync(content, cancellationToken);
+            // Write the shared response buffer in slices, awaiting each one, rather than in a single
+            // write. Kestrel copies all of the content passed to one write into the connection's output
+            // pipe before it applies back-pressure, so writing the whole buffer at once would make
+            // every client that does not read its response pin a private copy of the entire payload.
+            while (!content.IsEmpty)
+            {
+                var slice = content.Length > PrometheusExporter.MaximumResponseWriteSize
+                    ? content[..PrometheusExporter.MaximumResponseWriteSize]
+                    : content;
+
+                var result = await response.BodyWriter.WriteAsync(slice, cancellationToken);
+
+                if (result.IsCompleted)
+                {
+                    // The client has gone away, so there is no point writing any more
+                    break;
+                }
+
+                content = content[slice.Length..];
+            }
         }
     }
 }

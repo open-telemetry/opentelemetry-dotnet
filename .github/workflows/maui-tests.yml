@@ -64,14 +64,14 @@ jobs:
         target: google_apis
         script: |
           set +e
-          dotnet test test/OpenTelemetry.Maui.Tests/OpenTelemetry.Maui.Tests.csproj --configuration Debug --framework "${TARGET_FRAMEWORK}" --logger:"GitHubActions;report-warnings=false;summary-include-passed=false"
+          dotnet test test/OpenTelemetry.Maui.Tests/OpenTelemetry.Maui.Tests.csproj --configuration Debug --framework "${TARGET_FRAMEWORK}" --report-github --report-github-summary-include-passed false
           exit_code=$?
           adb pull /storage/emulated/0/Android/data/io.opentelemetry.dotnet.maui/files/TestResults ./TestResults || true
           exit $exit_code
 
     - name: Upload test result artifacts
       if: ${{ failure() }}
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
       with:
         name: maui-artifacts
         if-no-files-found: ignore

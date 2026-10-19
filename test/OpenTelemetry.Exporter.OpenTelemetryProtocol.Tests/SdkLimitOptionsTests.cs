@@ -6,18 +6,8 @@ using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests;
 
-public sealed class SdkLimitOptionsTests : IDisposable
+public sealed class SdkLimitOptionsTests
 {
-    public SdkLimitOptionsTests()
-    {
-        ClearEnvVars();
-    }
-
-    public void Dispose()
-    {
-        ClearEnvVars();
-    }
-
     [Fact]
     public void SdkLimitOptionsDefaults()
     {
@@ -38,14 +28,15 @@ public sealed class SdkLimitOptionsTests : IDisposable
     [Fact]
     public void SdkLimitOptionsIsInitializedFromEnvironment()
     {
-        Environment.SetEnvironmentVariable("OTEL_ATTRIBUTE_VALUE_LENGTH_LIMIT", "10");
-        Environment.SetEnvironmentVariable("OTEL_ATTRIBUTE_COUNT_LIMIT", "10");
-        Environment.SetEnvironmentVariable("OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT", "20");
-        Environment.SetEnvironmentVariable("OTEL_SPAN_ATTRIBUTE_COUNT_LIMIT", "20");
-        Environment.SetEnvironmentVariable("OTEL_SPAN_EVENT_COUNT_LIMIT", "10");
-        Environment.SetEnvironmentVariable("OTEL_SPAN_LINK_COUNT_LIMIT", "10");
-        Environment.SetEnvironmentVariable("OTEL_EVENT_ATTRIBUTE_COUNT_LIMIT", "30");
-        Environment.SetEnvironmentVariable("OTEL_LINK_ATTRIBUTE_COUNT_LIMIT", "30");
+        using var scope = EnvironmentVariableScope.Create(
+            ("OTEL_ATTRIBUTE_VALUE_LENGTH_LIMIT", "10"),
+            ("OTEL_ATTRIBUTE_COUNT_LIMIT", "10"),
+            ("OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT", "20"),
+            ("OTEL_SPAN_ATTRIBUTE_COUNT_LIMIT", "20"),
+            ("OTEL_SPAN_EVENT_COUNT_LIMIT", "10"),
+            ("OTEL_SPAN_LINK_COUNT_LIMIT", "10"),
+            ("OTEL_EVENT_ATTRIBUTE_COUNT_LIMIT", "30"),
+            ("OTEL_LINK_ATTRIBUTE_COUNT_LIMIT", "30"));
 
         var options = new SdkLimitOptions();
 
@@ -97,14 +88,14 @@ public sealed class SdkLimitOptionsTests : IDisposable
         options.SpanAttributeCountLimit = 20;
         Assert.Equal(10, options.AttributeCountLimit);
         Assert.Equal(20, options.SpanAttributeCountLimit);
-        Assert.Equal(20, options.SpanEventAttributeCountLimit);
-        Assert.Equal(20, options.SpanLinkAttributeCountLimit);
+        Assert.Equal(10, options.SpanEventAttributeCountLimit);
+        Assert.Equal(10, options.SpanLinkAttributeCountLimit);
 
         options.SpanEventAttributeCountLimit = 30;
         Assert.Equal(10, options.AttributeCountLimit);
         Assert.Equal(20, options.SpanAttributeCountLimit);
         Assert.Equal(30, options.SpanEventAttributeCountLimit);
-        Assert.Equal(20, options.SpanLinkAttributeCountLimit);
+        Assert.Equal(10, options.SpanLinkAttributeCountLimit);
 
         options.SpanLinkAttributeCountLimit = 40;
         Assert.Equal(10, options.AttributeCountLimit);
@@ -129,6 +120,46 @@ public sealed class SdkLimitOptionsTests : IDisposable
         Assert.Null(options.SpanAttributeCountLimit);
         Assert.Null(options.SpanEventAttributeCountLimit);
         Assert.Null(options.SpanLinkAttributeCountLimit);
+    }
+
+    [Fact]
+    public void EventAndLinkAttributeCountLimitsIgnoreSpanAttributeCountLimitFromEnvironment()
+    {
+        using var scope = EnvironmentVariableScope.Create("OTEL_SPAN_ATTRIBUTE_COUNT_LIMIT", "5");
+
+        var options = new SdkLimitOptions();
+
+        Assert.Equal(5, options.SpanAttributeCountLimit);
+        Assert.Equal(128, options.SpanEventAttributeCountLimit);
+        Assert.Equal(128, options.SpanLinkAttributeCountLimit);
+    }
+
+    [Fact]
+    public void EventAndLinkAttributeCountLimitsFollowGeneralLimitFromEnvironment()
+    {
+        using var scope = EnvironmentVariableScope.Create("OTEL_ATTRIBUTE_COUNT_LIMIT", "7");
+
+        var options = new SdkLimitOptions();
+
+        Assert.Equal(7, options.SpanAttributeCountLimit);
+        Assert.Equal(7, options.SpanEventAttributeCountLimit);
+        Assert.Equal(7, options.SpanLinkAttributeCountLimit);
+    }
+
+    [Fact]
+    public void EventAndLinkAttributeCountLimitsOverrideSpanAndGeneralLimitsFromEnvironment()
+    {
+        using var scope = EnvironmentVariableScope.Create(
+            ("OTEL_ATTRIBUTE_COUNT_LIMIT", "7"),
+            ("OTEL_SPAN_ATTRIBUTE_COUNT_LIMIT", "5"),
+            ("OTEL_EVENT_ATTRIBUTE_COUNT_LIMIT", "11"),
+            ("OTEL_LINK_ATTRIBUTE_COUNT_LIMIT", "13"));
+
+        var options = new SdkLimitOptions();
+
+        Assert.Equal(5, options.SpanAttributeCountLimit);
+        Assert.Equal(11, options.SpanEventAttributeCountLimit);
+        Assert.Equal(13, options.SpanLinkAttributeCountLimit);
     }
 
     [Fact]
@@ -164,19 +195,5 @@ public sealed class SdkLimitOptionsTests : IDisposable
         Assert.Equal(30, options.SpanLinkAttributeCountLimit);
         Assert.Equal(31, options.LogRecordAttributeValueLengthLimit);
         Assert.Equal(32, options.LogRecordAttributeCountLimit);
-    }
-
-    private static void ClearEnvVars()
-    {
-        Environment.SetEnvironmentVariable("OTEL_ATTRIBUTE_VALUE_LENGTH_LIMIT", null);
-        Environment.SetEnvironmentVariable("OTEL_ATTRIBUTE_COUNT_LIMIT", null);
-        Environment.SetEnvironmentVariable("OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT", null);
-        Environment.SetEnvironmentVariable("OTEL_SPAN_ATTRIBUTE_COUNT_LIMIT", null);
-        Environment.SetEnvironmentVariable("OTEL_SPAN_EVENT_COUNT_LIMIT", null);
-        Environment.SetEnvironmentVariable("OTEL_SPAN_LINK_COUNT_LIMIT", null);
-        Environment.SetEnvironmentVariable("OTEL_EVENT_ATTRIBUTE_COUNT_LIMIT", null);
-        Environment.SetEnvironmentVariable("OTEL_LINK_ATTRIBUTE_COUNT_LIMIT", null);
-        Environment.SetEnvironmentVariable("OTEL_LOGRECORD_ATTRIBUTE_VALUE_LENGTH_LIMIT", null);
-        Environment.SetEnvironmentVariable("OTEL_LOGRECORD_ATTRIBUTE_COUNT_LIMIT", null);
     }
 }

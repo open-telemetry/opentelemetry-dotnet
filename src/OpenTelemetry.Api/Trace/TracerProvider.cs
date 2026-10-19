@@ -101,7 +101,7 @@ public class TracerProvider : BaseProvider
                 var activitySourceOptions = new System.Diagnostics.ActivitySourceOptions(key.Name)
                 {
                     Version = key.Version,
-                    Tags = key.Tags,
+                    Tags = key.GetActivitySourceTags(),
                     TelemetrySchemaUrl = key.SchemaUrl,
                 };
 
@@ -182,6 +182,10 @@ public class TracerProvider : BaseProvider
             }
         }
 
+        // ActivitySource exposes its tags, so its arrays must not be shared with the cache key.
+        internal KeyValuePair<string, object?>[]? GetActivitySourceTags()
+            => GetOrderedTags(this.Tags);
+
         private static bool AreTagsEqual(
             KeyValuePair<string, object?>[]? tags1,
             KeyValuePair<string, object?>[]? tags2)
@@ -207,19 +211,44 @@ public class TracerProvider : BaseProvider
                 }
 
                 // Compare values
-                if (kvp1.Value is null)
+                if (!AreValuesEqual(kvp1.Value, kvp2.Value))
                 {
-                    if (kvp2.Value is not null)
-                    {
-                        return false;
-                    }
+                    return false;
                 }
-                else
+            }
+
+            return true;
+        }
+
+        private static bool AreValuesEqual(object? value1, object? value2)
+        {
+            if (value1 is not Array array1 || value2 is not Array array2)
+            {
+                return Equals(value1, value2);
+            }
+
+            if (array1.GetType() != array2.GetType() || array1.Length != array2.Length)
+            {
+                return false;
+            }
+
+            for (var dimension = 0; dimension < array1.Rank; dimension++)
+            {
+                if (array1.GetLength(dimension) != array2.GetLength(dimension)
+                    || array1.GetLowerBound(dimension) != array2.GetLowerBound(dimension))
                 {
-                    if (!kvp1.Value.Equals(kvp2.Value))
-                    {
-                        return false;
-                    }
+                    return false;
+                }
+            }
+
+            var enumerator1 = array1.GetEnumerator();
+            var enumerator2 = array2.GetEnumerator();
+            while (enumerator1.MoveNext() && enumerator2.MoveNext())
+            {
+                // Compare scalar elements without traversing arbitrary object graphs.
+                if (!Equals(enumerator1.Current, enumerator2.Current))
+                {
+                    return false;
                 }
             }
 
@@ -246,12 +275,41 @@ public class TracerProvider : BaseProvider
 #endif
                     if (kvp.Value != null)
                     {
-                        hash = (hash * 31) + kvp.Value.GetHashCode();
+                        hash = (hash * 31) + GetValueHashCode(kvp.Value);
                     }
                 }
             }
 
             return hash;
+        }
+
+        private static int GetValueHashCode(object value)
+        {
+            if (value is not Array array)
+            {
+                return value.GetHashCode();
+            }
+
+#if NET
+            HashCode hash = default;
+            foreach (var item in array)
+            {
+                hash.Add(item);
+            }
+
+            return hash.ToHashCode();
+#else
+            var hash = 0;
+            unchecked
+            {
+                foreach (var item in array)
+                {
+                    hash = (hash * 31) + (item?.GetHashCode() ?? 0);
+                }
+            }
+
+            return hash;
+#endif
         }
 
         private static KeyValuePair<string, object?>[]? GetOrderedTags(
@@ -263,6 +321,15 @@ public class TracerProvider : BaseProvider
             }
 
             var orderedTagList = new List<KeyValuePair<string, object?>>(tags);
+            for (var i = 0; i < orderedTagList.Count; i++)
+            {
+                // Snapshot array values so caller mutations cannot change a cached key.
+                if (orderedTagList[i].Value is Array array)
+                {
+                    orderedTagList[i] = new(orderedTagList[i].Key, array.Clone());
+                }
+            }
+
             orderedTagList.Sort((left, right) =>
             {
                 // First compare by key

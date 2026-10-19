@@ -101,11 +101,11 @@ internal sealed class SdkLimitOptions
     /// Gets or sets the maximum allowed span event attribute count.
     /// </summary>
     /// <remarks>
-    /// Note: Overrides the <see cref="SpanAttributeCountLimit"/> setting for span events if specified.
+    /// Note: Overrides the <see cref="AttributeCountLimit"/> setting for span events if specified.
     /// </remarks>
     public int? SpanEventAttributeCountLimit
     {
-        get => this.spanEventAttributeCountLimitSet ? this.spanEventAttributeCountLimit : this.SpanAttributeCountLimit;
+        get => this.spanEventAttributeCountLimitSet ? this.spanEventAttributeCountLimit : this.AttributeCountLimit;
         set
         {
             this.spanEventAttributeCountLimitSet = true;
@@ -117,11 +117,11 @@ internal sealed class SdkLimitOptions
     /// Gets or sets the maximum allowed span link attribute count.
     /// </summary>
     /// <remarks>
-    /// Note: Overrides the <see cref="SpanAttributeCountLimit"/> setting for span links if specified.
+    /// Note: Overrides the <see cref="AttributeCountLimit"/> setting for span links if specified.
     /// </remarks>
     public int? SpanLinkAttributeCountLimit
     {
-        get => this.spanLinkAttributeCountLimitSet ? this.spanLinkAttributeCountLimit : this.SpanAttributeCountLimit;
+        get => this.spanLinkAttributeCountLimitSet ? this.spanLinkAttributeCountLimit : this.AttributeCountLimit;
         set
         {
             this.spanLinkAttributeCountLimitSet = true;
