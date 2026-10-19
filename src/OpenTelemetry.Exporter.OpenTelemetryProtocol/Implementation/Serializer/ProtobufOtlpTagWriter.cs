@@ -250,7 +250,8 @@ internal sealed class ProtobufOtlpTagWriter : TagWriter<ProtobufOtlpTagWriter.Ot
 
     private static void RollBackTo(ref OtlpTagWriterState state, int startPosition)
     {
-        state.Buffer.AsSpan(startPosition, state.WritePosition - startPosition).Clear();
+        // Reserving a length can advance WritePosition past the end of the buffer.
+        state.Buffer.AsSpan(startPosition, Math.Min(state.WritePosition, state.Buffer.Length) - startPosition).Clear();
         state.WritePosition = startPosition;
     }
 
