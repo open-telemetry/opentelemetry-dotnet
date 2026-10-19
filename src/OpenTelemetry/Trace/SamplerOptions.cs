@@ -42,8 +42,10 @@ public sealed class SamplerOptions
         {
             this.Argument = argument;
 
-            if (IsTraceIdRatioSampler(this.Type)
-                && TryParseTraceIdRatio(argument, out var traceIdRatio))
+            // Projected regardless of the sampler type so that TraceIdRatio is the single source of
+            // truth: a sampler type chosen later through the options pipeline sees the configured
+            // ratio, and clearing TraceIdRatio resets it to the default.
+            if (TryParseTraceIdRatio(argument, out var traceIdRatio))
             {
                 this.TraceIdRatio = traceIdRatio;
                 this.ConfiguredTraceIdRatio = traceIdRatio;
@@ -69,6 +71,10 @@ public sealed class SamplerOptions
     /// When unset or invalid, the SDK falls back to <c>1.0</c>. Only used when
     /// <see cref="Type"/> is <c>traceidratio</c> or <c>parentbased_traceidratio</c>.
     /// </summary>
+    /// <remarks>
+    /// This value is initialized from <c>OTEL_TRACES_SAMPLER_ARG</c> when that value is a valid number.
+    /// Assigning <see langword="null"/> discards it and restores the default.
+    /// </remarks>
     public double? TraceIdRatio { get; set; }
 
     /// <summary>
@@ -83,14 +89,6 @@ public sealed class SamplerOptions
     /// the configured one when reporting an unusable value.
     /// </summary>
     internal double? ConfiguredTraceIdRatio { get; }
-
-    internal static bool IsTraceIdRatioSampler(string? type)
-    {
-        var trimmed = type?.Trim();
-
-        return string.Equals(trimmed, TraceIdRatioType, StringComparison.OrdinalIgnoreCase)
-            || string.Equals(trimmed, ParentBasedTraceIdRatioType, StringComparison.OrdinalIgnoreCase);
-    }
 
     // A ratio must be a finite number. NaN and infinity parse successfully but are not
     // usable values, so they are rejected here rather than being stored as a candidate ratio.

@@ -9,7 +9,6 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.RegularExpressions;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Resources;
 
@@ -64,9 +63,7 @@ internal sealed class TracerProviderSdk : TracerProvider
             resourceBuilder.ServiceProvider = serviceProvider;
             this.Resource = resourceBuilder.Build();
 
-            this.Sampler = SamplerFactory.GetSampler(
-                serviceProvider!.GetRequiredService<IOptions<SamplerOptions>>().Value,
-                state.Sampler);
+            this.Sampler = SamplerFactory.GetSampler(serviceProvider!, state.Sampler);
             OpenTelemetrySdkEventSource.Log.TracerProviderSdkEvent($"Sampler added = \"{this.Sampler.GetType()}\".");
 
             // this.Sampler is assigned on each iteration so a sampler returned by any

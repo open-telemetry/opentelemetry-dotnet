@@ -63,13 +63,13 @@ public sealed class SamplerOptionsTests
     }
 
     [Fact]
-    public void TracesSamplerArg_WithoutRatioType_TraceIdRatioNotParsed()
+    public void TracesSamplerArg_WithoutRatioType_StillProjectedIntoTraceIdRatio()
     {
-        // OTEL_TRACES_SAMPLER_ARG is sampler-specific. The ratio interpretation only applies
-        // to traceidratio and parentbased_traceidratio, so parsing is skipped for other types.
+        // TraceIdRatio is the single source of truth for the ratio, so a valid argument is
+        // projected whatever the type, which may be chosen later through the options pipeline.
         var options = CreateOptions((SamplerOptions.TracesSamplerArgConfigKey, "0.5"));
 
-        Assert.Null(options.TraceIdRatio);
+        Assert.Equal(0.5, options.TraceIdRatio);
         Assert.Equal("0.5", options.Argument);
     }
 
@@ -368,11 +368,9 @@ public sealed class SamplerOptionsTests
     }
 
     [Fact]
-    public void ProgrammaticTypeWithConfiguredArg_FallsBackToArgument()
+    public void ProgrammaticTypeWithConfiguredArg_UsesConfiguredRatio()
     {
-        // When Type is set programmatically and OTEL_TRACES_SAMPLER_ARG is in config but
-        // OTEL_TRACES_SAMPLER is not, the constructor guard skips parsing. ReadTraceIdRatio
-        // falls back to Argument so the ratio still takes effect.
+        // The constructor projects the argument into TraceIdRatio even though Type is selected later.
         using var tracerProvider = BuildTracerProvider(
             configuration: BuildConfiguration((SamplerOptions.TracesSamplerArgConfigKey, "0.5")),
             configureServices: s => s.Configure<SamplerOptions>(o => o.Type = SamplerOptions.TraceIdRatioType));
@@ -383,8 +381,7 @@ public sealed class SamplerOptionsTests
     [Fact]
     public void ProgrammaticTypeWithInvalidConfiguredArg_LogsAndUsesDefaultRatio()
     {
-        // The fallback parse in ReadTraceIdRatio correctly reports the value that was
-        // tried and rejected, not a "could not parse" message.
+        // The out-of-range configured ratio is reported when the programmatically selected sampler uses it.
         using var eventListener = new TestEventListener(OpenTelemetrySdkEventSource.Log);
 
         using var tracerProvider = BuildTracerProvider(
@@ -393,6 +390,54 @@ public sealed class SamplerOptionsTests
 
         Assert.Equal("TraceIdRatioBasedSampler{1.000000}", tracerProvider.Sampler.Description);
         AssertPayload(eventListener, TracesSamplerArgConfigInvalidEventId, "1.5");
+    }
+
+    [Fact]
+    public void ClearingTraceIdRatio_RestoresDefaultRatioWithoutDiagnostics()
+    {
+        using var eventListener = new TestEventListener(OpenTelemetrySdkEventSource.Log);
+
+        using var tracerProvider = BuildTracerProvider(
+            configuration: BuildConfiguration(
+                (SamplerOptions.TracesSamplerConfigKey, SamplerOptions.TraceIdRatioType),
+                (SamplerOptions.TracesSamplerArgConfigKey, "0.25")),
+            configureServices: s => s.Configure<SamplerOptions>(o => o.TraceIdRatio = null));
+
+        Assert.Equal("TraceIdRatioBasedSampler{1.000000}", tracerProvider.Sampler.Description);
+        Assert.DoesNotContain(eventListener.Messages, e => e.EventId == TracesSamplerArgConfigInvalidEventId);
+    }
+
+    [Fact]
+    public void ExplicitSampler_MalformedBoundOptions_DoNotFailProviderConstruction()
+    {
+        var configuration = BuildConfiguration(
+            ("Sampler:Type", SamplerOptions.TraceIdRatioType),
+            ("Sampler:TraceIdRatio", "invalid"));
+
+        using var tracerProvider = BuildTracerProvider(
+            configureServices: s => s.Configure<SamplerOptions>(configuration.GetSection("Sampler")),
+            configureBuilder: b => b.SetSampler(new AlwaysOffSampler()));
+
+        Assert.Equal("AlwaysOffSampler", tracerProvider.Sampler.Description);
+    }
+
+    [Fact]
+    public void ExplicitSampler_FailingOptionsValidator_DoesNotFailProviderConstruction()
+    {
+        using var tracerProvider = BuildTracerProvider(
+            configureServices: s => s.AddOptions<SamplerOptions>().Validate(_ => false, "invalid"),
+            configureBuilder: b => b.SetSampler(new AlwaysOffSampler()));
+
+        Assert.Equal("AlwaysOffSampler", tracerProvider.Sampler.Description);
+    }
+
+    [Fact]
+    public void MalformedBoundOptions_WithoutExplicitSampler_FailProviderConstruction()
+    {
+        var configuration = BuildConfiguration(("Sampler:TraceIdRatio", "invalid"));
+
+        Assert.Throws<InvalidOperationException>(() => BuildTracerProvider(
+            configureServices: s => s.Configure<SamplerOptions>(configuration.GetSection("Sampler"))));
     }
 
     private static SamplerOptions CreateOptions(params (string Key, string? Value)[] configuration)
