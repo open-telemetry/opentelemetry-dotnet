@@ -148,8 +148,8 @@ internal sealed class ConfigPropertiesBuilder
     /// <param name="value">The value to associate with the key.</param>
     /// <param name="keyPosition">The position of the key in its source document.</param>
     /// <returns>This builder, for chaining.</returns>
-    /// <exception cref="ArgumentNullException">Thrown when <paramref name="key"/> is <see langword="null"/>.</exception>
-    /// <exception cref="ArgumentException">Thrown when <paramref name="key"/> already exists in this builder.</exception>
+    /// <exception cref="ArgumentNullException"><paramref name="key"/> is <see langword="null"/>.</exception>
+    /// <exception cref="ArgumentException"><paramref name="key"/> already exists in this builder.</exception>
     internal ConfigPropertiesBuilder Add(string key, ConfigValue value, ConfigValuePosition keyPosition)
     {
         this.AddValue(key, value);
