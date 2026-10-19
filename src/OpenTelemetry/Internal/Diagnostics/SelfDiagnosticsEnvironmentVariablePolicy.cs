@@ -29,14 +29,11 @@ namespace OpenTelemetry.Internal;
 /// </remarks>
 internal static class SelfDiagnosticsEnvironmentVariablePolicy
 {
-    internal const string RedactedValue = "[REDACTED]";
+    internal const string RedactedValue = SensitiveDataHelper.RedactedValue;
 
     private const string ResourceAttributesVarName = "OTEL_RESOURCE_ATTRIBUTES";
-    private const string PemArmourPrefix = "-----BEGIN";
-    private const string Base64PemArmourPrefix = "LS0tLS1CRUdJT";
     private const string JwtPrefix = "eyJ";
 
-    private static readonly char[] NewLineChars = ['\r', '\n'];
     private static readonly char[] ResourceAttributeKeyValueSeparator = ['='];
 
     /// <summary>
@@ -263,17 +260,8 @@ internal static class SelfDiagnosticsEnvironmentVariablePolicy
     }
 
     private static bool ContainsInlineSecretMaterial(string value)
-        => value.IndexOfAny(NewLineChars) >= 0
-            || Contains(value, PemArmourPrefix)
-            || Contains(value, Base64PemArmourPrefix)
+        => SensitiveDataHelper.ContainsInlineCertificateMaterial(value)
             || ContainsJwt(value);
-
-    private static bool Contains(string value, string marker)
-#if NET || NETSTANDARD2_1_OR_GREATER
-        => value.Contains(marker, StringComparison.Ordinal);
-#else
-        => value.IndexOf(marker, StringComparison.Ordinal) >= 0;
-#endif
 
     private static bool ContainsJwt(string value)
     {

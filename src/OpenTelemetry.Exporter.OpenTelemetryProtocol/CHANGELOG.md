@@ -79,6 +79,10 @@ Notes](../../RELEASENOTES.md).
   encoding, which reduces the size of the exported payload.
   ([#7897](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7897))
 
+* Fixed inline certificate or private key material being included in OTLP
+  diagnostic events and exceptions when supplied instead of a file path.
+  ([#7981](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7981))
+
 ## 1.20.0
 
 Released 2026-Oct-15
