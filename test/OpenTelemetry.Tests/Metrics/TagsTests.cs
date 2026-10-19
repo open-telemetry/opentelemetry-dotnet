@@ -221,6 +221,24 @@ public class TagsTests
     }
 
     [Fact]
+    public void ComputeHashCode_GuidValuesUseEveryByte()
+    {
+        for (var index = 0; index < 16; index++)
+        {
+            var hashes = new HashSet<int>();
+
+            for (var value = 1; value <= byte.MaxValue; value++)
+            {
+                var bytes = new byte[16];
+                bytes[index] = (byte)value;
+                hashes.Add(Tags.ComputeHashCode([new("customer", new Guid(bytes))]));
+            }
+
+            Assert.True(hashes.Count >= 250, $"Only {hashes.Count} distinct hashes for Guid byte {index}.");
+        }
+    }
+
+    [Fact]
     public void ComputeHashCode_WideValuesWhoseHalvesCancelOutInSystemHashCodeAreDistributed()
     {
         // Adding the 32-bit halves separately to System.HashCode still allows

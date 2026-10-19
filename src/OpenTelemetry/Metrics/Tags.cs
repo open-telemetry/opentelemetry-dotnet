@@ -2,6 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Runtime.CompilerServices;
+#if !NET && !NETSTANDARD2_1_OR_GREATER
+using System.Runtime.InteropServices;
+#endif
 
 namespace OpenTelemetry.Metrics;
 
@@ -235,9 +238,9 @@ internal readonly struct Tags : IEquatable<Tags>
 
         return GetSeededHashCode(BitConverter.ToUInt64(bytes), BitConverter.ToUInt64(bytes.Slice(8)));
 #else
-        var bytes = value.ToByteArray();
+        var storage = new GuidHashCodeStorage { Value = value };
 
-        return GetSeededHashCode(BitConverter.ToUInt64(bytes, 0), BitConverter.ToUInt64(bytes, 8));
+        return GetSeededHashCode(storage.Low, storage.High);
 #endif
     }
 
@@ -400,4 +403,22 @@ internal readonly struct Tags : IEquatable<Tags>
         return ReferenceEquals(ourValue, theirValue)
             || (ourValue?.Equals(theirValue) ?? (theirValue == null));
     }
+
+#if !NET && !NETSTANDARD2_1_OR_GREATER
+    // Guid is a 128-bit value with no managed references. As with
+    // MetricPointValueStorage, overlapping fields avoids a temporary array
+    // on frameworks without Guid.TryWriteBytes.
+    [StructLayout(LayoutKind.Explicit)]
+    private struct GuidHashCodeStorage
+    {
+        [FieldOffset(0)]
+        public Guid Value;
+
+        [FieldOffset(0)]
+        public ulong Low;
+
+        [FieldOffset(8)]
+        public ulong High;
+    }
+#endif
 }
