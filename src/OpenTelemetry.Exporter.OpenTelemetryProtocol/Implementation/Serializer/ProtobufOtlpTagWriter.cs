@@ -57,7 +57,7 @@ internal sealed class ProtobufOtlpTagWriter : TagWriter<ProtobufOtlpTagWriter.Ot
 
         if (!Instance.TryWriteTag(ref state, key, value, tagValueMaxLength))
         {
-            state.WritePosition = startPosition;
+            RollBackTo(ref state, startPosition);
             return false;
         }
 
@@ -124,6 +124,34 @@ internal sealed class ProtobufOtlpTagWriter : TagWriter<ProtobufOtlpTagWriter.Ot
             ProtobufOtlpCommonFieldNumberConstants.AnyValue_String_Value,
             value);
     }
+
+#if NET
+    protected override bool TryStartUtf8StringTag(ref OtlpTagWriterState state, string key, out Span<byte> buffer)
+    {
+        state.WritePosition = ProtobufSerializer.WriteStringWithTag(state.Buffer, state.WritePosition, ProtobufOtlpCommonFieldNumberConstants.KeyValue_Key, key);
+
+        state.WritePosition = ProtobufSerializer.WriteTag(state.Buffer, state.WritePosition, ProtobufOtlpCommonFieldNumberConstants.KeyValue_Value, ProtobufWireType.LEN);
+        state.WritePosition += ReserveSizeForLength;
+
+        state.WritePosition = ProtobufSerializer.WriteTag(state.Buffer, state.WritePosition, ProtobufOtlpCommonFieldNumberConstants.AnyValue_String_Value, ProtobufWireType.LEN);
+        state.WritePosition += ReserveSizeForLength;
+
+        buffer = state.Buffer.AsSpan(state.WritePosition);
+        return true;
+    }
+
+    protected override void EndUtf8StringTag(ref OtlpTagWriterState state, ReadOnlySpan<byte> utf8Value)
+    {
+        // Laid out by TryStartUtf8StringTag: each reserved length is followed by a single byte tag.
+        var stringLengthPosition = state.WritePosition - ReserveSizeForLength;
+        var anyValueLengthPosition = stringLengthPosition - 1 - ReserveSizeForLength;
+
+        state.WritePosition += utf8Value.Length;
+
+        ProtobufSerializer.WriteReservedLength(state.Buffer, stringLengthPosition, utf8Value.Length);
+        ProtobufSerializer.WriteReservedLength(state.Buffer, anyValueLengthPosition, state.WritePosition - (anyValueLengthPosition + ReserveSizeForLength));
+    }
+#endif
 
     protected override void WriteArrayTag(ref OtlpTagWriterState state, string key, ref OtlpTagWriterArrayState value)
     {
@@ -201,7 +229,7 @@ internal sealed class ProtobufOtlpTagWriter : TagWriter<ProtobufOtlpTagWriter.Ot
                 // Drop a tag if we fail to write it, and reset the position to the start of the entry to overwrite the reserved tag and length for the next entry.
                 if (!this.TryWriteTag(ref state, kvp.Key, kvp.Value, tagValueMaxLength))
                 {
-                    state.WritePosition = startEntryPosition;
+                    RollBackTo(ref state, startEntryPosition);
                     continue;
                 }
 
@@ -210,7 +238,7 @@ internal sealed class ProtobufOtlpTagWriter : TagWriter<ProtobufOtlpTagWriter.Ot
         }
         catch (Exception)
         {
-            state.WritePosition = startPosition;
+            RollBackTo(ref state, startPosition);
 
             throw;
         }
@@ -218,6 +246,13 @@ internal sealed class ProtobufOtlpTagWriter : TagWriter<ProtobufOtlpTagWriter.Ot
         // Fill in reserved lengths
         ProtobufSerializer.WriteReservedLength(state.Buffer, kvlistLengthPos, state.WritePosition - (kvlistLengthPos + ReserveSizeForLength));
         ProtobufSerializer.WriteReservedLength(state.Buffer, anyValueLengthPos, state.WritePosition - (anyValueLengthPos + ReserveSizeForLength));
+    }
+
+    private static void RollBackTo(ref OtlpTagWriterState state, int startPosition)
+    {
+        // Reserving a length can advance WritePosition past the end of the buffer.
+        state.Buffer.AsSpan(startPosition, Math.Min(state.WritePosition, state.Buffer.Length) - startPosition).Clear();
+        state.WritePosition = startPosition;
     }
 
     internal struct OtlpTagWriterState

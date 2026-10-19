@@ -739,6 +739,59 @@ public sealed class OtlpTraceExporterTests : IDisposable
         Assert.Equal([1, 2], otlpSpan.Attributes.Single(a => a.Key == "Under").Value.BytesValue.ToByteArray());
     }
 
+#if NET
+    [Fact]
+    public void Utf8SpanFormattableAttributeGrowsTheExportBuffer()
+    {
+        var value = new string('v', 64 * 1024);
+
+        using var activitySource = new ActivitySource(nameof(this.Utf8SpanFormattableAttributeGrowsTheExportBuffer));
+        using var activity = activitySource.StartActivity("root");
+
+        Assert.NotNull(activity);
+        activity.SetTag("large", new Utf8Value(value));
+
+        var batch = new Batch<Activity>([activity], 1);
+        var request = CreateTraceExportRequest(new SdkLimitOptions(), batch, ResourceBuilder.CreateEmpty().Build());
+
+        var otlpSpan = Assert.Single(Assert.Single(Assert.Single(request.ResourceSpans).ScopeSpans).Spans);
+        var attribute = Assert.Single(otlpSpan.Attributes);
+        Assert.Equal(value, attribute.Value.StringValue);
+    }
+
+    [Fact]
+    public void Utf8SpanFormattableAttributeOverTheLengthLimitIsTruncatedWithoutGrowingTheExportBuffer()
+    {
+        using var activitySource = new ActivitySource(nameof(this.Utf8SpanFormattableAttributeOverTheLengthLimitIsTruncatedWithoutGrowingTheExportBuffer));
+        using var activity = activitySource.StartActivity("root");
+
+        Assert.NotNull(activity);
+        activity.SetTag("large", new Utf8Value(new string('v', 1024 * 1024)));
+
+        var sdkOptions = new SdkLimitOptions { AttributeValueLengthLimit = 10 };
+        var batch = new Batch<Activity>([activity], 1);
+
+        var buffer = ProtobufSerializer.RentBuffer(4096);
+        var initialBufferLength = buffer.Length;
+        try
+        {
+            var writePosition = ProtobufOtlpTraceSerializer.WriteTraceData(ref buffer, 0, sdkOptions, ResourceBuilder.CreateEmpty().Build(), batch);
+
+            Assert.Equal(initialBufferLength, buffer.Length);
+
+            using var stream = new MemoryStream(buffer, 0, writePosition);
+            var tracesData = OtlpTrace.TracesData.Parser.ParseFrom(stream);
+            var otlpSpan = Assert.Single(Assert.Single(Assert.Single(tracesData.ResourceSpans).ScopeSpans).Spans);
+            var attribute = Assert.Single(otlpSpan.Attributes);
+            Assert.Equal(new string('v', 10), attribute.Value.StringValue);
+        }
+        finally
+        {
+            ProtobufSerializer.ReturnBuffer(buffer);
+        }
+    }
+#endif
+
     [Fact]
     public void SpanAttributeValueLengthLimitOverridesAttributeValueLengthLimit()
     {
@@ -1536,6 +1589,16 @@ public sealed class OtlpTraceExporterTests : IDisposable
             }
         }
     }
+
+#if NET
+    private sealed class Utf8Value(string value) : IUtf8SpanFormattable
+    {
+        public bool TryFormat(Span<byte> utf8Destination, out int bytesWritten, ReadOnlySpan<char> format, IFormatProvider? provider)
+            => System.Text.Encoding.UTF8.TryGetBytes(value, utf8Destination, out bytesWritten);
+
+        public override string ToString() => value;
+    }
+#endif
 
     private sealed class ToStringThrows
     {

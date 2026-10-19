@@ -428,6 +428,172 @@ public class OtlpAttributeTests
         }
     }
 
+    [Fact]
+    public void DroppedTagWithOneByteRemainingRestoresPosition()
+    {
+        var state = new ProtobufOtlpTagWriter.OtlpTagWriterState
+        {
+            Buffer = new byte[16],
+            WritePosition = 15,
+        };
+
+        Assert.False(ProtobufOtlpTagWriter.WriteKeyValue(ref state, ProtobufOtlpTraceFieldNumberConstants.Span_Attributes, "key", new MyToStringMethodThrowsAnException()));
+
+        Assert.Equal(15, state.WritePosition);
+    }
+
+#if NET
+    [Fact]
+    public void Utf8SpanFormattableIsWrittenAsString()
+    {
+        var value = "{\"name\":\"caf\u00E9 \U0001F600\"}";
+        var kvp = new KeyValuePair<string, object?>("key", new Utf8Value(value));
+
+        Assert.True(TryTransformTag(kvp, out var attribute));
+        Assert.Equal(OtlpCommon.AnyValue.ValueOneofCase.StringValue, attribute.Value.ValueCase);
+        Assert.Equal(value, attribute.Value.StringValue);
+    }
+
+    [Theory]
+    [InlineData(0, "")]
+    [InlineData(1, "a")]
+    [InlineData(2, "a\u00E9")]
+    [InlineData(3, "a\u00E9\u20AC")]
+    [InlineData(4, "a\u00E9\u20AC")]
+    [InlineData(5, "a\u00E9\u20AC\U0001F600")]
+    [InlineData(100, "a\u00E9\u20AC\U0001F600b")]
+    public void Utf8SpanFormattableRespectsTagValueMaxLengthInChars(int tagValueMaxLength, string expected)
+    {
+        var kvp = new KeyValuePair<string, object?>("key", new Utf8Value("a\u00E9\u20AC\U0001F600b"));
+
+        Assert.True(TryTransformTag(kvp, out var attribute, tagValueMaxLength));
+        Assert.Equal(expected, attribute.Value.StringValue);
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData(100)]
+    public void Utf8SpanFormattableThatDoesNotFitThrowsSoTheBufferIsGrown(int? tagValueMaxLength)
+    {
+        var state = new ProtobufOtlpTagWriter.OtlpTagWriterState
+        {
+            Buffer = new byte[64],
+            WritePosition = 0,
+        };
+
+        var tag = new KeyValuePair<string, object?>("key", new Utf8Value(new string('v', 1024)));
+
+        Assert.Throws<ArgumentOutOfRangeException>(() => ProtobufOtlpTagWriter.Instance.TryWriteTag(ref state, tag, tagValueMaxLength));
+    }
+
+    [Fact]
+    public void ExceptionInUtf8ToStringFallbackIsCaught()
+    {
+        var kvp = new KeyValuePair<string, object?>("key", new Utf8ValueThatDoesNotFitAndThrowsInToString());
+        Assert.False(TryTransformTag(kvp, out _, tagValueMaxLength: 1));
+    }
+
+    [Fact]
+    public void NullUtf8ToStringFallbackIsDropped()
+    {
+        var kvp = new KeyValuePair<string, object?>("key", new Utf8ValueThatDoesNotFitAndReturnsNullFromToString());
+        Assert.False(TryTransformTag(kvp, out _, tagValueMaxLength: 1));
+    }
+
+    [Theory]
+    [InlineData(typeof(InvalidOperationException))]
+    [InlineData(typeof(ArgumentException))]
+    [InlineData(typeof(IndexOutOfRangeException))]
+    [InlineData(typeof(ArgumentOutOfRangeException))]
+    public void ExceptionInUtf8TryFormatIsCaught(Type exceptionType)
+    {
+        var kvp = new KeyValuePair<string, object?>("key", new Utf8ValueThatThrows(exceptionType));
+        Assert.False(TryTransformTag(kvp, out _));
+    }
+
+    [Fact]
+    public void KvListThatThrowsAfterAFormattedEntryLeavesNoBytesInBuffer()
+    {
+        var state = new ProtobufOtlpTagWriter.OtlpTagWriterState
+        {
+            Buffer = new byte[1024],
+            WritePosition = 0,
+        };
+
+        Assert.False(ProtobufOtlpTagWriter.WriteKeyValue(ref state, ProtobufOtlpTraceFieldNumberConstants.Span_Attributes, "key", ThrowAfterFirstEntry()));
+
+        Assert.Equal(0, state.WritePosition);
+        Assert.All(state.Buffer, b => Assert.Equal(0, b));
+
+        static IEnumerable<KeyValuePair<string, object?>> ThrowAfterFirstEntry()
+        {
+            yield return new("inner", new Utf8Value("value"));
+            throw new InvalidOperationException("Nope.");
+        }
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData(10)]
+    public void DroppedUtf8SpanFormattableLeavesNoBytesInBuffer(int? tagValueMaxLength)
+    {
+        var state = new ProtobufOtlpTagWriter.OtlpTagWriterState
+        {
+            Buffer = new byte[1024],
+            WritePosition = 0,
+        };
+
+        Assert.False(ProtobufOtlpTagWriter.WriteKeyValue(ref state, ProtobufOtlpTraceFieldNumberConstants.Span_Attributes, "key", new Utf8ValueThatFillsBufferAndThrows(), tagValueMaxLength));
+
+        Assert.Equal(0, state.WritePosition);
+        Assert.All(state.Buffer, b => Assert.Equal(0, b));
+    }
+
+    [Fact]
+    public void DroppedKvListEntryLeavesNoBytesInBuffer()
+    {
+        var state = new ProtobufOtlpTagWriter.OtlpTagWriterState
+        {
+            Buffer = new byte[1024],
+            WritePosition = 0,
+        };
+
+        var kvList = new Dictionary<string, object?> { ["inner"] = new Utf8ValueThatFillsBufferAndThrows() };
+
+        Assert.True(ProtobufOtlpTagWriter.WriteKeyValue(ref state, ProtobufOtlpTraceFieldNumberConstants.Span_Attributes, "key", kvList));
+
+        Assert.All(state.Buffer.Skip(state.WritePosition), b => Assert.Equal(0, b));
+    }
+
+    [Fact]
+    public void Utf8SpanFormattableToStringFallbackLeavesNoFormatterBytesInBuffer()
+    {
+        var state = new ProtobufOtlpTagWriter.OtlpTagWriterState
+        {
+            Buffer = new byte[1024],
+            WritePosition = 0,
+        };
+
+        Assert.True(ProtobufOtlpTagWriter.WriteKeyValue(ref state, ProtobufOtlpTraceFieldNumberConstants.Span_Attributes, "key", new Utf8ValueThatFillsBufferAndDoesNotFit("a"), tagValueMaxLength: 10));
+
+        Assert.All(state.Buffer.Skip(state.WritePosition), b => Assert.Equal(0, b));
+    }
+
+    [Fact]
+    public void TruncatedUtf8SpanFormattableLeavesNoDroppedBytesInBuffer()
+    {
+        var state = new ProtobufOtlpTagWriter.OtlpTagWriterState
+        {
+            Buffer = new byte[1024],
+            WritePosition = 0,
+        };
+
+        Assert.True(ProtobufOtlpTagWriter.WriteKeyValue(ref state, ProtobufOtlpTraceFieldNumberConstants.Span_Attributes, "key", new Utf8Value(new string('a', 20)), tagValueMaxLength: 10));
+
+        Assert.All(state.Buffer.Skip(state.WritePosition), b => Assert.Equal(0, b));
+    }
+#endif
+
     private static bool TryTransformTag(KeyValuePair<string, object?> tag, [NotNullWhen(true)] out OtlpCommon.KeyValue? attribute, int? tagValueMaxLength = null)
     {
         var otlpTagWriterState = new ProtobufOtlpTagWriter.OtlpTagWriterState
@@ -452,6 +618,65 @@ public class OtlpAttributeTests
         return false;
     }
 
+#if NET
+    private sealed class Utf8Value(string value) : IUtf8SpanFormattable
+    {
+        public bool TryFormat(Span<byte> utf8Destination, out int bytesWritten, ReadOnlySpan<char> format, IFormatProvider? provider)
+            => System.Text.Encoding.UTF8.TryGetBytes(value, utf8Destination, out bytesWritten);
+
+        public override string ToString() => value;
+    }
+
+    private sealed class Utf8ValueThatThrows(Type exceptionType) : IUtf8SpanFormattable
+    {
+        public bool TryFormat(Span<byte> utf8Destination, out int bytesWritten, ReadOnlySpan<char> format, IFormatProvider? provider)
+            => throw (Exception)Activator.CreateInstance(exceptionType, "Nope.")!;
+    }
+
+    private sealed class Utf8ValueThatDoesNotFitAndThrowsInToString : IUtf8SpanFormattable
+    {
+        public bool TryFormat(Span<byte> utf8Destination, out int bytesWritten, ReadOnlySpan<char> format, IFormatProvider? provider)
+        {
+            bytesWritten = 0;
+            return false;
+        }
+
+        public override string ToString() => throw new InvalidOperationException("Nope.");
+    }
+
+    private sealed class Utf8ValueThatDoesNotFitAndReturnsNullFromToString : IUtf8SpanFormattable
+    {
+        public bool TryFormat(Span<byte> utf8Destination, out int bytesWritten, ReadOnlySpan<char> format, IFormatProvider? provider)
+        {
+            bytesWritten = 0;
+            return false;
+        }
+
+        public override string? ToString() => null;
+    }
+
+    private sealed class Utf8ValueThatFillsBufferAndThrows : IUtf8SpanFormattable
+    {
+        public bool TryFormat(Span<byte> utf8Destination, out int bytesWritten, ReadOnlySpan<char> format, IFormatProvider? provider)
+        {
+            utf8Destination.Fill((byte)'x');
+            throw new InvalidOperationException("Nope.");
+        }
+    }
+
+    private sealed class Utf8ValueThatFillsBufferAndDoesNotFit(string value) : IUtf8SpanFormattable
+    {
+        public bool TryFormat(Span<byte> utf8Destination, out int bytesWritten, ReadOnlySpan<char> format, IFormatProvider? provider)
+        {
+            utf8Destination.Fill((byte)'x');
+            bytesWritten = 0;
+            return false;
+        }
+
+        public override string ToString() => value;
+    }
+
+#endif
     private sealed class MyToStringMethodThrowsAnException
     {
         public override string ToString()
