@@ -511,6 +511,27 @@ public class OtlpAttributeTests
         Assert.False(TryTransformTag(kvp, out _));
     }
 
+    [Fact]
+    public void KvListThatThrowsAfterAFormattedEntryLeavesNoBytesInBuffer()
+    {
+        var state = new ProtobufOtlpTagWriter.OtlpTagWriterState
+        {
+            Buffer = new byte[1024],
+            WritePosition = 0,
+        };
+
+        Assert.False(ProtobufOtlpTagWriter.WriteKeyValue(ref state, ProtobufOtlpTraceFieldNumberConstants.Span_Attributes, "key", ThrowAfterFirstEntry()));
+
+        Assert.Equal(0, state.WritePosition);
+        Assert.All(state.Buffer, b => Assert.Equal(0, b));
+
+        static IEnumerable<KeyValuePair<string, object?>> ThrowAfterFirstEntry()
+        {
+            yield return new("inner", new Utf8Value("value"));
+            throw new InvalidOperationException("Nope.");
+        }
+    }
+
     [Theory]
     [InlineData(null)]
     [InlineData(10)]

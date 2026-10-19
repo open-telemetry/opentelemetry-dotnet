@@ -238,7 +238,7 @@ internal sealed class ProtobufOtlpTagWriter : TagWriter<ProtobufOtlpTagWriter.Ot
         }
         catch (Exception)
         {
-            state.WritePosition = startPosition;
+            RollBackTo(ref state, startPosition);
 
             throw;
         }
