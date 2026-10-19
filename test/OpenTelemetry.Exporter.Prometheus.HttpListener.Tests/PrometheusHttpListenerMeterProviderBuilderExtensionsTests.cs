@@ -9,6 +9,7 @@ using OpenTelemetry.Tests;
 
 namespace OpenTelemetry.Exporter.Prometheus.Tests;
 
+[Collection(EnvVarsCollectionDefinition.Name)]
 public sealed class PrometheusHttpListenerMeterProviderBuilderExtensionsTests
 {
     [Fact]

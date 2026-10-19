@@ -3,10 +3,12 @@
 
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using OpenTelemetry.Tests;
 using static OpenTelemetry.OpenTelemetrySdk;
 
 namespace OpenTelemetry.Logs.Tests;
 
+[Collection(EnvVarsCollectionDefinition.Name)]
 public sealed class LoggerProviderBuilderBaseTests
 {
     [Theory]

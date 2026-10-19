@@ -6,6 +6,7 @@ using OpenTelemetry.Tests;
 
 namespace OpenTelemetry.Configuration.Declarative.Tests;
 
+[Collection(EnvVarsCollectionDefinition.Name)]
 public sealed class DeclarativeConfigurationDocumentPropertiesTests
 {
     private const string UnsetVariable = "OTEL_DECLARATIVE_TEST_DOC_UNSET";

@@ -19,6 +19,7 @@ using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Exporter.Zipkin.Tests;
 
+[Collection(EnvVarsCollectionDefinition.Name)]
 public sealed class ZipkinExporterTests : IDisposable
 {
     private const string TraceId = "e8ea7e9ac72de94e91fabc613f9686b2";

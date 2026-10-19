@@ -10,6 +10,7 @@ using OpenTelemetry.Tests;
 
 namespace OpenTelemetry.Logs.Tests;
 
+[Collection(LogRecordPoolCollectionDefinition.Name)]
 public sealed class BatchLogRecordExportProcessorTests
 {
     [Theory]

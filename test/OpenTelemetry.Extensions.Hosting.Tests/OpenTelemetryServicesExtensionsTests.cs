@@ -14,6 +14,7 @@ using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Extensions.Hosting.Tests;
 
+[Collection(EventSourceCollectionDefinition.Name)]
 public class OpenTelemetryServicesExtensionsTests
 {
     [Fact]
