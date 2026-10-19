@@ -38,6 +38,7 @@
     <Compile Include="$(RepoRoot)\test\OpenTelemetry.Exporter.Prometheus.HttpListener.Tests\PrometheusSerializerTests.cs" Link="Includes\PrometheusSerializerTests.cs" />
     <Compile Include="$(RepoRoot)\test\OpenTelemetry.Exporter.Prometheus.HttpListener.Tests\PromToolCollection.cs" Link="Includes\PromToolCollection.cs" />
     <Compile Include="$(RepoRoot)\test\OpenTelemetry.Exporter.Prometheus.HttpListener.Tests\PromToolFixture.cs" Link="Includes\PromToolFixture.cs" />
+    <Compile Include="$(RepoRoot)\test\OpenTelemetry.Exporter.Prometheus.HttpListener.Tests\TestMeterCollection.cs" Link="Includes\TestMeterCollection.cs" />
     <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Shared\EventSourceCollectionDefinition.cs" Link="Includes\EventSourceCollectionDefinition.cs" />
     <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Shared\EventSourceTestHelper.cs" Link="Includes\EventSourceTestHelper.cs" />
     <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Shared\TcpPortProvider.cs" Link="Includes\TcpPortProvider.cs" />

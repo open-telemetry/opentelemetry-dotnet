@@ -12,6 +12,7 @@ using OpenTelemetry.Tests;
 
 namespace OpenTelemetry.Exporter.Prometheus.Tests;
 
+[Collection(TestMeterCollection.Name)]
 public sealed class PrometheusCollectionManagerTests
 {
     [Theory]
