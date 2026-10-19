@@ -3,6 +3,9 @@
 
 #if NET
 
+using System.Diagnostics.Tracing;
+using OpenTelemetry.Tests;
+
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests;
 
 public class OtlpCertificateManagerTests
@@ -77,6 +80,63 @@ INVALID CERTIFICATE DATA
 
         Assert.Contains("CA certificate file not found", exception.Message, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("/nonexistent/ca.crt", exception.Message, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Theory]
+    [InlineData("-----BEGIN PRIVATE KEY-----\nTEST-PRIVATE-KEY\n-----END PRIVATE KEY-----")]
+    [InlineData("-----BEGIN CERTIFICATE----- TEST-CERTIFICATE -----END CERTIFICATE-----")]
+    [InlineData("  -----BEGIN RSA PRIVATE KEY----- TEST-PRIVATE-KEY -----END RSA PRIVATE KEY-----")]
+    [InlineData("\"-----BEGIN PRIVATE KEY----- TEST-PRIVATE-KEY -----END PRIVATE KEY-----\"")]
+    [InlineData("TEST-PRIVATE-KEY\rCONTINUED")]
+    [InlineData("TEST-PRIVATE-KEY\nCONTINUED")]
+    [InlineData("LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0t")]
+    public void LoadCertificates_RedactsInlineMaterial_InFileNotFoundDiagnostics(string inlineMaterial)
+        => AssertCertificateFileNotFoundDiagnostics(inlineMaterial, "[REDACTED]");
+
+    [Fact]
+    public void LoadCertificates_PreservesMissingPaths_InFileNotFoundDiagnostics()
+    {
+        using var directory = new TemporaryDirectory();
+        var missingPath = Path.Combine(directory.Path, "missing certificate.pem");
+
+        AssertCertificateFileNotFoundDiagnostics(missingPath, missingPath);
+    }
+
+    [Theory]
+    [InlineData(OtlpExportProtocol.Grpc)]
+    [InlineData(OtlpExportProtocol.HttpProtobuf)]
+    [Obsolete("Tests the obsolete gRPC protocol.")]
+    public void CreateExporter_RedactsInlinePrivateKey_InSecureHttpClientFailure(OtlpExportProtocol protocol)
+    {
+        const string InlineKey = "-----BEGIN PRIVATE KEY-----\nTEST-PRIVATE-KEY\n-----END PRIVATE KEY-----";
+
+        using var directory = new TemporaryDirectory();
+        var certificatePath = Path.Combine(directory.Path, "client.pem");
+        File.WriteAllText(certificatePath, string.Empty);
+
+        var options = new OtlpExporterOptions
+        {
+            Protocol = protocol,
+            MtlsOptions = new OtlpMtlsOptions { ClientCertificatePath = certificatePath, ClientKeyPath = InlineKey },
+        };
+
+        using var listener = new TestEventListener(
+            OpenTelemetryProtocol.Implementation.OpenTelemetryProtocolExporterEventSource.Log,
+            EventLevel.Error);
+        var exception = Assert.Throws<FileNotFoundException>(() =>
+        {
+            using var exporter = new OtlpTraceExporter(options);
+        });
+
+        Assert.Equal("[REDACTED]", exception.FileName);
+        Assert.DoesNotContain("TEST-PRIVATE-KEY", exception.ToString(), StringComparison.Ordinal);
+        var messages = listener.CurrentMessages;
+        Assert.Single(messages, message => message.EventId == 28);
+        var failure = Assert.Single(messages, message => message.EventId == 36);
+        Assert.NotNull(failure.Payload);
+        var failureText = Assert.IsType<string>(Assert.Single(failure.Payload));
+        Assert.Contains("[REDACTED]", failureText, StringComparison.Ordinal);
+        Assert.DoesNotContain("TEST-PRIVATE-KEY", failureText, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -200,6 +260,51 @@ INVALID CERTIFICATE DATA
             File.Delete(tempCertFile);
             File.Delete(tempKeyFile);
         }
+    }
+
+    private static void AssertCertificateFileNotFoundDiagnostics(string filePath, string displayPath)
+    {
+        using var directory = new TemporaryDirectory();
+        var certificatePath = Path.Combine(directory.Path, "client.pem");
+        File.WriteAllText(certificatePath, string.Empty);
+
+        AssertFileNotFoundDiagnostics(
+            () => OpenTelemetryProtocol.Implementation.OtlpCertificateManager.LoadCaCertificate(filePath),
+            OpenTelemetryProtocol.Implementation.OtlpCertificateManager.CaCertificateType,
+            displayPath);
+        AssertFileNotFoundDiagnostics(
+            () => OpenTelemetryProtocol.Implementation.OtlpCertificateManager.LoadClientCertificate(filePath, null),
+            OpenTelemetryProtocol.Implementation.OtlpCertificateManager.ClientCertificateType,
+            displayPath);
+        AssertFileNotFoundDiagnostics(
+            () => OpenTelemetryProtocol.Implementation.OtlpCertificateManager.LoadClientCertificate(
+                filePath,
+                certificatePath),
+            OpenTelemetryProtocol.Implementation.OtlpCertificateManager.ClientCertificateType,
+            displayPath);
+        AssertFileNotFoundDiagnostics(
+            () => OpenTelemetryProtocol.Implementation.OtlpCertificateManager.LoadClientCertificate(
+                certificatePath,
+                filePath),
+            OpenTelemetryProtocol.Implementation.OtlpCertificateManager.ClientPrivateKeyType,
+            displayPath);
+    }
+
+    private static void AssertFileNotFoundDiagnostics(Action loadCertificate, string fileType, string displayPath)
+    {
+        using var listener = new TestEventListener(
+            OpenTelemetryProtocol.Implementation.OpenTelemetryProtocolExporterEventSource.Log,
+            EventLevel.Error);
+        var exception = Assert.Throws<FileNotFoundException>(loadCertificate);
+
+        Assert.Equal($"{fileType} file not found at path: {displayPath}", exception.Message);
+        Assert.Equal(displayPath, exception.FileName);
+        var message = Assert.Single(listener.CurrentMessages, message => message.EventId == 28);
+        Assert.NotNull(message.Payload);
+        Assert.Collection(
+            message.Payload,
+            value => Assert.Equal(fileType, value),
+            value => Assert.Equal(displayPath, value));
     }
 
     private static System.Security.Cryptography.X509Certificates.X509Certificate2 CreateSelfSignedCertificate()

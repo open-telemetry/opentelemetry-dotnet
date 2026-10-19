@@ -306,10 +306,19 @@ internal static class OtlpCertificateManager
 
         if (!File.Exists(filePath))
         {
+            // Configuration may contain the certificate or key itself instead of a path.
+            // Redact inline material before writing either the event or the exception.
+            var displayPath = filePath.Contains('\r', StringComparison.Ordinal)
+                || filePath.Contains('\n', StringComparison.Ordinal)
+                || filePath.Contains("-----BEGIN", StringComparison.Ordinal)
+                || filePath.Contains("LS0tLS1CRUdJT", StringComparison.Ordinal) // Base64-encoded PEM armour.
+                ? "[REDACTED]"
+                : filePath;
+
             OpenTelemetryProtocolExporterEventSource.Log.MtlsCertificateFileNotFound(
                 fileType,
-                filePath);
-            throw new FileNotFoundException($"{fileType} file not found at path: {filePath}", filePath);
+                displayPath);
+            throw new FileNotFoundException($"{fileType} file not found at path: {displayPath}", displayPath);
         }
     }
 }
