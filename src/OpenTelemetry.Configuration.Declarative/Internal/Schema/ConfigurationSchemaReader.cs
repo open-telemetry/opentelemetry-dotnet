@@ -27,8 +27,10 @@ internal static class ConfigurationSchemaReader
 
 #if NET
     private static readonly FrozenDictionary<string, SchemaValueTypes> ValueTypesByName = CreateValueTypesByName();
+    private static readonly FrozenSet<string> IgnoredKeywords = CreateIgnoredKeywords();
 #else
     private static readonly Dictionary<string, SchemaValueTypes> ValueTypesByName = CreateValueTypesByName();
+    private static readonly HashSet<string> IgnoredKeywords = CreateIgnoredKeywords();
 #endif
 
     /// <summary>
@@ -98,6 +100,34 @@ internal static class ConfigurationSchemaReader
         }
 
         return types;
+    }
+
+#if NET
+    private static FrozenSet<string> CreateIgnoredKeywords()
+#else
+    private static HashSet<string> CreateIgnoredKeywords()
+#endif
+    {
+        var values = new HashSet<string>(StringComparer.Ordinal)
+        {
+            "deprecated",
+            "description",
+            "enum",
+            "exclusiveMinimum",
+            "maxProperties",
+            "maximum",
+            "minItems",
+            "minProperties",
+            "minimum",
+            "required",
+            "title",
+        };
+
+#if NET
+        return values.ToFrozenSet(StringComparer.Ordinal);
+#else
+        return values;
+#endif
     }
 
 #if NET
@@ -199,11 +229,13 @@ internal static class ConfigurationSchemaReader
             foreach (var entry in schema.Children)
             {
                 var keyword = ReadKeyword(entry.Key);
+                if (IgnoredKeywords.Contains(keyword) || (isRoot && keyword is "$defs" or "$schema"))
+                {
+                    continue;
+                }
+
                 switch (keyword)
                 {
-                    case "$defs" or "$schema" when isRoot:
-                        break;
-
                     case "additionalProperties":
                         this.ReadAdditionalProperties(node, entry.Value);
                         break;
@@ -227,11 +259,6 @@ internal static class ConfigurationSchemaReader
 
                     case "type":
                         node.ValueTypes = ReadValueTypes(entry.Value);
-                        break;
-
-                    case "deprecated" or "description" or "enum" or "exclusiveMinimum"
-                        or "maxProperties" or "maximum" or "minItems" or "minProperties"
-                        or "minimum" or "required" or "title":
                         break;
 
                     default:
