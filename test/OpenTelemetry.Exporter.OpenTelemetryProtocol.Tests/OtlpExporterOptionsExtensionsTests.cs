@@ -358,12 +358,80 @@ public class OtlpExporterOptionsExtensionsTests
                 .Build();
 
             using var transmissionHandler = exporterOptions.GetExportTransmissionHandler(new ExperimentalOptions(configuration), signalType);
-            var persistentStorageTransmissionHandler = Assert.IsType<OtlpExporterPersistentStorageTransmissionHandler>(transmissionHandler);
 
-            var fileBlobProviderField = typeof(OtlpExporterPersistentStorageTransmissionHandler).GetField("persistentBlobProvider", BindingFlags.NonPublic | BindingFlags.Instance);
-            var persistentBlobProvider = Assert.IsType<FileBlobProvider>(fileBlobProviderField?.GetValue(persistentStorageTransmissionHandler));
+            Assert.Equal(Path.Combine(retryRootPath, expectedDirectoryName), Path.GetDirectoryName(GetStorageDirectoryPath(transmissionHandler)));
+        }
+        finally
+        {
+            if (Directory.Exists(retryRootPath))
+            {
+                Directory.Delete(retryRootPath, recursive: true);
+            }
+        }
+    }
 
-            Assert.EndsWith(expectedDirectoryName, persistentBlobProvider.DirectoryPath, StringComparison.Ordinal);
+    [Theory]
+    [InlineData("http://collector-a:4318/v1/traces", "api-key=a", "http://collector-a:4318/v1/traces", "api-key=a", true)]
+    [InlineData("http://collector-a:4318/v1/traces", "api-key=a", "http://collector-b:4318/v1/traces", "api-key=a", false)]
+    [InlineData("http://collector-a:4318/v1/traces", "api-key=a", "http://collector-a:4318/v1/traces", "api-key=b", false)]
+    [InlineData("http://collector-a:4318/v1/traces", "api-key=a", "http://collector-a:4318/v1/traces", null, false)]
+    [InlineData("http://collector-a:4318/v1/traces", null, "https://collector-a:4318/v1/traces", null, false)]
+    public void GetTransmissionHandler_DiskRetry_UsesDestinationSpecificStorageDirectory(string firstEndpoint, string? firstHeaders, string secondEndpoint, string? secondHeaders, bool expectSameDirectory)
+        => AssertStorageDirectories(
+            new() { Protocol = OtlpExportProtocol.HttpProtobuf, Endpoint = new Uri(firstEndpoint), Headers = firstHeaders },
+            new() { Protocol = OtlpExportProtocol.HttpProtobuf, Endpoint = new Uri(secondEndpoint), Headers = secondHeaders },
+            expectSameDirectory);
+
+    [Fact]
+    public void GetTransmissionHandler_DiskRetry_UsesProtocolSpecificStorageDirectory()
+    {
+        var endpoint = new Uri("http://collector:4317");
+
+        AssertStorageDirectories(
+#pragma warning disable CS0618 // Suppressing gRPC obsolete warning
+            new() { Protocol = OtlpExportProtocol.Grpc, Endpoint = endpoint },
+#pragma warning restore CS0618 // Suppressing gRPC obsolete warning
+            new() { Protocol = OtlpExportProtocol.HttpProtobuf, Endpoint = endpoint },
+            expectSameDirectory: false);
+    }
+
+    [Fact]
+    public void GetTransmissionHandler_DiskRetry_DoesNotRetryRequestsStoredForAnotherDestination()
+    {
+        var retryRootPath = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
+
+        try
+        {
+            var experimentalOptions = CreateDiskRetryExperimentalOptions(retryRootPath);
+
+            using var firstHttpHandler = new UnavailableHttpMessageHandler();
+            using var secondHttpHandler = new TestHttpMessageHandler();
+
+            var firstOptions = new OtlpExporterOptions
+            {
+                Protocol = OtlpExportProtocol.HttpProtobuf,
+                Endpoint = new Uri("http://collector-a:4318/v1/traces"),
+                HttpClientFactory = () => new HttpClient(firstHttpHandler, disposeHandler: false),
+            };
+
+            var secondOptions = new OtlpExporterOptions
+            {
+                Protocol = OtlpExportProtocol.HttpProtobuf,
+                Endpoint = new Uri("http://collector-b:4318/v1/traces"),
+                HttpClientFactory = () => new HttpClient(secondHttpHandler, disposeHandler: false),
+            };
+
+            using var firstHandler = Assert.IsType<OtlpExporterPersistentStorageTransmissionHandler>(firstOptions.GetExportTransmissionHandler(experimentalOptions, OtlpSignalType.Traces));
+            using var secondHandler = Assert.IsType<OtlpExporterPersistentStorageTransmissionHandler>(secondOptions.GetExportTransmissionHandler(experimentalOptions, OtlpSignalType.Traces));
+
+            Assert.True(firstHandler.TrySubmitRequest([1, 2, 3], 3));
+            Assert.Equal(1, firstHttpHandler.RequestCount);
+
+            Assert.True(secondHandler.InitiateAndWaitForRetryProcess(10_000));
+            Assert.Null(secondHttpHandler.HttpRequestMessage);
+
+            Assert.True(firstHandler.InitiateAndWaitForRetryProcess(10_000));
+            Assert.Equal(2, firstHttpHandler.RequestCount);
         }
         finally
         {
@@ -397,6 +465,59 @@ public class OtlpExporterOptionsExtensionsTests
 
             Assert.Throws<NotSupportedException>(
                 () => exporterOptions.GetExportTransmissionHandler(new ExperimentalOptions(configuration), signalType));
+        }
+        finally
+        {
+            if (Directory.Exists(retryRootPath))
+            {
+                Directory.Delete(retryRootPath, recursive: true);
+            }
+        }
+    }
+
+    private static ExperimentalOptions CreateDiskRetryExperimentalOptions(string retryRootPath)
+    {
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(
+            new Dictionary<string, string?>
+            {
+                [ExperimentalOptions.OtlpRetryEnvVar] = "disk",
+                [ExperimentalOptions.OtlpDiskRetryDirectoryPathEnvVar] = retryRootPath,
+            })
+            .Build();
+
+        return new ExperimentalOptions(configuration);
+    }
+
+    private static string GetStorageDirectoryPath(OtlpExporterTransmissionHandler transmissionHandler)
+    {
+        var persistentStorageTransmissionHandler = Assert.IsType<OtlpExporterPersistentStorageTransmissionHandler>(transmissionHandler);
+
+        var fileBlobProviderField = typeof(OtlpExporterPersistentStorageTransmissionHandler).GetField("persistentBlobProvider", BindingFlags.NonPublic | BindingFlags.Instance);
+        var persistentBlobProvider = Assert.IsType<FileBlobProvider>(fileBlobProviderField?.GetValue(persistentStorageTransmissionHandler));
+
+        return persistentBlobProvider.DirectoryPath;
+    }
+
+    private static void AssertStorageDirectories(OtlpExporterOptions firstOptions, OtlpExporterOptions secondOptions, bool expectSameDirectory)
+    {
+        var retryRootPath = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
+
+        try
+        {
+            var experimentalOptions = CreateDiskRetryExperimentalOptions(retryRootPath);
+
+            using var firstHandler = firstOptions.GetExportTransmissionHandler(experimentalOptions, OtlpSignalType.Traces);
+            using var secondHandler = secondOptions.GetExportTransmissionHandler(experimentalOptions, OtlpSignalType.Traces);
+
+            if (expectSameDirectory)
+            {
+                Assert.Equal(GetStorageDirectoryPath(firstHandler), GetStorageDirectoryPath(secondHandler));
+            }
+            else
+            {
+                Assert.NotEqual(GetStorageDirectoryPath(firstHandler), GetStorageDirectoryPath(secondHandler));
+            }
         }
         finally
         {
@@ -490,6 +611,25 @@ public class OtlpExporterOptionsExtensionsTests
             },
             out host,
             out port);
+
+    private sealed class UnavailableHttpMessageHandler : HttpMessageHandler
+    {
+        public int RequestCount { get; private set; }
+
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        {
+            this.RequestCount++;
+            return Task.FromResult(new HttpResponseMessage(HttpStatusCode.ServiceUnavailable));
+        }
+
+#if NET
+        protected override HttpResponseMessage Send(HttpRequestMessage request, CancellationToken cancellationToken)
+        {
+            this.RequestCount++;
+            return new HttpResponseMessage(HttpStatusCode.ServiceUnavailable);
+        }
+#endif
+    }
 
     private sealed class ThrowingHttpClientFactory(Exception exception) : IHttpClientFactory
     {

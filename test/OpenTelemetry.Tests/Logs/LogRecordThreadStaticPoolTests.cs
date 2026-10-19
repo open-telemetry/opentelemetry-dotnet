@@ -32,6 +32,36 @@ public sealed class LogRecordThreadStaticPoolTests
     }
 
     [Fact]
+    public void ReturnReleasesLogContent()
+    {
+        LogRecordThreadStaticPool.Storage = null;
+
+        var logRecord = LogRecordThreadStaticPool.Instance.Rent();
+        logRecord.Body = "body";
+        logRecord.SeverityText = "severity";
+        logRecord.Data.EventName = "event";
+        logRecord.FormattedMessage = "message";
+        logRecord.TraceState = "key=value";
+        logRecord.Exception = new InvalidOperationException();
+        logRecord.Attributes = [new("key", new object())];
+        logRecord.ILoggerData.State = logRecord.Attributes;
+        logRecord.ILoggerData.BufferedScopes = [new object()];
+
+        LogRecordThreadStaticPool.Instance.Return(logRecord);
+
+        Assert.Same(logRecord, LogRecordThreadStaticPool.Storage);
+        Assert.Null(logRecord.Body);
+        Assert.Null(logRecord.SeverityText);
+        Assert.Null(logRecord.Data.EventName);
+        Assert.Null(logRecord.FormattedMessage);
+        Assert.Null(logRecord.TraceState);
+        Assert.Null(logRecord.Exception);
+        Assert.Null(logRecord.Attributes);
+        Assert.Null(logRecord.ILoggerData.State);
+        Assert.Null(logRecord.ILoggerData.BufferedScopes);
+    }
+
+    [Fact]
     public void ClearTests()
     {
         var logRecord1 = LogRecordThreadStaticPool.Instance.Rent();

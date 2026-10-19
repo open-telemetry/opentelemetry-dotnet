@@ -67,6 +67,24 @@ Notes](../../RELEASENOTES.md).
   be resized while the attribute was being written.
   ([#7973](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7973))
 
+* **Breaking:** Fixed telemetry stored by the experimental disk retry feature
+  for one exporter being resent by another exporter for the same signal to its
+  own endpoint and with its own headers. Disk retry storage is now additionally
+  separated by a subdirectory derived from the exporter's `Protocol`,
+  `Endpoint` and `Headers`. Telemetry stored on disk by earlier versions is
+  not resent.
+  ([#7972](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7972))
+
+* Exponential histogram bucket counts are now serialized in the packed
+  encoding, which reduces the size of the exported payload.
+  ([#7897](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7897))
+
+* **Breaking Change** Dropped support for `net8.0` and `net9.0`.
+  ([#6899](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6899))
+
+* Add support for .NET 11.0.
+  ([#6899](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6899))
+
 ## 1.20.0
 
 Released 2026-Oct-15
@@ -122,12 +140,6 @@ Released 2026-Oct-15
   while the `IServiceProvider` is being disposed. The exporter now falls back
   to the default `HttpClient` instead of failing the export.
   ([#7916](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7916))
-
-* **Breaking Change** Dropped support for `net8.0` and `net9.0`.
-  ([#6899](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6899))
-
-* Add support for .NET 11.0.
-  ([#6899](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6899))
 
 ## 1.19.1
 
