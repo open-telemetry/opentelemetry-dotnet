@@ -67,6 +67,10 @@ Notes](../../RELEASENOTES.md).
   be resized while the attribute was being written.
   ([#7973](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7973))
 
+* Fixed experimental in-memory retries exceeding the export timeout when a
+  retried request stalls.
+  ([#7977](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7977))
+
 ## 1.20.0
 
 Released 2026-Oct-15
