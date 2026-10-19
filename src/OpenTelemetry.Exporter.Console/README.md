@@ -49,8 +49,10 @@ configuration, for example in `appsettings.json`:
 ```json
 {
   "OpenTelemetry": {
-    "Console": {
-      "Targets": "Console, Debug"
+    "Exporters" : {
+      "Console": {
+        "Targets": "Console, Debug"
+      }
     }
   }
 }
