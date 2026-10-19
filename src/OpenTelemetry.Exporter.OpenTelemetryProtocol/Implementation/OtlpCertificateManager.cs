@@ -6,6 +6,7 @@
 using System.Net.Security;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
+using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 
@@ -302,10 +303,16 @@ internal static class OtlpCertificateManager
 
         if (!File.Exists(filePath))
         {
+            // Configuration may contain the certificate or key itself instead of a path.
+            // Redact inline material before writing either the event or the exception.
+            var displayPath = SensitiveDataHelper.ContainsInlineCertificateMaterial(filePath)
+                ? SensitiveDataHelper.RedactedValue
+                : filePath;
+
             OpenTelemetryProtocolExporterEventSource.Log.MtlsCertificateFileNotFound(
                 fileType,
-                filePath);
-            throw new FileNotFoundException($"{fileType} file not found at path: {filePath}", filePath);
+                displayPath);
+            throw new FileNotFoundException($"{fileType} file not found at path: {displayPath}", displayPath);
         }
     }
 }
