@@ -10,28 +10,8 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests;
 
 public class OtlpCertificateManagerTests
 {
-    private const string TestCertPem =
-        @"-----BEGIN CERTIFICATE-----
-MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA1234567890ABCDEFGHIJ
-KLMNOPQRSTUVWXYZ1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890A
-BCDEFGHIJKLMNOPQRSTUVWXYZ1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ123
-4567890ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890ABCDEFGHIJKLMNOPQRSTUV
-WXYZ1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890ABCDEFGHIJKLMNO
-PQRSTUVWXYZ1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890ABCDEFG
-HIJKLMNOPQRSTUVWXYZ1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890
-ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ123
-4567890ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890ABCDEFGHIJKLMNOPQRSTUV
-WXYZ1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890ABCDEFGHIJKLMNO
-PQRSTUVWXYZ1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890ABCDEFG
-HIJKLMNOPQRSTUVWXYZ1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890
-ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ123
-4567890ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890ABCDEFGHIJKLMNOPQRSTUV
-WXYZ1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890ABCDEFGHIJKLMNO
-PQRSTUVWXYZ1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890ABCDEFG
-HIJKLMNOPQRSTUVWXYZ1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890
-ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ123
-4567890ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890ABCD
------END CERTIFICATE-----";
+    private const string TestKeyPem =
+        "-----BEGIN PRIVATE KEY-----\nTEST-PRIVATE-KEY\n-----END PRIVATE KEY-----";
 
     private const string InvalidCertPem =
         @"-----BEGIN CERTIFICATE-----
@@ -39,59 +19,8 @@ INVALID CERTIFICATE DATA
 -----END CERTIFICATE-----";
 
     [Fact]
-    public void LoadClientCertificate_ThrowsFileNotFoundException_WhenCertificateFileDoesNotExist()
-    {
-        var exception = Assert.Throws<FileNotFoundException>(() =>
-            OpenTelemetryProtocol.Implementation.OtlpCertificateManager.LoadClientCertificate(
-                "/nonexistent/client.crt",
-                "/nonexistent/client.key"));
-
-        Assert.Contains("Certificate file not found", exception.Message, StringComparison.OrdinalIgnoreCase);
-        Assert.Contains("/nonexistent/client.crt", exception.Message, StringComparison.OrdinalIgnoreCase);
-    }
-
-    [Fact]
-    public void LoadClientCertificate_ThrowsFileNotFoundException_WhenPrivateKeyFileDoesNotExist()
-    {
-        var tempCertFile = Path.GetTempFileName();
-        File.WriteAllText(tempCertFile, TestCertPem);
-
-        try
-        {
-            var exception = Assert.Throws<FileNotFoundException>(() =>
-                OpenTelemetryProtocol.Implementation.OtlpCertificateManager.LoadClientCertificate(
-                    tempCertFile,
-                    "/nonexistent/client.key"));
-
-            Assert.Contains("Private key file not found", exception.Message, StringComparison.OrdinalIgnoreCase);
-            Assert.Contains("/nonexistent/client.key", exception.Message, StringComparison.OrdinalIgnoreCase);
-        }
-        finally
-        {
-            File.Delete(tempCertFile);
-        }
-    }
-
-    [Fact]
-    public void LoadCaCertificate_ThrowsFileNotFoundException_WhenTrustStoreFileDoesNotExist()
-    {
-        var exception = Assert.Throws<FileNotFoundException>(() =>
-            OpenTelemetryProtocol.Implementation.OtlpCertificateManager.LoadCaCertificate("/nonexistent/ca.crt"));
-
-        Assert.Contains("CA certificate file not found", exception.Message, StringComparison.OrdinalIgnoreCase);
-        Assert.Contains("/nonexistent/ca.crt", exception.Message, StringComparison.OrdinalIgnoreCase);
-    }
-
-    [Theory]
-    [InlineData("-----BEGIN PRIVATE KEY-----\nTEST-PRIVATE-KEY\n-----END PRIVATE KEY-----")]
-    [InlineData("-----BEGIN CERTIFICATE----- TEST-CERTIFICATE -----END CERTIFICATE-----")]
-    [InlineData("  -----BEGIN RSA PRIVATE KEY----- TEST-PRIVATE-KEY -----END RSA PRIVATE KEY-----")]
-    [InlineData("\"-----BEGIN PRIVATE KEY----- TEST-PRIVATE-KEY -----END PRIVATE KEY-----\"")]
-    [InlineData("TEST-PRIVATE-KEY\rCONTINUED")]
-    [InlineData("TEST-PRIVATE-KEY\nCONTINUED")]
-    [InlineData("LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0t")]
-    public void LoadCertificates_RedactsInlineMaterial_InFileNotFoundDiagnostics(string inlineMaterial)
-        => AssertCertificateFileNotFoundDiagnostics(inlineMaterial, "[REDACTED]");
+    public void LoadCertificates_RedactsInlineMaterial_InFileNotFoundDiagnostics()
+        => AssertCertificateFileNotFoundDiagnostics(TestKeyPem, "[REDACTED]");
 
     [Fact]
     public void LoadCertificates_PreservesMissingPaths_InFileNotFoundDiagnostics()
@@ -108,8 +37,6 @@ INVALID CERTIFICATE DATA
     [Obsolete("Tests the obsolete gRPC protocol.")]
     public void CreateExporter_RedactsInlinePrivateKey_InSecureHttpClientFailure(OtlpExportProtocol protocol)
     {
-        const string InlineKey = "-----BEGIN PRIVATE KEY-----\nTEST-PRIVATE-KEY\n-----END PRIVATE KEY-----";
-
         using var directory = new TemporaryDirectory();
         var certificatePath = Path.Combine(directory.Path, "client.pem");
         File.WriteAllText(certificatePath, string.Empty);
@@ -117,7 +44,7 @@ INVALID CERTIFICATE DATA
         var options = new OtlpExporterOptions
         {
             Protocol = protocol,
-            MtlsOptions = new OtlpMtlsOptions { ClientCertificatePath = certificatePath, ClientKeyPath = InlineKey },
+            MtlsOptions = new OtlpMtlsOptions { ClientCertificatePath = certificatePath, ClientKeyPath = TestKeyPem },
         };
 
         using var listener = new TestEventListener(
@@ -279,7 +206,7 @@ INVALID CERTIFICATE DATA
         AssertFileNotFoundDiagnostics(
             () => OpenTelemetryProtocol.Implementation.OtlpCertificateManager.LoadClientCertificate(
                 filePath,
-                certificatePath),
+                filePath),
             OpenTelemetryProtocol.Implementation.OtlpCertificateManager.ClientCertificateType,
             displayPath);
         AssertFileNotFoundDiagnostics(

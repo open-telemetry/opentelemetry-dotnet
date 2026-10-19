@@ -6,6 +6,7 @@
 using System.Net.Security;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
+using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 
@@ -308,11 +309,8 @@ internal static class OtlpCertificateManager
         {
             // Configuration may contain the certificate or key itself instead of a path.
             // Redact inline material before writing either the event or the exception.
-            var displayPath = filePath.Contains('\r', StringComparison.Ordinal)
-                || filePath.Contains('\n', StringComparison.Ordinal)
-                || filePath.Contains("-----BEGIN", StringComparison.Ordinal)
-                || filePath.Contains("LS0tLS1CRUdJT", StringComparison.Ordinal) // Base64-encoded PEM armour.
-                ? "[REDACTED]"
+            var displayPath = SensitiveDataHelper.ContainsInlineCertificateMaterial(filePath)
+                ? SensitiveDataHelper.RedactedValue
                 : filePath;
 
             OpenTelemetryProtocolExporterEventSource.Log.MtlsCertificateFileNotFound(
