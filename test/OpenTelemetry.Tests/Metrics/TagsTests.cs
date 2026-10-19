@@ -2,11 +2,33 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Globalization;
+using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Metrics.Tests;
 
 public class TagsTests
 {
+    public static TheoryData<object[]> GetEqualWideValues()
+    {
+        var ticks = new DateTime(2026, 10, 19, 12, 0, 0, DateTimeKind.Utc).Ticks;
+        object[][] equalValues =
+        [
+            [0.0, -0.0],
+            [double.NaN, -double.NaN, BitConverter.Int64BitsToDouble(0x7FF0000000000001)],
+            [0m, 0.00m, new decimal(0, 0, 0, true, 0), new decimal(0, 0, 0, true, 28)],
+            [1m, 1.0m, 1.0000000000000000000000000000m],
+            [-120m, -120.0m, -120.000m],
+            [0.5m, 0.50m, 0.5000000000000000000000000000m],
+            [7922816251426433759354395033m, 7922816251426433759354395033.0m],
+            [new decimal(0, 0, 10, false, 0), new decimal(0, 0, 100, false, 1)],
+            [new DateTime(ticks, DateTimeKind.Utc), new DateTime(ticks, DateTimeKind.Local)],
+            [new DateTimeOffset(ticks, TimeSpan.Zero),
+                new DateTimeOffset(ticks + TimeSpan.FromHours(2).Ticks, TimeSpan.FromHours(2))],
+        ];
+
+        return new TheoryData<object[]>(equalValues);
+    }
+
     [Fact]
     public void Equals_ReturnsTrue_ForEqualTags()
     {
@@ -258,41 +280,25 @@ public class TagsTests
         Assert.True(hashes.Count >= 2040, $"Only {hashes.Count} distinct hashes for 2048 distinct values.");
     }
 
-    [Fact]
-    public void ComputeHashCode_EqualWideValuesShareAHashCode()
+    [Theory]
+    [MemberData(nameof(GetEqualWideValues))]
+    public void ComputeHashCode_EqualWideValuesShareAHashCode(object[] values)
     {
-        var ticks = new DateTime(2026, 10, 19, 12, 0, 0, DateTimeKind.Utc).Ticks;
-        object[][] equalValues =
-        [
-            [0.0, -0.0],
-            [double.NaN, -double.NaN, BitConverter.Int64BitsToDouble(0x7FF0000000000001)],
-            [0m, 0.00m, new decimal(0, 0, 0, true, 0), new decimal(0, 0, 0, true, 28)],
-            [1m, 1.0m, 1.0000000000000000000000000000m],
-            [-120m, -120.0m, -120.000m],
-            [0.5m, 0.50m, 0.5000000000000000000000000000m],
-            [7922816251426433759354395033m, 7922816251426433759354395033.0m],
-            [new decimal(0, 0, 10, false, 0), new decimal(0, 0, 100, false, 1)],
-            [new DateTime(ticks, DateTimeKind.Utc), new DateTime(ticks, DateTimeKind.Local)],
-            [new DateTimeOffset(ticks, TimeSpan.Zero),
-                new DateTimeOffset(ticks + TimeSpan.FromHours(2).Ticks, TimeSpan.FromHours(2))],
-        ];
+        Guard.ThrowIfNull(values);
 
-        foreach (var values in equalValues)
+        var expected = new Tags([new("key", values[0])]);
+
+        foreach (var value in values)
         {
-            var expected = new Tags([new("key", values[0])]);
+            var actual = new Tags([new("key", value)]);
 
-            foreach (var value in values)
-            {
-                var actual = new Tags([new("key", value)]);
-
-                Assert.Equal(values[0], value);
-                Assert.True(
-                    expected.GetHashCode() == actual.GetHashCode(),
-                    $"Equal {value.GetType()} values {values[0]} and {value} have different tag hashes.");
-                Assert.Equal(expected.GetHashCode(), Tags.ComputeHashCode([new("key", value)]));
-                Assert.True(expected.Equals(actual));
-                Assert.True(expected.Equals([new("key", value)]));
-            }
+            Assert.Equal(values[0], value);
+            Assert.True(
+                expected.GetHashCode() == actual.GetHashCode(),
+                $"Equal {value.GetType()} values {values[0]} and {value} have different tag hashes.");
+            Assert.Equal(expected.GetHashCode(), Tags.ComputeHashCode([new("key", value)]));
+            Assert.True(expected.Equals(actual));
+            Assert.True(expected.Equals([new("key", value)]));
         }
     }
 
