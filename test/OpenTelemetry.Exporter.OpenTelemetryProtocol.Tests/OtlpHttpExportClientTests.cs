@@ -301,7 +301,7 @@ public class OtlpHttpExportClientTests
             httpClient,
             string.Empty);
 
-        Assert.Throws<OperationCanceledException>(() =>
+        Assert.ThrowsAny<OperationCanceledException>(() =>
             exportClient.SendExportRequest(payload, payload.Length, DateTime.UtcNow.AddSeconds(10), cts.Token));
     }
 

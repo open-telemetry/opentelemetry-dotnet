@@ -231,7 +231,38 @@ internal abstract class OtlpExportClient : IExportClient
         return content;
     }
 
-    protected HttpResponseMessage SendHttpRequest(HttpRequestMessage request, CancellationToken cancellationToken) =>
+    protected HttpResponseMessage SendHttpRequest(HttpRequestMessage request, DateTime deadlineUtc, CancellationToken cancellationToken)
+    {
+        var remaining = deadlineUtc - DateTime.UtcNow;
+
+        // The deadline is already in the past when the exporter has no timeout of
+        // its own (for example an HttpClient with an infinite Timeout), so only the
+        // caller's token applies then, as it does if the deadline is too far away to schedule.
+        if (remaining <= TimeSpan.Zero || remaining.TotalMilliseconds >= int.MaxValue)
+        {
+            return this.SendHttpRequest(request, cancellationToken);
+        }
+
+        // HttpClient.Timeout applies to every request and cannot be
+        // changed once the client has been used, so a deadline which is
+        // reached sooner (e.g. the time left of a ForceFlush timeout) is
+        // enforced through the cancellation token instead.
+        using var deadlineCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        deadlineCts.CancelAfter(remaining);
+
+        try
+        {
+            return this.SendHttpRequest(request, deadlineCts.Token);
+        }
+        catch (OperationCanceledException ex) when (deadlineCts.IsCancellationRequested && !cancellationToken.IsCancellationRequested)
+        {
+            // Surface the deadline the same way HttpClient reports its own
+            // timeout so that the callers' timeout handling applies.
+            throw new TaskCanceledException(ex.Message, new TimeoutException(ex.Message, ex));
+        }
+    }
+
+    private HttpResponseMessage SendHttpRequest(HttpRequestMessage request, CancellationToken cancellationToken) =>
 #if NET
         // Note: SendAsync must be used with HTTP/2 because synchronous send is
         // not supported.

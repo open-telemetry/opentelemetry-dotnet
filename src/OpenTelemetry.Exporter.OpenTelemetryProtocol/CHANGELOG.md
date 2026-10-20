@@ -7,6 +7,16 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Fixed exports continuing until `OtlpExporterOptions.TimeoutMilliseconds`
+  elapsed when a shorter timeout applied to them, such as the timeout passed
+  to `MeterProvider.ForceFlush()`,
+  `PeriodicExportingMetricReaderOptions.ExportTimeoutMilliseconds`
+  (`OTEL_METRIC_EXPORT_TIMEOUT`) or
+  `BatchExportProcessorOptions<T>.ExporterTimeoutMilliseconds`
+  (`OTEL_BSP_EXPORT_TIMEOUT`, `OTEL_BLRP_EXPORT_TIMEOUT`). The request is now
+  canceled when the shorter of the timeouts elapses.
+  ([#NNNN](https://github.com/open-telemetry/opentelemetry-dotnet/pull/NNNN))
+
 ## 1.20.1
 
 Released 2026-Oct-20

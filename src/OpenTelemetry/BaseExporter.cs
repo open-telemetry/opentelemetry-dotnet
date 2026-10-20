@@ -36,6 +36,19 @@ public abstract class BaseExporter<T> : IDisposable
     public BaseProvider? ParentProvider { get; internal set; }
 
     /// <summary>
+    /// Gets or sets the number of milliseconds the caller of <see cref="Export"/> allows
+    /// the export to take, or <c>Timeout.Infinite</c> when the caller does not set a limit.
+    /// </summary>
+    /// <remarks>
+    /// <see cref="Export"/> has no timeout parameter. This is set by the
+    /// processor or reader immediately before <see cref="Export"/> is called
+    /// (the time left of a <c>ForceFlush</c>/<c>Shutdown</c> timeout, or the
+    /// configured export timeout) so that exporters which are able to cancel
+    /// their work can honor it.
+    /// </remarks>
+    internal int ExportTimeoutMilliseconds { get; set; } = Timeout.Infinite;
+
+    /// <summary>
     /// Exports a batch of telemetry objects.
     /// </summary>
     /// <param name="batch">Batch of telemetry objects to export.</param>

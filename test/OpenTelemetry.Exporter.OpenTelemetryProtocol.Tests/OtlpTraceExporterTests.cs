@@ -1232,6 +1232,32 @@ public sealed class OtlpTraceExporterTests : IDisposable
     }
 
     [Fact]
+    public void Export_ProcessorTimeoutShorterThanExporterTimeout_LimitsExportDeadline()
+    {
+        var exportClientMock = new TestExportClient();
+        var exporterOptions = new OtlpExporterOptions();
+        using var transmissionHandler = new OtlpExporterTransmissionHandler(exportClientMock, exporterOptions.TimeoutMilliseconds);
+#pragma warning disable CA2000 // Dispose objects before losing scope
+        using var processor = new BatchActivityExportProcessor(
+            new OtlpTraceExporter(exporterOptions, DefaultSdkLimitOptions, DefaultExperimentalOptions, transmissionHandler),
+            exporterTimeoutMilliseconds: 500);
+#pragma warning restore CA2000 // Dispose objects before losing scope
+
+        using var activity = new Activity("activity")
+        {
+            ActivityTraceFlags = ActivityTraceFlags.Recorded,
+        };
+
+        var before = DateTime.UtcNow;
+        processor.OnEnd(activity);
+        Assert.True(processor.ForceFlush());
+        var after = DateTime.UtcNow;
+
+        Assert.True(exportClientMock.SendExportRequestCalled);
+        Assert.InRange(exportClientMock.LastDeadlineUtc, before.AddMilliseconds(500), after.AddMilliseconds(500));
+    }
+
+    [Fact]
     public void Shutdown_ClientShutdownIsCalled()
     {
         var exportClientMock = new TestExportClient();

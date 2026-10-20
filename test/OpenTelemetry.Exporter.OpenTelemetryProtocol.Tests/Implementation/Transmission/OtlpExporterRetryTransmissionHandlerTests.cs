@@ -6,6 +6,7 @@ using System.Net.Http;
 #endif
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient.Grpc;
+using OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Transmission.Tests;
 
@@ -82,6 +83,30 @@ public class OtlpExporterRetryTransmissionHandlerTests
 
         Assert.False(actual);
         Assert.True(exportClient.SendCount >= 2, $"Expected at least 2 send attempts, but got {exportClient.SendCount}.");
+    }
+
+    [Theory]
+    [InlineData(10_000, Timeout.Infinite, 10_000)]
+    [InlineData(10_000, 0, 10_000)]
+    [InlineData(10_000, 500, 500)]
+    [InlineData(10_000, 10_000, 10_000)]
+    [InlineData(10_000, 30_000, 10_000)]
+    [InlineData(Timeout.Infinite, Timeout.Infinite, Timeout.Infinite)]
+    [InlineData(Timeout.Infinite, 500, 500)]
+    public void TrySubmitRequest_DeadlineIsTheShorterOfTheTimeouts(int exporterTimeoutMilliseconds, int timeoutMilliseconds, int expectedTimeoutMilliseconds)
+    {
+        var exportClient = new TestExportClient();
+        using var transmissionHandler = new OtlpExporterRetryTransmissionHandler(exportClient, exporterTimeoutMilliseconds);
+
+        var before = DateTime.UtcNow;
+        var result = transmissionHandler.TrySubmitRequest([1, 2, 3], 3, timeoutMilliseconds);
+        var after = DateTime.UtcNow;
+
+        Assert.True(result);
+        Assert.InRange(
+            exportClient.LastDeadlineUtc,
+            before.AddMilliseconds(expectedTimeoutMilliseconds),
+            after.AddMilliseconds(expectedTimeoutMilliseconds));
     }
 
     private static string CreateMalformedGrpcStatusDetailsHeader(long value)

@@ -1200,6 +1200,31 @@ public sealed class OtlpMetricsExporterTests : IDisposable
     }
 
     [Fact]
+    public void ForceFlush_TimeoutShorterThanExporterTimeout_LimitsExportDeadline()
+    {
+        var exportClient = new TestExportClient();
+        var exporterOptions = new OtlpExporterOptions();
+        using var transmissionHandler = new OtlpExporterTransmissionHandler(exportClient, exporterOptions.TimeoutMilliseconds);
+
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+        using var meterProvider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+#pragma warning disable CA2000 // Dispose objects before losing scope
+            .AddReader(new BaseExportingMetricReader(new OtlpMetricExporter(exporterOptions, new ExperimentalOptions(), transmissionHandler)))
+#pragma warning restore CA2000 // Dispose objects before losing scope
+            .Build();
+
+        meter.CreateCounter<int>("counter").Add(1);
+
+        var before = DateTime.UtcNow;
+        Assert.True(meterProvider.ForceFlush(500));
+        var after = DateTime.UtcNow;
+
+        Assert.True(exportClient.SendExportRequestCalled);
+        Assert.InRange(exportClient.LastDeadlineUtc, before, after.AddMilliseconds(500));
+    }
+
+    [Fact]
     public void Export_WhenSerializationFails_ReportsDroppedBatchAndDoesNotSubmitRequest()
     {
         const int BatchDroppedEventId = 39;

@@ -133,7 +133,7 @@ public class OtlpTraceExporter : BaseExporter<Activity>
                 BinaryPrimitives.WriteUInt32BigEndian(data, (uint)dataLength);
             }
 
-            if (!this.transmissionHandler.TrySubmitRequest(buffer, writePosition))
+            if (!this.transmissionHandler.TrySubmitRequest(buffer, writePosition, this.ExportTimeoutMilliseconds))
             {
                 return ExportResult.Failure;
             }

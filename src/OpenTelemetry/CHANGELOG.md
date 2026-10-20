@@ -6,6 +6,14 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* The timeout passed to `MetricReader.Collect()` (for example by
+  `MeterProvider.ForceFlush()` or from the `ExportTimeoutMilliseconds` of
+  `PeriodicExportingMetricReader`) and the `ExporterTimeoutMilliseconds` of
+  `BatchExportProcessor<T>` are now made available to the exporter instead of
+  being ignored once the export has started, so that the OTLP exporter can
+  cancel an export which runs past the timeout.
+  ([#NNNN](https://github.com/open-telemetry/opentelemetry-dotnet/pull/NNNN))
+
 ## 1.20.1
 
 Released 2026-Oct-20

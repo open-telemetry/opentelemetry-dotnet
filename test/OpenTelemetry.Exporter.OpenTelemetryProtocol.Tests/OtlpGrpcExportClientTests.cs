@@ -362,7 +362,7 @@ public class OtlpGrpcExportClientTests
             httpClient,
             string.Empty);
 
-        Assert.Throws<OperationCanceledException>(() =>
+        Assert.ThrowsAny<OperationCanceledException>(() =>
             exportClient.SendExportRequest(buffer, buffer.Length, DateTime.UtcNow.AddSeconds(10), cts.Token));
     }
 

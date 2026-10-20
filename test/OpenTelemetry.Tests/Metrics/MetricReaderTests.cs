@@ -131,6 +131,46 @@ public class MetricReaderTests
         Assert.True(firstCollectResult);
     }
 
+    [Theory]
+    [InlineData(Timeout.Infinite)]
+    [InlineData(5_000)]
+    public void Collect_PassesRemainingTimeoutToExporter(int timeoutMilliseconds)
+    {
+        int? exportTimeoutMilliseconds = null;
+
+#pragma warning disable CA2000 // Dispose objects before losing scope
+        var exporter = new DelegatingExporter<Metric>();
+#pragma warning restore CA2000 // Dispose objects before losing scope
+        exporter.OnExportFunc = _ =>
+        {
+            exportTimeoutMilliseconds = exporter.ExportTimeoutMilliseconds;
+            return ExportResult.Success;
+        };
+
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+#pragma warning disable CA2000 // Dispose objects before losing scope
+            .AddReader(new BaseExportingMetricReader(exporter))
+#pragma warning restore CA2000 // Dispose objects before losing scope
+            .Build();
+
+        meter.CreateCounter<long>("test_counter").Add(1);
+
+        Assert.True(provider.ForceFlush(timeoutMilliseconds));
+
+        Assert.NotNull(exportTimeoutMilliseconds);
+
+        if (timeoutMilliseconds == Timeout.Infinite)
+        {
+            Assert.Equal(Timeout.Infinite, exportTimeoutMilliseconds);
+        }
+        else
+        {
+            Assert.InRange(exportTimeoutMilliseconds.Value, 1, timeoutMilliseconds);
+        }
+    }
+
     private sealed class BlockingMetricReader : MetricReader
     {
         public ManualResetEventSlim CollectionStarted { get; } = new();

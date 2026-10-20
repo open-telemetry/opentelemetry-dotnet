@@ -3,6 +3,7 @@
 
 using System.Diagnostics;
 using OpenTelemetry.Exporter;
+using OpenTelemetry.Tests;
 
 namespace OpenTelemetry.Trace.Tests;
 
@@ -183,6 +184,35 @@ public class BatchExportActivityProcessorTests
         processor.Shutdown();
 
         Assert.Equal(3, processor.ProcessedCount); // Verify batch was drained even though nothing was exported.
+    }
+
+    [Fact]
+    public void CheckExporterTimeoutIsPassedToExporter()
+    {
+        int? exportTimeoutMilliseconds = null;
+
+#pragma warning disable CA2000 // Dispose objects before losing scope
+        var exporter = new DelegatingExporter<Activity>();
+#pragma warning restore CA2000 // Dispose objects before losing scope
+        exporter.OnExportFunc = _ =>
+        {
+            exportTimeoutMilliseconds = exporter.ExportTimeoutMilliseconds;
+            return ExportResult.Success;
+        };
+
+        using var processor = new BatchActivityExportProcessor(
+            exporter,
+            exporterTimeoutMilliseconds: 1234);
+
+        using var activity = new Activity("start")
+        {
+            ActivityTraceFlags = ActivityTraceFlags.Recorded,
+        };
+
+        processor.OnEnd(activity);
+        processor.Shutdown();
+
+        Assert.Equal(1234, exportTimeoutMilliseconds);
     }
 
     private static async Task WaitForMinimumCountAsync(List<Activity> collection, int minimum)

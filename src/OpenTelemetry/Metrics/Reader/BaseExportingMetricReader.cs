@@ -80,10 +80,13 @@ public class BaseExportingMetricReader : MetricReader
     /// <inheritdoc/>
     internal override bool ProcessMetrics(in Batch<Metric> metrics, int timeoutMilliseconds)
     {
-        // TODO: Do we need to consider timeout here?
         try
         {
             OpenTelemetrySdkEventSource.Log.MetricReaderEvent(this.exportCalledMessage);
+
+            // MetricReader.Collect never runs two collections of the
+            // same reader at the same time, so this is not written concurrently.
+            this.exporter.ExportTimeoutMilliseconds = timeoutMilliseconds;
             var result = this.exporter.Export(metrics);
             if (result == ExportResult.Success)
             {

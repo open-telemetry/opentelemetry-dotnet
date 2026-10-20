@@ -31,10 +31,37 @@ internal class OtlpExporterTransmissionHandler : IDisposable
     /// otherwise, <see langword="false"/>.
     /// </returns>
     public bool TrySubmitRequest(byte[] request, int contentLength)
+        => this.TrySubmitRequest(request, contentLength, Timeout.Infinite);
+
+    /// <summary>
+    /// Attempts to send an export request to the server.
+    /// </summary>
+    /// <param name="request">The request to send to the server.</param>
+    /// <param name="contentLength">length of content.</param>
+    /// <param name="timeoutMilliseconds">
+    /// The number of milliseconds the caller allows the export to take, or zero
+    /// or <see cref="Timeout.Infinite"/> when the caller does not set a limit.
+    /// The shorter of this and the exporter's own timeout is used as the deadline.
+    /// </param>
+    /// <returns>
+    /// <see langword="true"/> if the request is sent successfully;
+    /// otherwise, <see langword="false"/>.
+    /// </returns>
+    public bool TrySubmitRequest(byte[] request, int contentLength, int timeoutMilliseconds)
     {
         try
         {
-            var deadlineUtc = DateTime.UtcNow.AddMilliseconds(this.TimeoutMilliseconds);
+            var effectiveTimeoutMilliseconds = this.TimeoutMilliseconds;
+
+            // The exporter's own timeout is not positive when it has no limit (for
+            // example an HttpClient with an infinite Timeout), so the caller's applies.
+            if (timeoutMilliseconds > 0 &&
+                (effectiveTimeoutMilliseconds <= 0 || timeoutMilliseconds < effectiveTimeoutMilliseconds))
+            {
+                effectiveTimeoutMilliseconds = timeoutMilliseconds;
+            }
+
+            var deadlineUtc = DateTime.UtcNow.AddMilliseconds(effectiveTimeoutMilliseconds);
             var response = this.ExportClient.SendExportRequest(request, contentLength, deadlineUtc);
 
             return response.Success || this.OnSubmitRequestFailure(request, contentLength, response);
