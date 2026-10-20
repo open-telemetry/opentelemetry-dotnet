@@ -675,8 +675,8 @@ public class OtlpAttributeTests
 
         public override string ToString() => value;
     }
-
 #endif
+
     private sealed class MyToStringMethodThrowsAnException
     {
         public override string ToString()
