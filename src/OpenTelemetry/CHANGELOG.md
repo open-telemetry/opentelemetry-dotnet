@@ -6,6 +6,28 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* **Breaking Change** Dropped support for `net8.0` and `net9.0`.
+  ([#6899](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6899))
+
+* Add support for .NET 11.0.
+  ([#6899](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6899))
+
+* Added support for enabling `ActivitySource`s from configuration using the
+  `Microsoft.Extensions.Diagnostics` tracing APIs introduced in .NET 11 (for
+  example, `services.AddTracing(b => b.AddConfiguration(section))`).
+  Activities from sources enabled this way are processed by the OpenTelemetry
+  `TracerProvider` registered through `AddOpenTelemetry().WithTracing()`.
+  Not supported when targeting `net10.0`.
+  ([#6899](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6899))
+
+## 1.20.1
+
+Released 2026-Oct-20
+
+## 1.20.1-rc.1
+
+Released 2026-Oct-20
+
 * Fixed a possible race condition on ARM64 when multiple threads record the
   first measurement with no tags, or the first overflow measurement, that could
   cause the measurement to be recorded incorrectly.
@@ -67,19 +89,13 @@ Notes](../../RELEASENOTES.md).
   `Guid`, share the same built-in hash code.
   ([#7979](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7979))
 
-* **Breaking Change** Dropped support for `net8.0` and `net9.0`.
-  ([#6899](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6899))
+* Fixed `ObservableCounter` and `ObservableUpDownCounter` overflow points
+  reporting only the last observation instead of the sum for each collection.
+  ([#7985](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7985))
 
-* Add support for .NET 11.0.
-  ([#6899](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6899))
-
-* Added support for enabling `ActivitySource`s from configuration using the
-  `Microsoft.Extensions.Diagnostics` tracing APIs introduced in .NET 11 (for
-  example, `services.AddTracing(b => b.AddConfiguration(section))`).
-  Activities from sources enabled this way are processed by the OpenTelemetry
-  `TracerProvider` registered through `AddOpenTelemetry().WithTracing()`.
-  Not supported when targeting `net10.0`.
-  ([#6899](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6899))
+* Fixed replaced log attributes being exported together with their original
+  values when buffering or updating `LogRecord.State`.
+  ([#7987](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7987))
 
 ## 1.20.0
 

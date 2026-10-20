@@ -74,6 +74,10 @@ internal sealed class AggregatorStore
     private volatile bool zeroTagMetricPointInitialized;
     private volatile bool overflowTagMetricPointInitialized;
 
+    // Only observable callbacks use this accumulator, serialized by the provider's collectLock.
+    private long overflowCollectionCycle;
+    private MetricPointValueStorage overflowSum;
+
     internal AggregatorStore(
         MetricStreamIdentity metricStreamIdentity,
         AggregationType aggType,
@@ -1244,6 +1248,12 @@ internal sealed class AggregatorStore
         {
             Interlocked.Increment(ref this.DroppedMeasurements);
             this.InitializeOverflowTagPointIfNotInitialized();
+            if (this.aggType == AggregationType.LongSumIncomingCumulative && this.PrepareObservableOverflowSum())
+            {
+                this.overflowSum.AsLong = unchecked(this.overflowSum.AsLong + value);
+                value = this.overflowSum.AsLong;
+            }
+
             this.metricPoints[1].Update(value);
 
             return;
@@ -1305,6 +1315,12 @@ internal sealed class AggregatorStore
         {
             Interlocked.Increment(ref this.DroppedMeasurements);
             this.InitializeOverflowTagPointIfNotInitialized();
+            if (this.aggType == AggregationType.DoubleSumIncomingCumulative && this.PrepareObservableOverflowSum())
+            {
+                this.overflowSum.AsDouble += value;
+                value = this.overflowSum.AsDouble;
+            }
+
             this.metricPoints[1].Update(value);
 
             return;
@@ -1329,6 +1345,25 @@ internal sealed class AggregatorStore
                 tags,
                 offerExemplar: Activity.Current?.Recorded ?? false);
         }
+    }
+
+    private bool PrepareObservableOverflowSum()
+    {
+        var collectionCycle = MeterProviderSdk.ObservableInstrumentsCollectionCycle;
+        if (collectionCycle == 0)
+        {
+            return false;
+        }
+
+        // A pass updates every reader's store, even when only one reader snapshots.
+        // Reset by observation pass rather than by snapshot or MetricPointStatus.
+        if (this.overflowCollectionCycle != collectionCycle)
+        {
+            this.overflowCollectionCycle = collectionCycle;
+            this.overflowSum = default;
+        }
+
+        return true;
     }
 
     private int FindMetricAggregatorsDefault(ReadOnlySpan<KeyValuePair<string, object?>> tags)

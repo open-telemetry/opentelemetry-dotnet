@@ -7,6 +7,20 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* **Breaking Change** Dropped support for `net8.0` and `net9.0`.
+  ([#6899](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6899))
+
+* Add support for .NET 11.0.
+  ([#6899](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6899))
+
+## 1.20.1
+
+Released 2026-Oct-20
+
+## 1.20.1-rc.1
+
+Released 2026-Oct-20
+
 * Fixed informational HTTP client logs not being suppressed by default when the
   OTLP log exporter is registered using `OpenTelemetryLoggerOptions.AddOtlpExporter`.
   ([#7959](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7959))
@@ -83,11 +97,9 @@ Notes](../../RELEASENOTES.md).
   diagnostic events and exceptions when supplied instead of a file path.
   ([#7981](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7981))
 
-* **Breaking Change** Dropped support for `net8.0` and `net9.0`.
-  ([#6899](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6899))
-
-* Add support for .NET 11.0.
-  ([#6899](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6899))
+* Fixed early metric collections permanently omitting resource attributes from
+  subsequent exports while the `MeterProvider` is being built.
+  ([#7984](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7984))
 
 ## 1.20.0
 

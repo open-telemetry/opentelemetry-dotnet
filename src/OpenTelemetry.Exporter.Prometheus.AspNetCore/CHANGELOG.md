@@ -7,17 +7,28 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* **Breaking Change** Dropped support for `net8.0` and `net9.0`.
+  ([#6899](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6899))
+
+* Add support for .NET 11.0.
+  ([#6899](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6899))
+
+## 1.20.1-beta.1
+
+Released 2026-Oct-20
+
 * Fixed scrape responses being handed to the server in a single write, which
   made the server buffer a full copy of the response for each client that did
   not read it until the request completed or timed out. Responses are now
   written in bounded slices so the server's back-pressure applies.
   ([#7957](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7957))
 
-* **Breaking Change** Dropped support for `net8.0` and `net9.0`.
-  ([#6899](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6899))
+* Fixed startup scrapes permanently omitting `target_info` and configured
+  resource constant labels from subsequent scrape responses.
+  ([#7984](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7984))
 
-* Add support for .NET 11.0.
-  ([#6899](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6899))
+* Updated OpenTelemetry core component version(s) to `1.20.1`.
+  ([#7990](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7990))
 
 ## 1.20.0-beta.1
 

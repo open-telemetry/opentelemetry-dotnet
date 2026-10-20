@@ -4,6 +4,9 @@
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using System.Diagnostics.Tracing;
+#if NETFRAMEWORK
+using System.Net.Http;
+#endif
 using System.Reflection;
 using Google.Protobuf;
 using Microsoft.Extensions.Configuration;
@@ -1227,6 +1230,48 @@ public sealed class OtlpMetricsExporterTests : IDisposable
         // The batch has been attributed to a signal and an item count, so it must
         // not also be reported as an unknown export error.
         Assert.DoesNotContain(listener.Messages, e => e.EventId == ExportMethodExceptionEventId);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void ExportDuringStartupDoesNotLoseResource(bool collectBeforeBuild)
+    {
+        using var meter = new Meter(new MeterOptions(Utils.GetCurrentMethodName()));
+        using var handler = new TestHttpMessageHandler();
+        using var client = new HttpClient(handler);
+        using var exporter = new OtlpMetricExporter(new OtlpExporterOptions
+        {
+            Protocol = OtlpExportProtocol.HttpProtobuf,
+            HttpClientFactory = () => client,
+        });
+        using var reader = new BaseExportingMetricReader(exporter);
+
+        if (collectBeforeBuild)
+        {
+            // A periodic reader can collect before the provider has attached it.
+            Assert.True(reader.Collect());
+        }
+
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .ConfigureResource(resource => resource.Clear().AddService("startup-service", serviceInstanceId: "id1"))
+            .AddReader(reader)
+            .Build();
+
+        meter.CreateCounter<int>("test_counter").Add(1);
+        Assert.True(reader.Collect());
+
+        Assert.NotNull(handler.HttpRequestContent);
+        var request = OtlpMetrics.MetricsData.Parser.ParseFrom(handler.HttpRequestContent);
+        var resourceMetrics = Assert.Single(request.ResourceMetrics);
+
+        Assert.Contains(
+            resourceMetrics.Resource.Attributes,
+            attribute => attribute.Key == "service.name" && attribute.Value.StringValue == "startup-service");
+        var metric = Assert.Single(Assert.Single(resourceMetrics.ScopeMetrics).Metrics);
+        Assert.Equal("test_counter", metric.Name);
+        Assert.Equal(1, Assert.Single(metric.Sum.DataPoints).AsInt);
     }
 
     public void Dispose()

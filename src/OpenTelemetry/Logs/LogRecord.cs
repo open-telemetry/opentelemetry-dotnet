@@ -547,7 +547,12 @@ public sealed class LogRecord
             return;
         }
 
-        var attributeStorage = this.AttributeStorage ??= [with(attributes.Count)];
+        var attributeStorage = this.AttributeStorage;
+        if (attributeStorage == null || attributeStorage.Count > 0)
+        {
+            // A replacement may wrap the previous storage, so leave it intact.
+            attributeStorage = this.AttributeStorage = [with(attributes.Count)];
+        }
 
         // Copying the KeyValuePairs from attributes to AttributeStorage
         // "captures" the state and fixes issues where the values are generated
