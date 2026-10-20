@@ -14,16 +14,17 @@ namespace OpenTelemetry.Configuration.Declarative.Tests;
 public sealed class DeclarativeConfigurationHostIntegrationTests
 {
     [Fact]
-    public void ModernHost_BuilderConfigurationExtension_ResourceAttributesFlowToSdk()
+    public void ModernHost_AddOpenTelemetryOnHostBuilder_AttributesListFlowsToSdk()
     {
-        // Recommended API for HostApplicationBuilder: add source directly on
+        // Recommended API for HostApplicationBuilder: the source is added directly to
         // builder.Configuration (the live ConfigurationManager).
         using var yamlFile = DeclarativeYamlTestFile.CreateDeclarativeYaml(
             resourceAttributesList: "service.name=modern-host-svc");
 
         var builder = Host.CreateApplicationBuilder();
-        builder.Configuration.AddOpenTelemetryDeclarativeConfiguration(yamlFile.Path);
-        builder.Services.AddOpenTelemetry().WithTracing();
+        builder.AddOpenTelemetry()
+            .UseDeclarativeConfiguration(yamlFile.Path)
+            .WithTracing();
 
         using var host = builder.Build();
 
@@ -60,11 +61,11 @@ public sealed class DeclarativeConfigurationHostIntegrationTests
     }
 
     [Fact]
-    public void ModernHost_BuilderConfiguration_RepresentativeConsumerUsesProviderAccessor()
+    public void ModernHost_UseDeclarativeConfiguration_RepresentativeConsumerUsesProviderAccessor()
     {
         using var yamlFile = DeclarativeYamlTestFile.CreateDeclarativeYaml(disabled: true);
         var builder = Host.CreateApplicationBuilder();
-        builder.Configuration.AddOpenTelemetryDeclarativeConfiguration(yamlFile.Path);
+        builder.AddOpenTelemetry().UseDeclarativeConfiguration(yamlFile.Path);
         builder.Services.AddRepresentativeDeclarativeConfigurationConsumer();
 
         using var host = builder.Build();
@@ -87,8 +88,9 @@ public sealed class DeclarativeConfigurationHostIntegrationTests
         using var yamlFile = DeclarativeYamlTestFile.CreateDeclarativeYaml(disabled: true);
 
         var builder = Host.CreateApplicationBuilder();
-        builder.Configuration.AddOpenTelemetryDeclarativeConfiguration(yamlFile.Path);
-        builder.Services.AddOpenTelemetry().WithTracing(b => b.AddSource("modern.disabled.source"));
+        builder.AddOpenTelemetry()
+            .UseDeclarativeConfiguration(yamlFile.Path)
+            .WithTracing(b => b.AddSource("modern.disabled.source"));
 
         using var host = builder.Build();
 
@@ -106,8 +108,9 @@ public sealed class DeclarativeConfigurationHostIntegrationTests
         using var yamlFile = DeclarativeYamlTestFile.CreateDeclarativeYaml(disabled: true);
 
         var builder = Host.CreateApplicationBuilder();
-        builder.Configuration.AddOpenTelemetryDeclarativeConfiguration(yamlFile.Path);
-        builder.Services.AddOpenTelemetry().WithMetrics();
+        builder.AddOpenTelemetry()
+            .UseDeclarativeConfiguration(yamlFile.Path)
+            .WithMetrics();
 
         using var host = builder.Build();
 
@@ -116,7 +119,7 @@ public sealed class DeclarativeConfigurationHostIntegrationTests
     }
 
     [Fact]
-    public void ModernHost_InvalidYaml_ThrowsDeclarativeConfigurationExceptionWhenSourceAdded()
+    public void ModernHost_InvalidYaml_ThrowsDeclarativeConfigurationExceptionDuringRegistration()
     {
         const string yaml = "{ unclosed: [";
 
@@ -127,7 +130,7 @@ public sealed class DeclarativeConfigurationHostIntegrationTests
         // ConfigurationManager loads providers eagerly when a source is added, so invalid
         // YAML fails during registration rather than at host.Build().
         Assert.Throws<DeclarativeConfigurationException>(() =>
-            builder.Configuration.AddOpenTelemetryDeclarativeConfiguration(yamlFile.Path));
+            builder.AddOpenTelemetry().UseDeclarativeConfiguration(yamlFile.Path));
     }
 
     [Fact]
@@ -139,13 +142,13 @@ public sealed class DeclarativeConfigurationHostIntegrationTests
         var builder = Host.CreateApplicationBuilder();
 
         // YAML is added first, then the in-memory source is added after it.
-        builder.Configuration.AddOpenTelemetryDeclarativeConfiguration(yamlFile.Path);
+        builder.AddOpenTelemetry()
+            .UseDeclarativeConfiguration(yamlFile.Path)
+            .WithTracing();
         builder.Configuration.AddInMemoryCollection(new Dictionary<string, string?>
         {
             ["OTEL_RESOURCE_ATTRIBUTES"] = "service.name=from-in-memory",
         });
-
-        builder.Services.AddOpenTelemetry().WithTracing();
 
         using var host = builder.Build();
 
@@ -156,10 +159,10 @@ public sealed class DeclarativeConfigurationHostIntegrationTests
     }
 
     [Fact]
-    public void ModernHost_YamlOverridesSourceAddedBeforeIt()
+    public void ModernHost_AttributesListOverridesSourceAddedBeforeIt()
     {
-        // Source-only path: attributes_list feeds OTEL_RESOURCE_ATTRIBUTES. Because YAML is appended
-        // after the in-memory source, the YAML value for the flat key wins in IConfiguration.
+        // attributes_list feeds OTEL_RESOURCE_ATTRIBUTES. Because YAML is appended after the
+        // in-memory source, the YAML value for the flat key wins in IConfiguration.
         using var yamlFile = DeclarativeYamlTestFile.CreateDeclarativeYaml(
             resourceAttributesList: "service.name=from-yaml");
 
@@ -170,9 +173,9 @@ public sealed class DeclarativeConfigurationHostIntegrationTests
         {
             ["OTEL_RESOURCE_ATTRIBUTES"] = "service.name=from-in-memory",
         });
-        builder.Configuration.AddOpenTelemetryDeclarativeConfiguration(yamlFile.Path);
-
-        builder.Services.AddOpenTelemetry().WithTracing();
+        builder.AddOpenTelemetry()
+            .UseDeclarativeConfiguration(yamlFile.Path)
+            .WithTracing();
 
         using var host = builder.Build();
 
@@ -183,18 +186,19 @@ public sealed class DeclarativeConfigurationHostIntegrationTests
     }
 
     [Fact]
-    public void ClassicHost_ConfigureAppConfiguration_ResourceAttributesFlowToSdk()
+    public void ClassicHost_UseDeclarativeConfiguration_AttributesListFlowsToSdk()
     {
-        // Recommended API for HostBuilder: add the source inside ConfigureAppConfiguration
-        // so it becomes part of the host's composed IConfiguration.
+        // Recommended API for HostBuilder: register inside ConfigureServices. The source is
+        // chained after the host's composed IConfiguration when it is first resolved.
         using var yamlFile = new DeclarativeYamlTestFileFactory();
         var yamlPath = yamlFile.CreateDeclarativeYaml(
             resourceAttributesList: "service.name=classic-host-svc");
 
         using var host = new HostBuilder()
-            .ConfigureAppConfiguration(configBuilder =>
-                configBuilder.AddOpenTelemetryDeclarativeConfiguration(yamlPath))
-            .ConfigureServices(services => services.AddOpenTelemetry().WithTracing())
+            .ConfigureServices(services =>
+                services.AddOpenTelemetry()
+                    .UseDeclarativeConfiguration(yamlPath)
+                    .WithTracing())
             .Build();
 
         var resource = host.Services.GetRequiredService<TracerProvider>().GetResource();
@@ -227,15 +231,16 @@ public sealed class DeclarativeConfigurationHostIntegrationTests
     }
 
     [Fact]
-    public void ClassicHost_BuilderConfiguration_RepresentativeConsumerUsesProviderAccessor()
+    public void ClassicHost_UseDeclarativeConfiguration_RepresentativeConsumerUsesProviderAccessor()
     {
         using var yamlFile = DeclarativeYamlTestFile.CreateDeclarativeYaml(disabled: true);
 
         using var host = new HostBuilder()
-            .ConfigureAppConfiguration(builder =>
-                builder.AddOpenTelemetryDeclarativeConfiguration(yamlFile.Path))
             .ConfigureServices(services =>
-                services.AddRepresentativeDeclarativeConfigurationConsumer())
+            {
+                services.AddOpenTelemetry().UseDeclarativeConfiguration(yamlFile.Path);
+                services.AddRepresentativeDeclarativeConfigurationConsumer();
+            })
             .Build();
         var configuration = Assert.IsType<IConfigurationRoot>(
             host.Services.GetRequiredService<IConfiguration>(), exactMatch: false);
@@ -257,8 +262,9 @@ public sealed class DeclarativeConfigurationHostIntegrationTests
         var yamlPath = yamlFile.CreateDeclarativeYaml(disabled: true);
 
         using var host = new HostBuilder()
-            .ConfigureAppConfiguration(b => b.AddOpenTelemetryDeclarativeConfiguration(yamlPath))
-            .ConfigureServices(s => s.AddOpenTelemetry().WithTracing(b => b.AddSource("classic.disabled.source")))
+            .ConfigureServices(s => s.AddOpenTelemetry()
+                .UseDeclarativeConfiguration(yamlPath)
+                .WithTracing(b => b.AddSource("classic.disabled.source")))
             .Build();
 
         using var source = new ActivitySource("classic.disabled.source");
@@ -276,27 +282,28 @@ public sealed class DeclarativeConfigurationHostIntegrationTests
         using var yamlFile = DeclarativeYamlTestFile.CreateYamlFile(yaml);
 
         var hostBuilder = new HostBuilder()
-            .ConfigureAppConfiguration(b =>
-                b.AddOpenTelemetryDeclarativeConfiguration(yamlFile.Path));
+            .ConfigureServices(services =>
+                services.AddOpenTelemetry().UseDeclarativeConfiguration(yamlFile.Path));
 
-        // Classic HostBuilder composes a ConfigurationRoot during Build(); providers
-        // load at that point rather than when the source is registered.
+        // Classic HostBuilder resolves IConfiguration during Build(), which is when the
+        // replaced registration adds the source and the provider loads.
         Assert.Throws<DeclarativeConfigurationException>(hostBuilder.Build);
     }
 
     [Fact]
     public void ModernHost_YamlOverridesOtelEnvVar_WhenEnvRegisteredFirst()
     {
-        // Source-only path: attributes_list feeds OTEL_RESOURCE_ATTRIBUTES. The YAML source
-        // is appended after the env-var source, so the YAML flat value wins in IConfiguration.
+        // attributes_list feeds OTEL_RESOURCE_ATTRIBUTES. The YAML source is appended after the
+        // env-var source, so the YAML flat value wins in IConfiguration.
         const string envVarName = "OTEL_RESOURCE_ATTRIBUTES";
         using var envScope = EnvironmentVariableScope.Create(envVarName, "service.name=from-env");
         using var yamlFile = DeclarativeYamlTestFile.CreateDeclarativeYaml(
             resourceAttributesList: "service.name=from-yaml");
 
         var builder = Host.CreateApplicationBuilder();
-        builder.Configuration.AddOpenTelemetryDeclarativeConfiguration(yamlFile.Path);
-        builder.Services.AddOpenTelemetry().WithTracing();
+        builder.AddOpenTelemetry()
+            .UseDeclarativeConfiguration(yamlFile.Path)
+            .WithTracing();
 
         using var host = builder.Build();
 

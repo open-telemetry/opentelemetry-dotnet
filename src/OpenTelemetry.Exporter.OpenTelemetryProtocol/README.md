@@ -751,6 +751,14 @@ want to solicit feedback from the community.
       managed on disk, refer to the [File
       details](https://github.com/open-telemetry/opentelemetry-dotnet-contrib/tree/main/src/OpenTelemetry.PersistentStorage.FileSystem#file-details).
 
+      Files are stored in a `<signal>/<destination>` subdirectory of the
+      specified directory path, where `<destination>` is derived from the
+      `Protocol`, `Endpoint` and `Headers` of the exporter. An exporter only
+      resends telemetry which was stored for its own destination. Exporters
+      which only differ in the `HttpClient` they use (for example one which adds
+      credentials to the requests) share a subdirectory and may resend each
+      other's telemetry.
+
       Added in **TBD** (Unreleased).
 
 > [!NOTE]

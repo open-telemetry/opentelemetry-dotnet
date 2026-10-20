@@ -217,10 +217,7 @@ public class SelfDiagnosticsConfigRefresherTests
     [Fact]
     public void SelfDiagnosticsConfigRefresher_PreserveWindowsFileSharing()
     {
-        if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-        {
-            return;
-        }
+        Assert.SkipUnless(RuntimeInformation.IsOSPlatform(OSPlatform.Windows), "This test can only be run on Windows.");
 
         var logDirectory = Utils.GetCurrentMethodName();
         using var configRefresher = CreateRefresher(logDirectory, EventLevel.Critical);

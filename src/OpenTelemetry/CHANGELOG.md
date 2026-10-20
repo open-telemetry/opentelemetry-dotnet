@@ -6,6 +6,14 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+## 1.20.1
+
+Released 2026-Oct-20
+
+## 1.20.1-rc.1
+
+Released 2026-Oct-20
+
 * Fixed a possible race condition on ARM64 when multiple threads record the
   first measurement with no tags, or the first overflow measurement, that could
   cause the measurement to be recorded incorrectly.
@@ -59,6 +67,21 @@ Notes](../../RELEASENOTES.md).
   so that only the owner can access them (`0700`/`0600`) on Linux and macOS,
   instead of inheriting the process umask.
   ([#7967](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7967))
+
+* Fixed pooled log records retaining completed log data until reused.
+  ([#7978](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7978))
+
+* Fixed slow metric recording when distinct wide tag values, such as `long` or
+  `Guid`, share the same built-in hash code.
+  ([#7979](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7979))
+
+* Fixed `ObservableCounter` and `ObservableUpDownCounter` overflow points
+  reporting only the last observation instead of the sum for each collection.
+  ([#7985](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7985))
+
+* Fixed replaced log attributes being exported together with their original
+  values when buffering or updating `LogRecord.State`.
+  ([#7987](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7987))
 
 ## 1.20.0
 
