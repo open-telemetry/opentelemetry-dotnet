@@ -655,8 +655,13 @@ public class MetricApiTests : MetricTestsBase
         using var meter2 = new Meter("DefCompany.XyzProduct.ComponentB");
         var exportedItems = new List<Metric>();
 
+        // The wildcard subscribes to every meter in the process, so drop
+        // instruments from meters created by other tests running in parallel.
+        // A dropped instrument is never enabled, so its callbacks are not
+        // invoked when this provider collects.
         using var container = BuildMeterProvider(out var meterProvider, builder => builder
             .AddMeter("*")
+            .AddView(i => i.Meter == meter1 || i.Meter == meter2 ? null : MetricStreamConfiguration.Drop)
             .AddInMemoryExporter(exportedItems));
 
         var measurement = new Measurement<int>(100);
