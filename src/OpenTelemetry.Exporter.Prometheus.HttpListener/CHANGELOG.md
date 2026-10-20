@@ -7,6 +7,10 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+## 1.20.1-beta.1
+
+Released 2026-Oct-20
+
 * Fixed scrape responses being handed to the server in a single write, which
   on Linux and macOS made the listener allocate and hold a full copy of the
   response for each client that did not read it until the request completed or
