@@ -15,7 +15,7 @@ Notes](../../RELEASENOTES.md).
   `BatchExportProcessorOptions<T>.ExporterTimeoutMilliseconds`
   (`OTEL_BSP_EXPORT_TIMEOUT`, `OTEL_BLRP_EXPORT_TIMEOUT`). The request is now
   canceled when the shorter of the timeouts elapses.
-  ([#NNNN](https://github.com/open-telemetry/opentelemetry-dotnet/pull/NNNN))
+  ([#7996](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7996))
 
 ## 1.20.1
 

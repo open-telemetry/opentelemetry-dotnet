@@ -12,7 +12,7 @@ Notes](../../RELEASENOTES.md).
   `BatchExportProcessor<T>` are now made available to the exporter instead of
   being ignored once the export has started, so that the OTLP exporter can
   cancel an export which runs past the timeout.
-  ([#NNNN](https://github.com/open-telemetry/opentelemetry-dotnet/pull/NNNN))
+  ([#7996](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7996))
 
 ## 1.20.1
 
