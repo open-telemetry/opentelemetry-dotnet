@@ -704,7 +704,7 @@ internal sealed class PrometheusCollectionManager
 
     private IReadOnlyList<KeyValuePair<string, object>>? GetResourceConstantLabels()
     {
-        if (!this.resourceConstantLabelsComputed)
+        if (!this.resourceConstantLabelsComputed && this.exporter.ParentProvider != null)
         {
             if (this.resourceConstantLabelsFilter is { } filter)
             {

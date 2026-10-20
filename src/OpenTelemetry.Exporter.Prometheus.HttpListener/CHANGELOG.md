@@ -19,6 +19,10 @@ Notes](../../RELEASENOTES.md).
   responding to a request with a body instead of being kept alive.
   ([#7962](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7962))
 
+* Fixed startup scrapes permanently omitting `target_info` and configured
+  resource constant labels from subsequent scrape responses.
+  ([#7984](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7984))
+
 ## 1.20.0-beta.1
 
 Released 2026-Oct-15
