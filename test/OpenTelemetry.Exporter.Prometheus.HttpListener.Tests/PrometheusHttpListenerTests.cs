@@ -680,6 +680,52 @@ public class PrometheusHttpListenerTests
     }
 
     [Fact]
+    public async Task ScrapeWhileMeterProviderIsBeingBuiltDoesNotLoseResource()
+    {
+        using var meter = new Meter(new MeterOptions(MeterName) { Version = MeterVersion });
+        var port = GetRandomPort();
+
+        using var client = new HttpClient
+        {
+            BaseAddress = new UriBuilder(Uri.UriSchemeHttp, "localhost", port).Uri,
+            Timeout = MaxCollectWait,
+        };
+
+        var detector = new ScrapingResourceDetector(client, TestContext.Current.CancellationToken);
+
+        using var context = CreateMeterProvider(
+            meter,
+            configureListener: options =>
+            {
+                options.Port = port;
+                options.ScrapeResponseCacheDurationMilliseconds = 0;
+                options.ResourceConstantLabels = static key => key == "service.name";
+                return options.Port;
+            },
+            configureMeterProvider: builder => builder.ConfigureResource(resource => resource.AddDetector(detector)));
+
+        Assert.Equal(HttpStatusCode.OK, detector.StatusCode);
+
+        meter.CreateCounter<int>("test_counter").Add(1);
+
+        using var response = await client.GetAsync(new Uri("metrics", UriKind.Relative), TestContext.Current.CancellationToken);
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+#if NET
+        var output = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+#else
+        var output = await response.Content.ReadAsStringAsync();
+#endif
+        var expected = "# TYPE target_info gauge\n"
+            + "# HELP target_info Target metadata\n"
+            + "target_info{service_name=\"my_service\",service_instance_id=\"id1\"} 1\n"
+            + "# TYPE test_counter_total counter\n"
+            + $"test_counter_total{{otel_scope_name=\"{MeterName}\",otel_scope_version=\"{MeterVersion}\",service_name=\"my_service\"}} 1\n";
+
+        Assert.Equal(expected, output);
+    }
+
+    [Fact]
     public async Task ScrapeClientThatStopsReadingTheResponseBodyDoesNotBlockOtherScrapesIndefinitely()
     {
         using var meter = new Meter(MeterName, MeterVersion);
@@ -1185,6 +1231,19 @@ public class PrometheusHttpListenerTests
 
         public void Dispose()
             => this.Provider.Dispose();
+    }
+
+    private sealed class ScrapingResourceDetector(HttpClient client, CancellationToken cancellationToken) : IResourceDetector
+    {
+        public HttpStatusCode? StatusCode { get; private set; }
+
+        public Resource Detect()
+        {
+            // Resource detection runs after the listener starts, before its reader is attached.
+            using var response = client.GetAsync(new Uri("metrics", UriKind.Relative), cancellationToken).GetAwaiter().GetResult();
+            this.StatusCode = response.StatusCode;
+            return Resource.Empty;
+        }
     }
 
     private sealed class PrometheusTestContext(PrometheusExporter exporter, PrometheusHttpListener listener, int port) : IDisposable
