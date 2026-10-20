@@ -71,6 +71,10 @@ Notes](../../RELEASENOTES.md).
   reporting only the last observation instead of the sum for each collection.
   ([#7985](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7985))
 
+* Fixed replaced log attributes being exported together with their original
+  values when buffering or updating `LogRecord.State`.
+  ([#7987](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7987))
+
 ## 1.20.0
 
 Released 2026-Oct-15
