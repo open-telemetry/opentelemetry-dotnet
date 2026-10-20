@@ -224,8 +224,6 @@ internal abstract class TagWriter<TTagState, TArrayState>
     protected abstract void WriteArrayTag(ref TTagState state, string key, ref TArrayState value);
 
 #if NET
-    // Writers that don't override this get the value's ToString() instead.
-    // Overriding this requires overriding EndUtf8StringTag too.
     protected virtual bool TryStartUtf8StringTag(ref TTagState state, string key, out Span<byte> buffer)
     {
         buffer = default;
