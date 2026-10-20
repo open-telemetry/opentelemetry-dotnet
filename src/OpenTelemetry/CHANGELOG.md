@@ -67,6 +67,10 @@ Notes](../../RELEASENOTES.md).
   `Guid`, share the same built-in hash code.
   ([#7979](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7979))
 
+* Fixed `ObservableCounter` and `ObservableUpDownCounter` overflow points
+  reporting only the last observation instead of the sum for each collection.
+  ([#7985](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7985))
+
 ## 1.20.0
 
 Released 2026-Oct-15
