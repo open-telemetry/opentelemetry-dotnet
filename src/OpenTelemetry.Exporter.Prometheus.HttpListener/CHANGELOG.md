@@ -12,7 +12,7 @@ Notes](../../RELEASENOTES.md).
   metrics collection. A collection now also writes the response for every
   format requested within the cache duration, so later scrapes for those
   formats are served from the cache.
-  ([#NNNN](https://github.com/open-telemetry/opentelemetry-dotnet/pull/NNNN))
+  ([#7994](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7994))
 
 ## 1.20.1-beta.1
 
