@@ -12,7 +12,7 @@ Notes](../../RELEASENOTES.md).
   `auth.failedlogins` with the unit `logins`), which caused scrapers such as
   Prometheus to reject the whole response. The `# UNIT` line is now omitted
   for such metrics; exported metric names are unchanged.
-  ([#NNNN](https://github.com/open-telemetry/opentelemetry-dotnet/pull/NNNN))
+  ([#7993](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7993))
 
 ## 1.20.1-beta.1
 
