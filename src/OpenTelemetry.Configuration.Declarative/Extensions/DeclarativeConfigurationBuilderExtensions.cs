@@ -10,46 +10,20 @@ namespace Microsoft.Extensions.Configuration;
 /// Extension methods for adding the OpenTelemetry declarative configuration source to
 /// an <see cref="IConfigurationBuilder"/>.
 /// </summary>
-public static class DeclarativeConfigurationBuilderExtensions
+internal static class DeclarativeConfigurationBuilderExtensions
 {
-    /// <summary>
-    /// Adds the declarative YAML source, reading the file path from the <c>OTEL_CONFIG_FILE</c> environment variable.
-    /// </summary>
-    /// <remarks>
-    /// The configuration file is the only source of OTel settings once registered. Keys set in
-    /// sources registered before it are ignored. Values from process environment variables can
-    /// be imported explicitly through environment variable substitution. <c>OTEL_DOTNET_*</c>
-    /// keys are unaffected. No-op when <c>OTEL_CONFIG_FILE</c> is unset, empty, or whitespace,
-    /// or when a declarative configuration file is already registered. The first file wins.
-    /// </remarks>
-    /// <param name="builder">The <see cref="IConfigurationBuilder"/> to add to.</param>
-    /// <returns>The original <see cref="IConfigurationBuilder"/> for chaining.</returns>
-    /// <exception cref="ArgumentNullException"><paramref name="builder"/> is null.</exception>
-    public static IConfigurationBuilder AddOpenTelemetryDeclarativeConfiguration(this IConfigurationBuilder builder)
-    {
-        Guard.ThrowIfNull(builder);
-
-        var filePath = Environment.GetEnvironmentVariable(OtelEnvironmentVariables.ConfigFile);
-
-        if (string.IsNullOrWhiteSpace(filePath))
-        {
-            OpenTelemetryDeclarativeConfigurationEventSource.Log.OtelConfigFileNotSet();
-            return builder;
-        }
-
-        return builder.AddOpenTelemetryDeclarativeConfiguration(filePath);
-    }
-
     /// <summary>
     /// Adds the declarative YAML source using the specified file path.
     /// </summary>
-    /// <remarks><inheritdoc cref="AddOpenTelemetryDeclarativeConfiguration(IConfigurationBuilder)" path="/remarks"/></remarks>
+    /// <remarks>
+    /// No-op when a declarative configuration file is already registered. The first file wins.
+    /// </remarks>
     /// <param name="builder">The <see cref="IConfigurationBuilder"/> to add to.</param>
     /// <param name="filePath">Path to the YAML file.</param>
     /// <returns>The original <see cref="IConfigurationBuilder"/> for chaining.</returns>
     /// <exception cref="ArgumentNullException"><paramref name="builder"/> is null.</exception>
     /// <exception cref="ArgumentException"><paramref name="filePath"/> is null, empty, or whitespace.</exception>
-    public static IConfigurationBuilder AddOpenTelemetryDeclarativeConfiguration(
+    internal static IConfigurationBuilder AddOpenTelemetryDeclarativeConfiguration(
         this IConfigurationBuilder builder,
         string filePath)
     {
