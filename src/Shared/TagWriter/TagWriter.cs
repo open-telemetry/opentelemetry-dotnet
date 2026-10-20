@@ -386,7 +386,6 @@ internal abstract class TagWriter<TTagState, TArrayState>
 
         if (!isBufferCapped)
         {
-            // Available buffer size was limited: throw so that the caller knows to grow the buffer
             throw new ArgumentOutOfRangeException(nameof(state), "The buffer is too small to hold the data being written.");
         }
 
