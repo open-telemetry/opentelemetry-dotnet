@@ -308,6 +308,10 @@ internal static class ProtobufOtlpMetricSerializer
 
             case MetricType.Histogram:
                 {
+                    // All of the data points of a histogram share the same explicit bounds,
+                    // so they are only encoded for the first data point and copied afterwards.
+                    var explicitBoundsCache = default(ExplicitBoundsCache);
+
                     writePosition = ProtobufSerializer.WriteTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.Metric_Data_Histogram, ProtobufWireType.LEN);
                     var metricTypeLengthPosition = writePosition;
                     writePosition += ReserveSizeForLength;
@@ -340,7 +344,7 @@ internal static class ProtobufOtlpMetricSerializer
                             writePosition = ProtobufSerializer.WriteDoubleWithTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.HistogramDataPoint_Max, max);
                         }
 
-                        writePosition = WriteHistogramBuckets(buffer, writePosition, metricPoint.GetHistogramBuckets());
+                        writePosition = WriteHistogramBuckets(buffer, writePosition, metricPoint.GetHistogramBuckets(), ref explicitBoundsCache);
 
                         writePosition = WriteDoubleExemplars(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.HistogramDataPoint_Exemplars, in metricPoint);
 
@@ -396,9 +400,27 @@ internal static class ProtobufOtlpMetricSerializer
 
                         writePosition = ProtobufSerializer.WriteSInt32WithTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.ExponentialHistogramDataPoint_Buckets_Offset, exponentialHistogramData.PositiveBuckets.Offset);
 
+                        // The bucket counts are a repeated scalar field, which proto3 packs into a single
+                        // length-delimited value by default instead of repeating the tag for every bucket.
+                        // Most data points have few populated buckets, so the length prefix is reserved as
+                        // a single byte rather than padded out to four.
+                        var bucketCountsLengthPosition = -1;
+
                         foreach (var bucketCount in exponentialHistogramData.PositiveBuckets)
                         {
-                            writePosition = ProtobufSerializer.WriteInt64WithTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.ExponentialHistogramDataPoint_Buckets_Bucket_Counts, (ulong)bucketCount);
+                            if (bucketCountsLengthPosition < 0)
+                            {
+                                writePosition = ProtobufSerializer.WriteTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.ExponentialHistogramDataPoint_Buckets_Bucket_Counts, ProtobufWireType.LEN);
+                                bucketCountsLengthPosition = writePosition;
+                                writePosition += ProtobufSerializer.ReserveSizeForCompactLength;
+                            }
+
+                            writePosition = ProtobufSerializer.WriteVarInt64(buffer, writePosition, (ulong)bucketCount);
+                        }
+
+                        if (bucketCountsLengthPosition >= 0)
+                        {
+                            writePosition = ProtobufSerializer.WriteCompactLength(buffer, bucketCountsLengthPosition, writePosition);
                         }
 
                         ProtobufSerializer.WriteReservedLength(buffer, positiveBucketsLengthPosition, writePosition - (positiveBucketsLengthPosition + ReserveSizeForLength));
@@ -512,10 +534,20 @@ internal static class ProtobufOtlpMetricSerializer
         }
 
         var startPosition = writePosition;
+        var allTagsWritten = true;
 
         foreach (var tag in tags)
         {
-            writePosition = WriteTag(buffer, writePosition, tag, fieldNumber);
+            writePosition = WriteTag(buffer, writePosition, tag, fieldNumber, out var written);
+            allTagsWritten &= written;
+        }
+
+        if (!allTagsWritten)
+        {
+            // A dropped tag is not necessarily dropped for good (for example a
+            // ToString() which throws only sometimes), so an incomplete set of
+            // attributes must not be replayed by every later export.
+            return writePosition;
         }
 
         var bytes = new byte[writePosition - startPosition];
@@ -532,6 +564,9 @@ internal static class ProtobufOtlpMetricSerializer
     }
 
     private static int WriteTag(byte[] buffer, int writePosition, KeyValuePair<string, object?> tag, int fieldNumber)
+        => WriteTag(buffer, writePosition, tag, fieldNumber, out _);
+
+    private static int WriteTag(byte[] buffer, int writePosition, KeyValuePair<string, object?> tag, int fieldNumber, out bool written)
     {
         var otlpTagWriterState = new ProtobufOtlpTagWriter.OtlpTagWriterState
         {
@@ -539,7 +574,7 @@ internal static class ProtobufOtlpMetricSerializer
             WritePosition = writePosition,
         };
 
-        _ = ProtobufOtlpTagWriter.WriteKeyValue(ref otlpTagWriterState, fieldNumber, tag.Key, tag.Value);
+        written = ProtobufOtlpTagWriter.WriteKeyValue(ref otlpTagWriterState, fieldNumber, tag.Key, tag.Value);
 
         return otlpTagWriterState.WritePosition;
     }
@@ -591,20 +626,34 @@ internal static class ProtobufOtlpMetricSerializer
         return writePosition;
     }
 
-    private static int WriteHistogramBuckets(byte[] buffer, int writePosition, HistogramBuckets buckets)
+    private static int WriteHistogramBuckets(byte[] buffer, int writePosition, HistogramBuckets buckets, ref ExplicitBoundsCache explicitBoundsCache)
     {
-        writePosition = WriteBucketCounts(buffer, writePosition, buckets.BucketCounts);
+        writePosition = WriteBucketCounts(buffer, writePosition, buckets.SnapshotBucketCounts);
 
         if (buckets.ExplicitBounds is { } explicitBounds)
         {
             // Use DisplayBounds (cleaned values) for export if available,
             // otherwise fall back to raw ExplicitBounds
-            writePosition = WriteExplicitBounds(buffer, writePosition, buckets.DisplayBounds ?? explicitBounds);
+            var bounds = buckets.DisplayBounds ?? explicitBounds;
+
+            if (ReferenceEquals(bounds, explicitBoundsCache.Bounds))
+            {
+                Buffer.BlockCopy(buffer, explicitBoundsCache.Start, buffer, writePosition, explicitBoundsCache.Length);
+                return writePosition + explicitBoundsCache.Length;
+            }
+
+            var start = writePosition;
+            writePosition = WriteExplicitBounds(buffer, writePosition, bounds);
+
+            if (writePosition > start)
+            {
+                explicitBoundsCache = new ExplicitBoundsCache(bounds, start, writePosition - start);
+            }
         }
 
         return writePosition;
 
-        static int WriteBucketCounts(byte[] buffer, int writePosition, HistogramBuckets.HistogramBucketValues[] values)
+        static int WriteBucketCounts(byte[] buffer, int writePosition, long[] values)
         {
             var length = values.Length;
 
@@ -619,7 +668,7 @@ internal static class ProtobufOtlpMetricSerializer
                 writePosition = ProtobufSerializer.WriteFixed64LittleEndianFormat(
                     buffer,
                     writePosition,
-                    (ulong)values[i].SnapshotValue);
+                    (ulong)values[i]);
             }
 
             return writePosition;
@@ -746,6 +795,18 @@ internal static class ProtobufOtlpMetricSerializer
             paramName,
             actualValue,
             $"Metric metadata exceeds the available serialization buffer capacity of {availableBufferSize} bytes.");
+
+    /// <summary>
+    /// The location in the buffer of the encoded explicit bounds of a histogram data point.
+    /// </summary>
+    private readonly struct ExplicitBoundsCache(double[] bounds, int start, int length)
+    {
+        public readonly double[]? Bounds { get; } = bounds;
+
+        public readonly int Start { get; } = start;
+
+        public readonly int Length { get; } = length;
+    }
 
     private sealed class CachedAttributes(int fieldNumber, byte[] bytes)
     {

@@ -25,6 +25,7 @@ public class SelfDiagnosticsLoggingEventListenerTests
     private const string EmptyPayloadSourceName = "OpenTelemetry-SelfDiagnosticsListenerTests-EmptyPayload";
     private const string CriticalSubscriptionSourceName = "OpenTelemetry-SelfDiagnosticsListenerTests-CriticalSubscription";
     private const string DisposedUpdateSourceName = "OpenTelemetry-SelfDiagnosticsListenerTests-DisposedUpdate";
+    private const string OversizedMessageSourceName = "OpenTelemetry-SelfDiagnosticsListenerTests-OversizedMessage";
 
     [Fact]
     public void SelfDescribingEvent_RendersPayloadNamesAndValues()
@@ -74,6 +75,24 @@ public class SelfDiagnosticsLoggingEventListenerTests
         var message = WaitForEntryEndingWith(context.Sink, "Widget gizmo failed after 4 attempts");
 
         Assert.Equal(SubstitutedMessageSourceName + ": Widget gizmo failed after 4 attempts", message);
+    }
+
+    [Fact]
+    public void MessageLongerThanMaxMessageLength_IsTruncated()
+    {
+        using var context = ListenerTestContext.Create(LogLevel.Warning, LogLevel.Warning);
+
+        using var eventSource = new OversizedMessageEventSource();
+
+        // The source name prefix pushes the rendered message past the limit.
+        eventSource.OversizedEvent(new string('x', SelfDiagnosticsLoggingEventListener.MaxMessageLength));
+
+        var message = WaitForEntryEndingWith(context.Sink, SelfDiagnosticsLoggingEventListener.TruncationSuffix);
+
+        Assert.StartsWith(OversizedMessageSourceName + ": x", message, StringComparison.Ordinal);
+        Assert.Equal(
+            SelfDiagnosticsLoggingEventListener.MaxMessageLength + SelfDiagnosticsLoggingEventListener.TruncationSuffix.Length,
+            message.Length);
     }
 
     [Fact]
@@ -342,6 +361,13 @@ public class SelfDiagnosticsLoggingEventListenerTests
         public void WidgetFailed(string widget, int attempts) => this.WriteEvent(1, widget, attempts);
     }
 
+    [EventSource(Name = OversizedMessageSourceName)]
+    private sealed class OversizedMessageEventSource : EventSource
+    {
+        [Event(1, Level = EventLevel.Warning, Message = "{0}")]
+        public void OversizedEvent(string message) => this.WriteEvent(1, message);
+    }
+
     [EventSource(Name = MismatchedMessageSourceName)]
     private sealed class MismatchedMessageEventSource : EventSource
     {
@@ -432,7 +458,6 @@ public class SelfDiagnosticsLoggingEventListenerTests
     private sealed class ListenerTestContext : IDisposable
     {
         private readonly SelfDiagnosticsSinkDispatcher dispatcher;
-        private readonly SelfDiagnosticsLoggingEventListener listener;
 
         private ListenerTestContext(
             TestSink sink,
@@ -443,18 +468,18 @@ public class SelfDiagnosticsLoggingEventListenerTests
             this.Sink = sink;
             this.dispatcher = dispatcher;
             this.Logger = logger;
-            this.listener = listener;
+            this.Listener = listener;
         }
 
         internal TestSink Sink { get; }
 
         internal SelfDiagnosticsLogger Logger { get; }
 
-        internal SelfDiagnosticsLoggingEventListener Listener => this.listener;
+        internal SelfDiagnosticsLoggingEventListener Listener { get; }
 
         public void Dispose()
         {
-            this.listener.Dispose();
+            this.Listener.Dispose();
             this.Logger.Dispose();
             this.dispatcher.Dispose();
             this.Sink.Dispose();

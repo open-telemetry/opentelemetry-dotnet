@@ -7,12 +7,36 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+## 1.20.1-beta.1
+
+Released 2026-Oct-20
+
+* Fixed scrape responses being handed to the server in a single write, which
+  made the server buffer a full copy of the response for each client that did
+  not read it until the request completed or timed out. Responses are now
+  written in bounded slices so the server's back-pressure applies.
+  ([#7957](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7957))
+
+* Fixed startup scrapes permanently omitting `target_info` and configured
+  resource constant labels from subsequent scrape responses.
+  ([#7984](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7984))
+
+* Updated OpenTelemetry core component version(s) to `1.20.1`.
+  ([#7990](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7990))
+
+## 1.20.0-beta.1
+
+Released 2026-Oct-15
+
 * A scrape request whose connection is aborted, or whose
   `X-Prometheus-Scrape-Timeout-Seconds` deadline elapses, now stops waiting
   for an in-progress metrics collection instead of continuing to wait for it
   to finish. The collection itself is not cancelled and continues running in
   the background.
   ([#7856](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7856))
+
+* Updated OpenTelemetry core component version(s) to `1.20.0`.
+  ([#7950](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7950))
 
 ## 1.19.1-beta.1
 

@@ -37,6 +37,15 @@ namespace OpenTelemetry.Internal;
 #endif
 internal sealed class SelfDiagnosticsFileSink : ISelfDiagnosticsSink
 {
+#if NET
+    // The log carries the environment snapshot (exporter credentials under AllValues) and
+    // exception detail, so on Unix the directory and files are created owner-only rather than
+    // inheriting whatever the process umask leaves (typically 0755/0644). Existing directories
+    // are left as they are.
+    private const UnixFileMode OwnerOnlyDirectoryMode = UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute;
+    private const UnixFileMode OwnerOnlyFileMode = UnixFileMode.UserRead | UnixFileMode.UserWrite;
+#endif
+
     private static readonly TimeSpan DefaultRetryInterval = TimeSpan.FromSeconds(30);
 
     // No BOM: log files are consumed by grep/tail-style tooling and concatenated into
@@ -268,6 +277,45 @@ internal sealed class SelfDiagnosticsFileSink : ISelfDiagnosticsSink
     private static bool IsSamePath(string path, string? other)
         => other is not null && string.Equals(path, other, StringComparison.OrdinalIgnoreCase);
 
+    private static void CreateLogDirectory(string path)
+    {
+#if NET
+        if (!OperatingSystem.IsWindows())
+        {
+            Directory.CreateDirectory(path, OwnerOnlyDirectoryMode);
+            return;
+        }
+#endif
+
+        Directory.CreateDirectory(path);
+    }
+
+    private static FileStream OpenLogFile(string path)
+    {
+        // The index is always past any file already in the series, so the name is expected to
+        // be free; an existing entry is most likely a symbolic link planted by another user of
+        // the log directory. FileMode.CreateNew fails instead of following it (and writing into
+        // its target), and the next attempt moves on to the next index.
+        // FileShare.Read lets external tools tail the log while it's open.
+#if NET
+        var options = new FileStreamOptions
+        {
+            Mode = FileMode.CreateNew,
+            Access = FileAccess.Write,
+            Share = FileShare.Read,
+        };
+
+        if (!OperatingSystem.IsWindows())
+        {
+            options.UnixCreateMode = OwnerOnlyFileMode;
+        }
+
+        return new FileStream(path, options);
+#else
+        return new FileStream(path, FileMode.CreateNew, FileAccess.Write, FileShare.Read);
+#endif
+    }
+
     /// <summary>
     /// Attempts to open a new log file, honoring the retry interval while broken.
     /// Returns <see langword="true"/> when the writer is open on exit.
@@ -283,7 +331,7 @@ internal sealed class SelfDiagnosticsFileSink : ISelfDiagnosticsSink
         {
             if (!Directory.Exists(this.logDirectory))
             {
-                Directory.CreateDirectory(this.logDirectory);
+                CreateLogDirectory(this.logDirectory);
             }
 
             if (!this.retentionSeeded)
@@ -319,8 +367,7 @@ internal sealed class SelfDiagnosticsFileSink : ISelfDiagnosticsSink
             var fileName = $"otel-dotnet-{ProcessIdentity}-{this.fileIndex}.log";
             var filePath = Path.Combine(this.logDirectory, fileName);
 
-            // FileShare.Read lets external tools tail the log while it's open.
-            var stream = new FileStream(filePath, FileMode.Append, FileAccess.Write, FileShare.Read);
+            var stream = OpenLogFile(filePath);
             var newWriter = new StreamWriter(stream, Utf8NoBom) { AutoFlush = false };
 
             this.CurrentFilePath = filePath;

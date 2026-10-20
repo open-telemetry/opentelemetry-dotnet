@@ -4,8 +4,12 @@
 #if NETFRAMEWORK
 using System.Net.Http;
 #endif
+using System.Buffers.Binary;
 using System.Diagnostics;
+using System.Globalization;
 using System.Reflection;
+using System.Security.Cryptography;
+using System.Text;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Transmission;
@@ -115,7 +119,10 @@ internal static class OtlpExporterOptionsExtensions
             return new OtlpExporterPersistentStorageTransmissionHandler(
                 exportClient,
                 timeoutMilliseconds,
-                Path.Combine(experimentalOptions.DiskRetryDirectoryPath, GetSignalStorageDirectoryName(otlpSignalType)));
+                Path.Combine(
+                    experimentalOptions.DiskRetryDirectoryPath,
+                    GetSignalStorageDirectoryName(otlpSignalType),
+                    GetDestinationStorageDirectoryName(options)));
         }
         else
         {
@@ -176,7 +183,29 @@ internal static class OtlpExporterOptionsExtensions
                 var httpClientFactoryType = Type.GetType("System.Net.Http.IHttpClientFactory, Microsoft.Extensions.Http", throwOnError: false);
                 if (httpClientFactoryType != null)
                 {
-                    var httpClientFactory = serviceProvider.GetService(httpClientFactoryType);
+                    object? httpClientFactory;
+
+                    try
+                    {
+                        httpClientFactory = serviceProvider.GetService(httpClientFactoryType);
+                    }
+                    catch (ObjectDisposedException ex)
+                    {
+                        // Note: This factory may be invoked lazily on the first
+                        // export (see LazyExportClient) which can happen while the
+                        // IServiceProvider is being disposed, for example when a
+                        // LoggerProvider flushes its pending batch from Dispose().
+                        // IHttpClientFactory cannot be resolved once the container
+                        // has been disposed so fall back to the default HttpClient
+                        // rather than failing the export and dropping the batch.
+                        // Only resolution failures are handled here; failures to
+                        // create the named client itself are allowed to surface
+                        // so that a misconfigured pipeline is not silently bypassed.
+                        // See https://github.com/open-telemetry/opentelemetry-dotnet/issues/7915.
+                        OpenTelemetryProtocolExporterEventSource.Log.HttpClientFactoryUnavailable(httpClientName, ex);
+                        httpClientFactory = null;
+                    }
+
                     if (httpClientFactory != null)
                     {
                         var createClientMethod = httpClientFactoryType.GetMethod(
@@ -246,4 +275,25 @@ internal static class OtlpExporterOptionsExtensions
         OtlpSignalType.Traces => "traces",
         _ => throw new NotSupportedException($"OtlpSignalType {otlpSignalType} is not supported."),
     };
+
+    private static string GetDestinationStorageDirectoryName(OtlpExporterOptions options)
+    {
+        // A stored request does not record which exporter stored it and
+        // is retried by whichever exporter finds it, using that exporter's
+        // endpoint and headers. Exporters must therefore only share a storage
+        // directory when they send to the same destination. The name is derived
+        // from the options (rather than being random) so that requests stored
+        // by a previous run of the application are still retried.
+        var destination = Encoding.UTF8.GetBytes(
+            $"{options.Protocol}\n{options.AppendSignalPathToEndpoint}\n{options.Endpoint.AbsoluteUri}\n{options.Headers}");
+
+#if NET
+        var hash = SHA256.HashData(destination);
+#else
+        using var sha256 = SHA256.Create();
+        var hash = sha256.ComputeHash(destination);
+#endif
+
+        return BinaryPrimitives.ReadUInt64LittleEndian(hash).ToString("x16", CultureInfo.InvariantCulture);
+    }
 }

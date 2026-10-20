@@ -29,13 +29,11 @@ namespace OpenTelemetry.Internal;
 /// </remarks>
 internal static class SelfDiagnosticsEnvironmentVariablePolicy
 {
-    internal const string RedactedValue = "[REDACTED]";
+    internal const string RedactedValue = SensitiveDataHelper.RedactedValue;
 
     private const string ResourceAttributesVarName = "OTEL_RESOURCE_ATTRIBUTES";
-    private const string PemArmourPrefix = "-----BEGIN";
     private const string JwtPrefix = "eyJ";
 
-    private static readonly char[] NewLineChars = ['\r', '\n'];
     private static readonly char[] ResourceAttributeKeyValueSeparator = ['='];
 
     /// <summary>
@@ -215,7 +213,7 @@ internal static class SelfDiagnosticsEnvironmentVariablePolicy
     internal static string GetDisplayValue(string name, string value)
     {
         // Applied ahead of everything else, including the safe list: no path, endpoint, or scalar
-        // setting legitimately spans lines or opens with PEM armour, so content that does is key
+        // setting legitimately spans lines or contains PEM armour, so content that does is key
         // material pasted where a reference was expected.
         if (ContainsInlineSecretMaterial(value))
         {
@@ -262,9 +260,24 @@ internal static class SelfDiagnosticsEnvironmentVariablePolicy
     }
 
     private static bool ContainsInlineSecretMaterial(string value)
-        => value.IndexOfAny(NewLineChars) >= 0
-            || value.TrimStart().StartsWith(PemArmourPrefix, StringComparison.Ordinal)
-            || value.TrimStart().StartsWith(JwtPrefix, StringComparison.Ordinal);
+        => SensitiveDataHelper.ContainsInlineCertificateMaterial(value)
+            || ContainsJwt(value);
+
+    private static bool ContainsJwt(string value)
+    {
+        for (var index = value.IndexOf(JwtPrefix, StringComparison.Ordinal);
+            index >= 0;
+            index = value.IndexOf(JwtPrefix, index + JwtPrefix.Length, StringComparison.Ordinal))
+        {
+            // Match token boundaries without treating a path such as /opt/keyJar/client.key as a JWT.
+            if (index == 0 || !char.IsLetterOrDigit(value[index - 1]))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
 
     /// <summary>
     /// Redacts <c>OTEL_RESOURCE_ATTRIBUTES</c> per <c>key=value</c> pair rather than wholesale.

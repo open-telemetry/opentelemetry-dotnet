@@ -102,9 +102,18 @@ internal abstract class TagWriter<TTagState, TArrayState>
                 return this.TryWriteKvListTagWithinDepthLimit(ref state, key, value, kvList, tagValueMaxLength);
 
             case Array array:
-                if (value.GetType() == typeof(byte[]) && this.TryWriteByteArrayTag(ref state, key, ((byte[])value).AsSpan()))
+                if (value.GetType() == typeof(byte[]))
                 {
-                    return true;
+                    var bytes = ((byte[])value).AsSpan();
+                    if (tagValueMaxLength is { } byteLimit && bytes.Length > byteLimit)
+                    {
+                        bytes = bytes.Slice(0, byteLimit);
+                    }
+
+                    if (this.TryWriteByteArrayTag(ref state, key, bytes))
+                    {
+                        return true;
+                    }
                 }
 
                 try
@@ -157,25 +166,30 @@ internal abstract class TagWriter<TTagState, TArrayState>
             // case ulong:   May throw an exception on overflow (where ISpanFormattable not available).
             // case decimal: Converting to double produces rounding errors (where ISpanFormattable not available).
             default:
+                string? stringValue;
                 try
                 {
-                    var stringValue = Convert.ToString(value, CultureInfo.InvariantCulture);
-                    if (stringValue == null)
-                    {
-                        return this.LogUnsupportedTagTypeAndReturnFalse(key, value);
-                    }
-
-                    this.WriteStringTag(
-                        ref state,
-                        key,
-                        stringValue,
-                        tagValueMaxLength);
+                    stringValue = Convert.ToString(value, CultureInfo.InvariantCulture);
                 }
                 catch
                 {
                     // If ToString throws an exception then the tag is ignored.
                     return this.LogUnsupportedTagTypeAndReturnFalse(key, value);
                 }
+
+                if (stringValue == null)
+                {
+                    return this.LogUnsupportedTagTypeAndReturnFalse(key, value);
+                }
+
+                // Written outside of the try block so that an exception thrown
+                // because the buffer is full reaches the serializer, which
+                // resizes the buffer and retries, instead of the tag being dropped.
+                this.WriteStringTag(
+                    ref state,
+                    key,
+                    stringValue,
+                    tagValueMaxLength);
 
                 break;
         }
