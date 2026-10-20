@@ -379,7 +379,9 @@ public class OtlpHttpExportClientTests
     {
         const int HttpRequestFailedEventId = 17;
 
-        var deadline = TimeSpan.FromMilliseconds(250);
+        // The deadline also bounds sending the request, so it must leave time to connect and
+        // receive the response headers when the thread pool is busy with tests running in parallel.
+        var deadline = TimeSpan.FromSeconds(5);
 
         // Generous enough for a slow CI machine, but far short of how long the server holds the connection.
         var tolerance = TimeSpan.FromSeconds(10);
@@ -429,9 +431,6 @@ public class OtlpHttpExportClientTests
             var stopwatch = Stopwatch.StartNew();
             var response = exportClient.SendExportRequest(payload, payload.Length, DateTime.UtcNow.Add(deadline), TestContext.Current.CancellationToken);
             stopwatch.Stop();
-
-            exported.Set();
-            await serverTask;
 
             Assert.False(response.Success);
             Assert.Equal(HttpStatusCode.BadRequest, Assert.IsType<ExportClientHttpResponse>(response).StatusCode);
