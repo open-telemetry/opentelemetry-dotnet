@@ -4,8 +4,11 @@
 #if NETFRAMEWORK
 using System.Net.Http;
 #endif
+using System.Diagnostics;
 using System.Diagnostics.Tracing;
 using System.IO.Compression;
+using System.Net;
+using System.Net.Sockets;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Transmission;
@@ -335,6 +338,128 @@ public class OtlpHttpExportClientTests
         Assert.Contains("Authorization", loggedException, StringComparison.Ordinal);
     }
 
+    [Fact]
+    public void SendExportRequest_ErrorResponse_LogsResponseBody()
+    {
+        const int HttpRequestFailedEventId = 17;
+        const string ResponseBody = "{\"error\":\"invalid payload\"}";
+
+        using var listener = new TestEventListener(OpenTelemetryProtocolExporterEventSource.Log, EventLevel.Error);
+
+        using var testHandler = new StatusCodeHttpMessageHandler(HttpStatusCode.BadRequest, System.Text.Encoding.UTF8.GetBytes(ResponseBody));
+        using var httpClient = new HttpClient(testHandler, disposeHandler: false);
+
+        var exportClient = new OtlpHttpExportClient(
+            new OtlpExporterOptions
+            {
+                Endpoint = new Uri("http://localhost:4318"),
+                Protocol = OtlpExportProtocol.HttpProtobuf,
+            },
+            httpClient,
+            string.Empty);
+
+        var payload = "hello world"u8.ToArray();
+        var response = exportClient.SendExportRequest(payload, payload.Length, DateTime.UtcNow.AddSeconds(10), TestContext.Current.CancellationToken);
+
+        Assert.False(response.Success);
+        Assert.Equal(HttpStatusCode.BadRequest, Assert.IsType<ExportClientHttpResponse>(response).StatusCode);
+
+        var exception = Assert.IsType<HttpRequestException>(response.Exception);
+        Assert.Contains("400", exception.Message, StringComparison.Ordinal);
+#if NET
+        Assert.Equal(HttpStatusCode.BadRequest, exception.StatusCode);
+#endif
+
+        var logged = Assert.Single(listener.Messages, e => e.EventId == HttpRequestFailedEventId);
+        Assert.Equal(ResponseBody, logged.Payload![1]);
+    }
+
+    [Fact]
+    public async Task SendExportRequest_ErrorResponseBodyNeverCompletes_ReturnsAtDeadline()
+    {
+        const int HttpRequestFailedEventId = 17;
+
+        var deadline = TimeSpan.FromMilliseconds(250);
+
+        // Generous enough for a slow CI machine, but far short of how long the server holds the connection.
+        var tolerance = TimeSpan.FromSeconds(10);
+        var serverHold = TimeSpan.FromSeconds(60);
+
+        // The response body is only read when it is going to be logged.
+        using var listener = new TestEventListener(OpenTelemetryProtocolExporterEventSource.Log, EventLevel.Error);
+
+        using var exported = new ManualResetEventSlim();
+
+        var server = new TcpListener(IPAddress.Loopback, 0);
+        Task? serverTask = null;
+
+        try
+        {
+            server.Start();
+
+            // Announce more content than is sent, then keep the connection open.
+            serverTask = Task.Run(
+                () =>
+                {
+                    using var connection = server.AcceptTcpClient();
+                    using var stream = connection.GetStream();
+
+                    _ = stream.Read(new byte[4096], 0, 4096);
+
+                    var headersAndPartialBody = "HTTP/1.1 400 Bad Request\r\nContent-Length: 100\r\n\r\nxxx"u8.ToArray();
+                    stream.Write(headersAndPartialBody, 0, headersAndPartialBody.Length);
+
+                    exported.Wait(serverHold);
+                },
+                TestContext.Current.CancellationToken);
+
+            using var httpClient = new HttpClient();
+
+            var exportClient = new OtlpHttpExportClient(
+                new OtlpExporterOptions
+                {
+                    Endpoint = new Uri($"http://{server.LocalEndpoint}"),
+                    Protocol = OtlpExportProtocol.HttpProtobuf,
+                },
+                httpClient,
+                string.Empty);
+
+            var payload = "hello world"u8.ToArray();
+
+            var stopwatch = Stopwatch.StartNew();
+            var response = exportClient.SendExportRequest(payload, payload.Length, DateTime.UtcNow.Add(deadline), TestContext.Current.CancellationToken);
+            stopwatch.Stop();
+
+            exported.Set();
+            await serverTask;
+
+            Assert.False(response.Success);
+            Assert.Equal(HttpStatusCode.BadRequest, Assert.IsType<ExportClientHttpResponse>(response).StatusCode);
+
+            // The export must give up at the deadline rather than wait for the server to close the connection.
+            Assert.True(stopwatch.Elapsed < deadline + tolerance, $"Export took {stopwatch.Elapsed} against a deadline of {deadline}.");
+
+            // The failure is still logged, just without the body that never arrived.
+            var logged = Assert.Single(listener.Messages, e => e.EventId == HttpRequestFailedEventId);
+            Assert.Equal(string.Empty, logged.Payload![1]);
+        }
+        finally
+        {
+            exported.Set();
+#if NET
+            server.Dispose();
+#else
+            server.Stop();
+#endif
+
+            if (serverTask is not null)
+            {
+                // Let the server stop waiting on the event before it is disposed.
+                await Task.WhenAny(serverTask);
+            }
+        }
+    }
+
     private static ExportClientResponse SendExportRequestThatThrows(Exception exception)
     {
         var payload = "hello world"u8.ToArray();
@@ -371,5 +496,32 @@ public class OtlpHttpExportClientTests
         protected override HttpResponseMessage Send(HttpRequestMessage request, CancellationToken cancellationToken)
             => throw this.exception;
 #endif
+    }
+
+    private sealed class StatusCodeHttpMessageHandler : HttpMessageHandler
+    {
+        private readonly HttpStatusCode statusCode;
+        private readonly byte[] body;
+
+        public StatusCodeHttpMessageHandler(HttpStatusCode statusCode, byte[] body)
+        {
+            this.statusCode = statusCode;
+            this.body = body;
+        }
+
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+            => Task.FromResult(this.CreateResponse(request));
+
+#if NET
+        protected override HttpResponseMessage Send(HttpRequestMessage request, CancellationToken cancellationToken)
+            => this.CreateResponse(request);
+#endif
+
+        private HttpResponseMessage CreateResponse(HttpRequestMessage request)
+            => new(this.statusCode)
+            {
+                RequestMessage = request,
+                Content = new ByteArrayContent(this.body),
+            };
     }
 }

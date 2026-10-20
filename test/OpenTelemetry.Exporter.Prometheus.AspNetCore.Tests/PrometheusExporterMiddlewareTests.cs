@@ -4,6 +4,7 @@
 #if !NETFRAMEWORK
 using System.Diagnostics.Metrics;
 using System.Globalization;
+using System.IO.Pipelines;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
@@ -949,6 +950,67 @@ public sealed class PrometheusExporterMiddlewareTests
         }
     }
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task ScrapeResponseIsWrittenInBoundedSlices(bool compress)
+    {
+        RecordingResponseBodyFeature? recorder = null;
+
+        using var host = await StartTestHostAsync(
+            app =>
+            {
+                app.Use((context, next) =>
+                {
+                    recorder = new RecordingResponseBodyFeature(context.Features.GetRequiredFeature<IHttpResponseBodyFeature>());
+                    context.Features.Set<IHttpResponseBodyFeature>(recorder);
+                    return next(context);
+                });
+
+                app.UseOpenTelemetryPrometheusScrapingEndpoint();
+            });
+
+        using var meter = new Meter(MeterName, MeterVersion);
+
+        // Roughly 2.5 MB of exposition text, far larger than a single response write
+        var padding = new string('x', 24_576);
+        for (var i = 0; i < 100; i++)
+        {
+            var counter = meter.CreateCounter<long>("counter_long_" + i.ToString(CultureInfo.InvariantCulture));
+            counter.Add(1, new KeyValuePair<string, object?>("key", padding));
+        }
+
+        using var client = host.GetTestClient();
+        using var request = new HttpRequestMessage(HttpMethod.Get, new Uri("/metrics", UriKind.Relative));
+
+        if (compress)
+        {
+            request.Headers.AcceptEncoding.ParseAdd("gzip");
+        }
+
+        using var response = await client.SendAsync(request, TestContext.Current.CancellationToken);
+        var body = await response.Content.ReadAsByteArrayAsync(TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal(compress, response.Content.Headers.ContentEncoding.Contains("gzip"));
+
+        if (!compress)
+        {
+            Assert.True(body.Length > padding.Length * 90, $"Expected a large response, but it was {body.Length} bytes.");
+        }
+
+        Assert.NotNull(recorder);
+        Assert.Equal(body.Length, recorder.BytesWritten);
+
+        // The response is written from a buffer shared by all scrapes. Kestrel copies everything
+        // handed to it in a single write into the connection's output pipe before it applies
+        // back-pressure, so a single write of the whole buffer makes every client that does not
+        // read its response pin a private copy of the entire body.
+        Assert.InRange(recorder.MaximumBytesPerWrite, 1, PrometheusExporter.MaximumResponseWriteSize);
+
+        await host.StopAsync(TestContext.Current.CancellationToken);
+    }
+
     private static async Task<(WebApplication App, Uri BaseAddress)> StartKestrelHostWithLargeScrapeResponseAsync(
         Meter meter,
         int? scrapeResponseTimeoutMilliseconds = null)
@@ -1246,6 +1308,81 @@ public sealed class PrometheusExporterMiddlewareTests
     private sealed class AlreadyStartedHttpResponseFeature : HttpResponseFeature
     {
         public override bool HasStarted => true;
+    }
+
+    private sealed class RecordingResponseBodyFeature : IHttpResponseBodyFeature
+    {
+        private readonly IHttpResponseBodyFeature inner;
+        private readonly RecordingPipeWriter writer;
+
+        public RecordingResponseBodyFeature(IHttpResponseBodyFeature inner)
+        {
+            this.inner = inner;
+            this.writer = new RecordingPipeWriter(inner.Writer);
+            this.Stream = this.writer.AsStream(leaveOpen: true);
+        }
+
+        public long BytesWritten => this.writer.BytesWritten;
+
+        public long MaximumBytesPerWrite => this.writer.MaximumBytesPerWrite;
+
+        public Stream Stream { get; }
+
+        public PipeWriter Writer => this.writer;
+
+        public Task CompleteAsync() => this.inner.CompleteAsync();
+
+        public void DisableBuffering() => this.inner.DisableBuffering();
+
+        public Task SendFileAsync(string path, long offset, long? count, CancellationToken cancellationToken = default)
+            => this.inner.SendFileAsync(path, offset, count, cancellationToken);
+
+        public Task StartAsync(CancellationToken cancellationToken = default) => this.inner.StartAsync(cancellationToken);
+
+        private sealed class RecordingPipeWriter(PipeWriter inner) : PipeWriter
+        {
+            private long unflushed;
+
+            public long BytesWritten { get; private set; }
+
+            public long MaximumBytesPerWrite { get; private set; }
+
+            public override void Advance(int bytes)
+            {
+                this.unflushed += bytes;
+                this.BytesWritten += bytes;
+                inner.Advance(bytes);
+            }
+
+            public override void CancelPendingFlush() => inner.CancelPendingFlush();
+
+            public override void Complete(Exception? exception = null) => inner.Complete(exception);
+
+            public override ValueTask CompleteAsync(Exception? exception = null) => inner.CompleteAsync(exception);
+
+            public override ValueTask<FlushResult> FlushAsync(CancellationToken cancellationToken = default)
+            {
+                this.RecordFlush(0);
+                return inner.FlushAsync(cancellationToken);
+            }
+
+            public override Memory<byte> GetMemory(int sizeHint = 0) => inner.GetMemory(sizeHint);
+
+            public override Span<byte> GetSpan(int sizeHint = 0) => inner.GetSpan(sizeHint);
+
+            public override ValueTask<FlushResult> WriteAsync(ReadOnlyMemory<byte> source, CancellationToken cancellationToken = default)
+            {
+                this.BytesWritten += source.Length;
+                this.RecordFlush(source.Length);
+                return inner.WriteAsync(source, cancellationToken);
+            }
+
+            private void RecordFlush(int bytes)
+            {
+                this.MaximumBytesPerWrite = Math.Max(this.MaximumBytesPerWrite, this.unflushed + bytes);
+                this.unflushed = 0;
+            }
+        }
     }
 }
 #endif

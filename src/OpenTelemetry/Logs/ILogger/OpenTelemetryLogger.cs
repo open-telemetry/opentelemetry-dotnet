@@ -183,8 +183,9 @@ internal sealed class OpenTelemetryLogger : ILogger
             iLoggerData.State = !parseStateValues ? stateValues : null;
 
             var attributeStorage = logRecord.AttributeStorage;
-            if (attributeStorage == null)
+            if (attributeStorage == null || attributeStorage.Count > 0)
             {
+                // A replacement State may enumerate the previous attributes.
                 return logRecord.AttributeStorage = [.. stateValues];
             }
             else

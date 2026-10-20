@@ -67,8 +67,17 @@ internal sealed class AggregatorStore
 
     private int metricPointIndex;
     private int batchSize;
-    private bool zeroTagMetricPointInitialized;
-    private bool overflowTagMetricPointInitialized;
+
+    // The highest creation ordinal (see ToSlot) ever handed out by DequeueAvailableMetricPoint.
+    // Only written under the delta dictionary lock. Slots with a higher ordinal have never held
+    // a MetricPoint, so a delta Snapshot does not need to visit them.
+    private int deltaOrdinalHighWaterMark = 1;
+    private volatile bool zeroTagMetricPointInitialized;
+    private volatile bool overflowTagMetricPointInitialized;
+
+    // Only observable callbacks use this accumulator, serialized by the provider's collectLock.
+    private long overflowCollectionCycle;
+    private MetricPointValueStorage overflowSum;
 
     internal AggregatorStore(
         MetricStreamIdentity metricStreamIdentity,
@@ -271,7 +280,13 @@ internal sealed class AggregatorStore
         // the same strided order in which they were first handed out, so that the
         // slots reclaimed in one collect cycle re-enter the free queue in that order
         // and points created after a reclaim are again spread apart.
-        for (var i = 2; i < this.NumberOfMetricPoints; i++)
+        //
+        // Only the ordinals that have ever been handed out can hold a MetricPoint. A point
+        // created concurrently with this loop is simply picked up by the next collect cycle,
+        // exactly as if the loop had visited its (still empty) slot just before it was created.
+        var highWaterMark = Volatile.Read(ref this.deltaOrdinalHighWaterMark);
+
+        for (var i = 2; i <= highWaterMark; i++)
         {
             var slot = this.ToSlot(i);
             ref var metricPoint = ref this.metricPoints[slot];
@@ -435,6 +450,7 @@ internal sealed class AggregatorStore
 
         if (bestLiveNeighbours == 0 || queue.Count == 0)
         {
+            this.RecordHandedOut(best);
             return best;
         }
 
@@ -463,7 +479,21 @@ internal sealed class AggregatorStore
             queue.Enqueue(skipped[i]);
         }
 
+        this.RecordHandedOut(best);
         return best;
+    }
+
+    private void RecordHandedOut(int slot)
+    {
+        // The inverse of ToSlot. Must be called under lock (this.TagsToMetricPointIndexDictionaryDelta).
+        var j = slot - 2;
+        var half = (this.NumberOfMetricPoints - 1) / 2;
+        var ordinal = (j & 1) == 0 ? 2 + (j / 2) : 2 + half + ((j - 1) / 2);
+
+        if (ordinal > this.deltaOrdinalHighWaterMark)
+        {
+            Volatile.Write(ref this.deltaOrdinalHighWaterMark, ordinal);
+        }
     }
 
     private int CountLiveNeighbours(int slot)
@@ -1221,6 +1251,12 @@ internal sealed class AggregatorStore
         {
             Interlocked.Increment(ref this.DroppedMeasurements);
             this.InitializeOverflowTagPointIfNotInitialized();
+            if (this.aggType == AggregationType.LongSumIncomingCumulative && this.PrepareObservableOverflowSum())
+            {
+                this.overflowSum.AsLong = unchecked(this.overflowSum.AsLong + value);
+                value = this.overflowSum.AsLong;
+            }
+
             this.metricPoints[1].Update(value);
 
             return;
@@ -1282,6 +1318,12 @@ internal sealed class AggregatorStore
         {
             Interlocked.Increment(ref this.DroppedMeasurements);
             this.InitializeOverflowTagPointIfNotInitialized();
+            if (this.aggType == AggregationType.DoubleSumIncomingCumulative && this.PrepareObservableOverflowSum())
+            {
+                this.overflowSum.AsDouble += value;
+                value = this.overflowSum.AsDouble;
+            }
+
             this.metricPoints[1].Update(value);
 
             return;
@@ -1306,6 +1348,25 @@ internal sealed class AggregatorStore
                 tags,
                 offerExemplar: Activity.Current?.Recorded ?? false);
         }
+    }
+
+    private bool PrepareObservableOverflowSum()
+    {
+        var collectionCycle = MeterProviderSdk.ObservableInstrumentsCollectionCycle;
+        if (collectionCycle == 0)
+        {
+            return false;
+        }
+
+        // A pass updates every reader's store, even when only one reader snapshots.
+        // Reset by observation pass rather than by snapshot or MetricPointStatus.
+        if (this.overflowCollectionCycle != collectionCycle)
+        {
+            this.overflowCollectionCycle = collectionCycle;
+            this.overflowSum = default;
+        }
+
+        return true;
     }
 
     private int FindMetricAggregatorsDefault(ReadOnlySpan<KeyValuePair<string, object?>> tags)

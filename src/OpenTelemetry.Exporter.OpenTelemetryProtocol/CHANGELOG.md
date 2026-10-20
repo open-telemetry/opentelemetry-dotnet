@@ -7,6 +7,102 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+## 1.20.1
+
+Released 2026-Oct-20
+
+## 1.20.1-rc.1
+
+Released 2026-Oct-20
+
+* Fixed informational HTTP client logs not being suppressed by default when the
+  OTLP log exporter is registered using `OpenTelemetryLoggerOptions.AddOtlpExporter`.
+  ([#7959](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7959))
+
+* **Breaking:** `HttpClient` instances created by the exporter directly no
+  longer follow HTTP redirects. A `3xx` response is now treated as a failed
+  export. See [Configure HttpClient](README.md#configure-httpclient)
+  to prevent `HttpClient` created by `IHttpClientFactory` from following
+  redirects.
+  ([#7958](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7958))
+
+* The value of `OTEL_EXPORTER_OTLP_ENDPOINT`, or of its signal-specific
+  variants, is no longer written to the exporter's diagnostic log when it is
+  not a valid URI.
+  ([#7971](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7971))
+
+* Hardened the experimental disk retry feature.
+  * When running on .NET on non-Windows platforms, the retry directory and
+    the blob files within it are now created accessible to the current user
+    only, including when the directory is recreated after being deleted.
+  * Directory size accounting no longer follows subdirectories, avoiding
+    a symbolic-link/junction walk.
+  * Expired lease-file cleanup now correctly locates the lease timestamp
+    delimiter within the file name rather than the whole path.
+  * Storage maintenance no longer deletes or renames files with a `.blob`,
+    `.tmp` or `.lock` extension that the exporter did not create when the
+    retry directory is shared with other files. Only files named the way the
+    exporter names its blobs, and the temporary and lease files derived from
+    them, are now removed or renamed, and only blobs named that way are now
+    retried.
+  * Timestamps in blob and lease file names are now always written using the
+    Gregorian calendar. Previously, when the current culture used a different
+    calendar, files were given timestamps that caused them never to be
+    removed or released when the storage was maintained.
+  * A stored request whose lease has expired is no longer deleted after it has
+    been retried, as it may have since been leased again for another retry.
+  * Stored blobs that are empty or that are larger than the maximum size of
+    the storage are no longer read. When running on .NET, stored blobs that
+    are symbolic links are also no longer read.
+  ([#7857](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7857))
+
+* Only the first 4 KiB of the body of an unsuccessful response is now read and
+  written to the exporter's diagnostic log, instead of up to
+  `MaxResponseSizeBytes`.
+  ([#7969](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7969))
+
+* Fixed reading the body of a failed export response for the exporter's
+  diagnostic log not being bounded by the export timeout.
+  ([#7970](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7970))
+
+* Fixed the body of a failed export response never being written to the
+  exporter's diagnostic log when running on .NET Framework.
+  ([#7970](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7970))
+
+* Fixed attributes whose value is converted with `ToString()` (for example
+  enums, `Uri` or `StringValues`) being dropped as unsupported, and for metric
+  data points omitted from every later export, when the export buffer had to
+  be resized while the attribute was being written.
+  ([#7973](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7973))
+
+* **Breaking:** Fixed telemetry stored by the experimental disk retry feature
+  for one exporter being resent by another exporter for the same signal to its
+  own endpoint and with its own headers. Disk retry storage is now additionally
+  separated by a subdirectory derived from the exporter's `Protocol`,
+  `Endpoint` and `Headers`. Telemetry stored on disk by earlier versions is
+  not resent.
+  ([#7972](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7972))
+
+* Exponential histogram bucket counts are now serialized in the packed
+  encoding, which reduces the size of the exported payload.
+  ([#7897](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7897))
+
+* Fixed inline certificate or private key material being included in OTLP
+  diagnostic events and exceptions when supplied instead of a file path.
+  ([#7981](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7981))
+
+* Fixed early metric collections permanently omitting resource attributes from
+  subsequent exports while the `MeterProvider` is being built.
+  ([#7984](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7984))
+
+## 1.20.0
+
+Released 2026-Oct-15
+
+## 1.20.0-rc.1
+
+Released 2026-Oct-15
+
 * Avoid closure allocations when serializing cached metric metadata.
   ([#7841](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7841))
 
@@ -30,6 +126,30 @@ Notes](../../RELEASENOTES.md).
   records emitted from a `Logger` with a schema URL set now populate
   `ScopeLogs.schema_url` in exported OTLP requests.
   ([#7727](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7727))
+
+* **Breaking:** `byte[]` attributes longer than the configured attribute value
+  length limit (for example `OTEL_ATTRIBUTE_VALUE_LENGTH_LIMIT`) are now
+  truncated to that many bytes instead of being exported in full.
+  ([#7893](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7893))
+
+* **Breaking:** `OTEL_EVENT_ATTRIBUTE_COUNT_LIMIT` and
+  `OTEL_LINK_ATTRIBUTE_COUNT_LIMIT` now fall back to
+  `OTEL_ATTRIBUTE_COUNT_LIMIT` (then the default of 128) when not set, instead
+  of falling back to `OTEL_SPAN_ATTRIBUTE_COUNT_LIMIT`.
+  ([#7894](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7894))
+
+* **Breaking:** Instrumentation scope attributes exported from
+  `ActivitySource.Tags` are now limited by `OTEL_ATTRIBUTE_COUNT_LIMIT` instead
+  of `OTEL_SPAN_ATTRIBUTE_COUNT_LIMIT`. Only applications that set
+  `OTEL_SPAN_ATTRIBUTE_COUNT_LIMIT` to a different value from
+  `OTEL_ATTRIBUTE_COUNT_LIMIT` are affected.
+  ([#7902](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7902))
+
+* Fixed log records being dropped when using `OtlpExportProtocol.HttpProtobuf`
+  with `IHttpClientFactory` integration if the first export of logs happens
+  while the `IServiceProvider` is being disposed. The exporter now falls back
+  to the default `HttpClient` instead of failing the export.
+  ([#7916](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7916))
 
 * The OTLP exporter now omits `HistogramDataPoint.sum` on the wire (rather
   than serializing `0`) for histograms that do not record a sum, per

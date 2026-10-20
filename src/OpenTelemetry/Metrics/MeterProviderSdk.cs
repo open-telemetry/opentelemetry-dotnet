@@ -6,6 +6,7 @@ using System.Collections.Frozen;
 #endif
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
+using System.Diagnostics.Tracing;
 using System.Text;
 using System.Text.RegularExpressions;
 using Microsoft.Extensions.Configuration;
@@ -20,6 +21,11 @@ internal sealed class MeterProviderSdk : MeterProvider
     internal const string ExemplarFilterConfigKey = "OTEL_METRICS_EXEMPLAR_FILTER";
     internal const string ExemplarFilterHistogramsConfigKey = "OTEL_DOTNET_EXPERIMENTAL_METRICS_EXEMPLAR_FILTER_HISTOGRAMS";
 
+    // Observable callbacks execute synchronously under collectLock. Restore this
+    // after each pass so callbacks may collect a different provider on the same thread.
+    [ThreadStatic]
+    internal static long ObservableInstrumentsCollectionCycle;
+
     internal readonly IServiceProvider ServiceProvider;
     internal IDisposable? OwnedServiceProvider;
     internal int ShutdownCount;
@@ -27,6 +33,8 @@ internal sealed class MeterProviderSdk : MeterProvider
     internal ExemplarFilterType? ExemplarFilter;
     internal ExemplarFilterType? ExemplarFilterForHistograms;
     internal Action? OnCollectObservableInstruments;
+
+    private static long lastObservableInstrumentsCollectionCycle;
 
     private readonly List<Func<Instrument, MetricStreamConfiguration?>> viewConfigs;
     private readonly Lock collectLock = new();
@@ -272,7 +280,10 @@ internal sealed class MeterProviderSdk : MeterProvider
 
         try
         {
-            OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent($"Started publishing Instrument = \"{instrument.Name}\" of Meter = \"{instrument.Meter.Name}\".");
+            if (OpenTelemetrySdkEventSource.Log.IsEnabled(EventLevel.Verbose, EventKeywords.All))
+            {
+                OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent($"Started publishing Instrument = \"{instrument.Name}\" of Meter = \"{instrument.Meter.Name}\".");
+            }
 
             if (viewConfigCount <= 0)
             {
@@ -402,12 +413,20 @@ internal sealed class MeterProviderSdk : MeterProvider
 
             if (state != null)
             {
-                OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent($"Measurements for Instrument = \"{instrument.Name}\" of Meter = \"{instrument.Meter.Name}\" will be processed and aggregated by the SDK.");
+                if (OpenTelemetrySdkEventSource.Log.IsEnabled(EventLevel.Verbose, EventKeywords.All))
+                {
+                    OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent($"Measurements for Instrument = \"{instrument.Name}\" of Meter = \"{instrument.Meter.Name}\" will be processed and aggregated by the SDK.");
+                }
+
                 return state;
             }
             else
             {
-                OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent($"Measurements for Instrument = \"{instrument.Name}\" of Meter = \"{instrument.Meter.Name}\" will be dropped by the SDK.");
+                if (OpenTelemetrySdkEventSource.Log.IsEnabled(EventLevel.Verbose, EventKeywords.All))
+                {
+                    OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent($"Measurements for Instrument = \"{instrument.Name}\" of Meter = \"{instrument.Meter.Name}\" will be dropped by the SDK.");
+                }
+
                 return null;
             }
         }
@@ -429,6 +448,9 @@ internal sealed class MeterProviderSdk : MeterProvider
     {
         lock (this.collectLock)
         {
+            var previousCollectionCycle = ObservableInstrumentsCollectionCycle;
+            ObservableInstrumentsCollectionCycle = Interlocked.Increment(ref lastObservableInstrumentsCollectionCycle);
+
             // Record all observable instruments
             try
             {
@@ -442,6 +464,10 @@ internal sealed class MeterProviderSdk : MeterProvider
                 // It doesn't looks like we can find which instrument callback
                 // threw.
                 OpenTelemetrySdkEventSource.Log.MetricObserverCallbackException(exception);
+            }
+            finally
+            {
+                ObservableInstrumentsCollectionCycle = previousCollectionCycle;
             }
         }
     }

@@ -23,12 +23,6 @@
 
 </details>
 
-> [!NOTE]
-> As at 1.19.1, the self-diagnostics features described on this page are
-> not yet released. See [Legacy self-diagnostics
-> mechanism](#legacy-self-diagnostics-mechanism) for the mechanism available in
-> current stable releases.
-
 ## Self-diagnostics
 
 Every component shipped from the OpenTelemetry .NET repository reports its own
@@ -74,6 +68,12 @@ $env:OTEL_DOTNET_SELF_DIAGNOSTICS_LOG_DIRECTORY = "c:\otel-logs"
 Setting the directory is all that is needed - it enables the file sink on its
 own. The directory is created if it does not exist. The process must have
 permission to create and write files there.
+
+On Linux and macOS the SDK creates the directory and the log files owner-only
+(`0700` and `0600`) on .NET 8+, because the preamble and the logged events can
+contain sensitive details. Another account that needs to read the files, such as
+a log shipper, must be granted access explicitly. Directories that already
+exist keep their permissions.
 
 Write to rolling log files using the default platform location when one is
 available:

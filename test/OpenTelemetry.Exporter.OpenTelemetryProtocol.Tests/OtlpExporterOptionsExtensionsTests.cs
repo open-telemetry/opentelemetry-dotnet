@@ -1,17 +1,20 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Collections.Concurrent;
+using System.Diagnostics.Tracing;
+using System.Net;
 #if NETFRAMEWORK
 using System.Net.Http;
 #endif
+using System.Reflection;
 using Microsoft.Extensions.Configuration;
-#if NET
 using Microsoft.Extensions.DependencyInjection;
-#endif
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Transmission;
 using OpenTelemetry.PersistentStorage.FileSystem;
+using OpenTelemetry.Tests;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests;
 
@@ -137,6 +140,126 @@ public class OtlpExporterOptionsExtensionsTests
     }
 #endif
 
+    [Fact]
+    public void TryEnableIHttpClientFactoryIntegration_UsesIHttpClientFactory_WhenServiceProviderIsNotDisposed()
+    {
+        var services = new ServiceCollection();
+
+        var invocations = 0;
+
+        services.AddHttpClient("OtlpLogExporter", configureClient: (client) => invocations++);
+
+        using var serviceProvider = services.BuildServiceProvider();
+
+        var options = new OtlpExporterOptions { Protocol = OtlpExportProtocol.HttpProtobuf };
+
+        Assert.True(options.TryEnableIHttpClientFactoryIntegration(serviceProvider, "OtlpLogExporter"));
+
+        using var client = options.HttpClientFactory();
+
+        Assert.NotNull(client);
+        Assert.Equal(1, invocations);
+    }
+
+    [Fact]
+    public void TryEnableIHttpClientFactoryIntegration_FallsBackToDefaultHttpClient_WhenServiceProviderIsDisposed()
+    {
+        using var listener = new TestEventListener(OpenTelemetryProtocolExporterEventSource.Log, EventLevel.Warning);
+
+        var services = new ServiceCollection();
+
+        var invocations = 0;
+
+        services.AddHttpClient("OtlpLogExporter", configureClient: (client) => invocations++);
+
+        var serviceProvider = services.BuildServiceProvider();
+
+        var options = new OtlpExporterOptions
+        {
+            Protocol = OtlpExportProtocol.HttpProtobuf,
+            TimeoutMilliseconds = 1234,
+        };
+
+        Assert.True(options.TryEnableIHttpClientFactoryIntegration(serviceProvider, "OtlpLogExporter"));
+
+        // Simulate the service provider being disposed before the deferred
+        // export client is created, e.g. when the first export of logs happens
+        // from LoggerProvider.Dispose() while the container is being disposed.
+        serviceProvider.Dispose();
+
+        using var client = options.HttpClientFactory();
+
+        Assert.NotNull(client);
+        Assert.Equal(0, invocations);
+        Assert.Equal(TimeSpan.FromMilliseconds(1234), client.Timeout);
+
+        var message = Assert.Single(listener.CurrentMessages);
+        Assert.Equal(42, message.EventId);
+        Assert.Equal(EventLevel.Warning, message.Level);
+        Assert.Equal("OtlpLogExporter", message.Payload?[0]);
+    }
+
+    [Theory]
+    [InlineData(typeof(ObjectDisposedException))]
+    [InlineData(typeof(InvalidOperationException))]
+    public void TryEnableIHttpClientFactoryIntegration_DoesNotFallBack_WhenCreateClientThrows(Type exceptionType)
+    {
+        using var listener = new TestEventListener(OpenTelemetryProtocolExporterEventSource.Log, EventLevel.Warning);
+
+        var services = new ServiceCollection();
+
+        var exception = (Exception)Activator.CreateInstance(exceptionType, "Named client pipeline failed.")!;
+        var httpClientFactory = new ThrowingHttpClientFactory(exception);
+
+        services.AddSingleton<IHttpClientFactory>(httpClientFactory);
+
+        using var serviceProvider = services.BuildServiceProvider();
+
+        var options = new OtlpExporterOptions { Protocol = OtlpExportProtocol.HttpProtobuf };
+
+        Assert.True(options.TryEnableIHttpClientFactoryIntegration(serviceProvider, "OtlpLogExporter"));
+
+        // Only a failure to resolve IHttpClientFactory from a disposed container
+        // falls back to the default HttpClient. Failures while creating the
+        // named client itself (including an ObjectDisposedException thrown by a
+        // user's handler) must surface so a configured pipeline, e.g. one that
+        // adds authentication, is never silently bypassed while the container
+        // is healthy.
+        var actual = Assert.Throws<TargetInvocationException>(() => options.HttpClientFactory());
+
+        Assert.Same(exception, actual.InnerException);
+        Assert.Equal(["OtlpLogExporter"], httpClientFactory.RequestedNames);
+        Assert.Empty(listener.CurrentMessages);
+    }
+
+    [Fact]
+    public void DefaultHttpClientFactory_CreatesHttpClientThatDoesNotFollowRedirects()
+    {
+        var requestedPaths = new ConcurrentQueue<string>();
+
+        using var server = RunRedirectingServer(requestedPaths, out var host, out var port);
+
+        var options = new OtlpExporterOptions
+        {
+            Endpoint = new Uri($"http://{host}:{port}/v1/traces"),
+            Protocol = OtlpExportProtocol.HttpProtobuf,
+        };
+
+        using var httpClient = options.DefaultHttpClientFactory();
+
+        var exportClient = new OtlpHttpExportClient(options, httpClient, string.Empty);
+
+        var response = exportClient.SendExportRequest(
+            "hello world"u8.ToArray(),
+            11,
+            DateTime.UtcNow.AddMinutes(1),
+            TestContext.Current.CancellationToken);
+
+        Assert.False(response.Success);
+        Assert.Equal(HttpStatusCode.TemporaryRedirect, Assert.IsType<ExportClientHttpResponse>(response).StatusCode);
+        Assert.Equal(["/v1/traces"], requestedPaths);
+    }
+
     [Theory]
 #pragma warning disable CS0618 // Suppressing gRPC obsolete warning
     [InlineData(OtlpExportProtocol.Grpc, typeof(OtlpGrpcExportClient), false, 10000, null)]
@@ -235,12 +358,80 @@ public class OtlpExporterOptionsExtensionsTests
                 .Build();
 
             using var transmissionHandler = exporterOptions.GetExportTransmissionHandler(new ExperimentalOptions(configuration), signalType);
-            var persistentStorageTransmissionHandler = Assert.IsType<OtlpExporterPersistentStorageTransmissionHandler>(transmissionHandler);
 
-            var fileBlobProviderField = typeof(OtlpExporterPersistentStorageTransmissionHandler).GetField("persistentBlobProvider", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-            var persistentBlobProvider = Assert.IsType<FileBlobProvider>(fileBlobProviderField?.GetValue(persistentStorageTransmissionHandler));
+            Assert.Equal(Path.Combine(retryRootPath, expectedDirectoryName), Path.GetDirectoryName(GetStorageDirectoryPath(transmissionHandler)));
+        }
+        finally
+        {
+            if (Directory.Exists(retryRootPath))
+            {
+                Directory.Delete(retryRootPath, recursive: true);
+            }
+        }
+    }
 
-            Assert.EndsWith(expectedDirectoryName, persistentBlobProvider.DirectoryPath, StringComparison.Ordinal);
+    [Theory]
+    [InlineData("http://collector-a:4318/v1/traces", "api-key=a", "http://collector-a:4318/v1/traces", "api-key=a", true)]
+    [InlineData("http://collector-a:4318/v1/traces", "api-key=a", "http://collector-b:4318/v1/traces", "api-key=a", false)]
+    [InlineData("http://collector-a:4318/v1/traces", "api-key=a", "http://collector-a:4318/v1/traces", "api-key=b", false)]
+    [InlineData("http://collector-a:4318/v1/traces", "api-key=a", "http://collector-a:4318/v1/traces", null, false)]
+    [InlineData("http://collector-a:4318/v1/traces", null, "https://collector-a:4318/v1/traces", null, false)]
+    public void GetTransmissionHandler_DiskRetry_UsesDestinationSpecificStorageDirectory(string firstEndpoint, string? firstHeaders, string secondEndpoint, string? secondHeaders, bool expectSameDirectory)
+        => AssertStorageDirectories(
+            new() { Protocol = OtlpExportProtocol.HttpProtobuf, Endpoint = new Uri(firstEndpoint), Headers = firstHeaders },
+            new() { Protocol = OtlpExportProtocol.HttpProtobuf, Endpoint = new Uri(secondEndpoint), Headers = secondHeaders },
+            expectSameDirectory);
+
+    [Fact]
+    public void GetTransmissionHandler_DiskRetry_UsesProtocolSpecificStorageDirectory()
+    {
+        var endpoint = new Uri("http://collector:4317");
+
+        AssertStorageDirectories(
+#pragma warning disable CS0618 // Suppressing gRPC obsolete warning
+            new() { Protocol = OtlpExportProtocol.Grpc, Endpoint = endpoint },
+#pragma warning restore CS0618 // Suppressing gRPC obsolete warning
+            new() { Protocol = OtlpExportProtocol.HttpProtobuf, Endpoint = endpoint },
+            expectSameDirectory: false);
+    }
+
+    [Fact]
+    public void GetTransmissionHandler_DiskRetry_DoesNotRetryRequestsStoredForAnotherDestination()
+    {
+        var retryRootPath = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
+
+        try
+        {
+            var experimentalOptions = CreateDiskRetryExperimentalOptions(retryRootPath);
+
+            using var firstHttpHandler = new UnavailableHttpMessageHandler();
+            using var secondHttpHandler = new TestHttpMessageHandler();
+
+            var firstOptions = new OtlpExporterOptions
+            {
+                Protocol = OtlpExportProtocol.HttpProtobuf,
+                Endpoint = new Uri("http://collector-a:4318/v1/traces"),
+                HttpClientFactory = () => new HttpClient(firstHttpHandler, disposeHandler: false),
+            };
+
+            var secondOptions = new OtlpExporterOptions
+            {
+                Protocol = OtlpExportProtocol.HttpProtobuf,
+                Endpoint = new Uri("http://collector-b:4318/v1/traces"),
+                HttpClientFactory = () => new HttpClient(secondHttpHandler, disposeHandler: false),
+            };
+
+            using var firstHandler = Assert.IsType<OtlpExporterPersistentStorageTransmissionHandler>(firstOptions.GetExportTransmissionHandler(experimentalOptions, OtlpSignalType.Traces));
+            using var secondHandler = Assert.IsType<OtlpExporterPersistentStorageTransmissionHandler>(secondOptions.GetExportTransmissionHandler(experimentalOptions, OtlpSignalType.Traces));
+
+            Assert.True(firstHandler.TrySubmitRequest([1, 2, 3], 3));
+            Assert.Equal(1, firstHttpHandler.RequestCount);
+
+            Assert.True(secondHandler.InitiateAndWaitForRetryProcess(10_000));
+            Assert.Null(secondHttpHandler.HttpRequestMessage);
+
+            Assert.True(firstHandler.InitiateAndWaitForRetryProcess(10_000));
+            Assert.Equal(2, firstHttpHandler.RequestCount);
         }
         finally
         {
@@ -274,6 +465,59 @@ public class OtlpExporterOptionsExtensionsTests
 
             Assert.Throws<NotSupportedException>(
                 () => exporterOptions.GetExportTransmissionHandler(new ExperimentalOptions(configuration), signalType));
+        }
+        finally
+        {
+            if (Directory.Exists(retryRootPath))
+            {
+                Directory.Delete(retryRootPath, recursive: true);
+            }
+        }
+    }
+
+    private static ExperimentalOptions CreateDiskRetryExperimentalOptions(string retryRootPath)
+    {
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(
+            new Dictionary<string, string?>
+            {
+                [ExperimentalOptions.OtlpRetryEnvVar] = "disk",
+                [ExperimentalOptions.OtlpDiskRetryDirectoryPathEnvVar] = retryRootPath,
+            })
+            .Build();
+
+        return new ExperimentalOptions(configuration);
+    }
+
+    private static string GetStorageDirectoryPath(OtlpExporterTransmissionHandler transmissionHandler)
+    {
+        var persistentStorageTransmissionHandler = Assert.IsType<OtlpExporterPersistentStorageTransmissionHandler>(transmissionHandler);
+
+        var fileBlobProviderField = typeof(OtlpExporterPersistentStorageTransmissionHandler).GetField("persistentBlobProvider", BindingFlags.NonPublic | BindingFlags.Instance);
+        var persistentBlobProvider = Assert.IsType<FileBlobProvider>(fileBlobProviderField?.GetValue(persistentStorageTransmissionHandler));
+
+        return persistentBlobProvider.DirectoryPath;
+    }
+
+    private static void AssertStorageDirectories(OtlpExporterOptions firstOptions, OtlpExporterOptions secondOptions, bool expectSameDirectory)
+    {
+        var retryRootPath = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
+
+        try
+        {
+            var experimentalOptions = CreateDiskRetryExperimentalOptions(retryRootPath);
+
+            using var firstHandler = firstOptions.GetExportTransmissionHandler(experimentalOptions, OtlpSignalType.Traces);
+            using var secondHandler = secondOptions.GetExportTransmissionHandler(experimentalOptions, OtlpSignalType.Traces);
+
+            if (expectSameDirectory)
+            {
+                Assert.Equal(GetStorageDirectoryPath(firstHandler), GetStorageDirectoryPath(secondHandler));
+            }
+            else
+            {
+                Assert.NotEqual(GetStorageDirectoryPath(firstHandler), GetStorageDirectoryPath(secondHandler));
+            }
         }
         finally
         {
@@ -347,6 +591,54 @@ public class OtlpExporterOptionsExtensionsTests
         foreach (var std in options.StandardHeaders)
         {
             Assert.Contains(headers, h => h.Key == std.Key && h.Value == std.Value);
+        }
+    }
+
+    private static IDisposable RunRedirectingServer(ConcurrentQueue<string> requestedPaths, out string host, out int port)
+        => TestHttpServer.RunServer(
+            context =>
+            {
+                requestedPaths.Enqueue(context.Request.Url!.AbsolutePath);
+                context.Request.InputStream.CopyTo(Stream.Null);
+
+                if (context.Request.Url.AbsolutePath != "/redirected")
+                {
+                    context.Response.StatusCode = (int)HttpStatusCode.TemporaryRedirect;
+                    context.Response.RedirectLocation = "/redirected";
+                }
+
+                context.Response.OutputStream.Close();
+            },
+            out host,
+            out port);
+
+    private sealed class UnavailableHttpMessageHandler : HttpMessageHandler
+    {
+        public int RequestCount { get; private set; }
+
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        {
+            this.RequestCount++;
+            return Task.FromResult(new HttpResponseMessage(HttpStatusCode.ServiceUnavailable));
+        }
+
+#if NET
+        protected override HttpResponseMessage Send(HttpRequestMessage request, CancellationToken cancellationToken)
+        {
+            this.RequestCount++;
+            return new HttpResponseMessage(HttpStatusCode.ServiceUnavailable);
+        }
+#endif
+    }
+
+    private sealed class ThrowingHttpClientFactory(Exception exception) : IHttpClientFactory
+    {
+        public List<string> RequestedNames { get; } = [];
+
+        public HttpClient CreateClient(string name)
+        {
+            this.RequestedNames.Add(name);
+            throw exception;
         }
     }
 }

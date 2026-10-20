@@ -2,18 +2,15 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Tracing;
-using System.IO.MemoryMappedFiles;
 
 namespace OpenTelemetry.Internal;
 
 /// <summary>
 /// SelfDiagnosticsConfigRefresher class checks a location for a configuration file
-/// and open a MemoryMappedFile of a configured size at the configured file path.
-/// The class provides a stream object with proper write position if the configuration
-/// file is present and valid. Otherwise, the stream object would be unavailable,
-/// nothing will be logged to any file.
+/// and opens a log file of a configured size at the configured file path.
+/// Events are written in a circular way if the configuration file is present and valid.
+/// Otherwise, nothing will be logged to any file.
 /// </summary>
 #if NET
 [System.Runtime.Versioning.UnsupportedOSPlatform("browser")]
@@ -27,31 +24,30 @@ internal class SelfDiagnosticsConfigRefresher : IDisposable
     private readonly CancellationTokenSource cancellationTokenSource;
     private readonly Task worker;
     private readonly SelfDiagnosticsConfigParser configParser;
+    private readonly Func<string, FileStream> logFileFactory;
 
-    /// <summary>
-    /// memoryMappedFileCache is a handle kept in thread-local storage as a cache to indicate whether the cached
-    /// viewStream is created from the current m_memoryMappedFile.
-    /// </summary>
-    private readonly ThreadLocal<MemoryMappedFile> memoryMappedFileCache = new(true);
-    private readonly ThreadLocal<MemoryMappedViewStream> viewStream = new(true);
+    private readonly Lock logFileLock = new();
     private bool disposedValue;
 
     // Once the configuration file is valid, an eventListener object will be created.
     private SelfDiagnosticsEventListener? eventListener;
-#pragma warning disable CA2213 // Disposable fields should be disposed
-    private volatile FileStream? underlyingFileStreamForMemoryMappedFile;
-    private volatile MemoryMappedFile? memoryMappedFile;
-#pragma warning restore CA2213 // Disposable fields should be disposed
+    private FileStream? logFile;
     private string? logDirectory;  // Log directory for log files
     private int logFileSize;  // Log file size in bytes
-    private long logFilePosition;  // The logger will write into the byte at this position
+    private int logFilePosition;  // The logger will write into the byte at this position
     private EventLevel logEventLevel = (EventLevel)(-1);
     private bool formatMessage;
 
     public SelfDiagnosticsConfigRefresher()
+        : this(static path => new FileStream(path, FileMode.CreateNew, FileAccess.Write, FileShare.Read, 1, FileOptions.None))
     {
+    }
+
+    internal SelfDiagnosticsConfigRefresher(Func<string, FileStream> logFileFactory)
+    {
+        this.logFileFactory = logFileFactory;
         this.configParser = new SelfDiagnosticsConfigParser();
-        this.UpdateMemoryMappedFileFromConfiguration();
+        this.UpdateLogFileFromConfiguration();
         this.cancellationTokenSource = new CancellationTokenSource();
         this.worker = Task.Run(() => this.Worker(this.cancellationTokenSource.Token), this.cancellationTokenSource.Token);
     }
@@ -64,69 +60,32 @@ internal class SelfDiagnosticsConfigRefresher : IDisposable
     }
 
     /// <summary>
-    /// Try to get the log stream which is sought to the position where the next line of log should be written.
+    /// Writes an event to the log file, wrapping at the configured size.
     /// </summary>
-    /// <param name="byteCount">The number of bytes that need to be written.</param>
-    /// <param name="stream">When this method returns, contains the Stream object where `byteCount` of bytes can be written.</param>
-    /// <param name="availableByteCount">The number of bytes that is remaining until the end of the stream.</param>
-    /// <returns>Whether the logger should log in the stream.</returns>
-    public virtual bool TryGetLogStream(
-        int byteCount,
-        [NotNullWhen(true)]
-        out Stream? stream,
-        out int availableByteCount)
+    /// <param name="buffer">The buffer containing the event.</param>
+    /// <param name="byteCount">The number of bytes to write from the start of the buffer.</param>
+    public virtual void WriteLog(byte[] buffer, int byteCount)
     {
-        if (this.memoryMappedFile == null)
+        lock (this.logFileLock)
         {
-            stream = null;
-            availableByteCount = 0;
-            return false;
-        }
-
-        try
-        {
-            var cachedViewStream = this.viewStream.Value;
-
-            // Each thread has its own MemoryMappedViewStream created from the only one MemoryMappedFile.
-            // Once worker thread updates the MemoryMappedFile, all the cached ViewStream objects become
-            // obsolete.
-            // Each thread creates a new MemoryMappedViewStream the next time it tries to retrieve it.
-            // Whether the MemoryMappedViewStream is obsolete is determined by comparing the current
-            // MemoryMappedFile object with the MemoryMappedFile object cached at the creation time of the
-            // MemoryMappedViewStream.
-            if (cachedViewStream == null || this.memoryMappedFileCache.Value != this.memoryMappedFile)
+            if (this.logFile == null)
             {
-                // Race condition: The code might reach here right after the worker thread sets memoryMappedFile
-                // to null in CloseLogFile().
-                // In this case, let the NullReferenceException be caught and fail silently.
-                // By design, all events captured will be dropped during a configuration file refresh if
-                // the file changed, regardless whether the file is deleted or updated.
-                cachedViewStream = this.memoryMappedFile.CreateViewStream();
-                this.viewStream.Value = cachedViewStream;
-                this.memoryMappedFileCache.Value = this.memoryMappedFile;
+                return;
             }
 
-            long beginPosition, endPosition;
-            do
+            var beginPosition = this.logFilePosition;
+            this.logFilePosition = (beginPosition + byteCount) % this.logFileSize;
+            var firstByteCount = Math.Min(byteCount, this.logFileSize - beginPosition);
+
+            // Serialize the complete event, including a possible wrap, with other
+            // writes and file disposal. One handle is shared by all logging threads.
+            this.logFile.Seek(beginPosition, SeekOrigin.Begin);
+            this.logFile.Write(buffer, 0, firstByteCount);
+            if (firstByteCount < byteCount)
             {
-                beginPosition = this.logFilePosition;
-                endPosition = beginPosition + byteCount;
-                if (endPosition >= this.logFileSize)
-                {
-                    endPosition %= this.logFileSize;
-                }
+                this.logFile.Seek(0, SeekOrigin.Begin);
+                this.logFile.Write(buffer, firstByteCount, byteCount - firstByteCount);
             }
-            while (beginPosition != Interlocked.CompareExchange(ref this.logFilePosition, endPosition, beginPosition));
-            availableByteCount = (int)(this.logFileSize - beginPosition);
-            cachedViewStream.Seek(beginPosition, SeekOrigin.Begin);
-            stream = cachedViewStream;
-            return true;
-        }
-        catch (Exception)
-        {
-            stream = null;
-            availableByteCount = 0;
-            return false;
         }
     }
 
@@ -135,17 +94,17 @@ internal class SelfDiagnosticsConfigRefresher : IDisposable
         await Task.Delay(ConfigurationUpdatePeriodMilliSeconds, cancellationToken).ConfigureAwait(false);
         while (!cancellationToken.IsCancellationRequested)
         {
-            this.UpdateMemoryMappedFileFromConfiguration();
+            this.UpdateLogFileFromConfiguration();
             await Task.Delay(ConfigurationUpdatePeriodMilliSeconds, cancellationToken).ConfigureAwait(false);
         }
     }
 
-    private void UpdateMemoryMappedFileFromConfiguration()
+    private void UpdateLogFileFromConfiguration()
     {
         if (this.configParser.TryGetConfiguration(out var newLogDirectory, out var fileSizeInKB, out var newEventLevel, out var formatMessage))
         {
             var newFileSize = fileSizeInKB * 1024;
-            if (!string.Equals(newLogDirectory, this.logDirectory, StringComparison.Ordinal) || this.logFileSize != newFileSize)
+            if (this.logFile == null || !string.Equals(newLogDirectory, this.logDirectory, StringComparison.Ordinal) || this.logFileSize != newFileSize)
             {
                 this.CloseLogFile();
                 this.OpenLogFile(newLogDirectory, newFileSize);
@@ -168,29 +127,16 @@ internal class SelfDiagnosticsConfigRefresher : IDisposable
 
     private void CloseLogFile()
     {
-        var mmf = Interlocked.CompareExchange(ref this.memoryMappedFile, null, this.memoryMappedFile);
-        if (mmf != null)
+        lock (this.logFileLock)
         {
-            // Each thread has its own MemoryMappedViewStream created from the only one MemoryMappedFile.
-            // Once worker thread closes the MemoryMappedFile, all the ViewStream objects should be disposed
-            // properly.
-            foreach (var stream in this.viewStream.Values)
-            {
-                stream?.Dispose();
-            }
-
-            mmf.Dispose();
+            this.logFile?.Dispose();
+            this.logFile = null;
         }
-
-        var fs = Interlocked.CompareExchange(
-            ref this.underlyingFileStreamForMemoryMappedFile,
-            null,
-            this.underlyingFileStreamForMemoryMappedFile);
-        fs?.Dispose();
     }
 
     private void OpenLogFile(string newLogDirectory, int newFileSize)
     {
+        FileStream? newLogFile = null;
         try
         {
             Directory.CreateDirectory(newLogDirectory);
@@ -202,40 +148,31 @@ internal class SelfDiagnosticsConfigRefresher : IDisposable
 #endif
             var filePath = Path.Combine(newLogDirectory, fileName);
 
-            // Because the API [MemoryMappedFile.CreateFromFile][1](the string version) behaves differently on
-            // .NET Framework and .NET Core, here I am using the [FileStream version][2] of it.
-            // Taking the last four parameter values from [.NET Framework]
-            // (https://referencesource.microsoft.com/#system.core/System/IO/MemoryMappedFiles/MemoryMappedFile.cs,148)
-            // and [.NET Core]
-            // (https://github.com/dotnet/runtime/blob/master/src/libraries/System.IO.MemoryMappedFiles/src/System/IO/MemoryMappedFiles/MemoryMappedFile.cs#L152)
-            // The parameter for FileAccess is different in type but the same in rules, both are Read and Write.
-            // The parameter for FileShare is different in values and in behavior.
-            // .NET Framework doesn't allow sharing but .NET Core allows reading by other programs.
-            // The last two parameters are the same values for both frameworks.
-            // [1]: https://docs.microsoft.com/dotnet/api/system.io.memorymappedfiles.memorymappedfile.createfromfile?view=net-5.0#System_IO_MemoryMappedFiles_MemoryMappedFile_CreateFromFile_System_String_System_IO_FileMode_System_String_System_Int64_
-            // [2]: https://docs.microsoft.com/dotnet/api/system.io.memorymappedfiles.memorymappedfile.createfromfile?view=net-5.0#System_IO_MemoryMappedFiles_MemoryMappedFile_CreateFromFile_System_IO_FileStream_System_String_System_Int64_System_IO_MemoryMappedFiles_MemoryMappedFileAccess_System_IO_HandleInheritability_System_Boolean_
-            this.underlyingFileStreamForMemoryMappedFile =
-                new FileStream(filePath, FileMode.Create, FileAccess.ReadWrite, FileShare.Read, 0x1000, FileOptions.None);
+            // The file name is predictable (executable name + process id), so an entry that already
+            // exists under it may be a symbolic link planted by another user of the log directory and
+            // must never be opened for writing. Deleting it removes a stale log of an earlier process
+            // with the same id, or the link itself but not its target, and FileMode.CreateNew then
+            // fails instead of following a link that was (re)created in between.
+            File.Delete(filePath);
 
-            // The parameter values for MemoryMappedFileSecurity, HandleInheritability and leaveOpen are the same
-            // values for .NET Framework and .NET Core:
-            // https://referencesource.microsoft.com/#system.core/System/IO/MemoryMappedFiles/MemoryMappedFile.cs,172
-            // https://github.com/dotnet/runtime/blob/master/src/libraries/System.IO.MemoryMappedFiles/src/System/IO/MemoryMappedFiles/MemoryMappedFile.cs#L168-L179
-            this.memoryMappedFile = MemoryMappedFile.CreateFromFile(
-                this.underlyingFileStreamForMemoryMappedFile,
-                null,
-                newFileSize,
-                MemoryMappedFileAccess.ReadWrite,
-                HandleInheritability.None,
-                false);
-            this.logDirectory = newLogDirectory;
-            this.logFileSize = newFileSize;
-            this.logFilePosition = MessageOnNewFile.Length;
-            using var stream = this.memoryMappedFile.CreateViewStream();
-            stream.Write(MessageOnNewFile, 0, MessageOnNewFile.Length);
+            // Ordinary file I/O reports a full disk as an exception. Writing to an
+            // unbacked memory-mapped page can instead terminate the process.
+            // Disable buffering so write errors are caught when the event is logged.
+            newLogFile = this.logFileFactory(filePath);
+            newLogFile.SetLength(newFileSize);
+            newLogFile.Write(MessageOnNewFile, 0, MessageOnNewFile.Length);
+
+            lock (this.logFileLock)
+            {
+                this.logDirectory = newLogDirectory;
+                this.logFileSize = newFileSize;
+                this.logFilePosition = MessageOnNewFile.Length;
+                this.logFile = newLogFile;
+            }
         }
         catch (Exception ex)
         {
+            newLogFile?.Dispose();
             OpenTelemetrySdkEventSource.Log.SelfDiagnosticsFileCreateException(newLogDirectory, ex);
         }
     }
@@ -264,13 +201,9 @@ internal class SelfDiagnosticsConfigRefresher : IDisposable
                 this.eventListener = null;
 
                 // Ensure worker thread properly finishes.
-                // Or it might have created another MemoryMappedFile in that thread
+                // Or it might have opened another log file in that thread
                 // after the CloseLogFile() below is called.
                 this.CloseLogFile();
-
-                // Dispose ThreadLocal variables after the file handles are disposed.
-                this.viewStream.Dispose();
-                this.memoryMappedFileCache.Dispose();
             }
 
             this.disposedValue = true;

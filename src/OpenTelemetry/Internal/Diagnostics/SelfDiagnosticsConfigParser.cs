@@ -38,7 +38,7 @@ internal sealed partial class SelfDiagnosticsConfigParser
     private static readonly Regex FormatMessageRegex = new(FormatMessageRegexPattern, RegexOptions.IgnoreCase | RegexOptions.Compiled);
 #endif
 
-    // This class is called in SelfDiagnosticsConfigRefresher.UpdateMemoryMappedFileFromConfiguration
+    // This class is called in SelfDiagnosticsConfigRefresher.UpdateLogFileFromConfiguration
     // in both main thread and the worker thread.
     // In theory the variable won't be access at the same time because worker thread first Task.Delay for a few seconds.
     private byte[]? configBuffer;
