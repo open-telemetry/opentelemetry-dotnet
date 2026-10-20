@@ -6,6 +6,14 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+## 1.20.1
+
+Released 2026-Oct-20
+
+## 1.20.1-rc.1
+
+Released 2026-Oct-20
+
 * Fixed a possible race condition on ARM64 when multiple threads record the
   first measurement with no tags, or the first overflow measurement, that could
   cause the measurement to be recorded incorrectly.
@@ -26,6 +34,54 @@ Notes](../../RELEASENOTES.md).
 * **Experimental (pre-release builds only):** Fixed `Logger.EmitLog` ignoring
   instrumentation suppression, which could cause recursive exports or deadlocks.
   ([#7961](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7961))
+
+* Fixed delta double counters losing subsequent measurements after a non-finite
+  or large value and idle metric points with a `NaN` value failing to be reclaimed.
+  ([#7963](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7963))
+
+* Improve the assignment of values to exponential histogram buckets when the
+  value is near a bucket boundary by using a pre-computed lookup table.
+  ([#7911](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7911))
+
+* Fixed `LogRecord`s being returned to the shared pool while still queued for
+  export when an exporter stops enumerating a single-item or array
+  `Batch<LogRecord>` early which could cause a `BatchLogRecordExportProcessor`
+  on the same provider to export missing or incorrect data.
+  ([#7965](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7965))
+
+* Fixed a `SuppressInstrumentationScope.Enter()` reference count never being
+  released when the `Activity` it was entered for is not recorded, which caused
+  all subsequent telemetry in that execution context to be suppressed.
+  ([#7966](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7966))
+
+* Self-diagnostics log files, whether configured through `OTEL_DIAGNOSTICS.json`
+  or `SelfDiagnosticsOptions`, are now always created as new files.
+  ([#7968](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7968))
+
+* Self-diagnostics messages written to the sinks configured by
+  `SelfDiagnosticsOptions` are now truncated to 16,384 characters so that the
+  memory used by entries waiting to be written is bounded.
+  ([#7969](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7969))
+
+* The self-diagnostics file sink now creates its log directory and log files
+  so that only the owner can access them (`0700`/`0600`) on Linux and macOS,
+  instead of inheriting the process umask.
+  ([#7967](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7967))
+
+* Fixed pooled log records retaining completed log data until reused.
+  ([#7978](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7978))
+
+* Fixed slow metric recording when distinct wide tag values, such as `long` or
+  `Guid`, share the same built-in hash code.
+  ([#7979](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7979))
+
+* Fixed `ObservableCounter` and `ObservableUpDownCounter` overflow points
+  reporting only the last observation instead of the sum for each collection.
+  ([#7985](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7985))
+
+* Fixed replaced log attributes being exported together with their original
+  values when buffering or updating `LogRecord.State`.
+  ([#7987](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7987))
 
 ## 1.20.0
 

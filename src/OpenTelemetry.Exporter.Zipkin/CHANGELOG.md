@@ -6,6 +6,18 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+## 1.20.1
+
+Released 2026-Oct-20
+
+## 1.20.1-rc.1
+
+Released 2026-Oct-20
+
+* The value of `OTEL_EXPORTER_ZIPKIN_ENDPOINT` is no longer written to the
+  exporter's diagnostic log when it is not a valid URI.
+  ([#7971](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7971))
+
 ## 1.20.0
 
 Released 2026-Oct-15
