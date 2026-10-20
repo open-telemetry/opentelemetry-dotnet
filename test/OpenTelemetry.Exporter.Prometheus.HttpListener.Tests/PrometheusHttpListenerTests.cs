@@ -716,13 +716,8 @@ public class PrometheusHttpListenerTests
 #else
         var output = await response.Content.ReadAsStringAsync();
 #endif
-        var expected = "# TYPE target_info gauge\n"
-            + "# HELP target_info Target metadata\n"
-            + "target_info{service_name=\"my_service\",service_instance_id=\"id1\"} 1\n"
-            + "# TYPE test_counter_total counter\n"
-            + $"test_counter_total{{otel_scope_name=\"{MeterName}\",otel_scope_version=\"{MeterVersion}\",service_name=\"my_service\"}} 1\n";
 
-        Assert.Equal(expected, output);
+        await Verify(output, VerifyFileExtension, PrometheusSerializerTests.VerifySettings);
     }
 
     [Fact]
