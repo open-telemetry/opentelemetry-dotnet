@@ -6,6 +6,10 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+## 1.20.1-rc.1
+
+Released 2026-Oct-20
+
 * Fixed a possible race condition on ARM64 when multiple threads record the
   first measurement with no tags, or the first overflow measurement, that could
   cause the measurement to be recorded incorrectly.

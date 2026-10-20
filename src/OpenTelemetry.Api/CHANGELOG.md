@@ -6,6 +6,10 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+## 1.20.1-rc.1
+
+Released 2026-Oct-20
+
 * Fixed `TracerProvider.GetTracer` caching a new tracer for each call with equal
   array-valued scope tags.
   ([#7960](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7960))
