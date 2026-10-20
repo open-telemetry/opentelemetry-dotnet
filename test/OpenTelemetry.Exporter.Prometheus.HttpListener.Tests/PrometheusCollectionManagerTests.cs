@@ -1140,6 +1140,64 @@ public sealed class PrometheusCollectionManagerTests
     }
 
     [Theory]
+    [InlineData(PrometheusProtocol.AllowUtf8Escaping)]
+    [InlineData(PrometheusProtocol.DotsEscaping)]
+    [InlineData(PrometheusProtocol.UnderscoresEscaping)]
+    [InlineData(PrometheusProtocol.ValuesEscaping)]
+    public async Task OpenMetricsUnitMetadataIsOnlyWrittenForAnUnderscoreSeparatedSuffixOfTheMetricFamilyName(string escaping)
+    {
+        using var meter = CreateMeter();
+
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+#if PROMETHEUS_HTTP_LISTENER
+            .AddPrometheusHttpListener()
+#elif PROMETHEUS_ASPNETCORE
+            .AddPrometheusExporter()
+#endif
+            .Build();
+
+#pragma warning disable CA2000 // MeterProvider owns exporter lifecycle
+        Assert.True(provider.TryFindExporter(out PrometheusExporter? exporter));
+#pragma warning restore CA2000 // MeterProvider owns exporter lifecycle
+
+        meter.CreateCounter<int>("auth_logins", unit: "logins").Add(1);
+        meter.CreateCounter<int>("auth.failedlogins", unit: "logins").Add(1);
+        meter.CreateCounter<int>("errors", unit: "errors").Add(1);
+        meter.CreateCounter<int>("sales", unit: "total").Add(1);
+        meter.CreateHistogram<double>("duration_milliseconds", unit: "s").Record(1);
+        meter.CreateObservableGauge("disk.kilobytes", () => 1, unit: "By");
+
+        var protocol = new PrometheusProtocol(
+            PrometheusProtocol.OpenMetricsMediaType,
+            escaping,
+            PrometheusProtocol.OpenMetricsV1,
+            isOpenMetrics: true);
+
+        var response = await exporter!.CollectionManager.EnterCollect(protocol, TestContext.Current.CancellationToken);
+
+        try
+        {
+            var view = response.View;
+            var output = Encoding.UTF8.GetString(view.Array!, view.Offset, view.Count);
+
+            // "# UNIT <family> <unit>" lines: the unit MUST be a suffix of the family separated by an underscore.
+            var units = output
+                .Split('\n')
+                .Where(line => line.StartsWith("# UNIT ", StringComparison.Ordinal))
+                .Select(line => line.Split(' '))
+                .ToArray();
+
+            Assert.Contains(units, p => p[3] == "logins");
+            Assert.All(units, p => Assert.EndsWith($"_{p[3]}", p[2].Trim('"'), StringComparison.Ordinal));
+        }
+        finally
+        {
+            exporter.CollectionManager.ExitCollect(protocol);
+        }
+    }
+
+    [Theory]
     [InlineData(true)]
     [InlineData(false)]
     public async Task LargeScrapeExpandsBufferAndReturnsCompleteResponse(bool openMetricsRequested)
