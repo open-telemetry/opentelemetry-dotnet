@@ -7,6 +7,25 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Hardened the experimental disk retry feature.
+  * **Breaking:** When running on .NET on non-Windows platforms, creating the
+    exporter now throws an `UnauthorizedAccessException` if the retry
+    directory could be changed by another user. The retry directory must be
+    owned by the current user and must not be writable by its group or by
+    other users. Each directory and symbolic link in its path must be owned by
+    the current user or by root, and those directories must not be writable
+    by their group or by other users unless they have the sticky bit set (such
+    as `/tmp`).
+  ([#7964](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7964))
+
+## 1.20.1
+
+Released 2026-Oct-20
+
+## 1.20.1-rc.1
+
+Released 2026-Oct-20
+
 * Fixed informational HTTP client logs not being suppressed by default when the
   OTLP log exporter is registered using `OpenTelemetryLoggerOptions.AddOtlpExporter`.
   ([#7959](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7959))
@@ -83,16 +102,9 @@ Notes](../../RELEASENOTES.md).
   diagnostic events and exceptions when supplied instead of a file path.
   ([#7981](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7981))
 
-* Hardened the experimental disk retry feature.
-  * **Breaking:** When running on .NET on non-Windows platforms, creating the
-    exporter now throws an `UnauthorizedAccessException` if the retry
-    directory could be changed by another user. The retry directory must be
-    owned by the current user and must not be writable by its group or by
-    other users. Each directory and symbolic link in its path must be owned by
-    the current user or by root, and those directories must not be writable
-    by their group or by other users unless they have the sticky bit set (such
-    as `/tmp`).
-  ([#7964](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7964))
+* Fixed early metric collections permanently omitting resource attributes from
+  subsequent exports while the `MeterProvider` is being built.
+  ([#7984](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7984))
 
 ## 1.20.0
 
