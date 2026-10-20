@@ -67,6 +67,10 @@ Notes](../../RELEASENOTES.md).
   `Guid`, share the same built-in hash code.
   ([#7979](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7979))
 
+* Fixed `ObservableCounter` and `ObservableUpDownCounter` overflow points
+  reporting only the last observation instead of the sum for each collection.
+  ([#7985](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7985))
+
 * Fixed replaced log attributes being exported together with their original
   values when buffering or updating `LogRecord.State`.
   ([#7987](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7987))
