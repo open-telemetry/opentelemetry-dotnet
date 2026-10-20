@@ -198,11 +198,13 @@ internal sealed class OtlpExporterBuilder
 
                 var processor = OtlpLogExporterHelperExtensions.BuildOtlpLogExporter(
                     sp,
-                    builderOptions.LoggingOptionsInstance.ApplyDefaults(builderOptions.DefaultOptionsInstance),
+                    builderOptions.LoggingOptionsInstance.Copy().ApplyDefaults(builderOptions.DefaultOptionsInstance),
                     builderOptions.LogRecordExportProcessorOptions ?? throw new InvalidOperationException("LogRecordExportProcessorOptions were missing with logging enabled"),
                     builderOptions.SdkLimitOptions,
                     builderOptions.ExperimentalOptions,
-                    skipUseOtlpExporterRegistrationCheck: true);
+                    skipUseOtlpExporterRegistrationCheck: true,
+                    useOtlpExporter: true,
+                    optionsName: name);
 
                 processor.PipelineWeight = DefaultProcessorPipelineWeight;
 
@@ -217,10 +219,12 @@ internal sealed class OtlpExporterBuilder
                 metrics.AddReader(
                     OtlpMetricExporterExtensions.BuildOtlpExporterMetricReader(
                         sp,
-                        builderOptions.MetricsOptionsInstance.ApplyDefaults(builderOptions.DefaultOptionsInstance),
+                        builderOptions.MetricsOptionsInstance.Copy().ApplyDefaults(builderOptions.DefaultOptionsInstance),
                         builderOptions.MetricReaderOptions ?? throw new InvalidOperationException("MetricReaderOptions were missing with metrics enabled"),
                         builderOptions.ExperimentalOptions,
-                        skipUseOtlpExporterRegistrationCheck: true));
+                        skipUseOtlpExporterRegistrationCheck: true,
+                        useOtlpExporter: true,
+                        optionsName: name));
             });
 
         services.ConfigureOpenTelemetryTracerProvider(
@@ -232,12 +236,14 @@ internal sealed class OtlpExporterBuilder
 
                 var processor = OtlpTraceExporterHelperExtensions.BuildOtlpExporterProcessor(
                     sp,
-                    builderOptions.TracingOptionsInstance.ApplyDefaults(builderOptions.DefaultOptionsInstance),
+                    builderOptions.TracingOptionsInstance.Copy().ApplyDefaults(builderOptions.DefaultOptionsInstance),
                     builderOptions.SdkLimitOptions,
                     builderOptions.ExperimentalOptions,
                     processorOptions.ExportProcessorType,
                     processorOptions.BatchExportProcessorOptions,
-                    skipUseOtlpExporterRegistrationCheck: true);
+                    skipUseOtlpExporterRegistrationCheck: true,
+                    useOtlpExporter: true,
+                    optionsName: name);
 
                 processor.PipelineWeight = DefaultProcessorPipelineWeight;
 

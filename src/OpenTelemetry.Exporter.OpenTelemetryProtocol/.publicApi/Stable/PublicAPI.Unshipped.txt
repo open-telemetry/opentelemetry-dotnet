@@ -1,0 +1,2 @@
+override OpenTelemetry.Exporter.OtlpMetricExporter.Dispose(bool disposing) -> void
+override OpenTelemetry.Exporter.OtlpTraceExporter.Dispose(bool disposing) -> void

@@ -104,43 +104,39 @@ public class OtlpExporterOptions : IOtlpExporterOptions
     {
         this.ApplyConfiguration(configuration, configurationType);
 
-        this.DefaultHttpClientFactory = () =>
-        {
-            var timeout = TimeSpan.FromMilliseconds(this.TimeoutMilliseconds);
-
-#if NET
-            // If TLS configuration is enabled (mTLS or CA only), create a secure client
-            if (this.MtlsOptions?.IsEnabled == true)
-            {
-                if (OperatingSystem.IsBrowser())
-                {
-                    throw new PlatformNotSupportedException("Custom TLS certificate configuration (custom CA trust or mTLS) is not supported on browser-based platforms.");
-                }
-
-                return OtlpSecureHttpClientFactory.CreateSecureHttpClient(
-                    this.MtlsOptions,
-                    client =>
-                    {
-                        client.MaxResponseContentBufferSize = this.MaxResponseSizeBytes;
-                        client.Timeout = timeout;
-                    });
-            }
-#endif
-
-#pragma warning disable CA5399 // HttpClient is created without enabling CheckCertificateRevocationList
-#pragma warning disable CA5400 // HttpClient is created without enabling CheckCertificateRevocationList
-            // CheckCertificateRevocationList is not explicitly enabled as it
-            // breaks TLS certificate validation in offline/air-gapped environments.
-            return new HttpClient(new HttpClientHandler { AllowAutoRedirect = false }, disposeHandler: true)
-            {
-                MaxResponseContentBufferSize = this.MaxResponseSizeBytes,
-                Timeout = timeout,
-            };
-#pragma warning restore CA5400 // HttpClient is created without enabling CheckCertificateRevocationList
-#pragma warning restore CA5399 // HttpClient is created without enabling CheckCertificateRevocationList
-        };
-
+        this.DefaultHttpClientFactory = this.CreateDefaultHttpClient;
         this.batchExportProcessorOptions = new(defaultBatchOptions);
+    }
+
+    private OtlpExporterOptions(OtlpExporterOptions source)
+    {
+        this.DefaultHttpClientFactory = this.CreateDefaultHttpClient;
+        this.protocol = source.protocol;
+        this.maxRequestSizeBytes = source.maxRequestSizeBytes;
+        this.maxResponseSizeBytes = source.maxResponseSizeBytes;
+        this.endpoint = source.endpoint;
+        this.timeoutMilliseconds = source.timeoutMilliseconds;
+        this.httpClientFactory = ReferenceEquals(source.httpClientFactory, source.DefaultHttpClientFactory)
+            ? this.DefaultHttpClientFactory
+            : source.httpClientFactory;
+        this.compression = source.compression;
+        this.exportProcessorType = source.exportProcessorType;
+        this.batchExportProcessorOptions = source.batchExportProcessorOptions?.Copy();
+        this.Headers = source.Headers;
+        this.UserAgentProductIdentifier = source.UserAgentProductIdentifier;
+        this.AppendSignalPathToEndpoint = source.AppendSignalPathToEndpoint;
+#if NET
+        if (source.MtlsOptions is { } mtlsOptions)
+        {
+            this.MtlsOptions = new OtlpMtlsOptions
+            {
+                CaCertificatePath = mtlsOptions.CaCertificatePath,
+                EnableCertificateChainValidation = mtlsOptions.EnableCertificateChainValidation,
+                ClientCertificatePath = mtlsOptions.ClientCertificatePath,
+                ClientKeyPath = mtlsOptions.ClientKeyPath,
+            };
+        }
+#endif
     }
 
     /// <inheritdoc/>
@@ -349,6 +345,8 @@ public class OtlpExporterOptions : IOtlpExporterOptions
             OtlpExporterOptionsConfigurationType.Default,
             serviceProvider.GetRequiredService<IOptionsMonitor<BatchExportActivityProcessorOptions>>().Get(name));
 
+    internal OtlpExporterOptions Copy() => new(this);
+
     internal void ApplyConfigurationUsingSpecificationEnvVars(
         IConfiguration configuration,
         string endpointEnvVarKey,
@@ -407,7 +405,9 @@ public class OtlpExporterOptions : IOtlpExporterOptions
 
         this.timeoutMilliseconds ??= defaultExporterOptions.timeoutMilliseconds;
 
-        this.httpClientFactory ??= defaultExporterOptions.httpClientFactory;
+        this.httpClientFactory ??= ReferenceEquals(defaultExporterOptions.httpClientFactory, defaultExporterOptions.DefaultHttpClientFactory)
+            ? this.DefaultHttpClientFactory
+            : defaultExporterOptions.httpClientFactory;
 
         this.compression ??= defaultExporterOptions.compression;
 
@@ -415,6 +415,42 @@ public class OtlpExporterOptions : IOtlpExporterOptions
         this.maxResponseSizeBytes ??= defaultExporterOptions.maxResponseSizeBytes;
 
         return this;
+    }
+
+    private HttpClient CreateDefaultHttpClient()
+    {
+        var timeout = TimeSpan.FromMilliseconds(this.TimeoutMilliseconds);
+#if NET
+        if (this.MtlsOptions?.IsEnabled == true)
+        {
+            if (OperatingSystem.IsBrowser())
+            {
+                throw new PlatformNotSupportedException("Custom TLS certificate configuration (custom CA trust or mTLS) is not supported on browser-based platforms.");
+            }
+
+            return OtlpSecureHttpClientFactory.CreateSecureHttpClient(
+                this.MtlsOptions,
+                client =>
+                {
+                    client.MaxResponseContentBufferSize = this.MaxResponseSizeBytes;
+                    client.Timeout = timeout;
+                });
+        }
+#endif
+
+#pragma warning disable CA5399 // HttpClient is created without enabling CheckCertificateRevocationList
+#pragma warning disable CA5400 // HttpClient is created without enabling CheckCertificateRevocationList
+#pragma warning disable CA2000 // HttpClient owns and disposes its handler.
+        // CheckCertificateRevocationList is not explicitly enabled as it
+        // breaks TLS certificate validation in offline/air-gapped environments.
+        return new HttpClient(new HttpClientHandler { AllowAutoRedirect = false }, disposeHandler: true)
+        {
+            MaxResponseContentBufferSize = this.MaxResponseSizeBytes,
+            Timeout = timeout,
+        };
+#pragma warning restore CA2000 // HttpClient owns and disposes its handler.
+#pragma warning restore CA5400 // HttpClient is created without enabling CheckCertificateRevocationList
+#pragma warning restore CA5399 // HttpClient is created without enabling CheckCertificateRevocationList
     }
 
     private void ApplyConfiguration(

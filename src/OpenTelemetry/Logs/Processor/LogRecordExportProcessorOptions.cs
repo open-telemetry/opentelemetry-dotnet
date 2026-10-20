@@ -50,4 +50,11 @@ public class LogRecordExportProcessorOptions
     }
 
     internal ExportProcessorType? ExportProcessorTypeValue => this.exportProcessorType;
+
+    internal LogRecordExportProcessorOptions Copy()
+    {
+        var copy = (LogRecordExportProcessorOptions)this.MemberwiseClone();
+        copy.batchExportProcessorOptions = (BatchExportLogRecordProcessorOptions)this.batchExportProcessorOptions.Copy();
+        return copy;
+    }
 }

@@ -7,6 +7,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using OpenTelemetry.Exporter;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
+using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Transmission;
 using OpenTelemetry.Internal;
 
@@ -62,7 +63,7 @@ public static class OtlpLogExporterHelperExtensions
         return loggerOptions.AddProcessor(sp =>
 #pragma warning restore CA1062 // Validate arguments of public methods
         {
-            var exporterOptions = GetOptions(sp, name, finalOptionsName, OtlpExporterOptions.CreateOtlpExporterOptions);
+            var exporterOptions = GetOptions(sp, name, finalOptionsName, OtlpExporterOptions.CreateOtlpExporterOptions).Copy();
 
             var processorOptions = sp.GetRequiredService<IOptionsMonitor<LogRecordExportProcessorOptions>>().Get(finalOptionsName);
 
@@ -112,10 +113,11 @@ public static class OtlpLogExporterHelperExtensions
         return loggerOptions.AddProcessor(sp =>
 #pragma warning restore CA1062 // Validate arguments of public methods
         {
-            var exporterOptions = GetOptions(sp, name, finalOptionsName, OtlpExporterOptions.CreateOtlpExporterOptions);
+            var exporterOptions = GetOptions(sp, name, finalOptionsName, OtlpExporterOptions.CreateOtlpExporterOptions).Copy();
 
             var processorOptions = sp.GetRequiredService<IOptionsMonitor<LogRecordExportProcessorOptions>>().Get(finalOptionsName);
 
+            processorOptions = processorOptions.Copy();
             configureExporterAndProcessor?.Invoke(exporterOptions, processorOptions);
 
             return BuildOtlpLogExporter(
@@ -215,7 +217,8 @@ public static class OtlpLogExporterHelperExtensions
                 exporterOptions,
                 sp.GetRequiredService<IOptionsMonitor<LogRecordExportProcessorOptions>>().Get(finalOptionsName),
                 sdkLimitOptions,
-                sp.GetRequiredService<IOptionsMonitor<ExperimentalOptions>>().Get(finalOptionsName));
+                sp.GetRequiredService<IOptionsMonitor<ExperimentalOptions>>().Get(finalOptionsName),
+                optionsName: name);
         });
     }
 
@@ -259,8 +262,15 @@ public static class OtlpLogExporterHelperExtensions
 
             var processorOptions = sp.GetRequiredService<IOptionsMonitor<LogRecordExportProcessorOptions>>().Get(finalOptionsName);
 
+            exporterOptions = exporterOptions.Copy();
+            var processorDefaults = processorOptions.Copy();
+            processorOptions = processorDefaults.Copy();
+
             // Configuration delegate is executed inline.
             configureExporterAndProcessor?.Invoke(exporterOptions, processorOptions);
+            Action<OtlpExporterOptions>? configureOnReload = name != null && configureExporterAndProcessor != null
+                ? options => configureExporterAndProcessor(options, processorDefaults.Copy())
+                : null;
 
             // Note: Not using finalOptionsName here for SdkLimitOptions.
             // There should only be one provider for a given service
@@ -273,7 +283,9 @@ public static class OtlpLogExporterHelperExtensions
                 exporterOptions,
                 processorOptions,
                 sdkLimitOptions,
-                sp.GetRequiredService<IOptionsMonitor<ExperimentalOptions>>().Get(finalOptionsName));
+                sp.GetRequiredService<IOptionsMonitor<ExperimentalOptions>>().Get(finalOptionsName),
+                optionsName: name,
+                configureOnReload: configureOnReload);
         });
     }
 
@@ -284,7 +296,10 @@ public static class OtlpLogExporterHelperExtensions
         SdkLimitOptions sdkLimitOptions,
         ExperimentalOptions experimentalOptions,
         bool skipUseOtlpExporterRegistrationCheck = false,
-        Func<BaseExporter<LogRecord>, BaseExporter<LogRecord>>? configureExporterInstance = null)
+        Func<BaseExporter<LogRecord>, BaseExporter<LogRecord>>? configureExporterInstance = null,
+        string? optionsName = null,
+        Action<OtlpExporterOptions>? configureOnReload = null,
+        bool useOtlpExporter = false)
     {
 #if NETFRAMEWORK || NETSTANDARD2_0
 #pragma warning disable CS0618 // Suppressing gRPC obsolete warning
@@ -303,26 +318,47 @@ public static class OtlpLogExporterHelperExtensions
         }
 
         OtlpExporterTransmissionHandler? transmissionHandler = null;
-        if (exporterOptions.TryEnableIHttpClientFactoryIntegration(
+        exporterOptions = exporterOptions.Copy();
+        var usesHttpClientFactory = exporterOptions.TryEnableIHttpClientFactoryIntegration(
             serviceProvider,
-            OtlpExporterHttpClientNames.LogExporter))
-        {
-            transmissionHandler = exporterOptions.GetExportTransmissionHandler(
-                experimentalOptions,
-                OtlpSignalType.Logs,
-                deferExportClientCreation: true);
-        }
-
-#pragma warning disable CA2000 // Dispose objects before losing scope
-        BaseExporter<LogRecord> otlpExporter = new OtlpLogExporter(
-            exporterOptions,
-            sdkLimitOptions,
-            experimentalOptions,
-            transmissionHandler);
-#pragma warning restore CA2000 // Dispose objects before losing scope
-
+            OtlpExporterHttpClientNames.LogExporter);
+        ReloadableExportClient? reloadableClient = null;
+        BaseExporter<LogRecord>? otlpExporter = null;
+        BaseProcessor<LogRecord>? processor = null;
         try
         {
+            if (optionsName != null)
+            {
+#pragma warning disable CA2000 // Ownership passes to the exporter.
+                reloadableClient = ReloadableExportClient.Create(
+                    exporterOptions,
+                    serviceProvider,
+                    optionsName,
+                    OtlpSignalType.Logs,
+                    useOtlpExporter: useOtlpExporter,
+                    usesHttpClientFactory: usesHttpClientFactory,
+                    configureOnReload);
+                transmissionHandler = exporterOptions.GetExportTransmissionHandler(experimentalOptions, OtlpSignalType.Logs, exportClientOverride: reloadableClient);
+#pragma warning restore CA2000 // Ownership passes to the exporter.
+            }
+            else if (usesHttpClientFactory)
+            {
+#pragma warning disable CA2000 // Owned by the exporter; finally disposes on construction failure.
+                transmissionHandler = exporterOptions.GetExportTransmissionHandler(
+                    experimentalOptions,
+                    OtlpSignalType.Logs,
+                    deferExportClientCreation: true);
+#pragma warning restore CA2000 // Owned by the exporter; finally disposes on construction failure.
+            }
+
+#pragma warning disable CA2000 // Dispose objects before losing scope
+            otlpExporter = new OtlpLogExporter(
+                exporterOptions,
+                sdkLimitOptions,
+                experimentalOptions,
+                transmissionHandler);
+#pragma warning restore CA2000 // Dispose objects before losing scope
+
             if (configureExporterInstance != null)
             {
                 otlpExporter = configureExporterInstance(otlpExporter);
@@ -334,25 +370,37 @@ public static class OtlpLogExporterHelperExtensions
 
             if (exportProcessorType == ExportProcessorType.Simple)
             {
-                return new SimpleLogRecordExportProcessor(otlpExporter);
+                processor = new SimpleLogRecordExportProcessor(otlpExporter);
             }
             else
             {
                 var (maxQueueSize, scheduledDelayMilliseconds, exporterTimeoutMilliseconds, maxExportBatchSize)
                     = GetBatchExportProcessorOptions(exporterOptions, processorOptions);
 
-                return new BatchLogRecordExportProcessor(
+                processor = new BatchLogRecordExportProcessor(
                     otlpExporter,
                     maxQueueSize,
                     scheduledDelayMilliseconds,
                     exporterTimeoutMilliseconds,
                     maxExportBatchSize);
             }
+
+            return processor;
         }
-        catch
+        finally
         {
-            otlpExporter.Dispose();
-            throw;
+            if (processor is null)
+            {
+                using (reloadableClient)
+                using (otlpExporter)
+                using (transmissionHandler)
+                {
+                    if (reloadableClient != null)
+                    {
+                        transmissionHandler?.Shutdown(Timeout.Infinite);
+                    }
+                }
+            }
         }
     }
 

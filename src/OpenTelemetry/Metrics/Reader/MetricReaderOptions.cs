@@ -53,4 +53,11 @@ public class MetricReaderOptions
     /// Gets or sets the default histogram aggregation.
     /// </summary>
     internal MetricReaderHistogramAggregation? DefaultHistogramAggregation { get; set; }
+
+    internal MetricReaderOptions Copy()
+    {
+        var copy = (MetricReaderOptions)this.MemberwiseClone();
+        copy.periodicExportingMetricReaderOptions = this.periodicExportingMetricReaderOptions.Copy();
+        return copy;
+    }
 }

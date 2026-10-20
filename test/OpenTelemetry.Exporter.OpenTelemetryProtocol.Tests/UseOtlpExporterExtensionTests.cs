@@ -2,8 +2,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics;
+using System.Diagnostics.Metrics;
+#if NETFRAMEWORK
+using System.Net.Http;
+#endif
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
@@ -54,23 +59,51 @@ public sealed class UseOtlpExporterExtensionTests : IDisposable
     {
         var services = new ServiceCollection();
         var configuredEndpoint = new Uri("http://configured_endpoint/");
+        using var handler = new TestHttpMessageHandler();
+        using var httpClient = new HttpClient(handler, disposeHandler: false);
 
-        services.Configure<OtlpExporterOptions>(options => options.Endpoint = configuredEndpoint);
+        services.Configure<OtlpExporterOptions>(options =>
+        {
+            options.Endpoint = configuredEndpoint;
+            options.Protocol = OtlpExportProtocol.HttpProtobuf;
+            options.HttpClientFactory = () => httpClient;
+        });
+        services.AddLogging();
         services.AddOpenTelemetry()
-            .UseOtlpExporter();
+            .UseOtlpExporter()
+            .WithTracing(builder => builder.AddSource("configured-test"))
+            .WithMetrics(builder => builder.AddMeter("configured-test"));
 
         using var sp = services.BuildServiceProvider();
 
-        Assert.NotNull(sp.GetRequiredService<LoggerProvider>());
-        Assert.NotNull(sp.GetRequiredService<MeterProvider>());
-        Assert.NotNull(sp.GetRequiredService<TracerProvider>());
+        var logs = sp.GetRequiredService<LoggerProvider>();
+        var metrics = sp.GetRequiredService<MeterProvider>();
+        var traces = sp.GetRequiredService<TracerProvider>();
 
         var exporterOptions = sp.GetRequiredService<IOptionsMonitor<OtlpExporterBuilderOptions>>().CurrentValue;
 
         Assert.Equal(configuredEndpoint, exporterOptions.DefaultOptions.Endpoint);
-        Assert.Equal(configuredEndpoint, exporterOptions.LoggingOptions.Endpoint);
-        Assert.Equal(configuredEndpoint, exporterOptions.MetricsOptions.Endpoint);
-        Assert.Equal(configuredEndpoint, exporterOptions.TracingOptions.Endpoint);
+        Assert.False(exporterOptions.LoggingOptionsInstance.HasData);
+        Assert.False(exporterOptions.MetricsOptionsInstance.HasData);
+        Assert.False(exporterOptions.TracingOptionsInstance.HasData);
+
+        using var source = new ActivitySource(new ActivitySourceOptions("configured-test"));
+        using (source.StartActivity("test"))
+        {
+        }
+
+        Assert.True(traces.ForceFlush());
+        Assert.Equal(new Uri(configuredEndpoint, "v1/traces"), handler.HttpRequestMessage!.RequestUri);
+
+        using var meter = new Meter(new MeterOptions("configured-test"));
+        meter.CreateCounter<int>("requests").Add(1);
+        Assert.True(metrics.ForceFlush());
+        Assert.Equal(new Uri(configuredEndpoint, "v1/metrics"), handler.HttpRequestMessage.RequestUri);
+
+        var logger = sp.GetRequiredService<ILoggerFactory>().CreateLogger("configured-test");
+        LoggerMessage.Define(LogLevel.Information, new EventId(1), "test")(logger, null);
+        Assert.True(logs.ForceFlush());
+        Assert.Equal(new Uri(configuredEndpoint, "v1/logs"), handler.HttpRequestMessage.RequestUri);
     }
 
     [Theory]
