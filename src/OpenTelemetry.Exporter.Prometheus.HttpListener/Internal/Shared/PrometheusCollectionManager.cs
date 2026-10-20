@@ -136,6 +136,8 @@ internal sealed class PrometheusCollectionManager
 
             try
             {
+                this.GetProtocolState(protocol).LastRequestedElapsed = this.GetElapsedTime();
+
                 // If we are within {ScrapeResponseCacheDurationMilliseconds} of the
                 // last successful collect, return the previous view.
                 if (this.TryGetCachedResponse(protocol, out var response))
@@ -231,6 +233,7 @@ internal sealed class PrometheusCollectionManager
                 }
 
                 activeCollectionContext = new CollectionContext(protocol);
+                this.RegisterRecentlyRequestedProtocols(activeCollectionContext);
                 this.collectionContext = activeCollectionContext;
 
                 this.IncrementReaderCount(protocol);
@@ -660,11 +663,14 @@ internal sealed class PrometheusCollectionManager
 
     private bool TryGetCachedResponse(in PrometheusProtocol protocol, out CollectionResponse response)
     {
+        // A protocol registered with the in-flight collection may still have a cached view,
+        // but its buffer is about to be rewritten, so it must not be read from the cache.
         if (this.protocolStates.TryGetValue(protocol, out var state) &&
             state.GeneratedAt is { } generatedAt &&
             state.GeneratedAtElapsed is { } generatedAtElapsed &&
             this.scrapeResponseCacheDuration > TimeSpan.Zero &&
-            this.GetElapsedTime() - generatedAtElapsed < this.scrapeResponseCacheDuration)
+            this.GetElapsedTime() - generatedAtElapsed < this.scrapeResponseCacheDuration &&
+            this.collectionContext?.ContainsProtocol(protocol) is not true)
         {
             response = new CollectionResponse(state.View, generatedAt, fromCache: true);
             return true;
@@ -672,6 +678,35 @@ internal sealed class PrometheusCollectionManager
 
         response = default;
         return false;
+    }
+
+    /// <summary>
+    /// Registers every other protocol requested within the last
+    /// {ScrapeResponseCacheDurationMilliseconds} with a new collection, so that scrapes
+    /// negotiating different formats within one cache window share a single collection
+    /// rather than each of them collecting again for its own format.
+    /// </summary>
+    /// <param name="collectionContext">The collection context being created.</param>
+    private void RegisterRecentlyRequestedProtocols(CollectionContext collectionContext)
+    {
+        if (this.scrapeResponseCacheDuration <= TimeSpan.Zero)
+        {
+            return;
+        }
+
+        var elapsed = this.GetElapsedTime();
+
+        foreach (var entry in this.protocolStates)
+        {
+            var state = entry.Value;
+
+            // A protocol with active readers cannot have its buffer rewritten, so it is not registered.
+            if (state.LastRequestedElapsed is { } lastRequestedElapsed &&
+                elapsed - lastRequestedElapsed < this.scrapeResponseCacheDuration)
+            {
+                collectionContext.TryRegisterProtocol(entry.Key, state.HasActiveReaders());
+            }
+        }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1029,6 +1064,14 @@ internal sealed class PrometheusCollectionManager
 
         public Task<CollectionResult> Task => this.tcs.Task;
 
+        public bool ContainsProtocol(in PrometheusProtocol protocol)
+        {
+            lock (this.gate)
+            {
+                return this.protocols.Contains(protocol);
+            }
+        }
+
         public PrometheusProtocol[] FreezeProtocols()
         {
             lock (this.gate)
@@ -1094,6 +1137,8 @@ internal sealed class PrometheusCollectionManager
         public DateTime? GeneratedAt { get; private set; }
 
         public TimeSpan? GeneratedAtElapsed { get; private set; }
+
+        public TimeSpan? LastRequestedElapsed { get; set; }
 
         public int DecrementReaderCount()
         {
@@ -1167,7 +1212,14 @@ internal sealed class PrometheusCollectionManager
             return true;
         }
 
-        public void ResetView() => this.View = EmptyView;
+        public void ResetView()
+        {
+            // A protocol registered with a collection while its previous view was still
+            // cached must not serve the empty view from the cache when the write fails.
+            this.View = EmptyView;
+            this.GeneratedAt = null;
+            this.GeneratedAtElapsed = null;
+        }
 
         public void UpdateView(int cursor)
             => this.View = new ArraySegment<byte>(this.Buffer, 0, cursor);

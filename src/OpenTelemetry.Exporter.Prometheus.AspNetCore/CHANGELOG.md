@@ -7,6 +7,13 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Fixed scrapes that negotiate different response formats within the
+  `ScrapeResponseCacheDurationMilliseconds` window each triggering their own
+  metrics collection. A collection now also writes the response for every
+  format requested within the cache duration, so later scrapes for those
+  formats are served from the cache.
+  ([#NNNN](https://github.com/open-telemetry/opentelemetry-dotnet/pull/NNNN))
+
 ## 1.20.1-beta.1
 
 Released 2026-Oct-20

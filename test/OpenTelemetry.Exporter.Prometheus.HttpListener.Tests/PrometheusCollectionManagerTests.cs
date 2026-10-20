@@ -508,6 +508,116 @@ public sealed class PrometheusCollectionManagerTests
     }
 
     [Fact]
+    public async Task EnterCollectWritesProtocolsRequestedWithinCacheDuration()
+    {
+        const int ScrapeResponseCacheDurationMilliseconds = 300;
+
+        using var meter = CreateMeter();
+#if PROMETHEUS_HTTP_LISTENER
+        using var provider = CreateMeterProviderWithRandomPort(
+            meter,
+            options => options.ScrapeResponseCacheDurationMilliseconds = ScrapeResponseCacheDurationMilliseconds);
+#elif PROMETHEUS_ASPNETCORE
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddPrometheusExporter(options => options.ScrapeResponseCacheDurationMilliseconds = ScrapeResponseCacheDurationMilliseconds)
+            .Build();
+#endif
+
+#pragma warning disable CA2000 // MeterProvider owns exporter lifecycle
+        if (!provider.TryFindExporter(out PrometheusExporter? exporter))
+#pragma warning restore CA2000 // MeterProvider owns exporter lifecycle
+        {
+            throw new InvalidOperationException("PrometheusExporter could not be found on MeterProvider.");
+        }
+
+        var startUtc = DateTime.UtcNow;
+        var elapsed = TimeSpan.Zero;
+
+        exporter.CollectionManager.UtcNow = () => startUtc + elapsed;
+        exporter.CollectionManager.GetElapsedTime = () => elapsed;
+
+        var collectCount = 0;
+        var originalCollect = exporter.Collect;
+        exporter.Collect = (timeout) =>
+        {
+            Interlocked.Increment(ref collectCount);
+            return originalCollect!(timeout);
+        };
+
+        var counter = meter.CreateCounter<int>("counter_int");
+        counter.Add(100);
+
+        var prometheusProtocol = GetProtocol(openMetricsRequested: false);
+        var openMetricsProtocol = GetProtocol(openMetricsRequested: true);
+        var fallbackProtocol = PrometheusProtocol.Fallback;
+
+        async Task<PrometheusCollectionManager.CollectionResponse> ScrapeAsync(PrometheusProtocol protocol, int elapsedMilliseconds)
+        {
+            elapsed = TimeSpan.FromMilliseconds(elapsedMilliseconds);
+
+            var response = await EnterCollectAsync(exporter, protocol);
+            exporter.CollectionManager.ExitCollect(protocol);
+
+            Assert.True(response.Succeeded, "The scrape did not succeed.");
+
+            return response;
+        }
+
+        var response = await ScrapeAsync(prometheusProtocol, 0);
+        Assert.False(response.FromCache, "Response was served from the cache.");
+        Assert.Equal(1, collectCount);
+
+        response = await ScrapeAsync(fallbackProtocol, 0);
+        Assert.False(response.FromCache, "Response was served from the cache.");
+        Assert.Equal(2, collectCount);
+
+        // Scrapes negotiating a different format within the cache duration collect again
+        // once, and that collection also writes the formats requested recently.
+        response = await ScrapeAsync(openMetricsProtocol, 100);
+        Assert.False(response.FromCache, "Response was served from the cache.");
+        Assert.Equal(3, collectCount);
+
+        var generatedAtUtc = response.GeneratedAtUtc;
+
+        foreach (var protocol in new[] { prometheusProtocol, fallbackProtocol, openMetricsProtocol })
+        {
+            response = await ScrapeAsync(protocol, 200);
+            Assert.True(response.FromCache, "Response was not served from the cache.");
+            Assert.Equal(generatedAtUtc, response.GeneratedAtUtc);
+        }
+
+        Assert.Equal(3, collectCount);
+
+        // Once the cache has expired, the next collection again writes every format requested
+        // within the last cache duration.
+        response = await ScrapeAsync(prometheusProtocol, 450);
+        Assert.False(response.FromCache, "Response was served from the cache.");
+        Assert.Equal(4, collectCount);
+
+        generatedAtUtc = response.GeneratedAtUtc;
+
+        response = await ScrapeAsync(openMetricsProtocol, 450);
+        Assert.True(response.FromCache, "Response was not served from the cache.");
+        Assert.Equal(generatedAtUtc, response.GeneratedAtUtc);
+
+        response = await ScrapeAsync(fallbackProtocol, 450);
+        Assert.True(response.FromCache, "Response was not served from the cache.");
+        Assert.Equal(generatedAtUtc, response.GeneratedAtUtc);
+
+        Assert.Equal(4, collectCount);
+
+        // Formats not requested within the last cache duration are not written.
+        response = await ScrapeAsync(prometheusProtocol, 1000);
+        Assert.False(response.FromCache, "Response was served from the cache.");
+        Assert.Equal(5, collectCount);
+
+        response = await ScrapeAsync(openMetricsProtocol, 1000);
+        Assert.False(response.FromCache, "Response was served from the cache.");
+        Assert.Equal(6, collectCount);
+    }
+
+    [Fact]
     public async Task EnterCollectFailsScrapesWhichSharedAFailedCollection()
     {
         var testTimeout = TimeSpan.FromSeconds(30);
