@@ -11,6 +11,10 @@ Notes](../../RELEASENOTES.md).
   .NET Framework.
   ([#7983](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7983))
 
+* `SelfDiagnosticsOptions` is now automatically bound from the
+  `OpenTelemetry:SelfDiagnostics` configuration section, when present.
+  ([#8008](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8008))
+
 * The timeout passed to `MetricReader.Collect()` (for example by
   `MeterProvider.ForceFlush()` or from the `ExportTimeoutMilliseconds` of
   `PeriodicExportingMetricReader`) and the `ExporterTimeoutMilliseconds` of
