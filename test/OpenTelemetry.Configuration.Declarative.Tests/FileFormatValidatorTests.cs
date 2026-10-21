@@ -5,6 +5,27 @@ namespace OpenTelemetry.Configuration.Declarative.Tests;
 
 public sealed class FileFormatValidatorTests
 {
+    private const int SupportedMajor = FileFormatValidator.SupportedMajorVersion;
+    private const int MaxSupportedMinor = FileFormatValidator.MaxSupportedMinorVersion;
+
+    public static TheoryData<int, int, bool, bool> VersionsRelativeToTheSupportedVersion => new()
+    {
+        { SupportedMajor, 0, true, false },
+        { SupportedMajor, MaxSupportedMinor, true, false },
+        { SupportedMajor, MaxSupportedMinor + 1, true, true },
+        { SupportedMajor - 1, MaxSupportedMinor + 1, false, false },
+        { SupportedMajor + 1, 0, false, false },
+        { SupportedMajor + 1, MaxSupportedMinor, false, false },
+        { SupportedMajor + 1, MaxSupportedMinor + 1, false, false },
+    };
+
+    public static TheoryData<string> OtherMajorVersions => new()
+    {
+        $"{SupportedMajor - 1}.{MaxSupportedMinor + 1}",
+        $"{SupportedMajor + 1}.0",
+        $"{SupportedMajor + 1}.{MaxSupportedMinor + 1}",
+    };
+
     // All 1.x versions at or below MaxSupportedMinorVersion must be accepted without warning.
     [Theory]
     [InlineData("1.0")]
@@ -12,12 +33,55 @@ public sealed class FileFormatValidatorTests
     [InlineData("1.0-rc.99")]
     [InlineData("1.1")]
     [InlineData("1.1-rc.1")]
+    [InlineData("1.2")]
+    [InlineData("1.2-rc.1")]
     public void Validate_KnownVersions_AcceptWithNoWarning(string format)
     {
         var warnings = new List<string>();
 
         FileFormatValidator.Validate(format, warnings.Add);
 
+        Assert.Empty(warnings);
+    }
+
+    [Theory]
+    [InlineData("1.0", 1, 0, false)]
+    [InlineData("1.2", 1, 2, false)]
+    [InlineData("1.2-rc.3", 1, 2, false)]
+    [InlineData("1.3", 1, 3, true)]
+    [InlineData("1.30-rc.1", 1, 30, true)]
+    public void Validate_ReturnsTheParsedVersion(string format, int major, int minor, bool isNewerMinorVersion)
+    {
+        var version = FileFormatValidator.Validate(format, _ => { });
+
+        Assert.Equal(new FileFormatVersion(format, major, minor), version);
+        Assert.Equal(isNewerMinorVersion, version.IsNewerMinorVersion);
+    }
+
+    [Theory]
+    [MemberData(nameof(VersionsRelativeToTheSupportedVersion))]
+    public void FileFormatVersion_MinorCompatibilityAppliesOnlyToTheSupportedMajorVersion(
+        int major,
+        int minor,
+        bool isSupportedMajorVersion,
+        bool isNewerMinorVersion)
+    {
+        var version = new FileFormatVersion($"{major}.{minor}", major, minor);
+
+        Assert.Equal(isSupportedMajorVersion, version.IsSupportedMajorVersion);
+        Assert.Equal(isNewerMinorVersion, version.IsNewerMinorVersion);
+    }
+
+    [Theory]
+    [MemberData(nameof(OtherMajorVersions))]
+    public void Validate_OtherMajorVersion_ThrowsWithoutWarning(string format)
+    {
+        var warnings = new List<string>();
+
+        var ex = Assert.Throws<DeclarativeConfigurationException>(
+            () => FileFormatValidator.Validate(format, warnings.Add));
+
+        Assert.Contains("major version", ex.Message, StringComparison.Ordinal);
         Assert.Empty(warnings);
     }
 
@@ -36,8 +100,8 @@ public sealed class FileFormatValidatorTests
 
     // Minor versions newer than MaxSupportedMinorVersion are accepted but warn (some features may not take effect).
     [Theory]
-    [InlineData("1.2")]
-    [InlineData("1.2-rc.1")]
+    [InlineData("1.3")]
+    [InlineData("1.3-rc.1")]
     [InlineData("1.99")]
     public void Validate_FutureMinorVersion_AcceptsWithWarning(string format)
     {

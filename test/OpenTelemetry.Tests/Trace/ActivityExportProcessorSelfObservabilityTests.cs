@@ -13,6 +13,7 @@ using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Tests.Trace;
 
+[Collection(SelfObservabilityCollectionDefinition.Name)]
 public class ActivityExportProcessorSelfObservabilityTests
 {
     private const string MetricName = "otel.sdk.processor.span.processed";

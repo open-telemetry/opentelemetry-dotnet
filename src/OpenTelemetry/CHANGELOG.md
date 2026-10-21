@@ -6,6 +6,11 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Fixed a race in the self-diagnostics sink dispatcher where disposing it
+  while its pump thread was exiting could throw `ArgumentNullException` on
+  .NET Framework.
+  ([#7983](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7983))
+
 * Non-finite histogram measurements (`NaN`, `+Inf`, `-Inf`) are now dropped
   rather than recorded, so they can no longer permanently corrupt the sum,
   min, and max of a cumulative histogram stream. This aligns the explicit-bucket

@@ -108,11 +108,13 @@ public class MetricReaderTests
     {
         using var metricReader = new BlockingMetricReader();
 
-        var firstCollectTask = Task.Run(() => metricReader.Collect(Timeout.Infinite));
+        // Run each collection on a dedicated thread so the test does not depend on the
+        // thread pool, which may be busy with other tests running at the same time.
+        var firstCollectTask = RunOnDedicatedThread(() => metricReader.Collect(Timeout.Infinite));
 
         Assert.True(metricReader.CollectionStarted.Wait(TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken));
 
-        var secondCollectTask = Task.Run(() => metricReader.Collect(50));
+        var secondCollectTask = RunOnDedicatedThread(() => metricReader.Collect(50));
 
         var firstCollectResult = false;
 
@@ -130,6 +132,9 @@ public class MetricReaderTests
 
         Assert.True(firstCollectResult);
     }
+
+    private static Task<bool> RunOnDedicatedThread(Func<bool> collect)
+        => Task.Factory.StartNew(collect, CancellationToken.None, TaskCreationOptions.LongRunning, TaskScheduler.Default);
 
     private sealed class BlockingMetricReader : MetricReader
     {
