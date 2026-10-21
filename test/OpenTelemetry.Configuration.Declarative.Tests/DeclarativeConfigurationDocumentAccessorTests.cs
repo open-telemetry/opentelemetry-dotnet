@@ -9,6 +9,7 @@ using OpenTelemetry.Tests;
 
 namespace OpenTelemetry.Configuration.Declarative.Tests;
 
+[Collection(EventSourceCollectionDefinition.Name)]
 public sealed class DeclarativeConfigurationDocumentAccessorTests
 {
     private const int FailedToLoadConfigurationEventId = 12;

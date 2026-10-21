@@ -58,6 +58,26 @@ internal sealed class PrometheusCollectionManager
 
     internal Func<TimeSpan> GetElapsedTime { get; set; }
 
+    /// <summary>
+    /// Gets the number of scrapes which have entered a collection and not yet
+    /// exited it, across all protocols. Exposed for tests, which use it to tell
+    /// when a scrape has joined an in-flight collection.
+    /// </summary>
+    internal int ActiveReaderCount
+    {
+        get
+        {
+            var count = 0;
+
+            foreach (var state in this.protocolStates.Values)
+            {
+                count += state.ReaderCount;
+            }
+
+            return count;
+        }
+    }
+
 #if NET
     public ValueTask<CollectionResponse> EnterCollect(in PrometheusProtocol protocol, CancellationToken cancellationToken = default)
 #else
@@ -831,12 +851,20 @@ internal sealed class PrometheusCollectionManager
             var writeMetadata = emittedMetricNames.Add(metricState.MetadataName);
             var metadataState = metadataStates[metricState.MetadataName];
 
+            // The unit is not appended to a name which already ends with it (e.g. "auth.failedlogins"
+            // with unit "logins"), is taken for the '_total' suffix of a counter, or may be changed by
+            // escaping. The UNIT metadata is optional, but a unit which is not an underscore-separated
+            // suffix of the name makes the whole OpenMetrics exposition invalid, so it is omitted then.
+            var writeUnit = writeMetadata &&
+                metadataState.Unit != null &&
+                PrometheusMetric.HasUnitSuffix(metricState.MetadataName, metadataState.Unit);
+
             metricStates.Add(
                 new MetricState(
                     metricState.Metric,
                     metricState.PrometheusMetric,
                     writeMetadata,
-                    writeMetadata && metadataState.Unit != null,
+                    writeUnit,
                     writeMetadata && metadataState.Help != null,
                     metadataState.Unit,
                     metadataState.Help));
@@ -1095,6 +1123,9 @@ internal sealed class PrometheusCollectionManager
 
         public TimeSpan? GeneratedAtElapsed { get; private set; }
 
+        public int ReaderCount
+            => Interlocked.CompareExchange(ref this.readerCount, 0, 0);
+
         public int DecrementReaderCount()
         {
             var readerCount = Interlocked.Decrement(ref this.readerCount);
@@ -1117,7 +1148,7 @@ internal sealed class PrometheusCollectionManager
         }
 
         public bool HasActiveReaders()
-            => Interlocked.CompareExchange(ref this.readerCount, 0, 0) != 0;
+            => this.ReaderCount != 0;
 
         public void IncrementReaderCount()
             => Interlocked.Increment(ref this.readerCount);

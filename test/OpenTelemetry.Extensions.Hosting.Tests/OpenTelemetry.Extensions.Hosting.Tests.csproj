@@ -13,6 +13,8 @@
 
   <ItemGroup>
     <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\EnvironmentVariableScope.cs" Link="Includes\EnvironmentVariableScope.cs" />
+    <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Shared\EnvVarsCollectionDefinition.cs" Link="Includes\EnvVarsCollectionDefinition.cs" />
+    <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Shared\EventSourceCollectionDefinition.cs" Link="Includes\EventSourceCollectionDefinition.cs" />
     <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Shared\EventSourceTestHelper.cs" Link="Includes\EventSourceTestHelper.cs" />
     <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Shared\TestEventListener.cs" Link="Includes\TestEventListener.cs" />
     <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Shared\Utils.cs" Link="Includes\Utils.cs" />
@@ -27,6 +29,7 @@
     <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Metrics\HostingMeterProviderBuilder.cs" Link="Includes\Metrics\HostingMeterProviderBuilder.cs" />
     <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Metrics\KnownHistogramBuckets.cs" Link="Includes\Metrics\KnownHistogramBuckets.cs" />
     <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Metrics\MetricApiTests.cs" Link="Includes\Metrics\MetricApiTests.cs" />
+    <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Metrics\MetricApiEventSourceTests.cs" Link="Includes\Metrics\MetricApiEventSourceTests.cs" />
     <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Metrics\MetricExemplarTests.cs" Link="Includes\Metrics\MetricExemplarTests.cs" />
     <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Metrics\MetricTestData.cs" Link="Includes\Metrics\MetricTestData.cs" />
     <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Metrics\MetricTestsBase.cs" Link="Includes\Metrics\MetricTestsBase.cs" />

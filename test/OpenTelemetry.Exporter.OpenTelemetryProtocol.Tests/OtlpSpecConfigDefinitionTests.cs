@@ -5,9 +5,11 @@ using System.Collections;
 using System.Globalization;
 using Microsoft.Extensions.Configuration;
 using OpenTelemetry.Metrics;
+using OpenTelemetry.Tests;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests;
 
+[Collection(EnvVarsCollectionDefinition.Name)]
 public class OtlpSpecConfigDefinitionTests : IEnumerable<object[]>
 {
     internal static TestData DefaultData { get; } = new TestData(

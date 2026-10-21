@@ -4,9 +4,11 @@
 using Microsoft.Extensions.Logging;
 using OpenTelemetry.Exporter;
 using OpenTelemetry.Resources;
+using OpenTelemetry.Tests;
 
 namespace OpenTelemetry.Logs.Tests;
 
+[Collection(EnvVarsCollectionDefinition.Name)]
 public sealed class LoggerFactoryAndResourceBuilderTests
 {
     [Fact]

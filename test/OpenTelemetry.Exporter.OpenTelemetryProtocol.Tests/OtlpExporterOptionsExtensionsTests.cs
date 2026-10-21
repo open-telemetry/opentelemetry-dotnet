@@ -18,6 +18,7 @@ using OpenTelemetry.Tests;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests;
 
+[Collection(EventSourceCollectionDefinition.Name)]
 public class OtlpExporterOptionsExtensionsTests
 {
     [Theory]
