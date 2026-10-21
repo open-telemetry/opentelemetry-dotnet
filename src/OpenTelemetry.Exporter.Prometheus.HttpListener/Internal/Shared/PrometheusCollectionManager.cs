@@ -747,9 +747,9 @@ internal sealed class PrometheusCollectionManager
     /// A format is registered when its most recent scrape arrived near a collection, so it
     /// would have been served from the cache had that collection written it too. That holds
     /// however long ago that scrape was, so scrapers which poll together at an interval longer
-    /// than the cache duration keep sharing collections. A format is not rewritten if it has
-    /// not been requested since its response was last written and either that response is
-    /// still cached, or it was itself written speculatively and so went unused.
+    /// than the cache duration keep sharing collections. A format is not rewritten while its
+    /// response is still cached. A response written speculatively is not rewritten again until
+    /// it has been requested.
     /// </remarks>
     /// <param name="collectionContext">The collection context being executed.</param>
     private void RegisterSpeculativeProtocols(CollectionContext collectionContext)
@@ -766,7 +766,8 @@ internal sealed class PrometheusCollectionManager
             var state = entry.Value;
 
             if (!state.LastRequestNearCollection ||
-                (!state.RequestedSinceWritten && (state.WrittenSpeculatively || this.IsCached(state, elapsed))))
+                this.IsCached(state, elapsed) ||
+                (!state.RequestedSinceWritten && state.WrittenSpeculatively))
             {
                 continue;
             }

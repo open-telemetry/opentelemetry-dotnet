@@ -744,6 +744,163 @@ public sealed class PrometheusCollectionManagerTests
         Assert.Equal(2, collectCount);
     }
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task EnterCollectServesCachedResponseWhileSerializingAnotherProtocol(bool repeatCachedRequest)
+    {
+        using var meter = CreateMeter();
+        using var provider = CreateMeterProviderWithCache(meter, 15_000);
+#pragma warning disable CA2000 // MeterProvider owns exporter lifecycle
+        var exporter = GetExporter(provider);
+#pragma warning restore CA2000 // MeterProvider owns exporter lifecycle
+
+        var elapsed = TimeSpan.Zero;
+        UseManualClock(exporter, () => elapsed);
+        var collectCount = CountCollections(exporter);
+
+        var serializationStarted = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var allowSerializationToContinue = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var blockSerialization = false;
+        var timeout = TimeSpan.FromSeconds(5);
+        var labelValue = new CallbackLabelValue(() =>
+        {
+            if (blockSerialization)
+            {
+                serializationStarted.TrySetResult(true);
+                Assert.True(allowSerializationToContinue.Task.Wait(timeout), "Serialization did not resume.");
+            }
+
+            return "small";
+        });
+
+        meter.CreateCounter<int>("counter_int").Add(100, new KeyValuePair<string, object?>("label", labelValue));
+
+        var prometheusProtocol = GetProtocol(openMetricsRequested: false);
+        var openMetricsProtocol = GetProtocol(openMetricsRequested: true);
+        var response = await ScrapeAndExitAsync(exporter, prometheusProtocol);
+        var generatedAtUtc = response.GeneratedAtUtc;
+        var payload = response.View.ToArray();
+
+        if (repeatCachedRequest)
+        {
+            elapsed = TimeSpan.FromMilliseconds(1);
+            Assert.True((await ScrapeAndExitAsync(exporter, prometheusProtocol)).FromCache);
+        }
+
+        elapsed = TimeSpan.FromMilliseconds(100);
+        blockSerialization = true;
+        var cachedScrapeCompleted = false;
+
+#pragma warning disable CA2025 // The test awaits the scheduled work before disposing the provider/exporter.
+        var collectingScrape = ScrapeAndExitAsync(exporter, openMetricsProtocol);
+#pragma warning restore CA2025 // The test awaits the scheduled work before disposing the provider/exporter.
+
+        try
+        {
+            var started = await Task.WhenAny(serializationStarted.Task, Task.Delay(timeout, TestContext.Current.CancellationToken));
+            Assert.Same(serializationStarted.Task, started);
+
+#pragma warning disable CA2025 // The test awaits the scheduled work before disposing the provider/exporter.
+            var cachedScrape = EnterCollectAsync(exporter, prometheusProtocol);
+#pragma warning restore CA2025 // The test awaits the scheduled work before disposing the provider/exporter.
+
+            // Observe availability while serialization is blocked, then release it before
+            // awaiting either scrape so a regression cannot strand a reader or worker.
+            cachedScrapeCompleted = cachedScrape.IsCompleted;
+            allowSerializationToContinue.TrySetResult(true);
+
+            try
+            {
+                response = await cachedScrape;
+            }
+            finally
+            {
+                exporter.CollectionManager.ExitCollect(prometheusProtocol);
+            }
+        }
+        finally
+        {
+            allowSerializationToContinue.TrySetResult(true);
+            await collectingScrape;
+        }
+
+        Assert.True(cachedScrapeCompleted, "The cached scrape waited for serialization of another format.");
+        Assert.True(response.FromCache, "Response was not served from the cache.");
+        Assert.Equal(generatedAtUtc, response.GeneratedAtUtc);
+        Assert.Equal(payload, response.View.ToArray());
+        Assert.Equal(2, collectCount());
+        Assert.Equal(0, exporter.CollectionManager.ActiveReaderCount);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task EnterCollectKeepsCachedResponseWhenAnotherProtocolExceedsResponseLimit(bool repeatCachedRequest)
+    {
+        using var meter = CreateMeter();
+#if PROMETHEUS_HTTP_LISTENER
+        using var provider = CreateMeterProviderWithRandomPort(meter, options =>
+        {
+            options.ScrapeResponseCacheDurationMilliseconds = 15_000;
+            options.MaxScrapeResponseSizeBytes = PrometheusExporterOptions.InitialScrapeResponseSizeBytes;
+        });
+#elif PROMETHEUS_ASPNETCORE
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddPrometheusExporter(options =>
+            {
+                options.ScrapeResponseCacheDurationMilliseconds = 15_000;
+                options.MaxScrapeResponseSizeBytes = PrometheusExporterOptions.InitialScrapeResponseSizeBytes;
+            })
+            .Build();
+#endif
+
+#pragma warning disable CA2000 // MeterProvider owns exporter lifecycle
+        var exporter = GetExporter(provider);
+#pragma warning restore CA2000 // MeterProvider owns exporter lifecycle
+
+        var elapsed = TimeSpan.Zero;
+        UseManualClock(exporter, () => elapsed);
+        var collectCount = CountCollections(exporter);
+
+        var counter = meter.CreateCounter<int>("counter_int");
+        counter.Add(100, new KeyValuePair<string, object?>("label", "small"));
+
+        var prometheusProtocol = GetProtocol(openMetricsRequested: false);
+        var openMetricsProtocol = GetProtocol(openMetricsRequested: true);
+        var response = await ScrapeAndExitAsync(exporter, prometheusProtocol);
+        var generatedAtUtc = response.GeneratedAtUtc;
+        var payload = response.View.ToArray();
+
+        if (repeatCachedRequest)
+        {
+            elapsed = TimeSpan.FromMilliseconds(1);
+            Assert.True((await ScrapeAndExitAsync(exporter, prometheusProtocol)).FromCache);
+        }
+
+        // The new series makes the next response exceed the configured buffer budget.
+        counter.Add(1, new KeyValuePair<string, object?>("label", new string('x', 90_000)));
+        elapsed = TimeSpan.FromMilliseconds(100);
+
+        try
+        {
+            response = await exporter.CollectionManager.EnterCollect(openMetricsProtocol, TestContext.Current.CancellationToken);
+            Assert.False(response.Succeeded, "The oversized scrape unexpectedly succeeded.");
+        }
+        finally
+        {
+            exporter.CollectionManager.ExitCollect(openMetricsProtocol);
+        }
+
+        response = await ScrapeAndExitAsync(exporter, prometheusProtocol);
+        Assert.True(response.FromCache, "Response was not served from the cache.");
+        Assert.Equal(generatedAtUtc, response.GeneratedAtUtc);
+        Assert.Equal(payload, response.View.ToArray());
+        Assert.Equal(2, collectCount());
+        Assert.Equal(0, exporter.CollectionManager.ActiveReaderCount);
+    }
+
     [Fact]
     public async Task EnterCollectFailsScrapesWhichSharedAFailedCollection()
     {
@@ -1687,6 +1844,11 @@ public sealed class PrometheusCollectionManagerTests
         throw new InvalidOperationException("MeterProvider could not bind a PrometheusHttpListener port.");
     }
 #endif
+
+    private sealed class CallbackLabelValue(Func<string> getValue)
+    {
+        public override string ToString() => getValue();
+    }
 
     private sealed class Response
     {
