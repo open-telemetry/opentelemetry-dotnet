@@ -453,6 +453,24 @@ public class SelfDiagnosticsOptionsTests
         Assert.Contains("syslog", warning, StringComparison.Ordinal);
     }
 
+    [Theory]
+    [InlineData("syslog", 1)]
+    [InlineData("syslog,stdot", 2)]
+    [InlineData(",,", 0)]
+    public void Sinks_NoRecognisedToken_IsIgnored(string value, int warnings)
+    {
+        var options = CreateOptions(new Dictionary<string, string?>
+        {
+            [SelfDiagnosticsOptions.LogDirectoryEnvVarName] = "/var/log/otel",
+            [SelfDiagnosticsOptions.SinksEnvVarName] = value,
+        });
+
+        Assert.Equal("/var/log/otel", options.LogDirectory);
+        Assert.False(options.LogToStdout, "LogToStdout should remain false when no recognised sink token is supplied.");
+        Assert.False(options.LogToStderr, "LogToStderr should remain false when no recognised sink token is supplied.");
+        Assert.Equal(warnings, options.ConfigurationWarnings.Count);
+    }
+
     [Fact]
     public void Sinks_Absent_StillEnablesTheFileSinkFromTheLogDirectory()
     {
