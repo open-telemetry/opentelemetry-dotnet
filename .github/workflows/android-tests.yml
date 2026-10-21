@@ -45,6 +45,10 @@ jobs:
 
     - name: Setup .NET
       uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+      with:
+        global-json-file: global.json
+        dotnet-version: |
+          10.0.x
 
     - name: Install android workload
       shell: bash
@@ -60,7 +64,7 @@ jobs:
         target: google_apis
         script: |
           set +e
-          dotnet test test/OpenTelemetry.Android.Tests/OpenTelemetry.Android.Tests.csproj --configuration Debug --report-github --report-github-summary-include-passed false
+          dotnet test "${GITHUB_WORKSPACE}/test/OpenTelemetry.Android.Tests" --configuration Debug --report-github --report-github-summary-include-passed false
           exit_code=$?
           adb pull /storage/emulated/0/Android/data/io.opentelemetry.dotnet.android/files/TestResults ./TestResults || true
           exit $exit_code

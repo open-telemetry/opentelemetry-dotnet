@@ -327,12 +327,20 @@ public class MultipleReadersTests
             composite.Collect(timeoutMilliseconds);
         }
 
-        Assert.Equal(timeoutMilliseconds, shutdown ? first.LastShutdownTimeoutMilliseconds : first.LastCollectTimeoutMilliseconds);
+        // The first reader receives the remaining budget measured from when the composite started,
+        // so it gets the full timeout less the few milliseconds the composite spent before calling
+        // it. That is normally 0ms, but the thread can be pre-empted for longer than that between
+        // the composite taking its timestamp and computing the first reader's timeout when the CI
+        // machine is loaded, so allow for a small amount of elapsed time rather than exact equality.
+        Assert.InRange(
+            shutdown ? first.LastShutdownTimeoutMilliseconds : first.LastCollectTimeoutMilliseconds,
+            timeoutMilliseconds - delayMilliseconds,
+            timeoutMilliseconds);
 
         // The first two readers each sleep delayMilliseconds before the third reader's timeout is
         // computed, so the third reader must receive at most (timeoutMilliseconds - 2 * delayMilliseconds)
         // of the budget. The exact remaining value depends on scheduling, so only assert the upper
-        // bound rather than a tight lower bound (which flaked under CI load). The Assert.Equal above
+        // bound rather than a tight lower bound (which flaked under CI load). The Assert.InRange above
         // proves the budget is not reset to the full value for every reader.
         Assert.InRange(
             shutdown ? third.LastShutdownTimeoutMilliseconds : third.LastCollectTimeoutMilliseconds,
