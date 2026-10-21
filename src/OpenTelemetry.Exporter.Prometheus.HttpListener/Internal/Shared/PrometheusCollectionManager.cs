@@ -851,12 +851,20 @@ internal sealed class PrometheusCollectionManager
             var writeMetadata = emittedMetricNames.Add(metricState.MetadataName);
             var metadataState = metadataStates[metricState.MetadataName];
 
+            // The unit is not appended to a name which already ends with it (e.g. "auth.failedlogins"
+            // with unit "logins"), is taken for the '_total' suffix of a counter, or may be changed by
+            // escaping. The UNIT metadata is optional, but a unit which is not an underscore-separated
+            // suffix of the name makes the whole OpenMetrics exposition invalid, so it is omitted then.
+            var writeUnit = writeMetadata &&
+                metadataState.Unit != null &&
+                PrometheusMetric.HasUnitSuffix(metricState.MetadataName, metadataState.Unit);
+
             metricStates.Add(
                 new MetricState(
                     metricState.Metric,
                     metricState.PrometheusMetric,
                     writeMetadata,
-                    writeMetadata && metadataState.Unit != null,
+                    writeUnit,
                     writeMetadata && metadataState.Help != null,
                     metadataState.Unit,
                     metadataState.Help));

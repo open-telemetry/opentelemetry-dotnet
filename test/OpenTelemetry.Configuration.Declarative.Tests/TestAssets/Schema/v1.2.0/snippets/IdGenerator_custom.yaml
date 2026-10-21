@@ -1,0 +1,12 @@
+file_format: "1.2"
+
+tracer_provider:
+  processors:
+    - simple:
+        exporter:
+          console:
+  id_generator:
+    # SNIPPET_START
+    # configure a custom ID generator registered via PluginComponentProvider
+    my_custom_id_generator:
+      property: value
