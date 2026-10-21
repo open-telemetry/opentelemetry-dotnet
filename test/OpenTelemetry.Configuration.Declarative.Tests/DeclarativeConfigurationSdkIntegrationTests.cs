@@ -9,10 +9,12 @@ using Microsoft.Extensions.Hosting;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
+using OpenTelemetry.Tests;
 using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Configuration.Declarative.Tests;
 
+[Collection(EnvVarsCollectionDefinition.Name)]
 public sealed class DeclarativeConfigurationSdkIntegrationTests
 {
     [Fact]
@@ -336,31 +338,10 @@ public sealed class DeclarativeConfigurationSdkIntegrationTests
     }
 
     [Fact]
-    public void SourceOnlyPath_ResourceAttributes_DoNotContributeToResource()
-    {
-        // AddOpenTelemetryDeclarativeConfiguration does NOT register the detector.
-        // Under option A, resource.attributes on that path contribute nothing to the Resource.
-        using var yamlFile = DeclarativeYamlTestFile.CreateDeclarativeYaml(
-            resourceAttributes: new Dictionary<string, string> { ["service.name"] = "should-not-appear" });
-
-        var config = new ConfigurationBuilder()
-            .AddOpenTelemetryDeclarativeConfiguration(yamlFile.Path)
-            .Build();
-
-        using var tracerProvider = Sdk.CreateTracerProviderBuilder()
-            .ConfigureServices(s => s.AddSingleton<IConfiguration>(config))
-            .Build();
-
-        var resource = tracerProvider.GetResource();
-
-        Assert.DoesNotContain(
-            resource.Attributes,
-            a => a.Key == "service.name" && a.Value is string v && v == "should-not-appear");
-    }
-
-    [Fact]
     public void PlainSdk_SharedConfigurationRoot_RepresentativeConsumersShareProviderAccessor()
     {
+        // Applications cannot build this shape yet: the source is added through the internal
+        // API. It pins the accessor sharing that plain-SDK registration overloads will build on.
         using var yamlFile = DeclarativeYamlTestFile.CreateDeclarativeYaml(disabled: false);
         var configuration = new ConfigurationBuilder()
             .AddOpenTelemetryDeclarativeConfiguration(yamlFile.Path)

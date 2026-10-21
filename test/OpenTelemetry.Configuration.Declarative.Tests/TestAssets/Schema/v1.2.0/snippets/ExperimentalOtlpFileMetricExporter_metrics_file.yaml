@@ -1,0 +1,11 @@
+file_format: "1.2"
+
+meter_provider:
+  readers:
+    - periodic:
+        exporter:
+          otlp_file/development:
+            # SNIPPET_START
+            output_stream: file:///var/log/metrics.jsonl
+            temporality_preference: cumulative
+            default_histogram_aggregation: explicit_bucket_histogram

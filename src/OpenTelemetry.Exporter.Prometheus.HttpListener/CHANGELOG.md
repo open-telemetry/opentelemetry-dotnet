@@ -7,6 +7,17 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Fixed OpenMetrics scrape responses containing a `# UNIT` line whose unit is
+  not an underscore-separated suffix of the metric family name (for example
+  `auth.failedlogins` with the unit `logins`), which caused scrapers such as
+  Prometheus to reject the whole response. The `# UNIT` line is now omitted
+  for such metrics; exported metric names are unchanged.
+  ([#7993](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7993))
+
+## 1.20.1-beta.1
+
+Released 2026-Oct-20
+
 * Fixed scrape responses being handed to the server in a single write, which
   on Linux and macOS made the listener allocate and hold a full copy of the
   response for each client that did not read it until the request completed or
@@ -18,6 +29,13 @@ Notes](../../RELEASENOTES.md).
   the client kept trickling in the body. The connection is now closed after
   responding to a request with a body instead of being kept alive.
   ([#7962](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7962))
+
+* Fixed startup scrapes permanently omitting `target_info` and configured
+  resource constant labels from subsequent scrape responses.
+  ([#7984](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7984))
+
+* Updated OpenTelemetry core component version(s) to `1.20.1`.
+  ([#7990](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7990))
 
 ## 1.20.0-beta.1
 

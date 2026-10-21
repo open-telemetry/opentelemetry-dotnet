@@ -26,7 +26,16 @@ public class MetricPointReclaimTests
         const int NumberOfUpdateThreads = 25;
         const int MaxNumberOfDistinctMetricPoints = 4000; // Default max MetricPoints * 2
 
-        using var exporter = new CustomExporter(assertNoDroppedMeasurements: true);
+        // MetricPoints are only reclaimed once they have been collected, so if the updates outrun
+        // the collections, for example because the thread pool used by the worker when threading
+        // is disabled is busy, the cardinality limit is reached and measurements are dropped.
+        // Bound how far ahead of the most recent collection the updates can get, well below the
+        // cardinality limit, so that the test does not depend on how promptly the worker runs.
+        const int MaxUncollectedMetricPoints = 500;
+
+        var threadArgs = new ThreadArguments();
+
+        using var exporter = new CustomExporter(threadArgs);
         using var metricReader = new PeriodicExportingMetricReader(
             exporter,
             exportIntervalMilliseconds: 10)
@@ -49,6 +58,12 @@ public class MetricPointReclaimTests
                     var i = Interlocked.Increment(ref threadArguments!.Counter);
                     if (i <= MaxNumberOfDistinctMetricPoints)
                     {
+                        var deadline = DateTime.UtcNow.AddSeconds(30);
+                        while (i - Volatile.Read(ref threadArguments.Collected) > MaxUncollectedMetricPoints && DateTime.UtcNow < deadline)
+                        {
+                            Thread.Sleep(10);
+                        }
+
                         // Check for cases where a metric with no dimension is also emitted
                         if (emitMetricWithNoDimensions)
                         {
@@ -77,7 +92,6 @@ public class MetricPointReclaimTests
             }
 
             var threads = new Thread[NumberOfUpdateThreads];
-            var threadArgs = new ThreadArguments();
 
             for (var i = 0; i < threads.Length; i++)
             {
@@ -98,6 +112,8 @@ public class MetricPointReclaimTests
             MaxNumberOfDistinctMetricPoints * (100 + 25) :
             MaxNumberOfDistinctMetricPoints * 100;
 
+        Assert.Equal(0, exporter.DroppedMeasurements);
+        Assert.InRange(exporter.MaxLookupDictionaryCount, 0, MeterProviderBuilderSdk.DefaultCardinalityLimit * 2);
         Assert.Equal(expectedSum, exporter.Sum);
     }
 
@@ -115,7 +131,7 @@ public class MetricPointReclaimTests
         const int NumberOfUpdateThreads = 4;
         const int NumberOfMeasurementsPerThread = 10;
 
-        using var exporter = new CustomExporter(assertNoDroppedMeasurements: false);
+        using var exporter = new CustomExporter();
         using var metricReader = new PeriodicExportingMetricReader(exporter, exportIntervalMilliseconds: 10)
         {
             TemporalityPreference = MetricReaderTemporalityPreference.Delta,
@@ -186,6 +202,7 @@ public class MetricPointReclaimTests
             Assert.True(meterProvider.ForceFlush());
         }
 
+        Assert.InRange(exporter.MaxLookupDictionaryCount, 0, MeterProviderBuilderSdk.DefaultCardinalityLimit * 2);
         Assert.Equal(sum, exporter.Sum);
     }
 
@@ -1382,6 +1399,7 @@ public class MetricPointReclaimTests
     private sealed class ThreadArguments
     {
         public int Counter;
+        public int Collected;
     }
 
     private sealed class CollidingTagValue(
@@ -1495,30 +1513,40 @@ public class MetricPointReclaimTests
     private sealed class CustomExporter : BaseExporter<Metric>
     {
         public long Sum;
+        public long DroppedMeasurements;
+        public int MaxLookupDictionaryCount;
 
-        private readonly bool assertNoDroppedMeasurements;
+        private readonly ThreadArguments? progress;
 
-        public CustomExporter(bool assertNoDroppedMeasurements)
+        public CustomExporter(ThreadArguments? progress = null)
         {
-            this.assertNoDroppedMeasurements = assertNoDroppedMeasurements;
+            this.progress = progress;
         }
 
         public override ExportResult Export(in Batch<Metric> batch)
         {
+            if (this.progress != null)
+            {
+                // Every MetricPoint created for a measurement counted before this export started
+                // has been collected, so it can be reclaimed by the next collection.
+                Volatile.Write(ref this.progress.Collected, Volatile.Read(ref this.progress.Counter));
+            }
+
+            // Note: Values are recorded and asserted on by the test, rather than asserted on here, as
+            // an exception thrown here fails the export and loses the batch, which would hide the cause.
             foreach (var metric in batch)
             {
                 var aggStore = metric.AggregatorStore;
                 var metricPointLookupDictionary = aggStore.TagsToMetricPointIndexDictionaryDelta;
-                var droppedMeasurements = aggStore.DroppedMeasurements;
 
-                if (this.assertNoDroppedMeasurements)
-                {
-                    Assert.Equal(0, droppedMeasurements);
-                }
+                this.DroppedMeasurements = Interlocked.Read(ref aggStore.DroppedMeasurements);
 
                 // This is to ensure that the lookup dictionary does not have unbounded growth
-                Assert.NotNull(metricPointLookupDictionary);
-                Assert.True(metricPointLookupDictionary.Count <= (MeterProviderBuilderSdk.DefaultCardinalityLimit * 2));
+                var lookupDictionaryCount = metricPointLookupDictionary?.Count ?? int.MaxValue;
+                if (lookupDictionaryCount > this.MaxLookupDictionaryCount)
+                {
+                    this.MaxLookupDictionaryCount = lookupDictionaryCount;
+                }
 
                 foreach (ref readonly var metricPoint in metric.GetMetricPoints())
                 {

@@ -19,6 +19,11 @@ internal class SelfDiagnosticsConfigRefresher : IDisposable
 {
     public static readonly byte[] MessageOnNewFile = "If you are seeing this message, it means that the OpenTelemetry SDK has successfully created the log file used to write self-diagnostic logs. This file will be appended with logs as they appear. If you do not see any logs following this line, it means no logs of the configured LogLevel is occurring. You may change the LogLevel to show lower log levels, so that logs of lower severities will be shown.\n"u8.ToArray();
 
+    // Shared with the tests so that they can opt out of the process-wide configuration
+    // file without also replacing the way the log file is opened.
+    internal static readonly Func<string, FileStream> DefaultLogFileFactory =
+        static path => new FileStream(path, FileMode.CreateNew, FileAccess.Write, FileShare.Read, 1, FileOptions.None);
+
     private const int ConfigurationUpdatePeriodMilliSeconds = 10000;
 
     private readonly CancellationTokenSource cancellationTokenSource;
@@ -39,14 +44,14 @@ internal class SelfDiagnosticsConfigRefresher : IDisposable
     private bool formatMessage;
 
     public SelfDiagnosticsConfigRefresher()
-        : this(static path => new FileStream(path, FileMode.CreateNew, FileAccess.Write, FileShare.Read, 1, FileOptions.None))
+        : this(DefaultLogFileFactory)
     {
     }
 
-    internal SelfDiagnosticsConfigRefresher(Func<string, FileStream> logFileFactory)
+    internal SelfDiagnosticsConfigRefresher(Func<string, FileStream> logFileFactory, string? configFilePath = null)
     {
         this.logFileFactory = logFileFactory;
-        this.configParser = new SelfDiagnosticsConfigParser();
+        this.configParser = new SelfDiagnosticsConfigParser(configFilePath);
         this.UpdateLogFileFromConfiguration();
         this.cancellationTokenSource = new CancellationTokenSource();
         this.worker = Task.Run(() => this.Worker(this.cancellationTokenSource.Token), this.cancellationTokenSource.Token);

@@ -9,6 +9,7 @@ using OpenTelemetry.SelfDiagnostics;
 
 namespace OpenTelemetry.Tests.Diagnostics;
 
+[Collection(EventSourceCollectionDefinition.Name)]
 public class SelfDiagnosticsLoggingEventListenerTests
 {
     // One EventSource name per test. Two live EventSource instances sharing a name are rejected by

@@ -128,7 +128,13 @@ public class CompositeActivityProcessorTests
             composite.ForceFlush(timeoutMilliseconds);
         }
 
-        Assert.Equal(timeoutMilliseconds, shutdown ? first.LastShutdownTimeoutMilliseconds : first.LastForceFlushTimeoutMilliseconds);
+        // The remaining budget is computed from a timestamp taken before the first processor is
+        // called, so under load the first processor can already see a few milliseconds less than
+        // the full budget. Allow for that rather than asserting the exact value.
+        Assert.InRange(
+            shutdown ? first.LastShutdownTimeoutMilliseconds : first.LastForceFlushTimeoutMilliseconds,
+            timeoutMilliseconds - delayMilliseconds,
+            timeoutMilliseconds);
 
         // The first two processors each sleep delayMilliseconds before the third processor's timeout
         // is computed, so the third processor must receive at most (timeoutMilliseconds - 2 * delayMilliseconds)

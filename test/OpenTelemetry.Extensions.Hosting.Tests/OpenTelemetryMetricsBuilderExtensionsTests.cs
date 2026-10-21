@@ -14,6 +14,7 @@ using OpenTelemetry.Tests;
 
 namespace OpenTelemetry.Extensions.Hosting.Tests;
 
+[Collection(EnvVarsCollectionDefinition.Name)]
 public class OpenTelemetryMetricsBuilderExtensionsTests
 {
     [Theory]

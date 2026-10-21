@@ -8,6 +8,7 @@ using OpenTelemetry.Tests;
 
 namespace OpenTelemetry.Resources.Tests;
 
+[Collection(EnvVarsCollectionDefinition.Name)]
 public sealed class ResourceTests : IDisposable
 {
     private const string KeyName = "key";

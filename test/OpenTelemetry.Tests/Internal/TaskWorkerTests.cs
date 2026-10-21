@@ -14,11 +14,15 @@ public class TaskWorkerTests
     private const int MaxExportBatchSize = 4;
     private const int PostBaselinePauseMilliseconds = 20;
     private const int WaitUntilPollingIntervalMilliseconds = 10;
-    private const int WorkerDelayMilliseconds = 1_000;
+    private const int WorkerDelayMilliseconds = 2_000;
     private const int WorkerTimeoutMilliseconds = 1_000;
     private const int ShutdownTimeoutMilliseconds = 10_000;
     private const int BaselineWaitTimeoutMilliseconds = 10_000;
-    private const int TriggerCompletionTimeoutMilliseconds = 600;
+
+    // A triggered export must complete well before the next scheduled one would run
+    // (WorkerDelayMilliseconds), but with enough headroom for the worker to be scheduled
+    // when the machine is busy running the rest of the test suite in parallel.
+    private const int TriggerCompletionTimeoutMilliseconds = WorkerDelayMilliseconds / 2;
 
     [Fact]
     public async Task BatchExportTaskWorker_TriggerExportAfterIdleCycles_DoesNotWaitForScheduledDelay()

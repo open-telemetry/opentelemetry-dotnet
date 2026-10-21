@@ -15,6 +15,7 @@ using OpenTelemetry.Tests;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests.Implementation.ExportClient;
 
+[Collection(EventSourceCollectionDefinition.Name)]
 public class OtlpGrpcExportClientTests
 {
     private const int GrpcHeaderSize = 5;
