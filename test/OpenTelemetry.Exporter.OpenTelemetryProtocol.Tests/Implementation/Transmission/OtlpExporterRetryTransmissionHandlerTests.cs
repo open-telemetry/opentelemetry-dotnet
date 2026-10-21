@@ -44,8 +44,8 @@ public class OtlpExporterRetryTransmissionHandlerTests
         // can run seconds late on a busy machine.
         Assert.True(httpHandler.RetryCanceled, "The stalled retry must be canceled at the original export deadline.");
 
-        var deadlineEvent = Assert.Single(listener.Messages, e => e.EventName == "RetryDeadlineExceeded");
-        Assert.Equal(EventLevel.Warning, deadlineEvent.Level);
+        var timedOutEvent = Assert.Single(listener.Messages, e => e.EventName == "RequestTimedOut");
+        Assert.Equal(EventLevel.Warning, timedOutEvent.Level);
         Assert.DoesNotContain(listener.Messages, e => e.EventId == 12);
     }
 

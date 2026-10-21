@@ -29,20 +29,12 @@ internal sealed class OtlpExporterRetryTransmissionHandler : OtlpExporterTransmi
                 return false;
             }
 
-            // HttpClient.Timeout applies separately to each request. Bound this
-            // attempt by the time left in the original export budget instead.
-            using var deadlineCancellation = new CancellationTokenSource(remainingTime);
-            try
+            // The export client bounds each attempt by the deadline, as HttpClient.Timeout
+            // applies separately to each request, so a stalled retry times out at the
+            // original export deadline rather than a full timeout period later.
+            if (this.TryRetryRequest(request, contentLength, response.DeadlineUtc, out response))
             {
-                if (this.TryRetryRequest(request, contentLength, response.DeadlineUtc, out response, deadlineCancellation.Token))
-                {
-                    return true;
-                }
-            }
-            catch (OperationCanceledException) when (deadlineCancellation.IsCancellationRequested)
-            {
-                OpenTelemetryProtocolExporterEventSource.Log.RetryDeadlineExceeded();
-                return false;
+                return true;
             }
 
             nextRetryDelayMilliseconds = retryResult.NextRetryDelayMilliseconds;
