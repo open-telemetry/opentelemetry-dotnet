@@ -1,0 +1,22 @@
+file_format: "1.2"
+
+tracer_provider:
+  processors:
+    - simple:
+        exporter:
+          console:
+  sampler:
+    # SNIPPET_START
+    # configure the parent based sampler to sample 1% of root spans, and follow the sampling decision of parent spans
+    parent_based:
+      root:
+        trace_id_ratio_based:
+          ratio: 0.01
+      remote_parent_sampled:
+        always_on:
+      remote_parent_not_sampled:
+        always_off:
+      local_parent_sampled:
+        always_on:
+      local_parent_not_sampled:
+        always_off:

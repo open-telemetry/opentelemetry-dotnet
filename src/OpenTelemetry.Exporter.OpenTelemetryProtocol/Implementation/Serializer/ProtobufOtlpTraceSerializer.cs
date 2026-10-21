@@ -282,7 +282,7 @@ internal static class ProtobufOtlpTraceSerializer
         (writePosition, var statusCode, var statusMessage) = WriteActivityTags(buffer, writePosition, sdkLimitOptions, activity);
         writePosition = WriteSpanEvents(buffer, writePosition, sdkLimitOptions, activity);
         writePosition = WriteSpanLinks(buffer, writePosition, sdkLimitOptions, activity);
-        writePosition = WriteSpanStatus(buffer, writePosition, activity, statusCode, statusMessage);
+        writePosition = WriteSpanStatus(buffer, writePosition, sdkLimitOptions, activity, statusCode, statusMessage);
         writePosition = ProtobufSerializer.WriteShortReservedLength(buffer, spanLengthPosition, writePosition);
 
         return writePosition;
@@ -566,7 +566,7 @@ internal static class ProtobufOtlpTraceSerializer
         return otlpTagWriterState.WritePosition;
     }
 
-    internal static int WriteSpanStatus(byte[] buffer, int position, Activity activity, StatusCode? statusCode, string? statusMessage)
+    internal static int WriteSpanStatus(byte[] buffer, int position, SdkLimitOptions sdkLimitOptions, Activity activity, StatusCode? statusCode, string? statusMessage)
     {
         if (activity.Status == ActivityStatusCode.Unset && statusCode == null)
         {
@@ -579,12 +579,20 @@ internal static class ProtobufOtlpTraceSerializer
 
         if (isError && description != null)
         {
-            var numberOfUtf8CharsInString = ProtobufSerializer.GetNumberOfUtf8CharsInString(description);
+            // The description is free-form text (it may also come from the
+            // otel.status_description tag which is skipped by WriteActivityTags)
+            // so it is truncated like any other string attribute value of the span.
+            var maxAttributeValueLength = sdkLimitOptions.SpanAttributeValueLengthLimit ?? int.MaxValue;
+            var message = description.Length > maxAttributeValueLength
+                ? description.AsSpan(0, maxAttributeValueLength)
+                : description.AsSpan();
+
+            var numberOfUtf8CharsInString = ProtobufSerializer.GetNumberOfUtf8CharsInString(message);
             var serializedLengthSize = ProtobufSerializer.ComputeVarInt64Size((ulong)numberOfUtf8CharsInString);
 
             // length = numberOfUtf8CharsInString + Status_Message tag size + serializedLengthSize field size + Span_Status tag size + Span_Status length size.
             position = ProtobufSerializer.WriteTagAndLength(buffer, position, numberOfUtf8CharsInString + 1 + serializedLengthSize + 2, ProtobufOtlpTraceFieldNumberConstants.Span_Status, ProtobufWireType.LEN);
-            position = ProtobufSerializer.WriteStringWithTag(buffer, position, ProtobufOtlpTraceFieldNumberConstants.Status_Message, numberOfUtf8CharsInString, description);
+            position = ProtobufSerializer.WriteStringWithTag(buffer, position, ProtobufOtlpTraceFieldNumberConstants.Status_Message, numberOfUtf8CharsInString, message);
         }
         else
         {

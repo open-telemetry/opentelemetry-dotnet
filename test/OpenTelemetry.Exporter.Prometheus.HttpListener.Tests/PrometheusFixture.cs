@@ -69,7 +69,7 @@ public class PrometheusFixture : XunitContainerFixture<IContainer>
             .WithBindMount(serviceDiscoveryTargetsPath, "/etc/prometheus/targets/targets.json")
             .WithCommand("--config.file=/etc/prometheus/prometheus.yml", "--log.level=debug")
             .WithExtraHost(DockerInternalHost, "host-gateway")
-            .WithPortBinding(9090)
+            .WithPortBinding(9090, assignRandomHostPort: true)
             .WithWaitStrategy(Wait.ForUnixContainer().UntilExternalTcpPortIsAvailable(9090))
             .Build();
     }

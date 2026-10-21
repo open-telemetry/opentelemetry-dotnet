@@ -6,6 +6,11 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Fixed a race in the self-diagnostics sink dispatcher where disposing it
+  while its pump thread was exiting could throw `ArgumentNullException` on
+  .NET Framework.
+  ([#7983](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7983))
+
 * **Breaking Change** Dropped support for `net8.0` and `net9.0`.
   ([#6899](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6899))
 

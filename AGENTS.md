@@ -69,8 +69,10 @@ python3 ./build/scripts/sanitycheck.py
 - The .NET SDK version specified in `global.json` (or newer) is required.
 - `TreatWarningsAsErrors` is active in Release builds; StyleCop and nullable
   violations fail the build.
-- Tests run **serially** by default
-  (`build/xunit.runner.json`: `maxParallelThreads: 1`).
+- Test collections (one per test class unless `[Collection]` is used) run in
+  **parallel** (the xunit.net defaults); tests within a collection run serially.
+  Tests which touch process-wide state (environment variables, static
+  configuration, fixed ports) must not assume they run alone.
 - `net472` tests only run on Windows.
 - Tests use [Microsoft Testing Platform](https://aka.ms/dotnet-test/mtp) (the
   `test.runner` setting in `global.json`), not VSTest. The test executables can

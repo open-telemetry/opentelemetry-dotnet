@@ -17,6 +17,7 @@ using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Extensions.Hosting.Tests;
 
+[Collection(EventSourceCollectionDefinition.Name)]
 public class OpenTelemetryServicesExtensionsTests
 {
     [Fact]
@@ -29,7 +30,7 @@ public class OpenTelemetryServicesExtensionsTests
 
         builder.ConfigureLogging(logging => logging.SetMinimumLevel(LogLevel.Warning));
 
-        var host = builder.Build();
+        using var host = builder.Build();
 
         await host.StartAsync(TestContext.Current.CancellationToken);
 
@@ -69,7 +70,7 @@ public class OpenTelemetryServicesExtensionsTests
                     });
             });
 
-        var host = builder.Build();
+        using var host = builder.Build();
 
         await Assert.ThrowsAsync<NotSupportedException>(() => host.StartAsync(TestContext.Current.CancellationToken));
 

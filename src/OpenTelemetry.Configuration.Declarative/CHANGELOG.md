@@ -50,6 +50,12 @@ Notes](../../RELEASENOTES.md).
   `OTEL_CONFIG_FILE`.
   ([#7873](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7873))
 
+* Validates property names against the schema. A property the schema does not
+  define is rejected. Limits YAML collection nesting to depth 128, including
+  paths through aliases, with the document root at depth zero. Rejects
+  unresolved mapping-key aliases during parsing.
+  ([#7904](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7904))
+
 * Dropped support for .NET 8.0 and 9.0.
   ([#6899](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6899))
 
