@@ -379,6 +379,13 @@ internal sealed class OpenTelemetryProtocolExporterEventSource : EventSource, IC
     internal void HttpClientFactoryUnavailable(string httpClientName, string exceptionMessage)
         => this.WriteEvent(42, httpClientName, exceptionMessage);
 
+    [Event(
+        43,
+        Message = "The export deadline was reached while retrying a request. The data will not be sent.",
+        Level = EventLevel.Warning)]
+    internal void RetryDeadlineExceeded()
+        => this.WriteEvent(43);
+
     private static string RedactEndpointUri(Uri endpoint)
         => endpoint.GetComponents(UriComponents.SchemeAndServer | UriComponents.Path, UriFormat.UriEscaped);
 }
