@@ -6,6 +6,7 @@
 using System.Net.Security;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
+using OpenTelemetry.Tests;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests;
 
@@ -55,59 +56,43 @@ public class OtlpTlsOptionsTests
     public void OtlpSecureHttpClientFactory_CreatesClient_WithCaCertificateOnly() =>
         SkipTestIfCryptoNotSupported(() =>
         {
-            var tempCertFile = Path.GetTempFileName();
-            try
+            using var directory = new TemporaryDirectory();
+            var tempCertFile = Path.Combine(directory.Path, "ca.pem");
+
+            using var cert = CreateSelfSignedCertificate();
+            File.WriteAllText(tempCertFile, cert.ExportCertificatePem());
+
+            var options = new OtlpTlsOptions
             {
-                using var cert = CreateSelfSignedCertificate();
-                File.WriteAllText(tempCertFile, cert.ExportCertificatePem());
+                CaCertificatePath = tempCertFile,
+                EnableCertificateChainValidation = false,
+            };
 
-                var options = new OtlpTlsOptions
-                {
-                    CaCertificatePath = tempCertFile,
-                    EnableCertificateChainValidation = false,
-                };
+            using var client = OpenTelemetryProtocol.Implementation.OtlpSecureHttpClientFactory.CreateSecureHttpClient(options);
 
-                using var client = OpenTelemetryProtocol.Implementation.OtlpSecureHttpClientFactory.CreateSecureHttpClient(options);
-
-                Assert.NotNull(client);
-            }
-            finally
-            {
-                if (File.Exists(tempCertFile))
-                {
-                    File.Delete(tempCertFile);
-                }
-            }
+            Assert.NotNull(client);
         });
 
     [Fact]
     public void OtlpSecureHttpClientFactory_CreatesClient_WithMtlsClientCertificate() =>
         SkipTestIfCryptoNotSupported(() =>
         {
-            var tempCertFile = Path.GetTempFileName();
-            try
+            using var directory = new TemporaryDirectory();
+            var tempCertFile = Path.Combine(directory.Path, "client.pfx");
+
+            using var cert = CreateSelfSignedCertificate();
+            var certBytes = cert.Export(X509ContentType.Pfx);
+            File.WriteAllBytes(tempCertFile, certBytes);
+
+            var options = new OtlpMtlsOptions
             {
-                using var cert = CreateSelfSignedCertificate();
-                var certBytes = cert.Export(X509ContentType.Pfx);
-                File.WriteAllBytes(tempCertFile, certBytes);
+                ClientCertificatePath = tempCertFile,
+                EnableCertificateChainValidation = false,
+            };
 
-                var options = new OtlpMtlsOptions
-                {
-                    ClientCertificatePath = tempCertFile,
-                    EnableCertificateChainValidation = false,
-                };
+            using var client = OpenTelemetryProtocol.Implementation.OtlpSecureHttpClientFactory.CreateSecureHttpClient(options);
 
-                using var client = OpenTelemetryProtocol.Implementation.OtlpSecureHttpClientFactory.CreateSecureHttpClient(options);
-
-                Assert.NotNull(client);
-            }
-            finally
-            {
-                if (File.Exists(tempCertFile))
-                {
-                    File.Delete(tempCertFile);
-                }
-            }
+            Assert.NotNull(client);
         });
 
     [Fact]

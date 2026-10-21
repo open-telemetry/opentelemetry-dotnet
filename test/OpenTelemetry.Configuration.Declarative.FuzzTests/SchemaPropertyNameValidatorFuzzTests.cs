@@ -4,10 +4,11 @@
 using FsCheck;
 using FsCheck.Fluent;
 using FsCheck.Xunit;
+using OpenTelemetry.Tests;
 
 namespace OpenTelemetry.Configuration.Declarative.FuzzTests;
 
-public class SchemaPropertyNameValidatorFuzzTests
+public sealed class SchemaPropertyNameValidatorFuzzTests : IDisposable
 {
     private const int MaxTests = 200;
     private const int MaxDepth = 3;
@@ -30,6 +31,10 @@ public class SchemaPropertyNameValidatorFuzzTests
 
     private static readonly Arbitrary<SharedSamplerCase> SharedSamplerArbitrary = Arb.From(GenerateCase(), Shrink);
 
+    private readonly TemporaryDirectory directory = new();
+
+    public void Dispose() => this.directory.Dispose();
+
     // A mapping reachable through an anchor and alias is validated from two places, one of which
     // can be experimental. The outcome must not depend on which place the document spells first,
     // and must match the document with the alias expanded: the same load result and, on failure,
@@ -40,8 +45,8 @@ public class SchemaPropertyNameValidatorFuzzTests
             SharedSamplerArbitrary,
             testCase =>
             {
-                var aliased = Load(testCase.Render(useAlias: true));
-                var expanded = Load(testCase.Render(useAlias: false));
+                var aliased = this.Load(testCase.Render(useAlias: true));
+                var expanded = this.Load(testCase.Render(useAlias: false));
 
                 return (aliased == expanded)
                     .Classify(expanded is null, "loads")
@@ -53,37 +58,10 @@ public class SchemaPropertyNameValidatorFuzzTests
     public void GeneratorProducesLoadingAndRejectedDocuments()
     {
         var cases = Gen.Sample(SharedSamplerArbitrary.Generator, 200, 0).ToArray();
-        var outcomes = cases.Select(c => Load(c.Render(useAlias: false)) is null).ToArray();
+        var outcomes = cases.Select(c => this.Load(c.Render(useAlias: false)) is null).ToArray();
 
         Assert.Contains(true, outcomes);
         Assert.Contains(false, outcomes);
-    }
-
-    // Returns null when the document loads, otherwise the first rejected property path.
-    private static string? Load(string yaml)
-    {
-        var path = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}.yaml");
-        try
-        {
-            File.WriteAllText(path, yaml);
-            _ = DeclarativeConfigurationReader.Read(new FilePath(path));
-            return null;
-        }
-        catch (DeclarativeConfigurationException ex)
-        {
-            const string prefix = "Property '";
-            var end = ex.Message.IndexOf("' (line", StringComparison.Ordinal);
-            return ex.Message.StartsWith(prefix, StringComparison.Ordinal) && end > 0
-                ? ex.Message.Substring(prefix.Length, end - prefix.Length)
-                : ex.Message;
-        }
-        finally
-        {
-            if (File.Exists(path))
-            {
-                File.Delete(path);
-            }
-        }
     }
 
     private static IEnumerable<SharedSamplerCase> Shrink(SharedSamplerCase testCase) =>
@@ -125,6 +103,27 @@ public class SchemaPropertyNameValidatorFuzzTests
         from shared in GenerateTree(MaxDepth)
         from experimentalFirst in Gen.Elements(true, false)
         select new SharedSamplerCase(shared, experimentalFirst);
+
+    // Returns null when the document loads, otherwise the first rejected property path.
+    private string? Load(string yaml)
+    {
+        var path = Path.Combine(this.directory.Path, $"{Guid.NewGuid():N}.yaml");
+        File.WriteAllText(path, yaml);
+
+        try
+        {
+            _ = DeclarativeConfigurationReader.Read(new FilePath(path));
+            return null;
+        }
+        catch (DeclarativeConfigurationException ex)
+        {
+            const string prefix = "Property '";
+            var end = ex.Message.IndexOf("' (line", StringComparison.Ordinal);
+            return ex.Message.StartsWith(prefix, StringComparison.Ordinal) && end > 0
+                ? ex.Message.Substring(prefix.Length, end - prefix.Length)
+                : ex.Message;
+        }
+    }
 
     private sealed record Tree(string[] Keys, Tree[] Children)
     {
