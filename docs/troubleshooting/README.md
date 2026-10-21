@@ -5,6 +5,7 @@
 
 * [Self-diagnostics](#self-diagnostics)
 * [Enable with environment variables](#enable-with-environment-variables)
+* [Enable with configuration](#enable-with-configuration)
 * [Enable with code](#enable-with-code)
 * [Configuration reference](#configuration-reference)
   * [Options](#options)
@@ -101,7 +102,7 @@ $env:OTEL_DOTNET_SELF_DIAGNOSTICS_SINKS = "stdout,stderr"
 $env:OTEL_LOG_LEVEL = "debug"
 ```
 
-Turn everything off again, overriding whatever else is set:
+Turn everything off again, overriding the other environment variables:
 
 ```sh
 export OTEL_DOTNET_SELF_DIAGNOSTICS_SINKS=none
@@ -130,6 +131,59 @@ cannot collide with the [.NET auto-instrumentation
 agent's](https://github.com/open-telemetry/opentelemetry-dotnet-instrumentation)
 own diagnostic logging configuration. If you configure both the SDK and the
 agent to log, you get both outputs.
+
+## Enable with configuration
+
+The SDK automatically reads the `OpenTelemetry:SelfDiagnostics` section from
+your application's configuration. In an app that already loads
+`appsettings.json`, add the following values (or a subset as needed):
+
+```json
+{
+  "OpenTelemetry": {
+    "SelfDiagnostics": {
+      "MinimumLevel": "Debug",
+      "LogDirectory": "/var/log/otel",
+      "FileSizeLimitKilobytes": 4096,
+      "MaxRetainedFiles": 5,
+      "LogToStdout": false,
+      "LogToStderr": false,
+      "EnvironmentVariables": "KnownSafeValues"
+    }
+  }
+}
+```
+
+Values are case-insensitive. For `MinimumLevel`, both `Information` and `info`
+work, as do `Warning` and `warn`. An empty value leaves the option unchanged,
+except for `LogDirectory`, where it turns file logging off.
+
+If the same option is set in several places, the later configuration source
+wins, as it does for any .NET configuration. This also applies when mixing
+section keys with the [environment variables](#environment-variables), such as
+`MinimumLevel` and `OTEL_LOG_LEVEL`. In the [default .NET
+host](https://learn.microsoft.com/aspnet/core/fundamentals/configuration#default-app-configuration-sources)
+the order, from lowest to highest precedence, is:
+
+1. `appsettings.json`, then `appsettings.{Environment}.json`
+1. User secrets, in the `Development` environment
+1. Environment variables
+1. Command-line arguments
+
+For example, with `"MinimumLevel": "Info"` in `appsettings.json` and
+`OTEL_LOG_LEVEL=debug` set, the level is `Debug`. Adding
+`--OpenTelemetry:SelfDiagnostics:MinimumLevel=Error` on the command line makes
+it `Error`. Likewise, `--OTEL_LOG_LEVEL=trace` overrides the JSON value.
+
+If both values come from the same configuration source, for example the
+environment variables `OpenTelemetry__SelfDiagnostics__MinimumLevel` and
+`OTEL_LOG_LEVEL`, the section key wins. [Code configuration](#enable-with-code)
+takes precedence over both.
+
+Changes apply automatically when your configuration supports reload, as
+`appsettings.json` does under the default .NET host. Invalid section values
+cause an error at startup or reload, naming the setting to correct. See
+[Changing the configuration at runtime](#changing-the-configuration-at-runtime).
 
 ## Enable with code
 
@@ -192,30 +246,6 @@ using var tracerProvider = Sdk.CreateTracerProviderBuilder()
     .Build();
 ```
 
-Binding to a configuration section works too, and is what makes runtime
-reconfiguration possible (see [Changing the configuration at
-runtime](#changing-the-configuration-at-runtime)). The section name is yours to
-choose; the SDK does not define one:
-
-```csharp
-builder.Services.Configure<SelfDiagnosticsOptions>(
-    builder.Configuration.GetSection("OpenTelemetry:SelfDiagnostics"));
-```
-
-```json
-{
-  "OpenTelemetry": {
-    "SelfDiagnostics": {
-      "MinimumLevel": "Debug",
-      "LogDirectory": "/var/log/otel",
-      "FileSizeLimitKilobytes": 4096,
-      "MaxRetainedFiles": 5,
-      "EnvironmentVariables": "KnownSafeValues"
-    }
-  }
-}
-```
-
 > [!NOTE]
 > Self-diagnostics configuration is process-global rather than
 > per-provider, so configuring it once is enough. If a process builds several
@@ -255,8 +285,14 @@ entry to both.
 
 ### Environment variables
 
-Environment variables supply *defaults*. Any `Configure<SelfDiagnosticsOptions>`
-callback runs afterwards and takes precedence.
+Environment variables supply *defaults*. A key in the
+[`OpenTelemetry:SelfDiagnostics` section](#enable-with-configuration) overrides
+one when it comes from a later configuration source, or from the same one. In
+the default .NET host, environment variables override `appsettings.json`, and
+command-line arguments override both. See
+[precedence](#enable-with-configuration) for an example. Any
+`Configure<SelfDiagnosticsOptions>` callback runs afterwards and takes
+precedence over both.
 
 | Variable | Sets | Accepted values |
 | -------- | ---- | --------------- |
@@ -301,9 +337,10 @@ directory globally across many services. Set
 example `stdout`) and no file is written, even though the directory is set.
 
 Invalid values are ignored and the default is kept. An unrecognised sink token
-is likewise ignored while any valid tokens in the same list still apply. All
-rejected values are reported in a `Configuration Warnings:` block in the file
-preamble.
+is likewise ignored while any valid tokens in the same list still apply. A list
+with no recognised token is ignored entirely, as if the variable were absent.
+All rejected values are reported in a `Configuration Warnings:` block in the
+file preamble.
 
 ### Default log directory
 
@@ -631,15 +668,9 @@ This is what makes it practical to turn diagnostics on during an incident: lower
 `MinimumLevel` to `Debug`, get the output, and put it back, all without a
 deployment.
 
-To enable this, bind `SelfDiagnosticsOptions` to a configuration section (see
-[Enable with code](#enable-with-code)):
-
-```csharp
-builder.Services.Configure<SelfDiagnosticsOptions>(
-    builder.Configuration.GetSection("OpenTelemetry:SelfDiagnostics"));
-```
-
-Then edit `appsettings.json` while the process is running:
+The SDK binds and subscribes to `OpenTelemetry:SelfDiagnostics` automatically;
+no explicit options binding is needed. Edit `appsettings.json` while the
+process is running:
 
 ```json
 {
@@ -657,14 +688,46 @@ size limit, and the retention count. Changing the directory closes the current
 file and opens a new one, with a fresh preamble, in the new location.
 
 > [!NOTE]
-> Environment variables and `Configure<SelfDiagnosticsOptions>`
-> callbacks do **not** reload. Neither source emits change notifications, so a
-> value from either is fixed for the lifetime of the process. Bind to a
-> reloading configuration section if you want runtime control.
+> **Environment variables and command-line arguments require a restart.**
+> Unlike a watched `appsettings.json` file, these settings normally do not
+> notify the application of changes.
 >
-> If you cannot edit files on the target machine, you can still enable a sink by
-> setting `OTEL_DOTNET_SELF_DIAGNOSTICS_SINKS` before the process starts, though
-> that requires a restart to take effect.
+> If you cannot edit configuration files on the target machine, set
+> `OTEL_DOTNET_SELF_DIAGNOSTICS_SINKS` before starting or restarting the
+> application to enable diagnostic output.
+
+Without a .NET host, the SDK reads only environment variables by default. It
+does not load `appsettings.json` or watch files for changes.
+
+### What happens during a reload
+
+The SDK reads the configuration again using the same precedence rules as at
+startup, including the values held by the environment-variable and command-line
+configuration sources. Any `Configure` and `PostConfigure` callbacks you
+registered run again, and the resulting options are validated. Settings made in
+these callbacks still take precedence over file settings.
+
+A reload can also happen when another part of the configuration file changes,
+or when a file change produces more than one notification. Your callbacks
+should be safe to run more than once.
+
+### If a configuration change is invalid
+
+> [!WARNING]
+> The SDK does not guarantee that it will keep using the last valid settings if
+> a reload fails. Check values carefully before saving changes to a running
+> application's configuration.
+
+For example, a value such as `"MinimumLevel": "NotALevel"` causes an
+`InvalidOperationException` whose message identifies the configuration setting
+that could not be converted. Errors from your configuration callbacks or options
+validation are also passed back to the application. These errors can occur
+while handling the change notification or when the application next reads the
+options through `IOptionsMonitor`.
+
+Malformed JSON, such as a missing closing brace, prevents the configuration
+source from loading the file. How that error is handled depends on the
+application's .NET configuration setup; the SDK does not change that behavior.
 
 ## Legacy self-diagnostics mechanism
 

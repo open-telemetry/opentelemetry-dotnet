@@ -6,6 +6,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 using OpenTelemetry;
+using OpenTelemetry.Internal;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.SelfDiagnostics;
@@ -80,11 +81,13 @@ internal static class ProviderBuilderServiceCollectionExtensions
         services.TryAddSingleton<IConfiguration>(
             sp => new ConfigurationBuilder().AddEnvironmentVariables().Build());
 
-        // Register the self-diagnostics options factory. The factory ctor reads env-var defaults
-        // via IConfiguration; Configure<SelfDiagnosticsOptions> calls override those defaults.
-        // DisableOptionsReloading is deliberately NOT called here so that IOptionsMonitor works
-        // for hot-reload (e.g. OpAMP remote config updating the level at runtime).
-        services.RegisterOptionsFactory(configuration => new SelfDiagnosticsOptions(configuration));
+        // Automatic resolution precedes application callbacks on creation and reload.
+        services.RegisterOptionsFactory((_, configuration, name) =>
+            name == Options.Options.DefaultName
+                ? SelfDiagnosticsOptionsFactory.CreateDefault(configuration)
+                : new SelfDiagnosticsOptions(configuration));
+        services.TryAddEnumerable(
+            ServiceDescriptor.Singleton<IOptionsChangeTokenSource<SelfDiagnosticsOptions>, SelfDiagnosticsOptionsChangeTokenSource>());
 
         return services;
     }
