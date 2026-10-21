@@ -124,22 +124,45 @@ public class CircularBufferTests
     {
         Assert.SkipWhen(Environment.ProcessorCount < 2, "This machine does not have enough processors to run this test.");
 
-        var circularBuffer = new CircularBuffer<string>(1_000_000);
+        // Small, so that draining it is cheap and the reader spends its time attempting
+        // TryAdd() rather than reading: on a busy machine the reader and the writers only
+        // run at the same time for short stretches, and the contention has to be hit then.
+        var circularBuffer = new CircularBuffer<string>(1_024);
+
+        // The writers stop adding at this fill level, so the buffer can never be full and
+        // a failed TryAdd() below can only mean the spin count was exceeded. (TryAdd() also
+        // returns false when the buffer is full, and checking Count afterwards to tell the
+        // two apart is a race the writers win whenever they outpace the reader.)
+        var writerLimit = circularBuffer.Capacity / 2;
 
         using var cts = new CancellationTokenSource();
 
-        var writers = new List<Task>();
+        // Dedicated threads rather than thread pool work items: when the pool is saturated
+        // by the rest of the suite running in parallel, queued work items can be delayed for
+        // so long that the writers never contend with the reader within the time limit.
+        var writers = new List<Thread>();
         for (var i = 0; i < Environment.ProcessorCount; i++)
         {
-            writers.Add(Task.Run(
-                () =>
+            var writer = new Thread(() =>
+            {
+                while (!cts.IsCancellationRequested)
                 {
-                    while (!cts.IsCancellationRequested)
+                    if (circularBuffer.Count < writerLimit)
                     {
                         circularBuffer.Add("item");
                     }
-                },
-                TestContext.Current.CancellationToken));
+                    else
+                    {
+                        Thread.SpinWait(1);
+                    }
+                }
+            })
+            {
+                IsBackground = true,
+            };
+
+            writer.Start();
+            writers.Add(writer);
         }
 
         var exceededMaxSpinCount = false;
@@ -150,15 +173,11 @@ public class CircularBufferTests
             if (!circularBuffer.TryAdd("item", maxSpinCount: 1, out var count))
             {
                 Assert.Equal(0, count);
-
-                // TryAdd() also returns false if the buffer is full. This is the only
-                // reader, so Count cannot have decreased since TryAdd() returned: if
-                // the buffer is not full now, then it was not full when TryAdd() failed.
-                exceededMaxSpinCount = circularBuffer.Count < circularBuffer.Capacity;
+                exceededMaxSpinCount = true;
             }
 
-            // Drain the buffer so that the writers never fill it up
-            if (!exceededMaxSpinCount && circularBuffer.Count >= circularBuffer.Capacity / 2)
+            // Drain the buffer so that the writers keep adding, and keep contending
+            if (!exceededMaxSpinCount && circularBuffer.Count >= writerLimit / 2)
             {
                 for (var i = circularBuffer.Count; i > 0; i--)
                 {
@@ -172,7 +191,10 @@ public class CircularBufferTests
 #else
         cts.Cancel();
 #endif
-        await Task.WhenAll(writers);
+        foreach (var writer in writers)
+        {
+            writer.Join();
+        }
 
         Assert.True(exceededMaxSpinCount);
     }

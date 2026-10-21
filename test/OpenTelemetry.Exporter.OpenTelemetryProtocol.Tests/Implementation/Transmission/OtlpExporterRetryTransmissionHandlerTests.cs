@@ -4,13 +4,67 @@
 #if NETFRAMEWORK
 using System.Net.Http;
 #endif
+using System.Diagnostics.Tracing;
+using System.Net;
+using System.Net.Http.Headers;
+using Google.Protobuf;
+using Google.Protobuf.WellKnownTypes;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient.Grpc;
+using OpenTelemetry.Tests;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Transmission.Tests;
 
 public class OtlpExporterRetryTransmissionHandlerTests
 {
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void TrySubmitRequest_StalledRetry_IsCanceledAtExportDeadline(bool useGrpc)
+    {
+        using var listener = new TestEventListener(OpenTelemetryProtocolExporterEventSource.Log);
+        using var httpHandler = new RetriedRequestHttpMessageHandler(useGrpc, stallRetry: true);
+        using var httpClient = new HttpClient(httpHandler, disposeHandler: false)
+        {
+            // Each request may take much longer than the total export budget.
+            Timeout = TimeSpan.FromSeconds(30),
+        };
+        var exportClient = CreateExportClient(useGrpc, httpClient);
+
+        using var transmissionHandler = new OtlpExporterRetryTransmissionHandler(exportClient, timeoutMilliseconds: 5_000);
+
+        var result = transmissionHandler.TrySubmitRequest([0, 0, 0, 0, 0], 5);
+
+        Assert.False(result);
+        Assert.Equal(2, httpHandler.SendCount);
+
+        // The stalled retry only waits a bounded time for cancellation, so this also asserts that
+        // the deadline canceled it. The elapsed time is not asserted, as the cancellation callback
+        // can run seconds late on a busy machine.
+        Assert.True(httpHandler.RetryCanceled, "The stalled retry must be canceled at the original export deadline.");
+
+        var deadlineEvent = Assert.Single(listener.Messages, e => e.EventName == "RetryDeadlineExceeded");
+        Assert.Equal(EventLevel.Warning, deadlineEvent.Level);
+        Assert.DoesNotContain(listener.Messages, e => e.EventId == 12);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void TrySubmitRequest_RetryCompletesBeforeDeadline_Succeeds(bool useGrpc)
+    {
+        using var httpHandler = new RetriedRequestHttpMessageHandler(useGrpc, stallRetry: false);
+        using var httpClient = new HttpClient(httpHandler, disposeHandler: false);
+        var exportClient = CreateExportClient(useGrpc, httpClient);
+        using var transmissionHandler = new OtlpExporterRetryTransmissionHandler(exportClient, timeoutMilliseconds: 10_000);
+
+        var result = transmissionHandler.TrySubmitRequest([0, 0, 0, 0, 0], 5);
+
+        Assert.True(result);
+        Assert.Equal(2, httpHandler.SendCount);
+        Assert.False(httpHandler.RetryCanceled);
+    }
+
     [Fact]
     public void TrySubmitRequest_HttpTimeoutWithExpiredDeadline_DoesNotRetry()
     {
@@ -84,6 +138,14 @@ public class OtlpExporterRetryTransmissionHandlerTests
         Assert.True(exportClient.SendCount >= 2, $"Expected at least 2 send attempts, but got {exportClient.SendCount}.");
     }
 
+    private static IExportClient CreateExportClient(bool useGrpc, HttpClient httpClient)
+    {
+        var options = new OtlpExporterOptions { Endpoint = new Uri("http://localhost:4318") };
+        return useGrpc
+            ? new OtlpGrpcExportClient(options, httpClient, string.Empty)
+            : new OtlpHttpExportClient(options, httpClient, string.Empty);
+    }
+
     private static string CreateMalformedGrpcStatusDetailsHeader(long value)
     {
         var anyValueLength = EncodeVarint(value);
@@ -118,6 +180,82 @@ public class OtlpExporterRetryTransmissionHandlerTests
         while (remaining != 0);
 
         return [.. encoded];
+    }
+
+    private sealed class RetriedRequestHttpMessageHandler(bool useGrpc, bool stallRetry) : HttpMessageHandler
+    {
+        public int SendCount { get; private set; }
+
+        public bool RetryCanceled { get; private set; }
+
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+            => Task.FromResult(this.SendRequest(request, cancellationToken));
+
+#if NET
+        protected override HttpResponseMessage Send(HttpRequestMessage request, CancellationToken cancellationToken)
+            => this.SendRequest(request, cancellationToken);
+#endif
+
+        private HttpResponseMessage SendRequest(HttpRequestMessage request, CancellationToken cancellationToken)
+        {
+            this.SendCount++;
+
+            if (this.SendCount > 1 && stallRetry)
+            {
+                // Bound the wait so the unpatched implementation fails instead of hanging.
+                this.RetryCanceled = cancellationToken.WaitHandle.WaitOne(TimeSpan.FromSeconds(10));
+                cancellationToken.ThrowIfCancellationRequested();
+                return new HttpResponseMessage(HttpStatusCode.BadRequest);
+            }
+
+            var response = new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                RequestMessage = request,
+                Content = new EmptyContent(),
+            };
+            if (useGrpc)
+            {
+                response.Content.Headers.ContentType = new MediaTypeHeaderValue("application/grpc");
+#if NETFRAMEWORK
+                response.EnsureTrailingHeaders();
+#endif
+                var trailingHeaders = response.TrailingHeaders();
+                trailingHeaders.Add("grpc-status", this.SendCount == 1 ? "8" : "0");
+                if (this.SendCount == 1)
+                {
+                    var status = new Google.Rpc.Status
+                    {
+                        Code = 8,
+                        Details = { Any.Pack(new Google.Rpc.RetryInfo { RetryDelay = new Duration { Seconds = 1 } }) },
+                    };
+                    trailingHeaders.Add(OtlpGrpcExportClient.GrpcStatusDetailsHeader, Convert.ToBase64String(status.ToByteArray()));
+                }
+            }
+            else if (this.SendCount == 1)
+            {
+                response.StatusCode = HttpStatusCode.ServiceUnavailable;
+                response.Headers.RetryAfter = new RetryConditionHeaderValue(TimeSpan.FromSeconds(1));
+            }
+
+            return response;
+        }
+    }
+
+    /// <summary>
+    /// Empty content which is buffered synchronously. On .NET Framework, buffering a
+    /// <see cref="ByteArrayContent"/> (as the gRPC client's <see cref="HttpCompletionOption.ResponseContentRead"/>
+    /// does) writes through <see cref="Stream.BeginWrite"/>, which runs on the thread pool.
+    /// </summary>
+    private sealed class EmptyContent : HttpContent
+    {
+        protected override Task SerializeToStreamAsync(Stream stream, TransportContext? context)
+            => Task.CompletedTask;
+
+        protected override bool TryComputeLength(out long length)
+        {
+            length = 0;
+            return true;
+        }
     }
 
     private sealed class RetryingTestExportClient(string maliciousHeader) : IExportClient

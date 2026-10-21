@@ -22,9 +22,27 @@ internal sealed class OtlpExporterRetryTransmissionHandler : OtlpExporterTransmi
             // we would fail fast and drop the data.
             Thread.Sleep(retryResult.RetryDelay);
 
-            if (this.TryRetryRequest(request, contentLength, response.DeadlineUtc, out response))
+            var remainingTime = response.DeadlineUtc - DateTime.UtcNow;
+            if (remainingTime <= TimeSpan.Zero)
             {
-                return true;
+                OpenTelemetryProtocolExporterEventSource.Log.RetryDeadlineExceeded();
+                return false;
+            }
+
+            // HttpClient.Timeout applies separately to each request. Bound this
+            // attempt by the time left in the original export budget instead.
+            using var deadlineCancellation = new CancellationTokenSource(remainingTime);
+            try
+            {
+                if (this.TryRetryRequest(request, contentLength, response.DeadlineUtc, out response, deadlineCancellation.Token))
+                {
+                    return true;
+                }
+            }
+            catch (OperationCanceledException) when (deadlineCancellation.IsCancellationRequested)
+            {
+                OpenTelemetryProtocolExporterEventSource.Log.RetryDeadlineExceeded();
+                return false;
             }
 
             nextRetryDelayMilliseconds = retryResult.NextRetryDelayMilliseconds;

@@ -3,9 +3,11 @@
 
 using Microsoft.Extensions.Configuration;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
+using OpenTelemetry.Tests;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests;
 
+[Collection(EnvVarsCollectionDefinition.Name)]
 public sealed class SdkLimitOptionsTests
 {
     [Fact]

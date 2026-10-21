@@ -5,6 +5,7 @@
 using System.Collections.Frozen;
 #endif
 using System.Collections.ObjectModel;
+using YamlDotNet.Core;
 using YamlDotNet.RepresentationModel;
 
 namespace OpenTelemetry.Configuration.Declarative;
@@ -34,10 +35,11 @@ internal static class DeclarativeConfigurationReader
     /// <exception cref="DeclarativeConfigurationException">
     /// Thrown when <c>file_format</c> is missing or unsupported, when an invalid <c>${...}</c>
     /// substitution reference is encountered, when the document root is not a YAML mapping, or when
-    /// any part of the document is not representable in the configuration data model.
+    /// any part of the document is not representable in the configuration data model, or collection
+    /// nesting exceeds the depth limit.
     /// </exception>
-    /// <exception cref="YamlDotNet.Core.YamlException">
-    /// Thrown when the input is not valid YAML (propagates from <see cref="YamlStream.Load(TextReader)"/>).
+    /// <exception cref="YamlException">
+    /// Thrown when the input is not valid YAML (propagates from <see cref="YamlStream.Load(IParser)"/>).
     /// </exception>
     /// <returns>A <see cref="DeclarativeConfigurationDocument"/> containing the typed model, flat keys, and document properties.</returns>
     internal static DeclarativeConfigurationDocument Read(FilePath filePath) =>
@@ -59,7 +61,8 @@ internal static class DeclarativeConfigurationReader
         using var reader = new StreamReader(fileStream);
 
         var stream = new YamlStream();
-        stream.Load(reader);
+        var documentTrackingParser = new YamlDocumentTrackingParser(new Parser(reader));
+        stream.Load(documentTrackingParser);
 
         if (stream.Documents.Count == 0)
         {
@@ -85,10 +88,12 @@ internal static class DeclarativeConfigurationReader
 
         root.EnsureCoreCollectionTag(YamlPath.Root);
 
+        YamlDepthValidator.ThrowIfExceeded(root);
+
         // Reject unsupported YAML 1.1 syntax before interpreting any part of the document.
         YamlMergeKeyValidator.ThrowIfPresent(root);
 
-        var context = new YamlParseContext(resolveVariable);
+        var context = new YamlParseContext(resolveVariable, documentTrackingParser);
 
         _ = context.ResolveMappingKeys(root, YamlPath.Root);
 
@@ -101,13 +106,17 @@ internal static class DeclarativeConfigurationReader
             rawFileFormat,
             OpenTelemetryDeclarativeConfigurationEventSource.Log.FileFormatWarning);
 
-        var config = new DeclarativeConfigurationParser(context).Parse(root, fileFormat);
-
         var properties = YamlNodeConverter.ConvertDocument(root, context);
 
-        // Reported only once the walk has succeeded, because the event states that the section was
-        // retained. A document the walk rejects retained nothing.
-        LogUnrecognizedTopLevelSections(root);
+        var undefinedProperties = SchemaPropertyNameValidator.Validate(properties, fileFormat);
+
+        var config = new DeclarativeConfigurationParser(context).Parse(root, fileFormat.Value);
+
+        // Reported only once the document is accepted, because the events state that the property
+        // was retained. A rejected document retained nothing.
+        SchemaPropertyNameValidator.ReportRetained(undefinedProperties, fileFormat);
+
+        LogUnrecognizedTopLevelSections(properties);
 
         DeclarativeConfigurationConverter.Convert(config, data);
 
@@ -118,34 +127,16 @@ internal static class DeclarativeConfigurationReader
             context.ReferencedEnvironmentVariables);
     }
 
-    // Root additionalProperties=true: unrecognized top-level keys (schema extras or not-yet-
-    // implemented named properties) are legal. They are reported once each, then retained by the
-    // document walk. Nested objects under known sections remain strict via
-    // YamlStructureExtensions.EnsureNoUnrecognizedProperties.
-    private static void LogUnrecognizedTopLevelSections(YamlMappingNode root)
+    // Sections the schema defines but this package does not interpret are retained in the
+    // document-rooted properties. Keys the schema does not define are reported by the validator.
+    private static void LogUnrecognizedTopLevelSections(ConfigProperties properties)
     {
-        foreach (var entry in root.Children)
+        foreach (var key in properties.Keys)
         {
-            if (!IsKnownTopLevelKey(entry.Key))
+            if (!KnownTopLevelKeys.Contains(key) && ConfigurationSchema.Pinned.Root.Properties.ContainsKey(key))
             {
-                LogUnrecognizedTopLevelSection(entry.Key);
+                OpenTelemetryDeclarativeConfigurationEventSource.Log.UnknownConfigurationSection(key);
             }
         }
-    }
-
-    private static bool IsKnownTopLevelKey(YamlNode key) =>
-        key is YamlScalarNode { Value: { } name } && KnownTopLevelKeys.Contains(name);
-
-    private static void LogUnrecognizedTopLevelSection(YamlNode key)
-    {
-        var display = key switch
-        {
-            YamlScalarNode { Value: null } => "<null>",
-            YamlScalarNode { Value.Length: 0 } => "<empty>",
-            YamlScalarNode { Value: { } name } => name,
-            _ => "<non-scalar key>",
-        };
-
-        OpenTelemetryDeclarativeConfigurationEventSource.Log.UnknownConfigurationSection(display);
     }
 }

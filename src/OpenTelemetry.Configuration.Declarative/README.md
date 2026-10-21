@@ -12,7 +12,7 @@ Declarative configuration allows you to configure the OpenTelemetry SDK using a
 YAML file instead of (or in addition to) environment variables and code-based
 setup. This package implements a subset of the stable OTel declarative
 configuration specification. It accepts any `file_format: "1.x"` document and
-has been built against the OpenTelemetry configuration schema v1.1.
+has been built against the OpenTelemetry configuration schema v1.2.
 
 ## Getting started
 
@@ -55,11 +55,10 @@ defaults (such as `service.name` from the application name).
 when `IConfiguration` is first resolved, and the host's resource defaults are
 not registered.
 
-**With `HostBuilder`**, add the source inside `ConfigureAppConfiguration`:
+**With `HostBuilder`**, register it inside `ConfigureServices`. The source is
+added to the host's configuration when `IConfiguration` is first resolved:
 
 ```csharp
-hostBuilder.ConfigureAppConfiguration(b =>
-    b.AddOpenTelemetryDeclarativeConfiguration("otel-config.yaml"));
 hostBuilder.ConfigureServices(services =>
     services.AddOpenTelemetry()
         .UseDeclarativeConfiguration("otel-config.yaml")
@@ -125,17 +124,20 @@ if (document is not null)
 }
 ```
 
-Use the `IServiceProvider` overload after the application has been built. When
-no service provider is available, such as during registration, read the
-document from configuration instead:
+Use the `IServiceProvider` overload after the application has been built. To
+read the document during registration on `IHostApplicationBuilder`, call
+`UseDeclarativeConfiguration` first, then read it from `builder.Configuration`:
 
 ```csharp
-builder.Configuration
-    .AddOpenTelemetryDeclarativeConfiguration("otel-config.yaml");
+builder.AddOpenTelemetry()
+    .UseDeclarativeConfiguration("otel-config.yaml");
 
 var document =
     builder.Configuration.GetOpenTelemetryDeclarativeConfiguration();
 ```
+
+With `HostBuilder` or a plain `IServiceCollection`, the document is available
+once the service provider has been built.
 
 If more than one declarative configuration file is found, the file with the
 highest priority is used and a warning is logged. Register only one file per
@@ -173,13 +175,6 @@ resource detectors, including the SDK's default resource, using the standard
 If the configured value differs from a schema URL contributed by another
 detector, the final resource has no schema URL.
 
-`resource.attributes` and `resource.schema_url` are only applied when using
-`UseDeclarativeConfiguration()` on an `IOpenTelemetryBuilder`. When the source
-is registered via `AddOpenTelemetryDeclarativeConfiguration()` alone (the
-source-only path), `resource.attributes` entries and `resource.schema_url` are
-not applied to the SDK resource; only `resource.attributes_list` and `disabled`
-take effect on that path.
-
 All other top-level sections (e.g. `tracer_provider`, `propagator`) are logged
 and are not applied. Structurally invalid content can fail configuration
 loading.
@@ -188,9 +183,38 @@ loading.
 
 The configuration file is expected to conform to the YAML 1.2 specification.
 
+Mappings and sequences may be nested up to depth 128, with the document root at
+depth zero. This applies to the whole document, including custom sections and
+paths through YAML aliases.
+
+An alias used as a mapping key must refer to an anchor already defined in the
+same document. Invalid alias keys are rejected during parsing.
+
 YAML 1.1 merge keys (`<<: *defaults`) are rejected before any configuration
 is interpreted. Quoted or explicitly string-tagged `<<` keys remain ordinary
 property names under the YAML 1.2 core schema.
+
+### Property names
+
+Property names are checked against the OpenTelemetry configuration schema. A
+property the schema does not define is an error wherever the schema does not
+allow additional properties.
+
+Additional properties are retained and readable through
+`DeclarativeConfigurationDocument.Properties` where the schema allows them.
+
+Undefined properties are retained with a warning, instead of being an error, in
+two cases:
+
+- The document declares a `file_format` minor version newer than the schema
+  version this package was built against, which may define properties the
+  package does not know.
+- The property is, or is nested in, a property whose name ends in
+  `/development`, `/alpha` or `/beta`. These are exempt from the schema's
+  stability guarantees.
+
+In both cases a misspelled property name is reported as a warning and is not
+applied.
 
 ### Environment-variable substitution
 
@@ -292,18 +316,22 @@ Points to be aware of:
   `IConfiguration` detaches it. Register declarative configuration after your
   configuration sources are settled.
 - For duplicate structured resource attribute names, the first occurrence wins.
-- Unknown top-level sections are logged and are not applied, but their `${...}`
+- Top-level sections that are not applied are logged, but their `${...}`
   references are resolved during the load, so an unset variable in one is
   reported.
 - `resource.detection/development` (the SDK's resource detector discovery
-  mechanism) is not yet implemented.
+  mechanism) is accepted but not yet implemented.
+- Property names are validated against the schema, but value types, ranges and
+  required properties are not.
 - Some components read environment variables directly and are not covered by
   strict mode: including options created with a public
   parameterless constructor in application code (for example
   `new OtlpExporterOptions()`), and a `ResourceBuilder` built without a service
   provider.
-- When the source is registered with `AddOpenTelemetryDeclarativeConfiguration()`
-  alone, strict mode applies but its warnings are not written.
+- Declarative configuration is registered through `IOpenTelemetryBuilder`.
+  Providers built directly with `Sdk.CreateTracerProviderBuilder()`, or the
+  meter and logger equivalents, cannot use it yet, and there is no API to parse
+  a file without registering it.
 
 ### Pitfalls to avoid
 
