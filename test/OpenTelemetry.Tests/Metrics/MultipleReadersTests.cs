@@ -329,7 +329,7 @@ public class MultipleReadersTests
 
         // The first reader receives the remaining budget measured from when the composite started,
         // so it gets the full timeout less the few milliseconds the composite spent before calling
-        // it. That is normally 0ms, but the thread can be pre-empted for longer than that between
+        // it. That is normally 0ms, but the thread can be preempted for longer than that between
         // the composite taking its timestamp and computing the first reader's timeout when the CI
         // machine is loaded, so allow for a small amount of elapsed time rather than exact equality.
         Assert.InRange(
