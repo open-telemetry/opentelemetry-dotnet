@@ -35,22 +35,27 @@ internal sealed class YamlDocumentTrackingParser(IParser innerParser) : IParser
             case DocumentStart:
                 this.definedAnchors.Clear();
                 break;
+
             case MappingStart mapping:
                 YamlDepthValidator.EnsureDepth(this.collectionFrames.Count, mapping.Start);
                 this.TrackNode(mapping);
                 this.collectionFrames.Push((new(mapping.Start.Line, mapping.Start.Column), 0));
                 break;
+
             case SequenceStart sequence:
                 YamlDepthValidator.EnsureDepth(this.collectionFrames.Count, sequence.Start);
                 this.TrackNode(sequence);
                 this.collectionFrames.Push((null, 0));
                 break;
+
             case MappingEnd or SequenceEnd:
                 this.collectionFrames.Pop();
                 break;
+
             case Scalar scalar:
                 this.TrackNode(scalar);
                 break;
+
             case AnchorAlias alias:
                 this.TrackNode(alias);
                 break;
