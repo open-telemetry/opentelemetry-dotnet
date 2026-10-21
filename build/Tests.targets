@@ -12,6 +12,13 @@
     <_TestFrameworkArgument>--framework $(TargetFramework)</_TestFrameworkArgument>
   </PropertyGroup>
 
+  <!--
+    HACK Workaround for https://github.com/dotnet/runtime/issues/134491
+  -->
+  <PropertyGroup Condition="'$(TargetFramework)' == '' AND '$(OS)' != 'Windows_NT' AND '$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture)' == 'Arm64'">
+    <_TestMaxParallelTestModulesArgument>--max-parallel-test-modules 1</_TestMaxParallelTestModulesArgument>
+  </PropertyGroup>
+
   <PropertyGroup Condition="'$(TestFilter)' != ''">
     <!--
       Ignoring exit code 8 stops dotnet test failing if a filter does not match any tests.
