@@ -12,6 +12,7 @@ using OpenTelemetry.Tests;
 
 namespace OpenTelemetry.Exporter.Prometheus.Tests;
 
+[Collection(TestMeterCollection.Name)]
 public sealed class PrometheusCollectionManagerTests
 {
     [Theory]
@@ -30,7 +31,11 @@ public sealed class PrometheusCollectionManagerTests
         using var provider = Sdk.CreateMeterProviderBuilder()
             .AddMeter(meter.Name)
 #if PROMETHEUS_HTTP_LISTENER
-            .AddPrometheusHttpListener(x => x.ScrapeResponseCacheDurationMilliseconds = scrapeResponseCacheDurationMilliseconds)
+            .AddPrometheusHttpListener(x =>
+            {
+                x.Port = TcpPortProvider.GetOpenPort();
+                x.ScrapeResponseCacheDurationMilliseconds = scrapeResponseCacheDurationMilliseconds;
+            })
 #elif PROMETHEUS_ASPNETCORE
             .AddPrometheusExporter(x => x.ScrapeResponseCacheDurationMilliseconds = scrapeResponseCacheDurationMilliseconds)
 #endif
@@ -779,7 +784,7 @@ public sealed class PrometheusCollectionManagerTests
             .ConfigureResource((p) => p.AddAttributes([new("service.name", "prometheus")]))
             .AddMeter(meter.Name)
 #if PROMETHEUS_HTTP_LISTENER
-            .AddPrometheusHttpListener()
+            .AddPrometheusHttpListener(static (options) => options.Port = TcpPortProvider.GetOpenPort())
 #elif PROMETHEUS_ASPNETCORE
             .AddPrometheusExporter()
 #endif
@@ -818,7 +823,7 @@ public sealed class PrometheusCollectionManagerTests
             .ConfigureResource((p) => p.AddAttributes([new("service.name", "prometheus")]))
             .AddMeter(meter.Name)
 #if PROMETHEUS_HTTP_LISTENER
-            .AddPrometheusHttpListener()
+            .AddPrometheusHttpListener(static (options) => options.Port = TcpPortProvider.GetOpenPort())
 #elif PROMETHEUS_ASPNETCORE
             .AddPrometheusExporter()
 #endif
@@ -857,7 +862,11 @@ public sealed class PrometheusCollectionManagerTests
         using var provider = Sdk.CreateMeterProviderBuilder()
             .AddMeter(meter.Name)
 #if PROMETHEUS_HTTP_LISTENER
-            .AddPrometheusHttpListener(x => x.ScrapeResponseCacheDurationMilliseconds = 0)
+            .AddPrometheusHttpListener(x =>
+            {
+                x.Port = TcpPortProvider.GetOpenPort();
+                x.ScrapeResponseCacheDurationMilliseconds = 0;
+            })
 #elif PROMETHEUS_ASPNETCORE
             .AddPrometheusExporter(x => x.ScrapeResponseCacheDurationMilliseconds = 0)
 #endif
@@ -903,7 +912,7 @@ public sealed class PrometheusCollectionManagerTests
             .ConfigureResource((p) => p.AddAttributes([new("service.name", "prometheus")]))
             .AddMeter(meter.Name)
 #if PROMETHEUS_HTTP_LISTENER
-            .AddPrometheusHttpListener()
+            .AddPrometheusHttpListener(static (options) => options.Port = TcpPortProvider.GetOpenPort())
 #elif PROMETHEUS_ASPNETCORE
             .AddPrometheusExporter()
 #endif
@@ -944,7 +953,7 @@ public sealed class PrometheusCollectionManagerTests
             .ConfigureResource((p) => p.AddAttributes([new("service.name", "prometheus")]))
             .AddMeter(meter.Name)
 #if PROMETHEUS_HTTP_LISTENER
-            .AddPrometheusHttpListener()
+            .AddPrometheusHttpListener(static (options) => options.Port = TcpPortProvider.GetOpenPort())
 #elif PROMETHEUS_ASPNETCORE
             .AddPrometheusExporter()
 #endif
@@ -985,7 +994,7 @@ public sealed class PrometheusCollectionManagerTests
             .ConfigureResource((p) => p.AddAttributes([new("service.name", "prometheus")]))
             .AddMeter(meter.Name)
 #if PROMETHEUS_HTTP_LISTENER
-            .AddPrometheusHttpListener()
+            .AddPrometheusHttpListener(static (options) => options.Port = TcpPortProvider.GetOpenPort())
 #elif PROMETHEUS_ASPNETCORE
             .AddPrometheusExporter()
 #endif
@@ -1026,7 +1035,7 @@ public sealed class PrometheusCollectionManagerTests
             .ConfigureResource((p) => p.AddAttributes([new("service.name", "prometheus")]))
             .AddMeter(meter.Name)
 #if PROMETHEUS_HTTP_LISTENER
-            .AddPrometheusHttpListener()
+            .AddPrometheusHttpListener(static (options) => options.Port = TcpPortProvider.GetOpenPort())
 #elif PROMETHEUS_ASPNETCORE
             .AddPrometheusExporter()
 #endif
@@ -1067,7 +1076,7 @@ public sealed class PrometheusCollectionManagerTests
             .ConfigureResource((p) => p.AddAttributes([new("service.name", "prometheus")]))
             .AddMeter(meter.Name)
 #if PROMETHEUS_HTTP_LISTENER
-            .AddPrometheusHttpListener()
+            .AddPrometheusHttpListener(static (options) => options.Port = TcpPortProvider.GetOpenPort())
 #elif PROMETHEUS_ASPNETCORE
             .AddPrometheusExporter()
 #endif
@@ -1109,7 +1118,7 @@ public sealed class PrometheusCollectionManagerTests
             .AddMeter(meter1.Name)
             .AddMeter(meter2.Name)
 #if PROMETHEUS_HTTP_LISTENER
-            .AddPrometheusHttpListener()
+            .AddPrometheusHttpListener(static (options) => options.Port = TcpPortProvider.GetOpenPort())
 #elif PROMETHEUS_ASPNETCORE
             .AddPrometheusExporter()
 #endif
@@ -1149,7 +1158,7 @@ public sealed class PrometheusCollectionManagerTests
         using var provider = Sdk.CreateMeterProviderBuilder()
             .AddMeter(meter.Name)
 #if PROMETHEUS_HTTP_LISTENER
-            .AddPrometheusHttpListener()
+            .AddPrometheusHttpListener(static (options) => options.Port = TcpPortProvider.GetOpenPort())
 #elif PROMETHEUS_ASPNETCORE
             .AddPrometheusExporter()
 #endif
@@ -1210,6 +1219,7 @@ public sealed class PrometheusCollectionManagerTests
 #if PROMETHEUS_HTTP_LISTENER
             .AddPrometheusHttpListener(options =>
             {
+                options.Port = TcpPortProvider.GetOpenPort();
                 options.MaxScrapeResponseSizeBytes = maxScrapeResponseSizeBytes;
                 options.ScrapeResponseCacheDurationMilliseconds = 0;
             })

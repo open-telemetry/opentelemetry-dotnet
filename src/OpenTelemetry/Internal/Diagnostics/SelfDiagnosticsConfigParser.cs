@@ -38,10 +38,31 @@ internal sealed partial class SelfDiagnosticsConfigParser
     private static readonly Regex FormatMessageRegex = new(FormatMessageRegexPattern, RegexOptions.IgnoreCase | RegexOptions.Compiled);
 #endif
 
+    private readonly string? configFilePath;
+
     // This class is called in SelfDiagnosticsConfigRefresher.UpdateLogFileFromConfiguration
     // in both main thread and the worker thread.
     // In theory the variable won't be access at the same time because worker thread first Task.Delay for a few seconds.
     private byte[]? configBuffer;
+
+    public SelfDiagnosticsConfigParser()
+        : this(configFilePath: null)
+    {
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="SelfDiagnosticsConfigParser"/> class.
+    /// </summary>
+    /// <param name="configFilePath">
+    /// The configuration file to read, or <see langword="null"/> to look for
+    /// <see cref="ConfigFileName"/> in the current working directory and then
+    /// in the application base directory. Tests pass an explicit path so that
+    /// they do not share the process-wide file with the SDK's own refresher.
+    /// </param>
+    internal SelfDiagnosticsConfigParser(string? configFilePath)
+    {
+        this.configFilePath = configFilePath;
+    }
 
     public bool TryGetConfiguration(
         [NotNullWhen(true)] out string? logDirectory,
@@ -55,11 +76,17 @@ internal sealed partial class SelfDiagnosticsConfigParser
         formatMessage = false;
         try
         {
-            var configFilePath = ConfigFileName;
+            var configFilePath = this.configFilePath ?? ConfigFileName;
 
             // First check using current working directory
             if (!File.Exists(configFilePath))
             {
+                // An explicitly configured path is not searched for anywhere else.
+                if (this.configFilePath is not null)
+                {
+                    return false;
+                }
+
                 configFilePath = Path.Combine(AppContext.BaseDirectory, ConfigFileName);
 
                 // Second check using application base directory

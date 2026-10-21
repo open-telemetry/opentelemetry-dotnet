@@ -9,6 +9,7 @@ using OpenTelemetry.Tests;
 
 namespace OpenTelemetry.Metrics.Tests;
 
+[Collection(EventSourceCollectionDefinition.Name)]
 public class MeterProviderSdkTests
 {
     [Fact]

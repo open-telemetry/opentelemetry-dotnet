@@ -1,6 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Globalization;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using OpenTelemetry.Metrics;
@@ -8,6 +9,7 @@ using OpenTelemetry.Tests;
 
 namespace OpenTelemetry.Exporter.Prometheus.Tests;
 
+[Collection(EnvVarsCollectionDefinition.Name)]
 public sealed class PrometheusHttpListenerMeterProviderBuilderExtensionsTests
 {
     [Fact]
@@ -15,6 +17,9 @@ public sealed class PrometheusHttpListenerMeterProviderBuilderExtensionsTests
     {
         var defaultExporterOptionsConfigureOptionsInvocations = 0;
         var namedExporterOptionsConfigureOptionsInvocations = 0;
+
+        // Both listeners bind the default port
+        using var portLock = DefaultPortLock.Acquire();
 
         using var meterProvider = Sdk.CreateMeterProviderBuilder()
             .ConfigureServices(services =>
@@ -34,6 +39,8 @@ public sealed class PrometheusHttpListenerMeterProviderBuilderExtensionsTests
     [Fact]
     public void TestAddPrometheusHttpListener_Defaults_Are_Correct()
     {
+        using var portLock = DefaultPortLock.Acquire();
+
         using var meterProvider = Sdk.CreateMeterProviderBuilder()
             .AddPrometheusHttpListener()
             .Build();
@@ -55,10 +62,12 @@ public sealed class PrometheusHttpListenerMeterProviderBuilderExtensionsTests
     [Fact]
     public void TestAddPrometheusHttpListener_Configuration_From_Environment_Variables()
     {
+        var port = TcpPortProvider.GetOpenPort();
+
         using (EnvironmentVariableScope.Create(
             [
                 ("OTEL_EXPORTER_PROMETHEUS_HOST", "127.0.0.1"),
-                ("OTEL_EXPORTER_PROMETHEUS_PORT", "4649"),
+                ("OTEL_EXPORTER_PROMETHEUS_PORT", port.ToString(CultureInfo.InvariantCulture)),
             ]))
         {
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
@@ -75,7 +84,7 @@ public sealed class PrometheusHttpListenerMeterProviderBuilderExtensionsTests
             Assert.NotNull(options.CurrentValue);
 
             Assert.Equal("127.0.0.1", options.CurrentValue.Host);
-            Assert.Equal(4649, options.CurrentValue.Port);
+            Assert.Equal(port, options.CurrentValue.Port);
             Assert.Equal("/metrics", options.CurrentValue.ScrapeEndpointPath);
         }
     }
@@ -89,6 +98,8 @@ public sealed class PrometheusHttpListenerMeterProviderBuilderExtensionsTests
                 ("OTEL_EXPORTER_PROMETHEUS_PORT", "not-a-number"),
             ]))
         {
+            using var portLock = DefaultPortLock.Acquire();
+
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddPrometheusHttpListener()
                 .Build();
@@ -119,6 +130,8 @@ public sealed class PrometheusHttpListenerMeterProviderBuilderExtensionsTests
                 ("OTEL_EXPORTER_PROMETHEUS_PORT", port),
             ]))
         {
+            using var portLock = DefaultPortLock.Acquire();
+
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddPrometheusHttpListener()
                 .Build();
@@ -139,6 +152,8 @@ public sealed class PrometheusHttpListenerMeterProviderBuilderExtensionsTests
     [Fact]
     public void TestAddPrometheusHttpListener_Manual_Configuration_Overrides_Environment_Variables()
     {
+        var port = TcpPortProvider.GetOpenPort();
+
         using (EnvironmentVariableScope.Create(
             [
                 ("OTEL_EXPORTER_PROMETHEUS_HOST", "prometheus.local"),
@@ -149,7 +164,7 @@ public sealed class PrometheusHttpListenerMeterProviderBuilderExtensionsTests
                 .AddPrometheusHttpListener((options) =>
                 {
                     options.Host = "127.0.0.1";
-                    options.Port = 5464;
+                    options.Port = port;
                     options.ScrapeEndpointPath = "/custom-metrics";
                 })
                 .Build();
@@ -164,7 +179,7 @@ public sealed class PrometheusHttpListenerMeterProviderBuilderExtensionsTests
             Assert.NotNull(options.CurrentValue);
 
             Assert.Equal("127.0.0.1", options.CurrentValue.Host);
-            Assert.Equal(5464, options.CurrentValue.Port);
+            Assert.Equal(port, options.CurrentValue.Port);
             Assert.Equal("/custom-metrics", options.CurrentValue.ScrapeEndpointPath);
         }
     }
@@ -173,7 +188,11 @@ public sealed class PrometheusHttpListenerMeterProviderBuilderExtensionsTests
     public void TestAddPrometheusHttpListener_UsesConfiguredCacheDuration()
     {
         using var meterProvider = Sdk.CreateMeterProviderBuilder()
-            .AddPrometheusHttpListener(options => options.ScrapeResponseCacheDurationMilliseconds = 123)
+            .AddPrometheusHttpListener(options =>
+            {
+                options.Port = TcpPortProvider.GetOpenPort();
+                options.ScrapeResponseCacheDurationMilliseconds = 123;
+            })
             .Build();
 
 #pragma warning disable CA2000 // MeterProvider owns exporter lifecycle

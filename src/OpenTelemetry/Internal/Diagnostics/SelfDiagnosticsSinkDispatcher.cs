@@ -150,10 +150,23 @@ internal sealed class SelfDiagnosticsSinkDispatcher : IDisposable
         this.SignalPump();
 
         // The pump owns final drain, flush, and sink disposal. Timeout = best-effort fallback.
-        pump.Join(DisposeDrainTimeout);
+        if (pump.Join(DisposeDrainTimeout))
+        {
+            // The semaphore is only disposed once the pump has exited and the producers have
+            // been quiesced above. Disposing it from the pump as it exited raced with the
+            // Release in SignalPump (the pump can dequeue the shutdown item before the
+            // Release that follows it): on .NET Framework SemaphoreSlim.Dispose nulls the
+            // object Release locks on, so that race surfaced as ArgumentNullException
+            // rather than the ObjectDisposedException SignalPump expects.
+            this.signal.Dispose();
+            this.pumpCts.Dispose();
+            return;
+        }
 
         // Safeguard: if the join timed out and the pump is still blocking on Wait (e.g. the
-        // signal permit was not delivered), cancel the token to wake it.
+        // signal permit was not delivered), cancel the token to wake it. The semaphore is
+        // deliberately left undisposed in this case, as the pump may still be waiting on it;
+        // a SemaphoreSlim whose wait handle was never requested holds no unmanaged resources.
         this.pumpCts.Cancel();
         this.pumpCts.Dispose();
     }
@@ -332,8 +345,9 @@ internal sealed class SelfDiagnosticsSinkDispatcher : IDisposable
         }
         catch (ObjectDisposedException)
         {
-            // The pump disposes the semaphore as it exits. A racing producer or Dispose
-            // call may arrive after that; neither has anything to wake.
+            // Dispose() disposes the semaphore once the pump has exited. A producer which
+            // passed the disposed check but outlived the quiesce timeout may still arrive
+            // here after that; it has nothing to wake.
         }
     }
 
@@ -427,8 +441,9 @@ internal sealed class SelfDiagnosticsSinkDispatcher : IDisposable
         }
         finally
         {
+            // The semaphore is not disposed here: Dispose() does that once this thread has
+            // been joined, so that the Release in SignalPump can never race its disposal.
             this.DisposeSinks();
-            this.signal.Dispose();
         }
     }
 

@@ -3,9 +3,11 @@
 
 using System.Collections;
 using System.Diagnostics;
+using OpenTelemetry.Tests;
 
 namespace OpenTelemetry.Context.Propagation.Tests;
 
+[Collection(EnvVarsCollectionDefinition.Name)]
 public class EnvironmentVariableCarrierTests
 {
     [Theory]
