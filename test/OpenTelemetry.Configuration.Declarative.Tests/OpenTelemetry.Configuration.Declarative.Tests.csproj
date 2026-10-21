@@ -15,6 +15,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <EmbeddedResource Include="TestAssets\Schema\v1.2.0\examples\*.yaml" LogicalName="Schema/v1.2.0/examples/%(Filename)%(Extension)" />
+    <EmbeddedResource Include="TestAssets\Schema\v1.2.0\snippets\*.yaml" LogicalName="Schema/v1.2.0/snippets/%(Filename)%(Extension)" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\EnvironmentVariableScope.cs" Link="Includes\EnvironmentVariableScope.cs" />
     <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Shared\EnvVarsCollectionDefinition.cs" Link="Includes\EnvVarsCollectionDefinition.cs" />
     <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Shared\EventSourceCollectionDefinition.cs" Link="Includes\EventSourceCollectionDefinition.cs" />

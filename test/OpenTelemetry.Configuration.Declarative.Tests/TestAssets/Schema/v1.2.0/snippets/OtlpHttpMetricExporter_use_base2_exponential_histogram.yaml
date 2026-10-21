@@ -1,0 +1,10 @@
+file_format: "1.2"
+
+meter_provider:
+  readers:
+    - periodic:
+        exporter:
+          otlp_http:
+            # SNIPPET_START
+            endpoint: http://localhost:4318/v1/metrics
+            default_histogram_aggregation: base2_exponential_bucket_histogram

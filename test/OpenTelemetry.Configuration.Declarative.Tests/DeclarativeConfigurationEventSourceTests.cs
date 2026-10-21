@@ -573,7 +573,7 @@ public sealed class DeclarativeConfigurationEventSourceTests
     }
 
     [Fact]
-    public void ReadConfiguration_QuotedMergeLikeKeyAtRoot_IsLoggedAsUnknownSectionNotMerged()
+    public void ReadConfiguration_QuotedMergeLikeKeyAtRoot_IsLoggedAsUndefinedRootPropertyNotMerged()
     {
         // Quoting `<<` makes it an ordinary string key, and the top-level schema object sets
         // additionalProperties=true.
@@ -582,11 +582,11 @@ public sealed class DeclarativeConfigurationEventSourceTests
             "<<": some-extension-value
             """;
 
-        using var listener = CreateWarningListener();
+        using var listener = CreateVerboseListener();
 
         var data = ReadConfiguration(yaml);
 
-        var evt = Assert.Single(listener.Messages, e => e.EventId == 2);
+        var evt = Assert.Single(listener.Messages, e => e.EventId == 42);
         Assert.Equal("<<", evt.Payload![0]);
         Assert.Empty(data);
     }
@@ -599,11 +599,11 @@ public sealed class DeclarativeConfigurationEventSourceTests
             !!str << : some-extension-value
             """;
 
-        using var listener = CreateWarningListener();
+        using var listener = CreateVerboseListener();
 
         _ = ReadConfiguration(yaml);
 
-        var evt = Assert.Single(listener.Messages, e => e.EventId == 2);
+        var evt = Assert.Single(listener.Messages, e => e.EventId == 42);
         Assert.Equal("<<", evt.Payload![0]);
     }
 
@@ -625,7 +625,7 @@ public sealed class DeclarativeConfigurationEventSourceTests
     // that then fails to load would tell the author to fix a section that was never accepted, so the
     // warning must not be reached until the whole read has succeeded.
     [Fact]
-    public void ReadConfiguration_UnknownSectionInDocumentThatFailsToLoad_IsNotLogged()
+    public void ReadConfiguration_UndefinedRootPropertyInDocumentThatFailsToLoad_IsNotLogged()
     {
         const string yaml = """
             file_format: "1.1"
@@ -633,11 +633,11 @@ public sealed class DeclarativeConfigurationEventSourceTests
               self: *cycle
             """;
 
-        using var listener = CreateWarningListener();
+        using var listener = CreateVerboseListener();
 
         Assert.Throws<DeclarativeConfigurationException>(() => ReadConfiguration(yaml));
 
-        Assert.DoesNotContain(listener.CurrentMessages, e => e.EventId == 2);
+        Assert.DoesNotContain(listener.CurrentMessages, e => e.EventId is 2 or 42);
     }
 
     [Fact]

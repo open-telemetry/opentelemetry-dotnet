@@ -1,0 +1,10 @@
+file_format: "1.2"
+
+meter_provider:
+  readers:
+    - periodic:
+        exporter:
+          console:
+            # SNIPPET_START
+            temporality_preference: cumulative
+            default_histogram_aggregation: explicit_bucket_histogram

@@ -97,7 +97,7 @@ internal static class YamlNodeConverter
                     ? this.ConvertScalar(scalar)
                     : this.ConvertCollection(entry.Value, YamlPath.Child(path, entry.Key));
 
-                builder.Add(entry.Key, value);
+                builder.Add(entry.Key, value, entry.KeyPosition);
             }
 
             return builder.Build();
