@@ -5,9 +5,11 @@ using System.Collections.Concurrent;
 using System.Diagnostics;
 using Microsoft.Extensions.Logging;
 using OpenTelemetry.Exporter;
+using OpenTelemetry.Tests;
 
 namespace OpenTelemetry.Logs.Tests;
 
+[Collection(LogRecordPoolCollectionDefinition.Name)]
 public sealed class LogRecordSharedPoolTests
 {
     [Fact]

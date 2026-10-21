@@ -18,6 +18,7 @@ using OpenTelemetry.Tests;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests;
 
+[Collection(EventSourceCollectionDefinition.Name)]
 public sealed class OtlpHttpClientLoggingTests
 {
     private const string MeterName = "OtlpHttpClientLoggingTests";

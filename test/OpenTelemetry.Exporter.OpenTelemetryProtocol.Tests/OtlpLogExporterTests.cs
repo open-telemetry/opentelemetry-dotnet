@@ -28,6 +28,7 @@ using OtlpLogs = OpenTelemetry.Proto.Logs.V1;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests;
 
+[Collection(EventSourceCollectionDefinition.Name)]
 public class OtlpLogExporterTests
 {
     private static readonly SdkLimitOptions DefaultSdkLimitOptions = new();

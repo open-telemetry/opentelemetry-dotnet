@@ -6,6 +6,11 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Fixed a race in the self-diagnostics sink dispatcher where disposing it
+  while its pump thread was exiting could throw `ArgumentNullException` on
+  .NET Framework.
+  ([#7983](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7983))
+
 * The timeout passed to `MetricReader.Collect()` (for example by
   `MeterProvider.ForceFlush()` or from the `ExportTimeoutMilliseconds` of
   `PeriodicExportingMetricReader`) and the `ExporterTimeoutMilliseconds` of

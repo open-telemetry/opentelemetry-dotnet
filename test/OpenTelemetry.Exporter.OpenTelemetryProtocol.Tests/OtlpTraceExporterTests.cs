@@ -18,7 +18,7 @@ using OtlpTrace = OpenTelemetry.Proto.Trace.V1;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests;
 
-[Collection("xUnitCollectionPreventingTestsThatDependOnSdkConfigurationFromRunningInParallel")]
+[Collection(EnvVarsCollectionDefinition.Name)]
 public sealed class OtlpTraceExporterTests : IDisposable
 {
     private static readonly SdkLimitOptions DefaultSdkLimitOptions = new();
@@ -785,6 +785,36 @@ public sealed class OtlpTraceExporterTests : IDisposable
         var otlpLink = Assert.Single(otlpSpan.Links);
         var linkAttribute = Assert.Single(otlpLink.Attributes);
         Assert.Equal("1234", linkAttribute.Value.StringValue);
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void SpanStatusDescriptionIsTruncatedToValueLengthLimit(bool useStatusTags)
+    {
+        var sdkOptions = new SdkLimitOptions() { SpanAttributeValueLengthLimit = 4 };
+
+        using var activitySource = new ActivitySource(nameof(this.SpanStatusDescriptionIsTruncatedToValueLengthLimit));
+        using var activity = activitySource.StartActivity("root");
+
+        Assert.NotNull(activity);
+
+        if (useStatusTags)
+        {
+            activity.SetTag(SpanAttributeConstants.StatusCodeKey, "ERROR");
+            activity.SetTag(SpanAttributeConstants.StatusDescriptionKey, "12345");
+        }
+        else
+        {
+            activity.SetStatus(ActivityStatusCode.Error, "12345");
+        }
+
+        var otlpSpan = ToOtlpSpan(sdkOptions, activity);
+
+        Assert.NotNull(otlpSpan);
+        Assert.NotNull(otlpSpan.Status);
+        Assert.Equal(OtlpTrace.Status.Types.StatusCode.Error, otlpSpan.Status.Code);
+        Assert.Equal("1234", otlpSpan.Status.Message);
     }
 
     [Fact]

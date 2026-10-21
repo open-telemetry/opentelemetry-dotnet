@@ -15,6 +15,7 @@ using OpenTelemetry.Tests;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests;
 
+[Collection(EventSourceCollectionDefinition.Name)]
 public class OtlpExportClientTests
 {
     private const int MessageSizeLimit = 4 * 1024 * 1024;

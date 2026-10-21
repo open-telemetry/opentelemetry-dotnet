@@ -12,7 +12,6 @@ namespace OpenTelemetry.Internal.Tests;
 
 public class SelfDiagnosticsConfigRefresherTests
 {
-    private const string ConfigFilePath = SelfDiagnosticsConfigParser.ConfigFileName;
     private const int CaptureAttempts = 5;
 
     private static readonly string MessageOnNewFileString = Encoding.UTF8.GetString(SelfDiagnosticsConfigRefresher.MessageOnNewFile);
@@ -239,19 +238,28 @@ public class SelfDiagnosticsConfigRefresherTests
         EventLevel logLevel = EventLevel.Error,
         Func<string, FileStream>? logFileFactory = null)
     {
-        CreateConfigFile(logDirectory, logLevel);
+        // Each test uses its own configuration file rather than the process-wide
+        // OTEL_DIAGNOSTICS.json: the SDK's own SelfDiagnostics singleton polls that
+        // file from the working directory too, and if a poll lands while a test's
+        // configuration exists it opens the same log file as the test's refresher.
+        var configFilePath = GetConfigFilePath(logDirectory);
+
+        CreateConfigFile(configFilePath, logDirectory, logLevel);
 
         try
         {
-            return logFileFactory == null
-                ? new SelfDiagnosticsConfigRefresher()
-                : new SelfDiagnosticsConfigRefresher(logFileFactory);
+            return new SelfDiagnosticsConfigRefresher(
+                logFileFactory ?? SelfDiagnosticsConfigRefresher.DefaultLogFileFactory,
+                configFilePath);
         }
         finally
         {
-            CleanupConfigFile();
+            CleanupConfigFile(configFilePath);
         }
     }
+
+    private static string GetConfigFilePath(string logDirectory)
+        => logDirectory + "." + SelfDiagnosticsConfigParser.ConfigFileName;
 
     private static string? FindLogLine(string logText, string expectedMessage)
     {
@@ -310,23 +318,23 @@ public class SelfDiagnosticsConfigRefresherTests
         return Encoding.UTF8.GetString(actualBytes, 0, totalBytesRead).TrimEnd('\0');
     }
 
-    private static void CreateConfigFile(string logDirectory, EventLevel logLevel)
+    private static void CreateConfigFile(string configFilePath, string logDirectory, EventLevel logLevel)
     {
         var configJson = $@"{{
                     ""LogDirectory"": ""{logDirectory}"",
                     ""FileSize"": 1024,
                     ""LogLevel"": ""{logLevel}""
                     }}";
-        using var file = File.Open(ConfigFilePath, FileMode.Create, FileAccess.Write);
+        using var file = File.Open(configFilePath, FileMode.Create, FileAccess.Write);
         var configBytes = Encoding.UTF8.GetBytes(configJson);
         file.Write(configBytes, 0, configBytes.Length);
     }
 
-    private static void CleanupConfigFile()
+    private static void CleanupConfigFile(string configFilePath)
     {
         try
         {
-            File.Delete(ConfigFilePath);
+            File.Delete(configFilePath);
         }
         catch
         {

@@ -15,6 +15,7 @@ using OpenTelemetry.Tests;
 
 namespace OpenTelemetry.Exporter.Prometheus.Tests;
 
+[Collection(TestMeterCollection.Name)]
 public sealed partial class PrometheusSerializerTests
 {
     internal static readonly VerifySettings VerifySettings = CreateVerifySettings();

@@ -23,7 +23,7 @@ using OtlpMetrics = OpenTelemetry.Proto.Metrics.V1;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests;
 
-[Collection("EnvVars")]
+[Collection(EnvVarsCollectionDefinition.Name)]
 public sealed class OtlpMetricsExporterTests : IDisposable
 {
     private static readonly KeyValuePair<string, object?>[] KeyValues =

@@ -16,6 +16,7 @@ using OpenTelemetry.Tests;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests;
 
+[Collection(EnvVarsCollectionDefinition.Name)]
 public class OtlpHttpExportClientTests
 {
     [Fact]
