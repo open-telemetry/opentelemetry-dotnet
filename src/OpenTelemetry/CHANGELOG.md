@@ -92,7 +92,7 @@ Released 2026-Oct-20
   adding configuration warnings and a redacted environment snapshot to each
   file's preamble. `Verbose` and `LogAlways` also log loaded assemblies.
   File-open failures are reported on standard error.
-  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+  ([#7997](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7997))
 
 * **Breaking Change**: `OTEL_DIAGNOSTICS.json` now writes rolling
   `otel-dotnet-*.log` files in the standard entry format instead of a circular
@@ -102,7 +102,7 @@ Released 2026-Oct-20
   including those enabled through environment variables, override the JSON
   configuration with a warning event. Writes are asynchronous and may drop
   entries when the bounded queue fills.
-  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+  ([#7997](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7997))
 
 ## 1.20.0
 
