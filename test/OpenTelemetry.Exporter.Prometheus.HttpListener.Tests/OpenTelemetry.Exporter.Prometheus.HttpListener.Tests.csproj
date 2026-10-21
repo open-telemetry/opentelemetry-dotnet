@@ -5,8 +5,6 @@
     <TargetFrameworks>$(TargetFrameworksForTests)</TargetFrameworks>
     <DefineConstants>$(DefineConstants);PROMETHEUS_HTTP_LISTENER</DefineConstants>
     <NoWarn>$(NoWarn);CA1019;CA1062;CA1515</NoWarn>
-    <!-- Avoid conflicting port registrations if TFMs tested in parallel -->
-    <TestTfmsInParallel>false</TestTfmsInParallel>
   </PropertyGroup>
 
   <ItemGroup>
@@ -32,7 +30,10 @@
 
   <ItemGroup>
     <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\EnvironmentVariableScope.cs" Link="Includes\EnvironmentVariableScope.cs" />
+    <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Shared\EnvVarsCollectionDefinition.cs" Link="Includes\EnvVarsCollectionDefinition.cs" />
+    <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Shared\EventSourceCollectionDefinition.cs" Link="Includes\EventSourceCollectionDefinition.cs" />
     <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Shared\EventSourceTestHelper.cs" Link="Includes\EventSourceTestHelper.cs" />
+    <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Shared\GcAllocationsCollectionDefinition.cs" Link="Includes\GcAllocationsCollectionDefinition.cs" />
     <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Shared\TcpPortProvider.cs" Link="Includes\TcpPortProvider.cs" />
     <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Shared\TestEventListener.cs" Link="Includes\TestEventListener.cs" />
     <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Shared\Utils.cs" Link="Includes\Utils.cs" />

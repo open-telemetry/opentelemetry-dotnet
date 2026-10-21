@@ -9,6 +9,7 @@ using OpenTelemetry.SelfDiagnostics;
 
 namespace OpenTelemetry.Tests.Diagnostics;
 
+[Collection(EventSourceCollectionDefinition.Name)]
 public class SelfDiagnosticsLoggerTests
 {
     [Fact]

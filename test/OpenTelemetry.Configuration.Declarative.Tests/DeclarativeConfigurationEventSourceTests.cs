@@ -10,6 +10,7 @@ using OpenTelemetry.Tests;
 
 namespace OpenTelemetry.Configuration.Declarative.Tests;
 
+[Collection(EnvVarsCollectionDefinition.Name)]
 public sealed class DeclarativeConfigurationEventSourceTests
 {
     [Fact]

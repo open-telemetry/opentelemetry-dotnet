@@ -14,6 +14,7 @@ using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests;
 
+[Collection(EventSourceCollectionDefinition.Name)]
 public sealed class IntegrationTests : IDisposable
 {
     private const string CollectorHostnameEnvVarName = "OTEL_COLLECTOR_HOSTNAME";

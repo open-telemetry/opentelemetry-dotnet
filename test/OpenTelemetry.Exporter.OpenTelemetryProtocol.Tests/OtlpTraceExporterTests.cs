@@ -18,7 +18,7 @@ using OtlpTrace = OpenTelemetry.Proto.Trace.V1;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests;
 
-[Collection("xUnitCollectionPreventingTestsThatDependOnSdkConfigurationFromRunningInParallel")]
+[Collection(EnvVarsCollectionDefinition.Name)]
 public sealed class OtlpTraceExporterTests : IDisposable
 {
     private static readonly SdkLimitOptions DefaultSdkLimitOptions = new();
