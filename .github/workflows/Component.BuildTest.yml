@@ -43,6 +43,9 @@ jobs:
     timeout-minutes: 45
 
     env:
+      DOTNET_DbgEnableMiniDump: 1
+      DOTNET_DbgMiniDumpType: 2
+      DOTNET_DbgMiniDumpName: ${{ github.workspace }}/TestResults/crash-%p.dmp
       DOTNET_NOLOGO: true
       DOTNET_SYSTEM_CONSOLE_ALLOW_ANSI_COLOR_REDIRECTION: 1
       FORCE_COLOR: 3
