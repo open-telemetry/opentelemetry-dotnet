@@ -11,6 +11,10 @@ Notes](../../RELEASENOTES.md).
   .NET Framework.
   ([#7983](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7983))
 
+* `SelfDiagnosticsOptions` is now automatically bound from the
+  `OpenTelemetry:SelfDiagnostics` configuration section, when present.
+  ([#8008](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8008))
+
 * **Breaking Change** Dropped support for `net8.0` and `net9.0`.
   ([#6899](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6899))
 
