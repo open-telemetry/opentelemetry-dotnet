@@ -55,11 +55,10 @@ defaults (such as `service.name` from the application name).
 when `IConfiguration` is first resolved, and the host's resource defaults are
 not registered.
 
-**With `HostBuilder`**, add the source inside `ConfigureAppConfiguration`:
+**With `HostBuilder`**, register it inside `ConfigureServices`. The source is
+added to the host's configuration when `IConfiguration` is first resolved:
 
 ```csharp
-hostBuilder.ConfigureAppConfiguration(b =>
-    b.AddOpenTelemetryDeclarativeConfiguration("otel-config.yaml"));
 hostBuilder.ConfigureServices(services =>
     services.AddOpenTelemetry()
         .UseDeclarativeConfiguration("otel-config.yaml")
@@ -125,17 +124,20 @@ if (document is not null)
 }
 ```
 
-Use the `IServiceProvider` overload after the application has been built. When
-no service provider is available, such as during registration, read the
-document from configuration instead:
+Use the `IServiceProvider` overload after the application has been built. To
+read the document during registration on `IHostApplicationBuilder`, call
+`UseDeclarativeConfiguration` first, then read it from `builder.Configuration`:
 
 ```csharp
-builder.Configuration
-    .AddOpenTelemetryDeclarativeConfiguration("otel-config.yaml");
+builder.AddOpenTelemetry()
+    .UseDeclarativeConfiguration("otel-config.yaml");
 
 var document =
     builder.Configuration.GetOpenTelemetryDeclarativeConfiguration();
 ```
+
+With `HostBuilder` or a plain `IServiceCollection`, the document is available
+once the service provider has been built.
 
 If more than one declarative configuration file is found, the file with the
 highest priority is used and a warning is logged. Register only one file per
@@ -172,13 +174,6 @@ resource detectors, including the SDK's default resource, using the standard
 [resource merge rules](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/resource/sdk.md#merge).
 If the configured value differs from a schema URL contributed by another
 detector, the final resource has no schema URL.
-
-`resource.attributes` and `resource.schema_url` are only applied when using
-`UseDeclarativeConfiguration()` on an `IOpenTelemetryBuilder`. When the source
-is registered via `AddOpenTelemetryDeclarativeConfiguration()` alone (the
-source-only path), `resource.attributes` entries and `resource.schema_url` are
-not applied to the SDK resource; only `resource.attributes_list` and `disabled`
-take effect on that path.
 
 All other top-level sections (e.g. `tracer_provider`, `propagator`) are logged
 and are not applied. Structurally invalid content can fail configuration
@@ -333,8 +328,10 @@ Points to be aware of:
   parameterless constructor in application code (for example
   `new OtlpExporterOptions()`), and a `ResourceBuilder` built without a service
   provider.
-- When the source is registered with `AddOpenTelemetryDeclarativeConfiguration()`
-  alone, strict mode applies but its warnings are not written.
+- Declarative configuration is registered through `IOpenTelemetryBuilder`.
+  Providers built directly with `Sdk.CreateTracerProviderBuilder()`, or the
+  meter and logger equivalents, cannot use it yet, and there is no API to parse
+  a file without registering it.
 
 ### Pitfalls to avoid
 

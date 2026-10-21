@@ -109,12 +109,13 @@ internal class OtlpExporterTransmissionHandler : IDisposable
     /// <param name="contentLength">Length of content.</param>
     /// <param name="deadlineUtc">The deadline time in utc for export request to finish.</param>
     /// <param name="response"><see cref="ExportClientResponse" />.</param>
+    /// <param name="cancellationToken">An optional token for canceling the call.</param>
     /// <returns>
     /// <see langword="true"/> If the retry succeeds; otherwise, <see langword="false"/>.
     /// </returns>
-    protected bool TryRetryRequest(byte[] request, int contentLength, DateTime deadlineUtc, out ExportClientResponse response)
+    protected bool TryRetryRequest(byte[] request, int contentLength, DateTime deadlineUtc, out ExportClientResponse response, CancellationToken cancellationToken = default)
     {
-        response = this.ExportClient.SendExportRequest(request, contentLength, deadlineUtc);
+        response = this.ExportClient.SendExportRequest(request, contentLength, deadlineUtc, cancellationToken);
         return response.Success;
     }
 

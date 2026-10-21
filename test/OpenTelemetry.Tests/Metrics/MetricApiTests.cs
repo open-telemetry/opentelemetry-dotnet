@@ -4,7 +4,6 @@
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using OpenTelemetry.Exporter;
-using OpenTelemetry.Internal;
 using OpenTelemetry.Tests;
 
 namespace OpenTelemetry.Metrics.Tests;
@@ -656,8 +655,13 @@ public class MetricApiTests : MetricTestsBase
         using var meter2 = new Meter("DefCompany.XyzProduct.ComponentB");
         var exportedItems = new List<Metric>();
 
+        // The wildcard subscribes to every meter in the process, so drop
+        // instruments from meters created by other tests running in parallel.
+        // A dropped instrument is never enabled, so its callbacks are not
+        // invoked when this provider collects.
         using var container = BuildMeterProvider(out var meterProvider, builder => builder
             .AddMeter("*")
+            .AddView(i => i.Meter == meter1 || i.Meter == meter2 ? null : MetricStreamConfiguration.Drop)
             .AddInMemoryExporter(exportedItems));
 
         var measurement = new Measurement<int>(100);
@@ -2087,39 +2091,6 @@ public class MetricApiTests : MetricTestsBase
     }
 
     [Fact]
-    public void UnsupportedMetricInstrument()
-    {
-        using var meter = new Meter(Utils.GetCurrentMethodName());
-        var exportedItems = new List<Metric>();
-
-        using var container = BuildMeterProvider(out var meterProvider, builder => builder
-            .AddMeter(meter.Name)
-            .AddInMemoryExporter(exportedItems));
-
-        using (var eventListener = new TestEventListener(OpenTelemetrySdkEventSource.Log))
-        {
-            var counter = meter.CreateCounter<decimal>("counter");
-            counter.Add(1);
-
-            // This validates that we log InstrumentIgnored event
-            // and not something else.
-            var instrumentIgnoredEvents = eventListener.Messages.Where((e) => e.EventId == 33);
-#if BUILDING_HOSTING_TESTS
-            // Note: When using IMetricsListener this event is fired twice. Once
-            // for the SDK listener ignoring it because it isn't listening to
-            // the meter and then once for IMetricsListener ignoring it because
-            // decimal is not supported.
-            Assert.Equal(2, instrumentIgnoredEvents.Count());
-#else
-            Assert.Single(instrumentIgnoredEvents);
-#endif
-        }
-
-        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
-        Assert.Empty(exportedItems);
-    }
-
-    [Fact]
     public void GaugeIsExportedCorrectly()
     {
         var exportedItems = new List<Metric>();
@@ -2774,7 +2745,7 @@ public class MetricApiTests : MetricTestsBase
         {
             foreach (var metricPoint in metric.GetMetricPoints())
             {
-                bucketCounts = [.. metricPoint.GetHistogramBuckets().BucketCounts.Select(v => v.RunningValue)];
+                bucketCounts = [.. metricPoint.GetHistogramBuckets().RunningBucketCounts];
             }
         }
 

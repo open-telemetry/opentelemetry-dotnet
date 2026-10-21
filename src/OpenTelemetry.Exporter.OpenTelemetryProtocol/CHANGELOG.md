@@ -7,6 +7,18 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Fixed experimental in-memory retries exceeding the export timeout when a
+  retried request stalls.
+  ([#7977](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7977))
+
+## 1.20.1
+
+Released 2026-Oct-20
+
+## 1.20.1-rc.1
+
+Released 2026-Oct-20
+
 * Fixed informational HTTP client logs not being suppressed by default when the
   OTLP log exporter is registered using `OpenTelemetryLoggerOptions.AddOtlpExporter`.
   ([#7959](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7959))
@@ -66,6 +78,26 @@ Notes](../../RELEASENOTES.md).
   data points omitted from every later export, when the export buffer had to
   be resized while the attribute was being written.
   ([#7973](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7973))
+
+* **Breaking:** Fixed telemetry stored by the experimental disk retry feature
+  for one exporter being resent by another exporter for the same signal to its
+  own endpoint and with its own headers. Disk retry storage is now additionally
+  separated by a subdirectory derived from the exporter's `Protocol`,
+  `Endpoint` and `Headers`. Telemetry stored on disk by earlier versions is
+  not resent.
+  ([#7972](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7972))
+
+* Exponential histogram bucket counts are now serialized in the packed
+  encoding, which reduces the size of the exported payload.
+  ([#7897](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7897))
+
+* Fixed inline certificate or private key material being included in OTLP
+  diagnostic events and exceptions when supplied instead of a file path.
+  ([#7981](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7981))
+
+* Fixed early metric collections permanently omitting resource attributes from
+  subsequent exports while the `MeterProvider` is being built.
+  ([#7984](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7984))
 
 ## 1.20.0
 

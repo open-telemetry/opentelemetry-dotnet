@@ -8,6 +8,7 @@ using OpenTelemetry.Tests;
 
 namespace OpenTelemetry.Exporter.Prometheus.Tests;
 
+[Collection(EventSourceCollectionDefinition.Name)]
 public class EventSourceTests
 {
     [Fact]

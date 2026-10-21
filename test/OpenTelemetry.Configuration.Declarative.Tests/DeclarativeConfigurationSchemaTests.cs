@@ -2,10 +2,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Collections.ObjectModel;
+using OpenTelemetry.Tests;
 using YamlDotNet.RepresentationModel;
 
 namespace OpenTelemetry.Configuration.Declarative.Tests;
 
+[Collection(EnvVarsCollectionDefinition.Name)]
 public sealed class DeclarativeConfigurationSchemaTests
 {
     [Theory]

@@ -10,6 +10,7 @@ using OpenTelemetry.Tests;
 
 namespace OpenTelemetry.Configuration.Declarative.Tests;
 
+[Collection(EnvVarsCollectionDefinition.Name)]
 public sealed class DeclarativeConfigurationEventSourceTests
 {
     [Fact]
@@ -382,12 +383,12 @@ public sealed class DeclarativeConfigurationEventSourceTests
     }
 
     [Fact]
-    public void AddOpenTelemetryDeclarativeConfiguration_Parameterless_NoEnvVar_EmitsOtelConfigFileNotSetWarning()
+    public void UseDeclarativeConfiguration_Parameterless_NoEnvVar_EmitsOtelConfigFileNotSetWarning()
     {
         using var envScope = EnvironmentVariableScope.Create(OtelEnvironmentVariables.ConfigFile, null);
         using var listener = CreateWarningListener();
 
-        new ConfigurationBuilder().AddOpenTelemetryDeclarativeConfiguration();
+        new TestEventSourceBuilder(new ServiceCollection()).UseDeclarativeConfiguration();
 
         Assert.Single(listener.Messages, e => e.EventId == 17);
     }

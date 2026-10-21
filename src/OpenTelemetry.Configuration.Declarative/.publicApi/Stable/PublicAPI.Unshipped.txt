@@ -1,4 +1,3 @@
-Microsoft.Extensions.Configuration.DeclarativeConfigurationBuilderExtensions
 Microsoft.Extensions.Configuration.DeclarativeConfigurationExtensions
 Microsoft.Extensions.DependencyInjection.DeclarativeConfigurationServiceProviderExtensions
 OpenTelemetry.Configuration.Declarative.ConfigProperties
@@ -54,8 +53,6 @@ override OpenTelemetry.Configuration.Declarative.ConfigValuePosition.Equals(obje
 override OpenTelemetry.Configuration.Declarative.ConfigValuePosition.GetHashCode() -> int
 override OpenTelemetry.Configuration.Declarative.ConfigValueResult<T>.Equals(object? obj) -> bool
 override OpenTelemetry.Configuration.Declarative.ConfigValueResult<T>.GetHashCode() -> int
-static Microsoft.Extensions.Configuration.DeclarativeConfigurationBuilderExtensions.AddOpenTelemetryDeclarativeConfiguration(this Microsoft.Extensions.Configuration.IConfigurationBuilder! builder) -> Microsoft.Extensions.Configuration.IConfigurationBuilder!
-static Microsoft.Extensions.Configuration.DeclarativeConfigurationBuilderExtensions.AddOpenTelemetryDeclarativeConfiguration(this Microsoft.Extensions.Configuration.IConfigurationBuilder! builder, string! filePath) -> Microsoft.Extensions.Configuration.IConfigurationBuilder!
 static Microsoft.Extensions.Configuration.DeclarativeConfigurationExtensions.GetOpenTelemetryDeclarativeConfiguration(this Microsoft.Extensions.Configuration.IConfigurationRoot! configuration) -> OpenTelemetry.Configuration.Declarative.DeclarativeConfigurationDocument?
 static Microsoft.Extensions.DependencyInjection.DeclarativeConfigurationServiceProviderExtensions.GetOpenTelemetryDeclarativeConfiguration(this System.IServiceProvider! serviceProvider) -> OpenTelemetry.Configuration.Declarative.DeclarativeConfigurationDocument?
 static OpenTelemetry.Configuration.Declarative.ConfigProperties.Empty.get -> OpenTelemetry.Configuration.Declarative.ConfigProperties!

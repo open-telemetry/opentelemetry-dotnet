@@ -15,6 +15,7 @@ using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Configuration.Declarative.Tests;
 
+[Collection(EnvVarsCollectionDefinition.Name)]
 public sealed class StrictModeDiagnosticsTests
 {
     private const int SettingsIgnoredEventId = 36;

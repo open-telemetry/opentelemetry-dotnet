@@ -7,6 +7,7 @@ using OpenTelemetry.Tests;
 
 namespace OpenTelemetry.Configuration.Declarative.Tests;
 
+[Collection(EnvVarsCollectionDefinition.Name)]
 public sealed class DeclarativeConfigurationReaderTests
 {
     private const int UnknownSectionEventId = 2;

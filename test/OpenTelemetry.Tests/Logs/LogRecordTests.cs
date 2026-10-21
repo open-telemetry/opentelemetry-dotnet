@@ -1074,11 +1074,13 @@ public sealed class LogRecordTests
         Assert.Equal(string.Empty, logRecord.CategoryName);
         Assert.Equal(logRecord.CategoryName, logRecord.Logger.Name);
 
+        // AddInMemoryExporter copies each exported record. Holding on to the pooled
+        // records themselves is not safe once the provider has exported them: they go
+        // back to the process-wide pool, where a logger in a test running at the same
+        // time can rent and overwrite them before the assertions below run.
         var exportedItems = new List<LogRecord>();
         using (var loggerProvider = Sdk.CreateLoggerProviderBuilder()
-#pragma warning disable CA2000 // Dispose objects before losing scope
-            .AddProcessor(new BatchLogRecordExportProcessor(new InMemoryExporter<LogRecord>(exportedItems)))
-#pragma warning restore CA2000 // Dispose objects before losing scope
+            .AddInMemoryExporter(exportedItems)
             .Build())
         {
             var logger = loggerProvider.GetLogger("TestName");
@@ -1094,9 +1096,7 @@ public sealed class LogRecordTests
         // SchemaUrl rather than resetting them to null.
         var exportedItemsWithScope = new List<LogRecord>();
         using (var loggerProvider = Sdk.CreateLoggerProviderBuilder()
-#pragma warning disable CA2000 // Dispose objects before losing scope
-            .AddProcessor(new BatchLogRecordExportProcessor(new InMemoryExporter<LogRecord>(exportedItemsWithScope)))
-#pragma warning restore CA2000 // Dispose objects before losing scope
+            .AddInMemoryExporter(exportedItemsWithScope)
             .Build())
         {
             var logger = loggerProvider.GetLogger(new LoggerOptions
@@ -1210,8 +1210,8 @@ public sealed class LogRecordTests
     public void BufferSnapshotsAttributeSourceCountOnce()
     {
         var attribute = new KeyValuePair<string, object?>("key", "value");
-        var attributeStorage = new List<KeyValuePair<string, object?>> { attribute };
-        var attributes = new CountOnceReadOnlyList<KeyValuePair<string, object?>>(attributeStorage);
+        var attributeStorage = new List<KeyValuePair<string, object?>>();
+        var attributes = new CountOnceReadOnlyList<KeyValuePair<string, object?>>([attribute]);
 
         var logRecord = new LogRecord
         {
@@ -1224,9 +1224,56 @@ public sealed class LogRecordTests
         Assert.Equal(1, attributes.CountAccesses);
         Assert.Same(attributeStorage, logRecord.Attributes);
 
+        Assert.Equal([attribute], attributeStorage);
+    }
+
+    [Fact]
+    public void BufferDoesNotRetainReplacedAttributes()
+    {
+        var attribute = new KeyValuePair<string, object?>("key", "value");
+        var attributeStorage = new List<KeyValuePair<string, object?>> { attribute };
+        var attributes = new CountOnceReadOnlyList<KeyValuePair<string, object?>>(attributeStorage);
+        var logRecord = new LogRecord
+        {
+            AttributeStorage = attributeStorage,
+            Attributes = attributes,
+        };
+
+        logRecord.Buffer();
+
+        Assert.NotSame(attributeStorage, logRecord.Attributes);
+        Assert.Same(logRecord.AttributeStorage, logRecord.Attributes);
+        Assert.Equal([attribute], logRecord.Attributes);
+        Assert.Equal([attribute], attributeStorage);
+
+        var bufferedAttributes = logRecord.Attributes;
+        logRecord.Buffer();
+
+        Assert.Same(bufferedAttributes, logRecord.Attributes);
+        Assert.Equal([attribute], logRecord.Attributes);
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(1)]
+    public void BufferReplacesAttributesWithFewerItems(int retainedAttributeCount)
+    {
+        var attributeStorage = new List<KeyValuePair<string, object?>>
+        {
+            new("user", "alice"),
+            new("password", "secret"),
+        };
+        var replacement = attributeStorage.Take(retainedAttributeCount).ToArray();
+        var logRecord = new LogRecord
+        {
+            AttributeStorage = attributeStorage,
+            Attributes = replacement,
+        };
+
+        logRecord.Buffer();
+
+        Assert.Equal(replacement, logRecord.Attributes);
         Assert.Equal(2, attributeStorage.Count);
-        Assert.Equal(attribute, attributeStorage[0]);
-        Assert.Equal(attribute, attributeStorage[1]);
     }
 
     private static ILoggerFactory InitializeLoggerFactory(out List<LogRecord> exportedItems, Action<OpenTelemetryLoggerOptions>? configure = null)
