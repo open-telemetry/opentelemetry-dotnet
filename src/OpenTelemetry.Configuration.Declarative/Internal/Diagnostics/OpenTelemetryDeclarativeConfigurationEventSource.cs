@@ -19,8 +19,7 @@ internal sealed class OpenTelemetryDeclarativeConfigurationEventSource : EventSo
     [Event(1, Message = "Declarative config file_format warning: {0}", Level = EventLevel.Warning)]
     public void FileFormatWarning(string message) => this.WriteEvent(1, message);
 
-    [Event(2, Message = "Declarative config: top-level section '{0}' is retained but not interpreted by this implementation.", Level = EventLevel.Warning)]
-    public void UnknownConfigurationSection(string sectionName) => this.WriteEvent(2, sectionName);
+    // Event 2 is retired. Events 42, 44 and 45 replace it.
 
     [Event(3, Message = "Declarative config: invalid resource attribute - {0}", Level = EventLevel.Warning)]
     public void InvalidResourceAttribute(string message) => this.WriteEvent(3, message);
@@ -181,4 +180,16 @@ internal sealed class OpenTelemetryDeclarativeConfigurationEventSource : EventSo
         Message = "Declarative config: property '{0}' is not defined by OpenTelemetry configuration schema {2}. It is retained but not applied: {3} (the document declares file_format '{1}').",
         Level = EventLevel.Warning)]
     public void UndefinedPropertyRetained(string propertyPath, string fileFormat, string schemaVersion, string reason) => this.WriteEvent(43, propertyPath, fileFormat, schemaVersion, reason);
+
+    [Event(
+        44,
+        Message = "Declarative config: '{1}' in '{0}' (line {2}, column {3}) is a Stable configuration setting that this version of the package does not apply. The setting has no effect.",
+        Level = EventLevel.Error)]
+    public void ConfiguredPropertyNotApplied(string filePath, string propertyPath, long line, long column) => this.WriteEvent(44, filePath, propertyPath, line, column);
+
+    [Event(
+        45,
+        Message = "Declarative config: '{1}' in '{0}' (line {2}, column {3}) is a Development configuration setting that this package does not implement. The setting has no effect.",
+        Level = EventLevel.Warning)]
+    public void DevelopmentPropertyNotApplied(string filePath, string propertyPath, long line, long column) => this.WriteEvent(45, filePath, propertyPath, line, column);
 }
