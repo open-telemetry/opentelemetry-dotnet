@@ -15,7 +15,7 @@ ARG PUBLISH_FRAMEWORK=net11.0
 # renovate: datasource=github-digest depName=w3c/trace-context packageName=w3c/trace-context currentValue=main
 ENV W3C_TRACE_CONTEXT_SHA="acab820be9db7b3433668baa5cdd43f57f4c4be0"
 
-# HACK Workaround for https://github.com/dotnet/dotnet-docker/issues/7296
+# Azure Linux 4 includes a version of OpenSSL that requires enabling SHA1 for .snk files explicitly
 ENV OPENSSL_ENABLE_SHA1_SIGNATURES=1
 
 WORKDIR /repo
