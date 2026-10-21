@@ -69,9 +69,11 @@ internal sealed class DeclarativeConfigurationProvider(DeclarativeConfigurationD
         {
             earlierKeys = earlierKeys.Where(key => !StrictModeKeyScope.IsInScope(key));
         }
-        else if (StrictModeKeyScope.IsInScope(parentPath))
+        else
         {
-            earlierKeys = [];
+            // Child keys are relative to parentPath. A child is hidden when its full path is in
+            // scope, which also covers every child of an in-scope parent.
+            earlierKeys = earlierKeys.Where(key => !StrictModeKeyScope.IsInScope(ConfigurationPath.Combine(parentPath, key)));
         }
 
         return base.GetChildKeys(earlierKeys, parentPath);
