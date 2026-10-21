@@ -2,6 +2,7 @@
 
   <PropertyGroup>
     <Description>Android test app validating the OpenTelemetry SDK runs end-to-end under the Android runtime.</Description>
+    <EmbedAssembliesIntoApk>true</EmbedAssembliesIntoApk>
     <EnableMSTestRunner>true</EnableMSTestRunner>
     <NoWarn>$(NoWarn);CA1515;CA1707;CA1848;CA2007;XA0101;XA0141</NoWarn>
     <OutputType>Exe</OutputType>
