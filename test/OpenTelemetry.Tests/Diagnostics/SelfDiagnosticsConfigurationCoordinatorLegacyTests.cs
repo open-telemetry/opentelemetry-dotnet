@@ -295,8 +295,9 @@ public class SelfDiagnosticsConfigurationCoordinatorLegacyTests
         var reports = 0;
         coordinator = new SelfDiagnosticsConfigurationCoordinator(_ => { }, path =>
         {
-            var reentry = Task.Run(() => coordinator!.SetLegacyConfiguration(FileOptions("from-another-thread"), "another.json"));
-            Assert.True(reentry.Wait(TimeSpan.FromSeconds(5)), "Ignored callback held the coordinator lock.");
+            Assert.True(
+                CompletesOnAnotherThread(() => coordinator!.SetLegacyConfiguration(FileOptions("from-another-thread"), "another.json")),
+                "Ignored callback held the coordinator lock.");
             Assert.Equal("legacy.json", path);
             reports++;
         });
@@ -395,8 +396,9 @@ public class SelfDiagnosticsConfigurationCoordinatorLegacyTests
         var monitor = FileMonitor("provider");
         monitor.OnSubscriptionDisposed = () =>
         {
-            var reentry = Task.Run(() => coordinator.SetLegacyConfiguration(null, null));
-            Assert.True(reentry.Wait(TimeSpan.FromSeconds(5)), "Subscription disposal held the coordinator lock.");
+            Assert.True(
+                CompletesOnAnotherThread(() => coordinator.SetLegacyConfiguration(null, null)),
+                "Subscription disposal held the coordinator lock.");
         };
 
         Assert.Throws<ObjectDisposedException>(() => coordinator.Register(monitor));
@@ -442,6 +444,12 @@ public class SelfDiagnosticsConfigurationCoordinatorLegacyTests
 
     private static TestMonitor FileMonitor(string directory)
         => new(FileOptions(directory));
+
+    // Uses a dedicated thread so a thread pool starved by parallel tests cannot delay the
+    // re-entrant call past the timeout and be misreported as the coordinator lock being held.
+    private static bool CompletesOnAnotherThread(Action action)
+        => Task.Factory.StartNew(action, CancellationToken.None, TaskCreationOptions.LongRunning, TaskScheduler.Default)
+            .Wait(TimeSpan.FromSeconds(5));
 
     private sealed class TestMonitor(SelfDiagnosticsOptions options) : IOptionsMonitor<SelfDiagnosticsOptions>
     {
