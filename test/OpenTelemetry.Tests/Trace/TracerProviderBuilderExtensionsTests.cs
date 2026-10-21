@@ -11,6 +11,7 @@ using OpenTelemetry.Tests;
 
 namespace OpenTelemetry.Trace.Tests;
 
+[Collection(EnvVarsCollectionDefinition.Name)]
 public class TracerProviderBuilderExtensionsTests
 {
     [Fact]

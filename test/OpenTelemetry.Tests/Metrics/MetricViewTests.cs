@@ -7,6 +7,7 @@ using OpenTelemetry.Tests;
 
 namespace OpenTelemetry.Metrics.Tests;
 
+[Collection(EventSourceCollectionDefinition.Name)]
 public class MetricViewTests : MetricTestsBase
 {
     private const int MaxTimeToAllowForFlush = 10000;

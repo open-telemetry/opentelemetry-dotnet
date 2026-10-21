@@ -5,6 +5,7 @@ using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Tests;
 
+[Collection(EventSourceCollectionDefinition.Name)]
 public class EventSourceTests
 {
     [Fact]

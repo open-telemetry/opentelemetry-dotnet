@@ -13,9 +13,20 @@ public class SelfDiagnosticsAssemblyLoggerTests
     {
         var recording = new RecordingLogger();
 
+        // A scan would report the assemblies which are already loaded. Assemblies that other
+        // tests running at the same time load after construction are legitimately reported
+        // through the AssemblyLoad event, so only the former must be absent.
+        var alreadyLoaded = AppDomain.CurrentDomain.GetAssemblies()
+            .Select(assembly => assembly.GetName().Name)
+            .Where(name => !string.IsNullOrEmpty(name))
+            .Select(name => $"Assembly loaded: {name},")
+            .ToList();
+
         using var assemblyLogger = new SelfDiagnosticsAssemblyLogger(recording);
 
-        Assert.Empty(recording.Entries);
+        Assert.DoesNotContain(
+            recording.Entries,
+            entry => alreadyLoaded.Any(prefix => entry.Message.StartsWith(prefix, StringComparison.Ordinal)));
     }
 
     [Fact]

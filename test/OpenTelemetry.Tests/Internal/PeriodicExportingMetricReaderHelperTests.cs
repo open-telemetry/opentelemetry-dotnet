@@ -5,9 +5,11 @@ using System.Globalization;
 using Microsoft.Extensions.Configuration;
 using OpenTelemetry.Exporter;
 using OpenTelemetry.Metrics;
+using OpenTelemetry.Tests;
 
 namespace OpenTelemetry.Internal.Tests;
 
+[Collection(EnvVarsCollectionDefinition.Name)]
 public sealed class PeriodicExportingMetricReaderHelperTests : IDisposable
 {
     public PeriodicExportingMetricReaderHelperTests()

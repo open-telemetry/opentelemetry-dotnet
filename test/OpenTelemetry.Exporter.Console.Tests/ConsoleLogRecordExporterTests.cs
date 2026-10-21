@@ -5,12 +5,14 @@ using System.Diagnostics;
 using Microsoft.Extensions.Logging;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Resources;
+using OpenTelemetry.Tests;
 
 namespace OpenTelemetry.Exporter.Console.Tests;
 
 #pragma warning disable CA1848 // Use the LoggerMessage delegates
 #pragma warning disable CA1873 // Avoid potentially expensive logging
 
+[Collection(ConsoleErrorCollectionDefinition.Name)]
 public class ConsoleLogRecordExporterTests
 {
     [Fact]

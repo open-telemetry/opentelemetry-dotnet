@@ -5,9 +5,11 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using OpenTelemetry.Resources;
+using OpenTelemetry.Tests;
 
 namespace OpenTelemetry.Metrics.Tests;
 
+[Collection(EnvVarsCollectionDefinition.Name)]
 public class MeterProviderBuilderExtensionsTests
 {
     [Fact]
