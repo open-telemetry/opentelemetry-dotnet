@@ -21,8 +21,6 @@ jobs:
 
     strategy:
       fail-fast: ${{ inputs.trigger == 'merge_group' }}
-      matrix:
-        version: [ net11.0, net10.0 ]
 
     steps:
     - name: Setup JDK 17
@@ -54,8 +52,6 @@ jobs:
 
     - name: Run MAUI end-to-end tests on the emulator
       uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
-      env:
-        TARGET_FRAMEWORK: ${{ matrix.version }}
       with:
         api-level: 34
         arch: x86_64
@@ -64,7 +60,7 @@ jobs:
         target: google_apis
         script: |
           set +e
-          dotnet test test/OpenTelemetry.Maui.Tests/OpenTelemetry.Maui.Tests.csproj --configuration Debug --framework "${TARGET_FRAMEWORK}" --report-github --report-github-summary-include-passed false
+          dotnet test test/OpenTelemetry.Maui.Tests/OpenTelemetry.Maui.Tests.csproj --configuration Debug --report-github --report-github-summary-include-passed false
           exit_code=$?
           adb pull /storage/emulated/0/Android/data/io.opentelemetry.dotnet.maui/files/TestResults ./TestResults || true
           exit $exit_code
