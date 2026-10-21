@@ -14,8 +14,8 @@ namespace OpenTelemetry.Internal;
 internal static class ConfigurationAliasPrecedence
 {
     /// <summary>
-    /// Creates the section to bind, without excluded keys or keys whose variable comes from a later
-    /// provider, and with values converted by <see cref="ConfigurationAlias.NormalizeSectionValue"/>.
+    /// Creates the section to bind, without excluded keys, keys whose variable comes from a later
+    /// provider, or empty values, and with values converted by <see cref="ConfigurationAlias.NormalizeSectionValue"/>.
     /// </summary>
     /// <remarks>
     /// A variable the options type did not apply, because it is unset, blank, or unrecognised,
@@ -50,16 +50,16 @@ internal static class ConfigurationAliasPrecedence
         }
 
         // Then copy everything else, normalized so the binder accepts the values the variables accept.
+        // Empty values are left out, as a blank variable is ignored, so every target framework keeps
+        // the default: the generated binders do not all skip an empty value.
         List<KeyValuePair<string, string?>> bindableValues = [];
         foreach (var pair in configuration.GetSection(sectionPath).AsEnumerable(makePathsRelative: true))
         {
-            if (pair.Value is not { } value || omittedKeys.Contains(GetFirstSegment(pair.Key)))
+            if (pair.Value is { Length: > 0 } value && !omittedKeys.Contains(GetFirstSegment(pair.Key)))
             {
-                continue;
+                // The copy keeps the full key paths, so a binding error still names the original key.
+                bindableValues.Add(new(ConfigurationPath.Combine(sectionPath, pair.Key), NormalizeSectionValue(aliases, pair.Key, value)));
             }
-
-            // The copy keeps the full key paths, so a binding error still names the original key.
-            bindableValues.Add(new(ConfigurationPath.Combine(sectionPath, pair.Key), NormalizeSectionValue(aliases, pair.Key, value)));
         }
 
         return new ConfigurationBuilder()
@@ -120,10 +120,10 @@ internal static class ConfigurationAliasPrecedence
         return value;
     }
 
-    // Must match the ConfigurationRoot indexer: the last provider whose TryGet succeeds supplies
-    // the value, even when that value is null.
     private static int GetWinningProviderIndex(IReadOnlyList<IConfigurationProvider> providers, string key)
     {
+        // Must match the ConfigurationRoot indexer: the last provider whose TryGet succeeds supplies
+        // the value, even when that value is null.
         for (var i = providers.Count - 1; i >= 0; i--)
         {
             if (providers[i].TryGet(key, out _))

@@ -11,18 +11,18 @@ namespace OpenTelemetry.Tests.Diagnostics;
 public class SelfDiagnosticsOptionsEnvironmentDefaultsTests
 {
     [Theory]
-    [InlineData(SelfDiagnosticsOptions.LogLevelEnvVarName, "debug", true)]
-    [InlineData(SelfDiagnosticsOptions.LogLevelEnvVarName, "verbose", false)]
-    [InlineData(SelfDiagnosticsOptions.LogLevelEnvVarName, " ", false)]
-    [InlineData(SelfDiagnosticsOptions.EnvironmentVariablesEnvVarName, "all", true)]
-    [InlineData(SelfDiagnosticsOptions.EnvironmentVariablesEnvVarName, "some", false)]
-    [InlineData(SelfDiagnosticsOptions.LogDirectoryEnvVarName, "/logs", true)]
-    [InlineData(SelfDiagnosticsOptions.LogDirectoryEnvVarName, "", false)]
-    [InlineData(SelfDiagnosticsOptions.SinksEnvVarName, "stdout,syslog", true)]
-    [InlineData(SelfDiagnosticsOptions.SinksEnvVarName, "none", true)]
-    [InlineData(SelfDiagnosticsOptions.SinksEnvVarName, "file", true)]
-    [InlineData(SelfDiagnosticsOptions.SinksEnvVarName, "syslog", false)]
-    [InlineData(SelfDiagnosticsOptions.SinksEnvVarName, ",,", false)]
+    [InlineData("OTEL_LOG_LEVEL", "debug", true)]
+    [InlineData("OTEL_LOG_LEVEL", "verbose", false)]
+    [InlineData("OTEL_LOG_LEVEL", " ", false)]
+    [InlineData("OTEL_DOTNET_SELF_DIAGNOSTICS_ENV_VARS", "all", true)]
+    [InlineData("OTEL_DOTNET_SELF_DIAGNOSTICS_ENV_VARS", "some", false)]
+    [InlineData("OTEL_DOTNET_SELF_DIAGNOSTICS_LOG_DIRECTORY", "/logs", true)]
+    [InlineData("OTEL_DOTNET_SELF_DIAGNOSTICS_LOG_DIRECTORY", "", false)]
+    [InlineData("OTEL_DOTNET_SELF_DIAGNOSTICS_SINKS", "stdout,syslog", true)]
+    [InlineData("OTEL_DOTNET_SELF_DIAGNOSTICS_SINKS", "none", true)]
+    [InlineData("OTEL_DOTNET_SELF_DIAGNOSTICS_SINKS", "file", true)]
+    [InlineData("OTEL_DOTNET_SELF_DIAGNOSTICS_SINKS", "syslog", false)]
+    [InlineData("OTEL_DOTNET_SELF_DIAGNOSTICS_SINKS", ",,", false)]
     public void ApplyEnvironmentVariables_RecordsOnlyTheVariablesItApplied(string name, string value, bool applied)
     {
         var configuration = new ConfigurationBuilder().AddInMemoryCollection([new(name, value)]).Build();

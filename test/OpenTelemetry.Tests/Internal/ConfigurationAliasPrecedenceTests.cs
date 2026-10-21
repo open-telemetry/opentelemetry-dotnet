@@ -107,6 +107,17 @@ public class ConfigurationAliasPrecedenceTests
     }
 
     [Fact]
+    public void CreateBindableSection_OmitsEmptyValues()
+    {
+        var configuration = BuildConfiguration(
+            ($"{SectionPath}:Level", string.Empty),
+            ($"{SectionPath}:Mode", "fast"),
+            ($"{SectionPath}:Other", " "));
+
+        Assert.Equal(["Mode=fast", "Other= "], GetValues(CreateBindableSection(configuration)));
+    }
+
+    [Fact]
     public void CreateBindableSection_KeepsTheOriginalKeyPaths()
     {
         var section = CreateBindableSection(BuildConfiguration(($"{SectionPath}:Mode", "fast")));

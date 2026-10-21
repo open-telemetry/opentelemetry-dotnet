@@ -86,9 +86,11 @@ internal static class SelfDiagnosticsOptionsEnvironmentDefaults
         // Keep explicit empty section values, which disable file output rather than request a default directory.
         var sectionDirectory = section?[nameof(SelfDiagnosticsOptions.LogDirectory)];
         var directoryKey = ConfigurationPath.Combine(SelfDiagnosticsOptions.ConfigurationSectionPath, nameof(SelfDiagnosticsOptions.LogDirectory));
+
         var sectionDirectoryWins = sectionDirectory != null
             && (string.IsNullOrWhiteSpace(logDirectory)
                 || !ConfigurationAliasPrecedence.IsFromLaterProvider(configuration, SelfDiagnosticsOptions.LogDirectoryEnvVarName, directoryKey));
+
         if (sectionDirectoryWins)
         {
             options.LogDirectory = sectionDirectory;

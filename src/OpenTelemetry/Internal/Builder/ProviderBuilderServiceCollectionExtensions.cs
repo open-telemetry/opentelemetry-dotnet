@@ -86,9 +86,8 @@ internal static class ProviderBuilderServiceCollectionExtensions
             name == Options.Options.DefaultName
                 ? SelfDiagnosticsOptionsFactory.CreateDefault(configuration)
                 : new SelfDiagnosticsOptions(configuration));
-        services.TryAddEnumerable(ServiceDescriptor.Singleton<
-            IOptionsChangeTokenSource<SelfDiagnosticsOptions>,
-            SelfDiagnosticsOptionsChangeTokenSource>());
+        services.TryAddEnumerable(
+            ServiceDescriptor.Singleton<IOptionsChangeTokenSource<SelfDiagnosticsOptions>, SelfDiagnosticsOptionsChangeTokenSource>());
 
         return services;
     }

@@ -155,9 +155,9 @@ public class SelfDiagnosticsOptionsBindingTests
     public void SameProvider_SectionKeysWinTies()
     {
         var options = CreateDefaultOptions(BuildConfiguration(
-            (SelfDiagnosticsOptions.LogLevelEnvVarName, "debug"),
-            (SelfDiagnosticsOptions.LogDirectoryEnvVarName, "/from-environment"),
-            (SelfDiagnosticsOptions.EnvironmentVariablesEnvVarName, "all"),
+            ("OTEL_LOG_LEVEL", "debug"),
+            ("OTEL_DOTNET_SELF_DIAGNOSTICS_LOG_DIRECTORY", "/from-environment"),
+            ("OTEL_DOTNET_SELF_DIAGNOSTICS_ENV_VARS", "all"),
             ($"{SectionPath}:MinimumLevel", "Error"),
             ($"{SectionPath}:LogDirectory", "/from-section"),
             ($"{SectionPath}:EnvironmentVariables", "Names")));
@@ -171,7 +171,7 @@ public class SelfDiagnosticsOptionsBindingTests
     public void SameProvider_SectionKeyCanTurnOffASinkTheVariableSelected()
     {
         var options = CreateDefaultOptions(BuildConfiguration(
-            (SelfDiagnosticsOptions.SinksEnvVarName, "stdout,stderr"),
+            ("OTEL_DOTNET_SELF_DIAGNOSTICS_SINKS", "stdout,stderr"),
             ($"{SectionPath}:LogToStdout", "false")));
 
         Assert.False(options.LogToStdout, "Expected LogToStdout to be false when the section key disables it.");
@@ -184,7 +184,7 @@ public class SelfDiagnosticsOptionsBindingTests
         // Platform injects the variable; a checked-in file has the section.
         var options = CreateDefaultOptions(BuildConfiguration(
             earlierProvider: [($"{SectionPath}:MinimumLevel", "Error")],
-            laterProvider: [(SelfDiagnosticsOptions.LogLevelEnvVarName, "debug")]));
+            laterProvider: [("OTEL_LOG_LEVEL", "debug")]));
 
         Assert.Equal(LogLevel.Debug, options.MinimumLevel);
     }
@@ -194,7 +194,7 @@ public class SelfDiagnosticsOptionsBindingTests
     {
         // The variable is set in the environment; the command line overrides the section key.
         var options = CreateDefaultOptions(BuildConfiguration(
-            earlierProvider: [(SelfDiagnosticsOptions.LogLevelEnvVarName, "debug")],
+            earlierProvider: [("OTEL_LOG_LEVEL", "debug")],
             laterProvider: [($"{SectionPath}:MinimumLevel", "Error")]));
 
         Assert.Equal(LogLevel.Error, options.MinimumLevel);
@@ -206,7 +206,7 @@ public class SelfDiagnosticsOptionsBindingTests
         // Hosts register a ConfigurationManager rather than a ConfigurationRoot.
         using var configuration = new ConfigurationManager();
         configuration.AddInMemoryCollection([new($"{SectionPath}:MinimumLevel", "Error")]);
-        configuration.AddInMemoryCollection([new(SelfDiagnosticsOptions.LogLevelEnvVarName, "debug")]);
+        configuration.AddInMemoryCollection([new("OTEL_LOG_LEVEL", "debug")]);
 
         Assert.Equal(LogLevel.Debug, CreateDefaultOptions(configuration).MinimumLevel);
     }
@@ -215,7 +215,7 @@ public class SelfDiagnosticsOptionsBindingTests
     public void ChainedConfiguration_UsesItsOuterProviderPosition()
     {
         var chained = BuildConfiguration(
-            earlierProvider: [(SelfDiagnosticsOptions.LogLevelEnvVarName, "debug")],
+            earlierProvider: [("OTEL_LOG_LEVEL", "debug")],
             laterProvider: [($"{SectionPath}:MinimumLevel", "Error")]);
         var configuration = new ConfigurationBuilder()
             .AddInMemoryCollection([new($"{SectionPath}:MinimumLevel", "Critical")])
@@ -226,14 +226,14 @@ public class SelfDiagnosticsOptionsBindingTests
     }
 
     [Theory]
-    [InlineData(SelfDiagnosticsOptions.LogLevelEnvVarName, LogLevel.Error)]
+    [InlineData("OTEL_LOG_LEVEL", LogLevel.Error)]
     [InlineData("OpenTelemetry:SelfDiagnostics:MinimumLevel", LogLevel.Debug)]
     public void MaskedConfiguration_DoesNotExposeHiddenProviderValues(string maskedKey, LogLevel expected)
     {
         var configuration = new MaskedConfiguration(
             BuildConfiguration(
                 earlierProvider: [($"{SectionPath}:MinimumLevel", "Error")],
-                laterProvider: [(SelfDiagnosticsOptions.LogLevelEnvVarName, "debug")]),
+                laterProvider: [("OTEL_LOG_LEVEL", "debug")]),
             maskedKey);
 
         Assert.Equal(expected, CreateDefaultOptions(configuration).MinimumLevel);
@@ -247,7 +247,7 @@ public class SelfDiagnosticsOptionsBindingTests
     {
         var configuration = BuildConfiguration(
             earlierProvider: [($"{SectionPath}:EnvironmentVariables", "Names")],
-            laterProvider: [(SelfDiagnosticsOptions.EnvironmentVariablesEnvVarName, value)]);
+            laterProvider: [("OTEL_DOTNET_SELF_DIAGNOSTICS_ENV_VARS", value)]);
 
         var options = CreateDefaultOptions(configuration);
 
@@ -264,7 +264,7 @@ public class SelfDiagnosticsOptionsBindingTests
                 ($"{SectionPath}:LogToStdout", "true"),
                 ($"{SectionPath}:LogDirectory", "/from-section"),
             ],
-            laterProvider: [(SelfDiagnosticsOptions.SinksEnvVarName, "none")]));
+            laterProvider: [("OTEL_DOTNET_SELF_DIAGNOSTICS_SINKS", "none")]));
 
         Assert.False(options.LogToStdout, "LogToStdout should be false when sinks is set to 'none'.");
         Assert.Null(options.LogDirectory);
@@ -277,7 +277,7 @@ public class SelfDiagnosticsOptionsBindingTests
     {
         var options = CreateDefaultOptions(BuildConfiguration(
             earlierProvider: [($"{SectionPath}:{key}", "/from-section")],
-            laterProvider: [(SelfDiagnosticsOptions.SinksEnvVarName, "none")]));
+            laterProvider: [("OTEL_DOTNET_SELF_DIAGNOSTICS_SINKS", "none")]));
 
         Assert.Null(options.LogDirectory);
     }
@@ -292,7 +292,7 @@ public class SelfDiagnosticsOptionsBindingTests
                 ($"{SectionPath}:LogToStderr", "true"),
                 ($"{SectionPath}:LogDirectory", "/from-section"),
             ],
-            laterProvider: [(SelfDiagnosticsOptions.SinksEnvVarName, "stdout")]));
+            laterProvider: [("OTEL_DOTNET_SELF_DIAGNOSTICS_SINKS", "stdout")]));
 
         Assert.True(options.LogToStdout, "LogToStdout should be true when sinks is set to 'stdout'.");
         Assert.False(options.LogToStderr, "LogToStderr should be false when sinks is set to 'stdout'.");
@@ -309,7 +309,7 @@ public class SelfDiagnosticsOptionsBindingTests
                 ($"{SectionPath}:MaxRetainedFiles", "5"),
                 ($"{SectionPath}:LogToStderr", "true"),
             ],
-            laterProvider: [(SelfDiagnosticsOptions.LogLevelEnvVarName, "debug")]));
+            laterProvider: [("OTEL_LOG_LEVEL", "debug")]));
 
         Assert.Equal(LogLevel.Debug, options.MinimumLevel);
         Assert.Equal(5, options.MaxRetainedFiles);
@@ -328,7 +328,7 @@ public class SelfDiagnosticsOptionsBindingTests
                 ($"{SectionPath}:{normalizedKey}", "all"),
                 ($"{SectionPath}:{retainedKey}", "5"),
             ],
-            laterProvider: [(SelfDiagnosticsOptions.LogLevelEnvVarName, "debug")]);
+            laterProvider: [("OTEL_LOG_LEVEL", "debug")]);
 
         var options = CreateDefaultOptions(configuration);
 
@@ -347,10 +347,10 @@ public class SelfDiagnosticsOptionsBindingTests
         var configuration = BuildConfiguration(
             earlierProvider:
             [
-                (SelfDiagnosticsOptions.LogLevelEnvVarName, "debug"),
+                ("OTEL_LOG_LEVEL", "debug"),
                 ($"{SectionPath}:MinimumLevel", sectionValue),
             ],
-            laterProvider: [(SelfDiagnosticsOptions.LogLevelEnvVarName, null)]);
+            laterProvider: [("OTEL_LOG_LEVEL", null)]);
 
         var options = CreateDefaultOptions(configuration);
 
@@ -363,7 +363,7 @@ public class SelfDiagnosticsOptionsBindingTests
     {
         var options = CreateDefaultOptions(BuildConfiguration(
             earlierProvider: [($"{SectionPath}:MinimumLevel", "verbose")],
-            laterProvider: [(SelfDiagnosticsOptions.LogLevelEnvVarName, "debug")]));
+            laterProvider: [("OTEL_LOG_LEVEL", "debug")]));
 
         Assert.Equal(LogLevel.Debug, options.MinimumLevel);
     }
@@ -379,7 +379,7 @@ public class SelfDiagnosticsOptionsBindingTests
                 ($"{SectionPath}:MinimumLevel", "Error"),
                 ($"{SectionPath}:LogToStdout", "yes"),
             ],
-            laterProvider: [(SelfDiagnosticsOptions.LogLevelEnvVarName, "debug")]);
+            laterProvider: [("OTEL_LOG_LEVEL", "debug")]);
 
         var exception = Assert.Throws<InvalidOperationException>(() => CreateDefaultOptions(configuration));
 
@@ -395,7 +395,7 @@ public class SelfDiagnosticsOptionsBindingTests
         // The options type ignores an unrecognised or blank OTEL_LOG_LEVEL, so it cannot win.
         var options = CreateDefaultOptions(BuildConfiguration(
             earlierProvider: [($"{SectionPath}:MinimumLevel", "Error")],
-            laterProvider: [(SelfDiagnosticsOptions.LogLevelEnvVarName, ignoredValue)]));
+            laterProvider: [("OTEL_LOG_LEVEL", ignoredValue)]));
 
         Assert.Equal(LogLevel.Error, options.MinimumLevel);
     }
@@ -413,9 +413,9 @@ public class SelfDiagnosticsOptionsBindingTests
             ],
             laterProvider:
             [
-                (SelfDiagnosticsOptions.LogLevelEnvVarName, "debug"),
-                (SelfDiagnosticsOptions.LogDirectoryEnvVarName, "/from-environment"),
-                (SelfDiagnosticsOptions.SinksEnvVarName, "stderr"),
+                ("OTEL_LOG_LEVEL", "debug"),
+                ("OTEL_DOTNET_SELF_DIAGNOSTICS_LOG_DIRECTORY", "/from-environment"),
+                ("OTEL_DOTNET_SELF_DIAGNOSTICS_SINKS", "stderr"),
             ]));
 
         var options = CreateDefaultOptions(configuration);
@@ -430,7 +430,7 @@ public class SelfDiagnosticsOptionsBindingTests
     public void EnvironmentVariables_StillApplyToOptionsTheSectionDoesNotSet()
     {
         var options = CreateDefaultOptions(BuildConfiguration(
-            (SelfDiagnosticsOptions.LogLevelEnvVarName, "debug"),
+            ("OTEL_LOG_LEVEL", "debug"),
             ($"{SectionPath}:LogToStderr", "true")));
 
         Assert.Equal(LogLevel.Debug, options.MinimumLevel);
@@ -508,18 +508,25 @@ public class SelfDiagnosticsOptionsBindingTests
         Assert.Throws<InvalidOperationException>(() => builder.Build());
     }
 
-    [Fact]
-    public void EmptyMinimumLevel_KeepsTheDefault()
+    [Theory]
+    [InlineData("MinimumLevel")]
+    [InlineData("EnvironmentVariables")]
+    [InlineData("FileSizeLimitKilobytes")]
+    [InlineData("MaxRetainedFiles")]
+    [InlineData("LogToStdout")]
+    [InlineData("LogToStderr")]
+    public void EmptyValue_KeepsTheDefault(string key)
     {
-        var configuration = BuildConfiguration(($"{SectionPath}:MinimumLevel", string.Empty));
+        var expected = new SelfDiagnosticsOptions();
 
-#if NET8_0
-        // The source-generated binder in Microsoft.Extensions.Configuration.Binder 8.0.2 does not
-        // skip an empty enum value, unlike the generator in later versions.
-        Assert.Throws<InvalidOperationException>(() => CreateDefaultOptions(configuration));
-#else
-        Assert.Equal(LogLevel.Warning, CreateDefaultOptions(configuration).MinimumLevel);
-#endif
+        var actual = CreateDefaultOptions(BuildConfiguration(($"{SectionPath}:{key}", string.Empty)));
+
+        Assert.Equal(expected.MinimumLevel, actual.MinimumLevel);
+        Assert.Equal(expected.EnvironmentVariables, actual.EnvironmentVariables);
+        Assert.Equal(expected.FileSizeLimitKilobytes, actual.FileSizeLimitKilobytes);
+        Assert.Equal(expected.MaxRetainedFiles, actual.MaxRetainedFiles);
+        Assert.Equal(expected.LogToStdout, actual.LogToStdout);
+        Assert.Equal(expected.LogToStderr, actual.LogToStderr);
     }
 
     [Fact]
@@ -638,7 +645,7 @@ public class SelfDiagnosticsOptionsBindingTests
                 ($"{SectionPath}:LogToStdout", "true"),
                 ($"{SectionPath}:LogToStderr", "true"),
             ],
-            laterProvider: [(SelfDiagnosticsOptions.SinksEnvVarName, sinks)]);
+            laterProvider: [("OTEL_DOTNET_SELF_DIAGNOSTICS_SINKS", sinks)]);
 
         var resolverCalls = 0;
         var options = SelfDiagnosticsOptionsFactory.CreateDefault(configuration, () =>
@@ -662,7 +669,7 @@ public class SelfDiagnosticsOptionsBindingTests
     public void LaterSectionDirectory_OverridesSinkSelection(string sinks, string sectionDirectory, string expectedDirectory)
     {
         var configuration = BuildConfiguration(
-            earlierProvider: [(SelfDiagnosticsOptions.SinksEnvVarName, sinks)],
+            earlierProvider: [("OTEL_DOTNET_SELF_DIAGNOSTICS_SINKS", sinks)],
             laterProvider: [($"{SectionPath}:LogDirectory", sectionDirectory)]);
 
         var options = SelfDiagnosticsOptionsFactory.CreateDefault(configuration, () => throw new InvalidOperationException("Unexpected fallback."));
@@ -674,7 +681,7 @@ public class SelfDiagnosticsOptionsBindingTests
     public void LaterSectionStream_AddsToEarlierSelection()
     {
         var options = CreateDefaultOptions(BuildConfiguration(
-            earlierProvider: [(SelfDiagnosticsOptions.SinksEnvVarName, "stdout")],
+            earlierProvider: [("OTEL_DOTNET_SELF_DIAGNOSTICS_SINKS", "stdout")],
             laterProvider: [($"{SectionPath}:LogToStderr", "true")]));
 
         Assert.True(options.LogToStdout, "LogToStdout should be true when the environment variable enables it.");
@@ -688,7 +695,7 @@ public class SelfDiagnosticsOptionsBindingTests
     {
         var options = SelfDiagnosticsOptionsFactory.CreateDefault(
             BuildConfiguration(
-                (SelfDiagnosticsOptions.SinksEnvVarName, sinks),
+                ("OTEL_DOTNET_SELF_DIAGNOSTICS_SINKS", sinks),
                 ($"{SectionPath}:LogDirectory", directory),
                 ($"{SectionPath}:LogToStderr", "true")),
             () => throw new InvalidOperationException("Unexpected fallback."));
@@ -703,11 +710,11 @@ public class SelfDiagnosticsOptionsBindingTests
     public void FileSelection_UsesLatestConfiguredLocation(bool sectionIsLater)
     {
         var section = new KeyValuePair<string, string?>($"{SectionPath}:LogDirectory", @"C:\section");
-        var variable = new KeyValuePair<string, string?>(SelfDiagnosticsOptions.LogDirectoryEnvVarName, @"C:\variable");
+        var variable = new KeyValuePair<string, string?>("OTEL_DOTNET_SELF_DIAGNOSTICS_LOG_DIRECTORY", @"C:\variable");
         var configuration = new ConfigurationBuilder()
             .AddInMemoryCollection([sectionIsLater ? variable : section])
             .AddInMemoryCollection([sectionIsLater ? section : variable])
-            .AddInMemoryCollection([new(SelfDiagnosticsOptions.SinksEnvVarName, "file")])
+            .AddInMemoryCollection([new("OTEL_DOTNET_SELF_DIAGNOSTICS_SINKS", "file")])
             .Build();
 
         var options = SelfDiagnosticsOptionsFactory.CreateDefault(configuration, () => throw new InvalidOperationException("Unexpected fallback."));
@@ -743,8 +750,8 @@ public class SelfDiagnosticsOptionsBindingTests
     {
         var providers = new KeyValuePair<string, string?>[3][];
         providers[sectionProviderIndex] = [new($"{SectionPath}:LogDirectory", @"C:\section")];
-        providers[variableProviderIndex] = [new(SelfDiagnosticsOptions.LogDirectoryEnvVarName, @"C:\variable")];
-        providers[sinksProviderIndex] = [new(SelfDiagnosticsOptions.SinksEnvVarName, sinks)];
+        providers[variableProviderIndex] = [new("OTEL_DOTNET_SELF_DIAGNOSTICS_LOG_DIRECTORY", @"C:\variable")];
+        providers[sinksProviderIndex] = [new("OTEL_DOTNET_SELF_DIAGNOSTICS_SINKS", sinks)];
 
         var builder = new ConfigurationBuilder();
         foreach (var provider in providers)
@@ -771,7 +778,7 @@ public class SelfDiagnosticsOptionsBindingTests
         var calls = 0;
         var reports = new List<string>();
         var options = SelfDiagnosticsOptionsFactory.CreateDefault(
-            BuildConfiguration((SelfDiagnosticsOptions.SinksEnvVarName, "file")),
+            BuildConfiguration(("OTEL_DOTNET_SELF_DIAGNOSTICS_SINKS", "file")),
             () =>
             {
                 calls++;
@@ -789,8 +796,8 @@ public class SelfDiagnosticsOptionsBindingTests
     public void IgnoredEffectiveVariable_DoesNotRevealEarlierValue()
     {
         var configuration = BuildConfiguration(
-            earlierProvider: [(SelfDiagnosticsOptions.LogLevelEnvVarName, "debug"), ($"{SectionPath}:MinimumLevel", "Error")],
-            laterProvider: [(SelfDiagnosticsOptions.LogLevelEnvVarName, "critical")]);
+            earlierProvider: [("OTEL_LOG_LEVEL", "debug"), ($"{SectionPath}:MinimumLevel", "Error")],
+            laterProvider: [("OTEL_LOG_LEVEL", "critical")]);
 
         var options = CreateDefaultOptions(configuration);
 
@@ -803,7 +810,7 @@ public class SelfDiagnosticsOptionsBindingTests
     [InlineData(false)]
     public void AutomaticReload_RecreatesDefaultOptionsButNotNamedOptions(bool sectionInitiallyPresent)
     {
-        var configuration = BuildConfiguration((SelfDiagnosticsOptions.LogLevelEnvVarName, "debug"));
+        var configuration = BuildConfiguration(("OTEL_LOG_LEVEL", "debug"));
 
         if (sectionInitiallyPresent)
         {
@@ -847,7 +854,7 @@ public class SelfDiagnosticsOptionsBindingTests
     {
         var configuration = BuildConfiguration(
             earlierProvider: [($"{SectionPath}:MinimumLevel", "info")],
-            laterProvider: [(SelfDiagnosticsOptions.LogLevelEnvVarName, "debug")]);
+            laterProvider: [("OTEL_LOG_LEVEL", "debug")]);
 
         var services = new ServiceCollection();
         services.AddSingleton<IConfiguration>(configuration);
@@ -858,7 +865,7 @@ public class SelfDiagnosticsOptionsBindingTests
 
         Assert.Equal(LogLevel.Debug, monitor.CurrentValue.MinimumLevel);
 
-        configuration.Providers.Last().Set(SelfDiagnosticsOptions.LogLevelEnvVarName, null);
+        configuration.Providers.Last().Set("OTEL_LOG_LEVEL", null);
         configuration.Reload();
 
         Assert.Equal(LogLevel.Information, monitor.CurrentValue.MinimumLevel);
@@ -868,7 +875,7 @@ public class SelfDiagnosticsOptionsBindingTests
     public void ApplicationNamedChangeTokenSource_IsPreservedAndRemainsIndependent()
     {
         var configuration = BuildConfiguration(
-            (SelfDiagnosticsOptions.LogLevelEnvVarName, "debug"),
+            ("OTEL_LOG_LEVEL", "debug"),
             ($"{SectionPath}:MinimumLevel", "Error"));
         var namedConfiguration = BuildConfiguration();
         var applicationSource = new ConfigurationChangeTokenSource<SelfDiagnosticsOptions>("custom", namedConfiguration);

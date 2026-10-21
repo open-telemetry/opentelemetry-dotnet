@@ -155,15 +155,18 @@ your application's configuration. In an app that already loads
 ```
 
 Values are case-insensitive. For `MinimumLevel`, both `Information` and `info`
-work, as do `Warning` and `warn`.
+work, as do `Warning` and `warn`. An empty value leaves the option unchanged,
+except for `LogDirectory`, where it turns file logging off.
 
 If the same option is set in several places, the later configuration source
 wins, as it does for any .NET configuration. This also applies when mixing
 section keys with the [environment variables](#environment-variables), such as
-`MinimumLevel` and `OTEL_LOG_LEVEL`. In the default .NET host the order, from
-lowest to highest precedence, is:
+`MinimumLevel` and `OTEL_LOG_LEVEL`. In the [default .NET
+host](https://learn.microsoft.com/aspnet/core/fundamentals/configuration#default-app-configuration-sources)
+the order, from lowest to highest precedence, is:
 
-1. `appsettings.json` (and other JSON files)
+1. `appsettings.json`, then `appsettings.{Environment}.json`
+1. User secrets, in the `Development` environment
 1. Environment variables
 1. Command-line arguments
 
@@ -710,9 +713,10 @@ should be safe to run more than once.
 
 ### If a configuration change is invalid
 
-Check values carefully before saving changes to a running application's
-configuration. **The SDK does not guarantee that it will keep using the last
-valid settings if a reload fails.**
+> [!WARNING]
+> The SDK does not guarantee that it will keep using the last valid settings if
+> a reload fails. Check values carefully before saving changes to a running
+> application's configuration.
 
 For example, a value such as `"MinimumLevel": "NotALevel"` causes an
 `InvalidOperationException` whose message identifies the configuration setting
