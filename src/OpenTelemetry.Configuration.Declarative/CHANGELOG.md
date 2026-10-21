@@ -61,4 +61,4 @@ Notes](../../RELEASENOTES.md).
   setting under development as a warning, naming the setting with its line and
   column. Loading still succeeds. A document based on a starter template now
   produces several error-level events until more sections are supported.
-  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+  ([#8009](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8009))
