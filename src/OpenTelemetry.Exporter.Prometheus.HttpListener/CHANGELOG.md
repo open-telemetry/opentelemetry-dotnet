@@ -7,6 +7,13 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Fixed OpenMetrics scrape responses containing a `# UNIT` line whose unit is
+  not an underscore-separated suffix of the metric family name (for example
+  `auth.failedlogins` with the unit `logins`), which caused scrapers such as
+  Prometheus to reject the whole response. The `# UNIT` line is now omitted
+  for such metrics; exported metric names are unchanged.
+  ([#7993](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7993))
+
 ## 1.20.1-beta.1
 
 Released 2026-Oct-20

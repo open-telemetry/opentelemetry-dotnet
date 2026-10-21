@@ -208,6 +208,24 @@ internal sealed class PrometheusMetric
         return sb.ToString();
     }
 
+    /// <summary>
+    /// Returns whether the metric name ends with the unit as an underscore-separated suffix.
+    /// </summary>
+    /// <remarks>
+    /// The OpenMetrics unit "MUST be a suffix of the MetricFamily name separated by an underscore",
+    /// so a name that merely ends with the same characters as the unit (e.g. "workitems" and "items"),
+    /// or that is the unit itself, does not carry the suffix. Scrapers reject the whole exposition
+    /// for a UNIT line that breaks this rule.
+    /// https://github.com/prometheus/OpenMetrics/blob/v1.0.0/specification/OpenMetrics.md#metricfamily.
+    /// </remarks>
+    /// <param name="metricName">The metric name to check.</param>
+    /// <param name="unit">The unit.</param>
+    /// <returns><see langword="true"/> if the name ends with '_' followed by the unit; otherwise, <see langword="false"/>.</returns>
+    internal static bool HasUnitSuffix(string metricName, string unit)
+        => metricName.Length > unit.Length &&
+           metricName[metricName.Length - unit.Length - 1] == '_' &&
+           metricName.EndsWith(unit, StringComparison.Ordinal);
+
     internal static PrometheusType GetPrometheusType(MetricType openTelemetryMetricType)
     {
         var metricType = (int)openTelemetryMetricType >> 4;
