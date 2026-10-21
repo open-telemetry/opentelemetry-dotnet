@@ -1392,7 +1392,7 @@ public sealed class PrometheusCollectionManagerTests
         using var provider = Sdk.CreateMeterProviderBuilder()
             .AddMeter(meter.Name)
 #if PROMETHEUS_HTTP_LISTENER
-            .AddPrometheusHttpListener()
+            .AddPrometheusHttpListener(static (options) => options.Port = TcpPortProvider.GetOpenPort())
 #elif PROMETHEUS_ASPNETCORE
             .AddPrometheusExporter()
 #endif
