@@ -49,3 +49,9 @@ Notes](../../RELEASENOTES.md).
   sources that override the file, and an explicit path that differs from
   `OTEL_CONFIG_FILE`.
   ([#7873](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7873))
+
+* Validates property names against the schema. A property the schema does not
+  define is rejected. Limits YAML collection nesting to depth 128, including
+  paths through aliases, with the document root at depth zero. Rejects
+  unresolved mapping-key aliases during parsing.
+  ([#7904](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7904))

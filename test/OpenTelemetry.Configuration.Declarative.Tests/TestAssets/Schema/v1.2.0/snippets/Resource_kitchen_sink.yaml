@@ -1,0 +1,44 @@
+file_format: "1.2"
+
+resource:
+  # SNIPPET_START
+  attributes:
+    - name: service.name
+      value: unknown_service
+    - name: string_key
+      value: value
+      type: string
+    - name: bool_key
+      value: true
+      type: bool
+    - name: int_key
+      value: 1
+      type: int
+    - name: double_key
+      value: 1.1
+      type: double
+    - name: string_array_key
+      value: [ "value1", "value2" ]
+      type: string_array
+    - name: bool_array_key
+      value: [ true, false ]
+      type: bool_array
+    - name: int_array_key
+      value: [ 1, 2 ]
+      type: int_array
+    - name: double_array_key
+      value: [ 1.1, 2.2 ]
+      type: double_array
+  attributes_list: "service.namespace=my-namespace,service.version=1.0.0"
+  detection/development:
+    attributes:
+      included:
+        - process.*
+      excluded:
+        - process.command_args
+    detectors:
+      - container:
+      - host:
+      - process:
+      - service:
+  schema_url: https://opentelemetry.io/schemas/1.16.0

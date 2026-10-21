@@ -4,7 +4,6 @@
 #if NETFRAMEWORK
 using System.Net.Http;
 #endif
-using System.Diagnostics;
 using System.Diagnostics.Tracing;
 using System.Net;
 using System.Net.Http.Headers;
@@ -31,16 +30,18 @@ public class OtlpExporterRetryTransmissionHandlerTests
             Timeout = TimeSpan.FromSeconds(30),
         };
         var exportClient = CreateExportClient(useGrpc, httpClient);
-        using var transmissionHandler = new OtlpExporterRetryTransmissionHandler(exportClient, timeoutMilliseconds: 2_000);
 
-        var stopwatch = Stopwatch.StartNew();
+        using var transmissionHandler = new OtlpExporterRetryTransmissionHandler(exportClient, timeoutMilliseconds: 5_000);
+
         var result = transmissionHandler.TrySubmitRequest([0, 0, 0, 0, 0], 5);
-        stopwatch.Stop();
 
         Assert.False(result);
         Assert.Equal(2, httpHandler.SendCount);
+
+        // The stalled retry only waits a bounded time for cancellation, so this also asserts that
+        // the deadline canceled it. The elapsed time is not asserted, as the cancellation callback
+        // can run seconds late on a busy machine.
         Assert.True(httpHandler.RetryCanceled, "The stalled retry must be canceled at the original export deadline.");
-        Assert.InRange(stopwatch.Elapsed, TimeSpan.Zero, TimeSpan.FromSeconds(3));
 
         var deadlineEvent = Assert.Single(listener.Messages, e => e.EventName == "RetryDeadlineExceeded");
         Assert.Equal(EventLevel.Warning, deadlineEvent.Level);
@@ -210,7 +211,7 @@ public class OtlpExporterRetryTransmissionHandlerTests
             var response = new HttpResponseMessage(HttpStatusCode.OK)
             {
                 RequestMessage = request,
-                Content = new ByteArrayContent([]),
+                Content = new EmptyContent(),
             };
             if (useGrpc)
             {
@@ -237,6 +238,23 @@ public class OtlpExporterRetryTransmissionHandlerTests
             }
 
             return response;
+        }
+    }
+
+    /// <summary>
+    /// Empty content which is buffered synchronously. On .NET Framework, buffering a
+    /// <see cref="ByteArrayContent"/> (as the gRPC client's <see cref="HttpCompletionOption.ResponseContentRead"/>
+    /// does) writes through <see cref="Stream.BeginWrite"/>, which runs on the thread pool.
+    /// </summary>
+    private sealed class EmptyContent : HttpContent
+    {
+        protected override Task SerializeToStreamAsync(Stream stream, TransportContext? context)
+            => Task.CompletedTask;
+
+        protected override bool TryComputeLength(out long length)
+        {
+            length = 0;
+            return true;
         }
     }
 

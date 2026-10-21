@@ -1,0 +1,53 @@
+file_format: "1.2"
+
+tracer_provider:
+  processors:
+    - simple:
+        exporter:
+          console:
+  sampler:
+    # SNIPPET_START
+    composite/development:
+      rule_based:
+        # The rules for the sampler, matched in order. Each rule can have multiple match conditions - the sampler will be applied if all match.
+        # If no conditions are specified, the rule matches all spans that reach it. If no rules match, the span is not sampled.
+        # The rules of this sampler, in plain english:
+        # - If http.route = /healthz or /livez, do not sample the span.
+        # - If http.path starts with /internal/ and not /internal/special/, sample the span.
+        # - If there is no parent and the sppan kind is client, sample the span 5% of the time.
+        # - Else, sample the span .1% of the time.
+        rules:
+          - attribute_values:
+              key: http.route
+              values:
+                - /healthz
+                - /livez
+            # Configure sampler when matched.
+            sampler:
+              # Configure sampler to be always_off if matched.
+              always_off:
+          # Configure a sampling rule matching http.path attribute patterns.
+          - attribute_patterns:
+              key: http.path
+              included:
+                - /internal/*
+              excluded:
+                - /internal/special/*
+            # Configure sampler when matched.
+            sampler:
+              # Configure sampler to be always_on if matched.
+              always_on:
+          # Configure a sampling rule matching root spans with CLIENT span kind.
+          - parent:
+              - none
+            span_kinds:
+              - client
+            sampler:
+              # Configure sampler to be probability if matched.
+              probability:
+                ratio: 0.05
+          - sampler:
+              probability:
+                # Configure ratio.
+                # If omitted or null, 1.0 is used.
+                ratio: 0.001

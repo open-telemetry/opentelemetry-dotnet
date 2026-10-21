@@ -53,14 +53,18 @@ internal static class YamlStructureExtensions
     /// </summary>
     /// <param name="node">The mapping to validate.</param>
     /// <param name="context">A description of the mapping, used in error messages.</param>
-    /// <returns>The resolved key strings paired with their value nodes, in document order.</returns>
+    /// <param name="documentTrackingParser">The parser that tracked alias-key positions, if available.</param>
+    /// <returns>The resolved key strings, value nodes, and key positions, in document order.</returns>
     /// <exception cref="DeclarativeConfigurationException">
     /// Thrown when a key is not a YAML string scalar, or when two keys resolve to the same string.
     /// </exception>
-    internal static IReadOnlyList<KeyValuePair<string, YamlNode>> EnsureUniqueStringKeys(this YamlMappingNode node, string context)
+    internal static IReadOnlyList<ResolvedYamlMappingEntry> EnsureUniqueStringKeys(
+        this YamlMappingNode node,
+        string context,
+        YamlDocumentTrackingParser? documentTrackingParser = null)
     {
         var keys = new HashSet<string>(StringComparer.Ordinal);
-        var entries = new List<KeyValuePair<string, YamlNode>>(node.Children.Count);
+        var entries = new List<ResolvedYamlMappingEntry>(node.Children.Count);
 
         foreach (var entry in node.Children)
         {
@@ -86,7 +90,9 @@ internal static class YamlStructureExtensions
                     $"Mapping '{context}' contains duplicate key '{resolved.Value}'.");
             }
 
-            entries.Add(new(resolved.Value, entry.Value));
+            var keyPosition = documentTrackingParser?.GetKeyPosition(node, entries.Count, keyNode)
+                ?? new(keyNode.Start.Line, keyNode.Start.Column);
+            entries.Add(new(resolved.Value, entry.Value, keyPosition));
         }
 
         return entries;
@@ -118,46 +124,5 @@ internal static class YamlStructureExtensions
 
         throw new DeclarativeConfigurationException(
             $"YAML {node.NodeType} '{context}' has explicit tag '{tag}' but must use '{expectedTag}'.");
-    }
-
-    /// <summary>
-    /// Reports every key in <paramref name="node"/> that is not in <paramref name="known"/>, then throws.
-    /// </summary>
-    /// <param name="node">The mapping to check.</param>
-    /// <param name="path">The dotted path of <paramref name="node"/>, used in the diagnostic messages.</param>
-    /// <param name="known">Keys defined by the schema for this mapping.</param>
-    internal static void EnsureNoUnrecognizedProperties(
-        this YamlMappingNode node,
-        string path,
-        IReadOnlyCollection<string> known)
-    {
-        string? firstUnknownProperty = null;
-
-        foreach (var entry in node.Children)
-        {
-            if (entry.Key is not YamlScalarNode keyNode)
-            {
-                var nonScalarPath = $"{path}.<non-scalar key>";
-                OpenTelemetryDeclarativeConfigurationEventSource.Log.UnknownConfigurationProperty(nonScalarPath);
-                firstUnknownProperty ??= nonScalarPath;
-                continue;
-            }
-
-            var key = keyNode.Value;
-            if (key is not null && known.Contains(key))
-            {
-                continue;
-            }
-
-            var display = $"{path}.{(key is null ? "<null>" : key.Length == 0 ? "<empty>" : key)}";
-            OpenTelemetryDeclarativeConfigurationEventSource.Log.UnknownConfigurationProperty(display);
-            firstUnknownProperty ??= display;
-        }
-
-        if (firstUnknownProperty is not null)
-        {
-            throw new DeclarativeConfigurationException(
-                $"Property '{firstUnknownProperty}' is not supported by this declarative configuration implementation.");
-        }
     }
 }
