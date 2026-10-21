@@ -284,6 +284,28 @@ public sealed class SupportManifestTests
         Assert.Equal(["tracer_provider.sampler.parent_based.remote_parent_sampled"], unapplied.Select(p => p.Path));
     }
 
+    [Fact]
+    public void EvaluateUnapplied_NodeSharedByAnchorAtTheSameManifestPath_IsVisitedOnce()
+    {
+        var unapplied = Evaluate(
+            """
+            file_format: "1.2"
+            tracer_provider:
+              processors:
+                - &processor
+                  batch:
+                    exporter:
+                      console:
+                  simple:
+                    exporter:
+                      console:
+                - *processor
+            """,
+            "tracer_provider.processors[].simple");
+
+        Assert.Equal(["tracer_provider.processors[0].batch"], unapplied.Select(p => p.Path));
+    }
+
     private static IReadOnlyList<UnappliedProperty> Evaluate(string yaml, params string[] additionalCoveredPaths)
     {
         using var factory = new DeclarativeYamlTestFileFactory();
