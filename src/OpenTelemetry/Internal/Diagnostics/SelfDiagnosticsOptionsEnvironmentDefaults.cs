@@ -10,6 +10,26 @@ namespace OpenTelemetry.Internal;
 
 internal static class SelfDiagnosticsOptionsEnvironmentDefaults
 {
+    // Section keys set by the same option as a variable. When ApplyEnvironmentVariables applied
+    // the variable, the key from the later provider wins.
+    internal static readonly ConfigurationAlias[] SectionKeyAliases =
+    [
+        new(
+            nameof(SelfDiagnosticsOptions.MinimumLevel),
+            SelfDiagnosticsOptions.LogLevelEnvVarName,
+            static value => TryParseOtelLogLevel(value, out var level) ? level.ToString() : value),
+        new(nameof(SelfDiagnosticsOptions.LogToStdout), SelfDiagnosticsOptions.SinksEnvVarName),
+        new(nameof(SelfDiagnosticsOptions.LogToStderr), SelfDiagnosticsOptions.SinksEnvVarName),
+        new(
+            nameof(SelfDiagnosticsOptions.EnvironmentVariables),
+            SelfDiagnosticsOptions.EnvironmentVariablesEnvVarName,
+            static value => TryParseEnvironmentVariableLogMode(value, out var mode) ? mode.ToString() : value),
+    ];
+
+    // LogDirectory depends on two variables, the directory and the sinks selection, so
+    // ApplyEnvironmentVariables resolves it against the section itself and binding must not overwrite it.
+    internal static readonly string[] SectionKeysResolvedWithVariables = [nameof(SelfDiagnosticsOptions.LogDirectory)];
+
     private static readonly Action<string> DefaultConfigurationErrorReporter = static message =>
     {
         try
@@ -29,12 +49,16 @@ internal static class SelfDiagnosticsOptionsEnvironmentDefaults
     /// <param name="configuration">The configuration source to read from.</param>
     /// <param name="defaultLogDirectoryResolver">Resolves the default per-user log directory.</param>
     /// <param name="reportConfigurationError">Reports a configuration problem when the file sink cannot start.</param>
+    /// <param name="section">The <c>OpenTelemetry:SelfDiagnostics</c> section. <see langword="null"/> for named options.</param>
+    /// <param name="appliedVariables">Receives the names of the variables whose values were applied. <see langword="null"/> when not needed.</param>
     /// <returns>The collected configuration warnings, or <see langword="null"/> when there were none.</returns>
     internal static List<string>? ApplyEnvironmentVariables(
         SelfDiagnosticsOptions options,
         IConfiguration configuration,
         Func<string?> defaultLogDirectoryResolver,
-        Action<string>? reportConfigurationError = null)
+        Action<string>? reportConfigurationError = null,
+        IConfiguration? section = null,
+        ISet<string>? appliedVariables = null)
     {
         List<string>? warnings = null;
         var reportError = reportConfigurationError ?? DefaultConfigurationErrorReporter;
@@ -44,6 +68,7 @@ internal static class SelfDiagnosticsOptionsEnvironmentDefaults
             if (TryParseOtelLogLevel(logLevelRaw, out var parsedLevel))
             {
                 options.MinimumLevel = parsedLevel;
+                appliedVariables?.Add(SelfDiagnosticsOptions.LogLevelEnvVarName);
             }
             else
             {
@@ -54,6 +79,19 @@ internal static class SelfDiagnosticsOptionsEnvironmentDefaults
         if (configuration.TryGetStringValue(SelfDiagnosticsOptions.LogDirectoryEnvVarName, out var logDirectory))
         {
             options.LogDirectory = logDirectory;
+            appliedVariables?.Add(SelfDiagnosticsOptions.LogDirectoryEnvVarName);
+        }
+
+        // Resolve directory precedence before sink selection: later providers win, with ties going to the section.
+        // Keep explicit empty section values, which disable file output rather than request a default directory.
+        var sectionDirectory = section?[nameof(SelfDiagnosticsOptions.LogDirectory)];
+        var directoryKey = ConfigurationPath.Combine(SelfDiagnosticsOptions.ConfigurationSectionPath, nameof(SelfDiagnosticsOptions.LogDirectory));
+        var sectionDirectoryWins = sectionDirectory != null
+            && (string.IsNullOrWhiteSpace(logDirectory)
+                || !ConfigurationAliasPrecedence.IsFromLaterProvider(configuration, SelfDiagnosticsOptions.LogDirectoryEnvVarName, directoryKey));
+        if (sectionDirectoryWins)
+        {
+            options.LogDirectory = sectionDirectory;
         }
 
         if (configuration.TryGetStringValue(SelfDiagnosticsOptions.EnvironmentVariablesEnvVarName, out var envVarModeRaw))
@@ -61,6 +99,7 @@ internal static class SelfDiagnosticsOptionsEnvironmentDefaults
             if (TryParseEnvironmentVariableLogMode(envVarModeRaw, out var parsedMode))
             {
                 options.EnvironmentVariables = parsedMode;
+                appliedVariables?.Add(SelfDiagnosticsOptions.EnvironmentVariablesEnvVarName);
             }
             else
             {
@@ -68,11 +107,20 @@ internal static class SelfDiagnosticsOptionsEnvironmentDefaults
             }
         }
 
-        if (configuration.TryGetStringValue(SelfDiagnosticsOptions.SinksEnvVarName, out var sinksRaw))
+        if (configuration.TryGetStringValue(SelfDiagnosticsOptions.SinksEnvVarName, out var sinksRaw)
+            && TryApplySinks(options, sinksRaw, ref warnings, out var fileRequested))
         {
-            var fileRequested = ApplySinks(options, sinksRaw, ref warnings);
-            if (fileRequested)
+            appliedVariables?.Add(SelfDiagnosticsOptions.SinksEnvVarName);
+
+            // Sink selection can clear the directory, so restore a section value unless the sinks came from a later provider.
+            if (sectionDirectoryWins
+                && !ConfigurationAliasPrecedence.IsFromLaterProvider(configuration, SelfDiagnosticsOptions.SinksEnvVarName, directoryKey))
             {
+                options.LogDirectory = sectionDirectory;
+            }
+            else if (fileRequested)
+            {
+                // Only resolve a fallback after precedence and sink selection have been settled.
                 EnsureFileLogDirectory(options, defaultLogDirectoryResolver, reportError, ref warnings);
             }
         }
@@ -170,16 +218,27 @@ internal static class SelfDiagnosticsOptionsEnvironmentDefaults
     /// </summary>
     /// <remarks>
     /// Unrecognised tokens are reported and skipped rather than invalidating the whole value, so
-    /// one typo does not silence the sinks that were spelled correctly. <c>none</c> overrides every
+    /// one typo does not silence the sinks that were spelled correctly. A selection with no
+    /// recognised token is ignored, like any other unrecognised value. <c>none</c> overrides every
     /// other token.
     /// </remarks>
-    /// <returns>
+    /// <param name="options">The options object to update.</param>
+    /// <param name="value">The raw <c>OTEL_DOTNET_SELF_DIAGNOSTICS_SINKS</c> value.</param>
+    /// <param name="warnings">The collected configuration warnings.</param>
+    /// <param name="fileRequested">
     /// <see langword="true"/> when the file sink was requested and not overridden by <c>none</c>.
+    /// </param>
+    /// <returns>
+    /// <see langword="true"/> if the selection names a recognised sink and was applied; otherwise <see langword="false"/>.
     /// </returns>
-    private static bool ApplySinks(SelfDiagnosticsOptions options, string value, ref List<string>? warnings)
+    private static bool TryApplySinks(SelfDiagnosticsOptions options, string value, ref List<string>? warnings, out bool fileRequested)
     {
+        fileRequested = false;
+
         var none = false;
-        var fileRequested = false;
+        var file = false;
+        var stdout = false;
+        var stderr = false;
 
         foreach (var token in value.Split(','))
         {
@@ -194,22 +253,22 @@ internal static class SelfDiagnosticsOptionsEnvironmentDefaults
                     break;
 
                 case "FILE":
-                    fileRequested = true;
+                    file = true;
                     break;
 
                 case "STDOUT":
-                    options.LogToStdout = true;
+                    stdout = true;
                     break;
 
                 case "STDERR":
-                    options.LogToStderr = true;
+                    stderr = true;
                     break;
 
                 // Alias for 'stdout,stderr', for anyone arriving with the .NET
                 // auto-instrumentation agent's vocabulary.
                 case "CONSOLE":
-                    options.LogToStdout = true;
-                    options.LogToStderr = true;
+                    stdout = true;
+                    stderr = true;
                     break;
 
                 default:
@@ -218,20 +277,28 @@ internal static class SelfDiagnosticsOptionsEnvironmentDefaults
             }
         }
 
+        if (!none && !file && !stdout && !stderr)
+        {
+            return false;
+        }
+
         if (none)
         {
             options.LogToStdout = false;
             options.LogToStderr = false;
             options.LogDirectory = null;
-            return false;
+            return true;
         }
 
-        if (!fileRequested)
+        options.LogToStdout |= stdout;
+        options.LogToStderr |= stderr;
+
+        if (!file)
         {
             options.LogDirectory = null;
-            return false;
         }
 
+        fileRequested = file;
         return true;
     }
 

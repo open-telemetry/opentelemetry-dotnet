@@ -1,13 +1,44 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using OpenTelemetry.Internal;
+using OpenTelemetry.SelfDiagnostics;
 
 namespace OpenTelemetry.Tests.Diagnostics;
 
 public class SelfDiagnosticsOptionsEnvironmentDefaultsTests
 {
+    [Theory]
+    [InlineData(SelfDiagnosticsOptions.LogLevelEnvVarName, "debug", true)]
+    [InlineData(SelfDiagnosticsOptions.LogLevelEnvVarName, "verbose", false)]
+    [InlineData(SelfDiagnosticsOptions.LogLevelEnvVarName, " ", false)]
+    [InlineData(SelfDiagnosticsOptions.EnvironmentVariablesEnvVarName, "all", true)]
+    [InlineData(SelfDiagnosticsOptions.EnvironmentVariablesEnvVarName, "some", false)]
+    [InlineData(SelfDiagnosticsOptions.LogDirectoryEnvVarName, "/logs", true)]
+    [InlineData(SelfDiagnosticsOptions.LogDirectoryEnvVarName, "", false)]
+    [InlineData(SelfDiagnosticsOptions.SinksEnvVarName, "stdout,syslog", true)]
+    [InlineData(SelfDiagnosticsOptions.SinksEnvVarName, "none", true)]
+    [InlineData(SelfDiagnosticsOptions.SinksEnvVarName, "file", true)]
+    [InlineData(SelfDiagnosticsOptions.SinksEnvVarName, "syslog", false)]
+    [InlineData(SelfDiagnosticsOptions.SinksEnvVarName, ",,", false)]
+    public void ApplyEnvironmentVariables_RecordsOnlyTheVariablesItApplied(string name, string value, bool applied)
+    {
+        var configuration = new ConfigurationBuilder().AddInMemoryCollection([new(name, value)]).Build();
+        var appliedVariables = new HashSet<string>();
+
+        SelfDiagnosticsOptionsEnvironmentDefaults.ApplyEnvironmentVariables(
+            new SelfDiagnosticsOptions(),
+            configuration,
+            static () => "/fallback",
+            static _ => { },
+            appliedVariables: appliedVariables);
+
+        string[] expected = applied ? [name] : [];
+        Assert.Equal(expected, appliedVariables);
+    }
+
     [Theory]
 
     // OTel spec tokens.
