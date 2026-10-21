@@ -532,6 +532,29 @@ public class OtlpAttributeTests
         }
     }
 
+    [Fact]
+    public void NestedKvListThatDoesNotFitIsNotClearedBeforeTheBufferIsGrown()
+    {
+        var state = new ProtobufOtlpTagWriter.OtlpTagWriterState
+        {
+            Buffer = new byte[64],
+            WritePosition = 0,
+        };
+
+        var kvList = new List<KeyValuePair<string, object?>>
+        {
+            new("outer", new List<KeyValuePair<string, object?>>
+            {
+                new("inner", new string('v', 1024)),
+            }),
+        };
+
+        var exception = Record.Exception(() => ProtobufOtlpTagWriter.WriteKeyValue(ref state, ProtobufOtlpTraceFieldNumberConstants.Span_Attributes, "key", kvList));
+
+        Assert.True(exception is IndexOutOfRangeException or ArgumentException);
+        Assert.True(state.Buffer.AsSpan().IndexOf("outer"u8) >= 0);
+    }
+
     [Theory]
     [InlineData(null)]
     [InlineData(10)]
