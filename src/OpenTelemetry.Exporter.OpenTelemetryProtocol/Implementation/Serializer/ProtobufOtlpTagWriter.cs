@@ -132,7 +132,6 @@ internal sealed class ProtobufOtlpTagWriter : TagWriter<ProtobufOtlpTagWriter.Ot
 #if NET
     protected override bool TryWriteUtf8SpanFormattableTag(ref OtlpTagWriterState state, string key, IUtf8SpanFormattable value, int? tagValueMaxLength)
     {
-        // A UTF-16 char is at most 3 UTF-8 bytes
         const int MaxUtf8BytesPerChar = 3;
 
         state.WritePosition = ProtobufSerializer.WriteStringWithTag(state.Buffer, state.WritePosition, ProtobufOtlpCommonFieldNumberConstants.KeyValue_Key, key);
@@ -156,10 +155,14 @@ internal sealed class ProtobufOtlpTagWriter : TagWriter<ProtobufOtlpTagWriter.Ot
         // If max attribute length is in place, we'll cap the buffer size to avoid very large values exhausting the buffer
         // If the buffer isn't large enough to contain the max possible truncated output, we'll pass it as-is and grow it if the write fails
         var isBufferCapped = false;
-        if (tagValueMaxLength is { } maxLength && buffer.Length >= (long)maxLength * MaxUtf8BytesPerChar)
+        if (tagValueMaxLength.HasValue)
         {
-            buffer = buffer[..(maxLength * MaxUtf8BytesPerChar)];
-            isBufferCapped = true;
+            var maxUtf8Bytes = (long)tagValueMaxLength.Value * MaxUtf8BytesPerChar;
+            if (buffer.Length >= maxUtf8Bytes)
+            {
+                buffer = buffer[..(int)maxUtf8Bytes];
+                isBufferCapped = true;
+            }
         }
 
         try
@@ -172,10 +175,15 @@ internal sealed class ProtobufOtlpTagWriter : TagWriter<ProtobufOtlpTagWriter.Ot
                 return true;
             }
         }
-        catch (Exception)
+        catch (Exception ex)
         {
             // How much the formatter wrote is unknown, and the buffer may be returned to a shared pool.
             buffer.Clear();
+            if (ex is OutOfMemoryException)
+            {
+                throw;
+            }
+
             return this.LogUnsupportedTagTypeAndReturnFalse(key, value);
         }
 
