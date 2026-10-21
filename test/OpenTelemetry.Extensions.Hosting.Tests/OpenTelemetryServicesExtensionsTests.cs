@@ -631,7 +631,7 @@ public class OpenTelemetryServicesExtensionsTests
 
         public Task StartingAsync(CancellationToken cancellationToken)
         {
-            using (var activity = this.activitySource.StartActivity("starting"))
+            using (this.activitySource.StartActivity("starting"))
             {
             }
 
