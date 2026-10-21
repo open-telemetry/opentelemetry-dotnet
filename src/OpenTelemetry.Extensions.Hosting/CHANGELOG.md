@@ -11,7 +11,7 @@ Notes](../../RELEASENOTES.md).
   so that telemetry emitted by other hosted services during `StartingAsync` is
   captured. `ITelemetryHostInitializer.Initialize()` is invoked only once per
   host start.
-  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+  ([#7998](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7998))
 
 ## 1.20.1
 
