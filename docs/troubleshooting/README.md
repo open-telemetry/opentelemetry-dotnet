@@ -699,9 +699,9 @@ without a restart. Deleting it disables this source.
 ```
 
 * `LogDirectory` - absolute, or relative to the current working directory.
-* `FileSize` - the size limit per file in KiB, clamped to `[1024, 131072]`.
-  Two files are retained, so the previous file survives a rollover and total
-  disk usage can be roughly twice this limit.
+* `FileSize` - the approximate total disk space to use, in KiB, clamped to
+  `[1024, 131072]`. It is split evenly across two files: when the current
+  file fills up, the older one is deleted and a new one is started.
 * `LogLevel` - a case-sensitive
   [`EventLevel`](https://learn.microsoft.com/dotnet/api/system.diagnostics.tracing.eventlevel)
   name. Levels map to their .NET equivalents: `Informational` becomes

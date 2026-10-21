@@ -19,8 +19,8 @@ internal sealed class SelfDiagnosticsLegacyConfigSource : IDisposable
     private const int MinFileSizeKilobytes = 1024;
     private const int MaxFileSizeKilobytes = 128 * 1024;
 
-    // Keeps the previous file across a rollover so at least FileSize of recent history survives,
-    // which the legacy circular file always provided.
+    // The legacy FileSize is split across this many files so total disk use stays close to the
+    // configured limit, while the previous file survives a rollover.
     private const int RetainedFileCount = 2;
 
     private static readonly TimeSpan DefaultPollInterval = TimeSpan.FromSeconds(10);
@@ -188,7 +188,7 @@ internal sealed class SelfDiagnosticsLegacyConfigSource : IDisposable
         return new SelfDiagnosticsOptions
         {
             LogDirectory = configuration.LogDirectory,
-            FileSizeLimitKilobytes = fileSizeKilobytes,
+            FileSizeLimitKilobytes = fileSizeKilobytes / RetainedFileCount,
             MaxRetainedFiles = RetainedFileCount,
             MinimumLevel = level,
             ConfigurationWarnings = [.. warnings],

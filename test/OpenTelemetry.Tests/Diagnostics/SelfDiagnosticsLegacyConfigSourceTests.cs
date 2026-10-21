@@ -105,19 +105,19 @@ public sealed class SelfDiagnosticsLegacyConfigSourceTests : IDisposable
     }
 
     [Theory]
-    [InlineData(0, 1024)]
-    [InlineData(100, 1024)]
-    [InlineData(1024, 1024)]
-    [InlineData(1025, 1025)]
-    [InlineData(32768, 32768)]
-    [InlineData(131072, 131072)]
-    [InlineData(131073, 131072)]
-    public void FileSize_IsClampedPerFileAndRetainsTwoFiles(int requested, int clamped)
+    [InlineData(0, 1024, 512)]
+    [InlineData(100, 1024, 512)]
+    [InlineData(1024, 1024, 512)]
+    [InlineData(1025, 1025, 512)]
+    [InlineData(32768, 32768, 16384)]
+    [InlineData(131072, 131072, 65536)]
+    [InlineData(131073, 131072, 65536)]
+    public void FileSize_IsClampedAndSplitAcrossTwoFiles(int requested, int clamped, int perFile)
     {
         this.WriteConfiguration(fileSize: requested);
         using var source = this.CreateSource();
 
-        Assert.Equal(clamped, this.Latest.FileSizeLimitKilobytes);
+        Assert.Equal(perFile, this.Latest.FileSizeLimitKilobytes);
         Assert.Equal(2, this.Latest.MaxRetainedFiles);
 
         if (requested == clamped)
