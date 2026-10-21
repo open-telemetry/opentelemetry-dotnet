@@ -236,7 +236,7 @@ internal sealed class ProtobufOtlpTagWriter : TagWriter<ProtobufOtlpTagWriter.Ot
                 ProtobufSerializer.WriteReservedLength(state.Buffer, entryLengthPos, state.WritePosition - (entryLengthPos + ReserveSizeForLength));
             }
         }
-        catch (Exception)
+        catch (Exception ex) when (ex is not (IndexOutOfRangeException or ArgumentException))
         {
             RollBackTo(ref state, startPosition);
 
