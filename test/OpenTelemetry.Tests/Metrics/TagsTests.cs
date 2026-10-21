@@ -22,8 +22,10 @@ public class TagsTests
             [7922816251426433759354395033m, 7922816251426433759354395033.0m],
             [new decimal(0, 0, 10, false, 0), new decimal(0, 0, 100, false, 1)],
             [new DateTime(ticks, DateTimeKind.Utc), new DateTime(ticks, DateTimeKind.Local)],
-            [new DateTimeOffset(ticks, TimeSpan.Zero),
-                new DateTimeOffset(ticks + TimeSpan.FromHours(2).Ticks, TimeSpan.FromHours(2))],
+            [
+                new DateTimeOffset(ticks, TimeSpan.Zero),
+                new DateTimeOffset(ticks + TimeSpan.FromHours(2).Ticks, TimeSpan.FromHours(2)),
+            ],
         ];
 
         return new TheoryData<object[]>(equalValues);

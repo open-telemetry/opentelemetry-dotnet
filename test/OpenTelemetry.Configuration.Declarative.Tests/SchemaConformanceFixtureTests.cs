@@ -277,10 +277,12 @@ public sealed partial class SchemaConformanceFixtureTests
     }
 
     private static List<string> EnumerateFixtures(string directory) =>
-        [.. typeof(SchemaConformanceFixtureTests).Assembly.GetManifestResourceNames()
-            .Where(name => name.StartsWith(FixtureResourcePrefix + directory + "/", StringComparison.Ordinal))
-            .Select(name => name.Substring(FixtureResourcePrefix.Length))
-            .OrderBy(path => path, StringComparer.Ordinal)];
+        [
+            .. typeof(SchemaConformanceFixtureTests).Assembly.GetManifestResourceNames()
+                .Where(name => name.StartsWith(FixtureResourcePrefix + directory + "/", StringComparison.Ordinal))
+                .Select(name => name.Substring(FixtureResourcePrefix.Length))
+                .OrderBy(path => path, StringComparer.Ordinal),
+        ];
 
     private static string ReadFixture(string relativePath)
     {
@@ -298,10 +300,12 @@ public sealed partial class SchemaConformanceFixtureTests
 #endif
 
     private static List<string> GetTopLevelKeys(string yaml) =>
-        [.. yaml.Split(["\r\n", "\n"], StringSplitOptions.None)
-            .Select(line => GetTopLevelKeyRegex().Match(line))
-            .Where(match => match.Success)
-            .Select(match => match.Groups[1].Value)];
+        [
+            .. yaml.Split(["\r\n", "\n"], StringSplitOptions.None)
+                .Select(line => GetTopLevelKeyRegex().Match(line))
+                .Where(match => match.Success)
+                .Select(match => match.Groups[1].Value),
+        ];
 
     // Locate the authored mapping, then edit only the text so diagnostic positions remain meaningful.
     private static (string Yaml, int Line, int Column) InsertUndefinedKey(string snippet, string parentPath)

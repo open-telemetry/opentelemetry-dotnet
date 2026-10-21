@@ -13,14 +13,14 @@ internal sealed class MyProcessor : BaseProcessor<Activity>
         this.name = name;
     }
 
-    public override void OnStart(Activity activity)
+    public override void OnStart(Activity data)
     {
-        Console.WriteLine($"{this.name}.OnStart({activity.DisplayName})");
+        Console.WriteLine($"{this.name}.OnStart({data.DisplayName})");
     }
 
-    public override void OnEnd(Activity activity)
+    public override void OnEnd(Activity data)
     {
-        Console.WriteLine($"{this.name}.OnEnd({activity.DisplayName})");
+        Console.WriteLine($"{this.name}.OnEnd({data.DisplayName})");
     }
 
     protected override bool OnForceFlush(int timeoutMilliseconds)
