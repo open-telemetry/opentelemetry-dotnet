@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Collections.Concurrent;
+using System.Reflection;
 using Microsoft.Extensions.Logging;
 using OpenTelemetry.Internal;
 using OpenTelemetry.SelfDiagnostics;
@@ -311,6 +312,38 @@ public sealed class SelfDiagnosticsLegacyConfigSourceTests : IDisposable
     }
 
     [Fact]
+    public void PublishFailure_WhenStandardErrorIsUnavailable_DoesNotEscapeConstruction()
+    {
+        this.WriteConfiguration();
+        var publishes = 0;
+        var originalError = Console.Error;
+        using var error = new StringWriter();
+        error.Dispose();
+
+        Console.SetError(error);
+        try
+        {
+            using var source = new SelfDiagnosticsLegacyConfigSource(
+                new SelfDiagnosticsConfigParser(() => this.ConfigFilePath),
+                Timeout.InfiniteTimeSpan,
+                (_, _) =>
+                {
+                    publishes++;
+                    throw new InvalidOperationException("Pipeline unavailable.");
+                });
+
+            Assert.Equal(1, publishes);
+            Assert.Equal(this.ConfigFilePath, source.ConfigFilePath);
+            Assert.False(source.Refresh(), "Expected an unchanged file not to be republished.");
+            Assert.Equal(1, publishes);
+        }
+        finally
+        {
+            Console.SetError(originalError);
+        }
+    }
+
+    [Fact]
     public void ConcurrentRefreshes_SerializeReadsAndPublication()
     {
         this.WriteConfiguration();
@@ -352,6 +385,32 @@ public sealed class SelfDiagnosticsLegacyConfigSourceTests : IDisposable
         Assert.Equal(readsAfterDisposal, Volatile.Read(ref reads));
         Assert.False(source.Refresh(), "Expected the source to not refresh after disposal.");
         source.Dispose();
+    }
+
+    [Fact]
+    public void Timer_CallbackAfterDisposal_DoesNotReadPublishOrRearm()
+    {
+        var reads = 0;
+        using var source = new SelfDiagnosticsLegacyConfigSource(
+            new SelfDiagnosticsConfigParser(() =>
+            {
+                reads++;
+                return this.ConfigFilePath;
+            }),
+            Timeout.InfiniteTimeSpan,
+            this.Publish);
+        source.Dispose();
+        this.WriteConfiguration();
+
+        // Simulate a queued callback arriving after disposal without racing a real timer.
+        var onTimer = typeof(SelfDiagnosticsLegacyConfigSource).GetMethod(
+            "OnTimer",
+            BindingFlags.Instance | BindingFlags.NonPublic);
+        Assert.NotNull(onTimer);
+        onTimer.Invoke(source, null);
+
+        Assert.Equal(1, reads);
+        Assert.Empty(this.published);
     }
 
     [Theory]
