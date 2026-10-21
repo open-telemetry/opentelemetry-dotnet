@@ -199,8 +199,6 @@ internal sealed class SelfDiagnosticsLegacyConfigSource : IDisposable
     private Timer CreateTimer()
         => new(static state => ((SelfDiagnosticsLegacyConfigSource)state!).OnTimer(), this, Timeout.InfiniteTimeSpan, Timeout.InfiniteTimeSpan);
 
-    // Called from the constructor, which runs during SDK type initialization, and from the timer;
-    // neither may throw.
     private void TryRefresh()
     {
         try

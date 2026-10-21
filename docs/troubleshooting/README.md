@@ -710,7 +710,7 @@ without a restart. Deleting it disables this source.
 `LogDirectory`, `FileSize`, and `LogLevel` are required. Missing, unreadable, or
 invalid configuration disables this source.
 
-`FormatMessage` is ignored; messages are always formatted. Output uses the
+`FormatMessage` is now ignored; messages are always formatted. Output uses the
 standard [entry format](#log-entries), [preamble](#file-preamble), and
 [rolling files](#file-naming-and-rollover) instead of the old circular
 `{executable}.{pid}.log` file. Unlike other file sink configurations, the
@@ -720,14 +720,14 @@ file is opened.
 Entries are now written asynchronously through the shared bounded queue. If the
 queue fills, new entries are dropped and a warning reports the number dropped.
 
-**Precedence:** any provider whose options configure a sink takes ownership,
-whether those options come from environment variables, code, or a bound
-configuration section. While such a provider owns the configuration, the legacy
-file is ignored and a warning event is emitted.
-
-Setting only `MinimumLevel`, including `None` or `OTEL_LOG_LEVEL=none`, does not
-take ownership. Neither does `OTEL_DOTNET_SELF_DIAGNOSTICS_SINKS=none`: a valid
-legacy file can still enable its file sink. A provider with a configured sink
-and `MinimumLevel = None` suppresses output once registered. The legacy file may
-activate diagnostics during SDK initialization, before provider options are
-applied.
+> [!NOTE]
+> **Precedence:** if any other source configures a self-diagnostics sink, whether
+> through environment variables, code, or a bound configuration section, that
+> configuration wins. The legacy file is ignored and a warning event is emitted.
+>
+> Setting only `MinimumLevel`, including `None` or `OTEL_LOG_LEVEL=none`, does
+> not count as configuring a sink. Neither does
+> `OTEL_DOTNET_SELF_DIAGNOSTICS_SINKS=none`: a valid legacy file can still enable
+> its file sink. A provider with a configured sink and `MinimumLevel = None`
+> suppresses output once registered. The legacy file may activate diagnostics
+> during SDK initialization, before provider options are applied.
