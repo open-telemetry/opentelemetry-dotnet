@@ -11,9 +11,9 @@ namespace OpenTelemetry.Internal;
 /// </summary>
 /// <remarks>
 /// This type exists only to own the singletons and to tear them down on process exit. The logic
-/// lives in <see cref="SelfDiagnosticsController"/> (the current mechanism) and
-/// <see cref="SelfDiagnosticsConfigRefresher"/> (the legacy <c>OTEL_DIAGNOSTICS.json</c>
-/// mechanism, retained for backwards compatibility).
+/// lives in <see cref="SelfDiagnosticsController"/>. The legacy
+/// <c>OTEL_DIAGNOSTICS.json</c> file supplies options to the same pipeline through
+/// <see cref="SelfDiagnosticsLegacyConfigSource"/>.
 /// </remarks>
 #if NET
 [System.Runtime.Versioning.UnsupportedOSPlatform("browser")]
@@ -26,17 +26,26 @@ internal sealed class SelfDiagnostics : IDisposable
     private static readonly SelfDiagnostics Instance = new();
 
     private readonly SelfDiagnosticsController controller;
-    private readonly SelfDiagnosticsConfigRefresher configRefresher;
+    private readonly SelfDiagnosticsLegacyConfigSource legacySource;
 
     static SelfDiagnostics()
     {
         AppDomain.CurrentDomain.ProcessExit += (_, _) => Instance.Dispose();
     }
 
-    private SelfDiagnostics()
+    internal SelfDiagnostics(SelfDiagnosticsConfigParser legacyConfigParser, TimeSpan? legacyPollInterval)
     {
-        this.controller = new SelfDiagnosticsController();
-        this.configRefresher = new SelfDiagnosticsConfigRefresher();
+        this.controller = new SelfDiagnosticsController(
+            static configFilePath => OpenTelemetrySdkEventSource.Log.SelfDiagnosticsLegacyConfigIgnored(configFilePath));
+        this.legacySource = new SelfDiagnosticsLegacyConfigSource(
+            legacyConfigParser,
+            legacyPollInterval,
+            this.controller.SetLegacyConfiguration);
+    }
+
+    private SelfDiagnostics()
+        : this(new SelfDiagnosticsConfigParser(), null)
+    {
     }
 
     /// <summary>
@@ -51,8 +60,10 @@ internal sealed class SelfDiagnostics : IDisposable
     /// <inheritdoc/>
     public void Dispose()
     {
+        // Controller first: a poll racing with shutdown then finds the coordinator disposed
+        // instead of re-applying configuration while the pipeline is being torn down.
         this.controller.Dispose();
-        this.configRefresher.Dispose();
+        this.legacySource.Dispose();
     }
 
     /// <summary>
@@ -63,5 +74,9 @@ internal sealed class SelfDiagnostics : IDisposable
     /// <param name="monitor">The provider's live self-diagnostics options.</param>
     /// <returns>A lease that relinquishes ownership when the provider is disposed.</returns>
     internal static IDisposable Initialize(IOptionsMonitor<SelfDiagnosticsOptions> monitor)
-        => Instance.controller.Register(monitor);
+        => Instance.Register(monitor);
+
+    /// <inheritdoc cref="Initialize"/>
+    internal IDisposable Register(IOptionsMonitor<SelfDiagnosticsOptions> monitor)
+        => this.controller.Register(monitor);
 }

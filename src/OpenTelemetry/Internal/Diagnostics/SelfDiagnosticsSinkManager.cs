@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics.CodeAnalysis;
+using Microsoft.Extensions.Logging;
 using OpenTelemetry.SelfDiagnostics;
 
 namespace OpenTelemetry.Internal;
@@ -81,6 +82,17 @@ internal sealed class SelfDiagnosticsSinkManager
     internal ISelfDiagnosticsSink[] ApplyOptions(SelfDiagnosticsOptions.SelfDiagnosticsConfiguration configuration)
     {
         this.latestConfiguration = configuration;
+
+        // A configuration that captures nothing (MinimumLevel None) must not open files, write
+        // preambles, or announce a log path, even when it names a sink.
+        if (configuration.EffectiveLevel == LogLevel.None)
+        {
+            this.fileSink = null;
+            this.activeFileDirectory = null;
+            this.consoleSink = null;
+            return [];
+        }
+
         this.ApplyFileOptions(configuration);
         this.ApplyConsoleOptions(configuration);
         return this.Snapshot();
@@ -103,7 +115,8 @@ internal sealed class SelfDiagnosticsSinkManager
             && configuration.FileSizeLimitKilobytes == this.activeFileSizeLimitKilobytes
             && configuration.MaxRetainedFiles == this.activeMaxRetainedFiles)
         {
-            return; // unchanged
+            this.fileSink.UpdateAnnouncement(configuration.AnnounceLogFile);
+            return;
         }
 
         // Honor the latest configuration even if the new target is currently unavailable:
@@ -120,7 +133,8 @@ internal sealed class SelfDiagnosticsSinkManager
             this.BuildPreamble,
             this.reportError,
             this.fileRetryInterval,
-            excludeFromPruning: this.fileSink?.CurrentFilePath);
+            excludeFromPruning: this.fileSink?.CurrentFilePath,
+            announceLogFile: configuration.AnnounceLogFile);
 
         this.activeFileDirectory = configuration.LogDirectory;
         this.activeFileSizeLimitKilobytes = configuration.FileSizeLimitKilobytes;

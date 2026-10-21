@@ -160,8 +160,10 @@ rules, and runtime reconfiguration - see:
 [Troubleshooting](../../docs/troubleshooting/README.md).
 
 > [!NOTE]
-> The legacy `OTEL_DIAGNOSTICS.json` file mechanism still works but is
-> superseded by the above and will be removed in a future major version. See
+> The legacy `OTEL_DIAGNOSTICS.json` file is still honored and now routes
+> through the same pipeline, unless a provider configures a sink through the
+> options above. It is superseded by those options and will be removed in a
+> future major version. See
 > [Legacy self-diagnostics
 > mechanism](../../docs/troubleshooting/README.md#legacy-self-diagnostics-mechanism).
 

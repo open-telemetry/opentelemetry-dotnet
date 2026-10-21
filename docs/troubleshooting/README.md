@@ -101,11 +101,15 @@ $env:OTEL_DOTNET_SELF_DIAGNOSTICS_SINKS = "stdout,stderr"
 $env:OTEL_LOG_LEVEL = "debug"
 ```
 
-Turn everything off again, overriding whatever else is set:
+Disable the environment-variable sink defaults:
 
 ```sh
 export OTEL_DOTNET_SELF_DIAGNOSTICS_SINKS=none
 ```
+
+This does not disable a valid legacy `OTEL_DIAGNOSTICS.json` file. See
+[Legacy self-diagnostics mechanism](#legacy-self-diagnostics-mechanism) for
+configuration precedence.
 
 > [!TIP]
 > The level defaults to `Warning`, which is intended to be safe to leave
@@ -261,7 +265,7 @@ callback runs afterwards and takes precedence.
 | Variable | Sets | Accepted values |
 | -------- | ---- | --------------- |
 | `OTEL_LOG_LEVEL` | `MinimumLevel` | OTel log level names (`error`, `warn`, `info`, `debug`, `trace`, `none`) or .NET `LogLevel` names. Case-insensitive. See [Log levels](#log-levels). |
-| `OTEL_DOTNET_SELF_DIAGNOSTICS_SINKS` | Which sinks are enabled | A comma-separated list of `file`, `stdout`, `stderr`, and `console`. Use `none` alone to disable all output. |
+| `OTEL_DOTNET_SELF_DIAGNOSTICS_SINKS` | Which sinks are enabled | A comma-separated list of `file`, `stdout`, `stderr`, and `console`. Use `none` alone to disable environment-variable sink defaults, not the legacy JSON file. |
 | `OTEL_DOTNET_SELF_DIAGNOSTICS_LOG_DIRECTORY` | `LogDirectory` | Any absolute or relative directory path. |
 | `OTEL_DOTNET_SELF_DIAGNOSTICS_ENV_VARS` | `EnvironmentVariables` | `none`, `names`, `knownsafe`, `all`. |
 
@@ -280,7 +284,8 @@ ignored. The recognised tokens are:
 * `stderr` - the console sink, writing to standard error.
 * `console` - an alias for `stdout,stderr`, for anyone arriving with the .NET
   auto-instrumentation agent's vocabulary.
-* `none` - disables all sinks, regardless of what else is in the list.
+* `none` - disables environment-variable sink defaults, regardless of what else
+  is in the list. A legacy JSON file can still enable diagnostics.
 
 The following table summarises all combinations of the two variables and their
 effect on file output:
@@ -344,6 +349,11 @@ and `Critical` events.
 
 There is no OpenTelemetry specification token for `Critical`; use the .NET name
 if you need it.
+
+Events written at
+[`EventLevel.LogAlways`](https://learn.microsoft.com/dotnet/api/system.diagnostics.tracing.eventlevel)
+are recorded as `Information` but are captured at any enabled `MinimumLevel`,
+matching `EventSource` semantics. Nothing is captured at `None`.
 
 > [!NOTE]
 > The default is `Warning`, which **diverges from the OpenTelemetry
@@ -445,6 +455,7 @@ If an environment variable was set to a value that could not be parsed, a
 `Configuration Warnings:` block appears above the snapshot naming the variable,
 the rejected value, and the accepted values. Options are constructed before any
 sink exists, so the preamble is the only place such a failure can be reported.
+Legacy JSON activation and value mappings are also reported in this block.
 
 The console sink writes entries only; it has no preamble.
 
@@ -668,39 +679,55 @@ file and opens a new one, with a fresh preamble, in the new location.
 
 ## Legacy self-diagnostics mechanism
 
-Before the mechanism described on this page was added, the SDK was configured by
-dropping an `OTEL_DIAGNOSTICS.json` file into the working directory of the
-process. The SDK re-read it periodically and wrote to a fixed-size file
-named `ExecutableName.ProcessId.log`:
+The legacy `OTEL_DIAGNOSTICS.json` file is still supported, but now configures
+the same pipeline described above. It is superseded by `SelfDiagnosticsOptions`
+and will be removed in a future major version. Prefer [options bound to a
+reloading configuration section](#changing-the-configuration-at-runtime) for new
+applications.
+
+Place the file in the process's working directory or application base directory
+(the working directory takes precedence). The SDK reads it at initialization and
+polls every 10 seconds, so creating or changing it can enable or update diagnostics
+without a restart. Deleting it disables this source.
 
 ```json
 {
     "LogDirectory": ".",
     "FileSize": 32768,
-    "LogLevel": "Warning",
-    "FormatMessage": "true"
+    "LogLevel": "Warning"
 }
 ```
 
-* `LogDirectory` - absolute, or relative to the working directory.
-* `FileSize` - the log file size in KiB, clamped to the range `[1024, 131072]`.
-  The file is fixed-size and overwritten circularly, so older entries may be
-  overwritten when the file is full.
-* `LogLevel` - an
+* `LogDirectory` - absolute, or relative to the current working directory.
+* `FileSize` - the size limit per file in KiB, clamped to `[1024, 131072]`.
+  Two files are retained, so the previous file survives a rollover and total
+  disk usage can be roughly twice this limit.
+* `LogLevel` - a case-sensitive
   [`EventLevel`](https://learn.microsoft.com/dotnet/api/system.diagnostics.tracing.eventlevel)
-  name, not a `LogLevel` name.
-* `FormatMessage` - whether `{0}`-style placeholders in messages are replaced
-  with their argument values. Defaults to `false`.
+  name. Levels map to their .NET equivalents: `Informational` becomes
+  `Information`, `Verbose` becomes `Debug`, and `LogAlways` becomes `Trace`.
 
-Deleting the file disables it. An unparsable file is treated as invalid and no
-output is produced.
+`LogDirectory`, `FileSize`, and `LogLevel` are required. Missing, unreadable, or
+invalid configuration disables this source.
 
-That mechanism still works and is unchanged, but it is superseded by everything
-described above and will be removed in a future major version. It runs
-independently of the mechanism described above, so if you configure both you
-will get two copies of every event, in two different formats.
+`FormatMessage` is ignored; messages are always formatted. Output uses the
+standard [entry format](#log-entries), [preamble](#file-preamble), and
+[rolling files](#file-naming-and-rollover) instead of the old circular
+`{executable}.{pid}.log` file. Unlike other file sink configurations, the
+legacy file does not write a `logging to` notice to standard error when a log
+file is opened.
 
-> [!TIP]
-> Prefer the new mechanism for anything new. The one remaining reason to
-> use the legacy file is if the process is already running without a reloading
-> configuration source and you need diagnostics without a restart.
+Entries are now written asynchronously through the shared bounded queue. If the
+queue fills, new entries are dropped and a warning reports the number dropped.
+
+**Precedence:** any provider whose options configure a sink takes ownership,
+whether those options come from environment variables, code, or a bound
+configuration section. While such a provider owns the configuration, the legacy
+file is ignored and a warning event is emitted.
+
+Setting only `MinimumLevel`, including `None` or `OTEL_LOG_LEVEL=none`, does not
+take ownership. Neither does `OTEL_DOTNET_SELF_DIAGNOSTICS_SINKS=none`: a valid
+legacy file can still enable its file sink. A provider with a configured sink
+and `MinimumLevel = None` suppresses output once registered. The legacy file may
+activate diagnostics during SDK initialization, before provider options are
+applied.

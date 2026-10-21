@@ -15,7 +15,7 @@ public class SelfDiagnosticsOptionsTests
     public void ConfigurationCoordinator_NewestOwnerWins_AndDisposalRestoresLatestPreviousValue()
     {
         var applied = new List<SelfDiagnosticsOptions.SelfDiagnosticsConfiguration>();
-        using var coordinator = new SelfDiagnosticsOptions.SelfDiagnosticsConfigurationCoordinator(applied.Add);
+        using var coordinator = new SelfDiagnosticsConfigurationCoordinator(applied.Add);
         var firstMonitor = new TestOptionsMonitor(new SelfDiagnosticsOptions { LogToStdout = true });
         var secondMonitor = new TestOptionsMonitor(new SelfDiagnosticsOptions { LogToStderr = true });
 
@@ -39,7 +39,7 @@ public class SelfDiagnosticsOptionsTests
     public void ConfigurationCoordinator_DisposingMiddleActiveOwner_AppliesNewestRemainingRegistration()
     {
         var applied = new List<SelfDiagnosticsOptions.SelfDiagnosticsConfiguration>();
-        using var coordinator = new SelfDiagnosticsOptions.SelfDiagnosticsConfigurationCoordinator(applied.Add);
+        using var coordinator = new SelfDiagnosticsConfigurationCoordinator(applied.Add);
 
         using var firstSilentRegistration = coordinator.Register(
             new TestOptionsMonitor(new SelfDiagnosticsOptions()));

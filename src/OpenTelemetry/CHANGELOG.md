@@ -88,6 +88,22 @@ Released 2026-Oct-20
   values when buffering or updating `LogRecord.State`.
   ([#7987](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7987))
 
+* `OTEL_DIAGNOSTICS.json` now uses the `SelfDiagnosticsOptions` pipeline,
+  adding configuration warnings and a redacted environment snapshot to each
+  file's preamble. `Verbose` and `LogAlways` also log loaded assemblies.
+  File-open failures are reported on standard error.
+  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+
+* **Breaking Change**: `OTEL_DIAGNOSTICS.json` now writes rolling
+  `otel-dotnet-*.log` files in the standard entry format instead of a circular
+  `{executable}.{pid}.log` file. `FileSize` applies per file; two files are
+  retained, allowing roughly twice the previous disk usage. `FormatMessage`
+  is ignored; messages are always formatted. Provider-configured sinks,
+  including those enabled through environment variables, override the JSON
+  configuration with a warning event. Writes are asynchronous and may drop
+  entries when the bounded queue fills.
+  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+
 ## 1.20.0
 
 Released 2026-Oct-15

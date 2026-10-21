@@ -196,10 +196,13 @@ internal sealed class SelfDiagnosticsSinkDispatcher : IDisposable
     /// Determines whether an entry at <paramref name="level"/> would currently be accepted.
     /// </summary>
     /// <param name="level">The candidate log level.</param>
+    /// <param name="bypassMinimumLevel">
+    /// <see langword="true"/> to admit the entry at any minimum level other than <c>None</c>.
+    /// </param>
     /// <returns><see langword="true"/> when the entry should be captured.</returns>
-    internal bool IsEnabled(LogLevel level)
+    internal bool IsEnabled(LogLevel level, bool bypassMinimumLevel = false)
     {
-        if (this.disposed || level == LogLevel.None || level < this.minimumLevel)
+        if (this.disposed || level == LogLevel.None || !PassesMinimumLevel(level, bypassMinimumLevel, this.minimumLevel))
         {
             return false;
         }
@@ -237,7 +240,7 @@ internal sealed class SelfDiagnosticsSinkDispatcher : IDisposable
 
             // Also guard None here to avoid consuming queue capacity for entries IsEnabled already rejected.
             if (entry.Level == LogLevel.None
-                || (!this.deferred && entry.Level < this.minimumLevel))
+                || (!this.deferred && !PassesMinimumLevel(entry.Level, entry.BypassesMinimumLevel, this.minimumLevel)))
             {
                 return;
             }
@@ -311,6 +314,10 @@ internal sealed class SelfDiagnosticsSinkDispatcher : IDisposable
             this.Enqueue(in entry);
         }
     }
+
+    // A disabled pipeline (None) admits nothing, including entries that bypass the threshold.
+    private static bool PassesMinimumLevel(LogLevel level, bool bypassMinimumLevel, LogLevel minimumLevel)
+        => minimumLevel != LogLevel.None && (bypassMinimumLevel || level >= minimumLevel);
 
     /// <summary>
     /// Starts the pump on a dedicated background thread rather than the thread pool.
@@ -519,7 +526,8 @@ internal sealed class SelfDiagnosticsSinkDispatcher : IDisposable
 
         foreach (var entry in entries)
         {
-            if (entry.Level >= this.drainMinimumLevel && entry.Level != LogLevel.None)
+            if (entry.Level != LogLevel.None
+                && PassesMinimumLevel(entry.Level, entry.BypassesMinimumLevel, this.drainMinimumLevel))
             {
                 wroteAny |= this.WriteToSinks(in entry);
             }

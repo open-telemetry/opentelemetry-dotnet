@@ -4,6 +4,7 @@
 using System.Reflection;
 using Microsoft.Extensions.Logging;
 using OpenTelemetry.Internal;
+using OpenTelemetry.SelfDiagnostics;
 
 namespace OpenTelemetry.Tests.Diagnostics;
 
@@ -110,6 +111,91 @@ public sealed class SelfDiagnosticsFileSinkTests : IDisposable
         Assert.NotNull(expectedPath);
         Assert.Contains("OpenTelemetry SDK self-diagnostics: logging to", output, StringComparison.Ordinal);
         Assert.Contains(expectedPath, output, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void FirstOpen_WithAnnouncementDisabled_WritesNothingToStderr()
+    {
+        using var captured = new StringWriter();
+        var previous = Console.Error;
+        Console.SetError(captured);
+
+        try
+        {
+            using var sink = new SelfDiagnosticsFileSink(
+                this.tempDirectory.Path,
+                10_240,
+                3,
+                preambleFactory: null,
+                reportError: null,
+                retryInterval: TimeSpan.Zero,
+                announceLogFile: false);
+            Assert.NotNull(sink.CurrentFilePath);
+        }
+        finally
+        {
+            Console.SetError(previous);
+        }
+
+        Assert.Empty(captured.ToString());
+    }
+
+    [Theory]
+    [InlineData(true, false)]
+    [InlineData(false, true)]
+    public void ReusedSink_UpdatesAnnouncementPolicyBeforeRecovery(bool announceBefore, bool announceAfter)
+    {
+        var blockedPath = Path.Combine(this.tempDirectory.Path, "blocked");
+        File.WriteAllText(blockedPath, string.Empty);
+        var errors = new List<string>();
+        var manager = new SelfDiagnosticsSinkManager(
+            static _ => string.Empty,
+            errors.Add,
+            fileRetryInterval: TimeSpan.Zero);
+        var options = new SelfDiagnosticsOptions
+        {
+            LogDirectory = blockedPath,
+            AnnounceLogFile = announceBefore,
+        };
+
+        using var sink = Assert.IsType<SelfDiagnosticsFileSink>(
+            Assert.Single(manager.ApplyOptions(SelfDiagnosticsOptions.SelfDiagnosticsConfiguration.Create(options))));
+        Assert.False(sink.IsActive, "The sink should not be active when the log directory is blocked.");
+        Assert.Single(errors);
+
+        options.AnnounceLogFile = announceAfter;
+        using var reusedSink = Assert.IsType<SelfDiagnosticsFileSink>(
+            Assert.Single(manager.ApplyOptions(SelfDiagnosticsOptions.SelfDiagnosticsConfiguration.Create(options))));
+        Assert.Same(sink, reusedSink);
+
+        using var captured = new StringWriter();
+        var previous = Console.Error;
+        Console.SetError(captured);
+
+        try
+        {
+            File.Delete(blockedPath);
+            WriteLine(reusedSink, "recovered entry");
+            reusedSink.Flush();
+        }
+        finally
+        {
+            Console.SetError(previous);
+        }
+
+        Assert.True(reusedSink.IsActive, "The sink should be active after recovering from a blocked log directory.");
+        Assert.Single(errors);
+        var filePath = Assert.Single(Directory.GetFiles(blockedPath));
+        Assert.Contains("recovered entry", SelfDiagnosticsTestHelpers.ReadAllTextShared(filePath), StringComparison.Ordinal);
+
+        if (announceAfter)
+        {
+            Assert.Equal($"OpenTelemetry SDK self-diagnostics: logging to {filePath}{Environment.NewLine}", captured.ToString());
+        }
+        else
+        {
+            Assert.Empty(captured.ToString());
+        }
     }
 
     [Fact]

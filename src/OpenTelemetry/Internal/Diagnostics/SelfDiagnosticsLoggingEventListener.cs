@@ -263,7 +263,11 @@ internal sealed class SelfDiagnosticsLoggingEventListener : EventListener
 
         var logLevel = MapEventLevel(eventData.Level);
 
-        if (!this.logger.IsEnabled(logLevel))
+        // EventSource delivers LogAlways events at every subscribed level, so they bypass the
+        // minimum-level threshold here too (but not a disabled pipeline).
+        var bypassMinimumLevel = eventData.Level == EventLevel.LogAlways;
+
+        if (!this.logger.IsEnabled(logLevel, bypassMinimumLevel))
         {
             return;
         }
@@ -299,7 +303,8 @@ internal sealed class SelfDiagnosticsLoggingEventListener : EventListener
             new EventId(eventData.EventId, eventData.EventName),
             message,
             exception: null,
-            Activity.Current?.Context);
+            Activity.Current?.Context,
+            bypassMinimumLevel);
 
         this.logger.Write(in entry);
     }

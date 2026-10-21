@@ -22,7 +22,8 @@ internal readonly struct SelfDiagnosticsLogEntry
         EventId eventId,
         string message,
         Exception? exception,
-        ActivityContext? activityContext)
+        ActivityContext? activityContext,
+        bool bypassesMinimumLevel = false)
     {
         this.TimestampUtc = timestampUtc;
         this.ThreadId = threadId;
@@ -31,6 +32,7 @@ internal readonly struct SelfDiagnosticsLogEntry
         this.Message = message;
         this.Exception = exception;
         this.ActivityContext = activityContext;
+        this.BypassesMinimumLevel = bypassesMinimumLevel;
     }
 
     /// <summary>
@@ -71,6 +73,14 @@ internal readonly struct SelfDiagnosticsLogEntry
     /// entry was emitted, or <see langword="null"/> if no activity was active.
     /// </summary>
     public ActivityContext? ActivityContext { get; }
+
+    /// <summary>
+    /// Gets a value indicating whether the entry is admitted at any minimum level while
+    /// diagnostics are enabled. Set for <see cref="System.Diagnostics.Tracing.EventLevel.LogAlways"/>
+    /// events, which an <see cref="System.Diagnostics.Tracing.EventSource"/> delivers regardless of
+    /// the subscribed level.
+    /// </summary>
+    public bool BypassesMinimumLevel { get; }
 
     /// <summary>
     /// Captures a new entry using the current time, thread, and <see cref="Activity.Current"/>.
