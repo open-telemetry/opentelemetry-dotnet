@@ -7,11 +7,6 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
-* Attribute values implementing `IUtf8SpanFormattable` (.NET 8+) that are not
-  already handled as a built-in type are now formatted directly into the
-  export buffer with `TryFormat` and exported as string attributes, instead of
-  through `ToString()`.
-  ([#7929](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7929))
 * Fixed informational HTTP client logs not being suppressed by default when the
   OTLP log exporter is registered using `OpenTelemetryLoggerOptions.AddOtlpExporter`.
   ([#7959](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7959))
@@ -87,6 +82,12 @@ Notes](../../RELEASENOTES.md).
 * Fixed inline certificate or private key material being included in OTLP
   diagnostic events and exceptions when supplied instead of a file path.
   ([#7981](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7981))
+
+* Attribute values implementing `IUtf8SpanFormattable` (.NET 8+) that are not
+  already handled as a built-in type are now formatted directly into the
+  export buffer with `TryFormat` and exported as string attributes, instead of
+  through `ToString()`.
+  ([#7929](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7929))
 
 ## 1.20.0
 
