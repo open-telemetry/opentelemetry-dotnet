@@ -1,13 +1,44 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using OpenTelemetry.Internal;
+using OpenTelemetry.SelfDiagnostics;
 
 namespace OpenTelemetry.Tests.Diagnostics;
 
 public class SelfDiagnosticsOptionsEnvironmentDefaultsTests
 {
+    [Theory]
+    [InlineData("OTEL_LOG_LEVEL", "debug", true)]
+    [InlineData("OTEL_LOG_LEVEL", "verbose", false)]
+    [InlineData("OTEL_LOG_LEVEL", " ", false)]
+    [InlineData("OTEL_DOTNET_SELF_DIAGNOSTICS_ENV_VARS", "all", true)]
+    [InlineData("OTEL_DOTNET_SELF_DIAGNOSTICS_ENV_VARS", "some", false)]
+    [InlineData("OTEL_DOTNET_SELF_DIAGNOSTICS_LOG_DIRECTORY", "/logs", true)]
+    [InlineData("OTEL_DOTNET_SELF_DIAGNOSTICS_LOG_DIRECTORY", "", false)]
+    [InlineData("OTEL_DOTNET_SELF_DIAGNOSTICS_SINKS", "stdout,syslog", true)]
+    [InlineData("OTEL_DOTNET_SELF_DIAGNOSTICS_SINKS", "none", true)]
+    [InlineData("OTEL_DOTNET_SELF_DIAGNOSTICS_SINKS", "file", true)]
+    [InlineData("OTEL_DOTNET_SELF_DIAGNOSTICS_SINKS", "syslog", false)]
+    [InlineData("OTEL_DOTNET_SELF_DIAGNOSTICS_SINKS", ",,", false)]
+    public void ApplyEnvironmentVariables_RecordsOnlyTheVariablesItApplied(string name, string value, bool applied)
+    {
+        var configuration = new ConfigurationBuilder().AddInMemoryCollection([new(name, value)]).Build();
+        var appliedVariables = new HashSet<string>();
+
+        SelfDiagnosticsOptionsEnvironmentDefaults.ApplyEnvironmentVariables(
+            new SelfDiagnosticsOptions(),
+            configuration,
+            static () => "/fallback",
+            static _ => { },
+            appliedVariables: appliedVariables);
+
+        string[] expected = applied ? [name] : [];
+        Assert.Equal(expected, appliedVariables);
+    }
+
     [Theory]
 
     // OTel spec tokens.

@@ -11,6 +11,10 @@ Notes](../../RELEASENOTES.md).
   .NET Framework.
   ([#7983](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7983))
 
+* `SelfDiagnosticsOptions` is now automatically bound from the
+  `OpenTelemetry:SelfDiagnostics` configuration section, when present.
+  ([#8008](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8008))
+
 * Non-finite histogram measurements (`NaN`, `+Inf`, `-Inf`) are now dropped
   rather than recorded, so they can no longer permanently corrupt the sum,
   min, and max of a cumulative histogram stream. This aligns the explicit-bucket
