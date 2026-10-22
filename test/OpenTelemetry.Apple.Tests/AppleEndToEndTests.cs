@@ -139,7 +139,7 @@ public sealed class AppleEndToEndTests(AppleAppFixture fixture) : IClassFixture<
             .ToHashSet(StringComparer.Ordinal);
 
     private static List<LogRecord> GetLogRecords(OtlpHttpCollector collector) =>
-        [   
+        [
             .. collector.GetLogsRequests()
                 .SelectMany((p) => p.ResourceLogs)
                 .SelectMany((p) => p.ScopeLogs)
