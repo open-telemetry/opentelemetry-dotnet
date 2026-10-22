@@ -488,6 +488,85 @@ public class MetricPointReclaimTests
         }
     }
 
+    [Fact]
+    public void SeriesIsExportedOnceWhenReplacementIsCreatedInFreeSlotDuringSnapshot()
+    {
+        // Regression test for a snapshot exporting a metric point that was created in a free slot after the
+        // snapshot had checked the slot. If the point replaced one that the same snapshot had already claimed
+        // and exported (deferring its reclaim), the same series would be exported twice in a single collect.
+        var exportedItems = new List<Metric>();
+
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+        var counter = meter.CreateCounter<long>("counter");
+
+        using var meterProvider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddView("counter", new MetricStreamConfiguration { CardinalityLimit = 2 })
+            .AddInMemoryExporter(exportedItems, metricReaderOptions => metricReaderOptions.TemporalityPreference = MetricReaderTemporalityPreference.Delta)
+            .Build();
+
+        var tagA = new KeyValuePair<string, object?>("key", "A");
+        var tagB = new KeyValuePair<string, object?>("key", "B");
+
+        counter.Add(1, tagA);
+        counter.Add(1, tagB);
+        Assert.True(meterProvider.ForceFlush());
+
+        var store = exportedItems[0].AggregatorStore;
+        var slotA = Assert.Single(store.TagsToMetricPointIndexDictionaryDelta!.Values, lookupData => Equals(lookupData.GivenTags.KeyValuePairs[0].Value, "A")).Index;
+
+        // Keep A alive and let B be reclaimed, so that B's slot is free.
+        counter.Add(1, tagA);
+        Assert.True(meterProvider.ForceFlush());
+        Assert.Single(store.TagsToMetricPointIndexDictionaryDelta!);
+
+        var observedSlots = new List<int>();
+
+        store.DeltaReclaimCandidateObserved = slot =>
+        {
+            observedSlots.Add(slot);
+
+            // For A, a measurement races with the snapshot claiming A, so the snapshot exports A and
+            // defers its reclaim. For any slot visited afterwards, a measurement for A creates the point
+            // that replaces A in a free slot, which must not be exported by this snapshot too.
+            counter.Add(1, tagA);
+        };
+
+        exportedItems.Clear();
+
+        try
+        {
+            Assert.True(meterProvider.ForceFlush());
+        }
+        finally
+        {
+            store.DeltaReclaimCandidateObserved = null;
+        }
+
+        Assert.Equal(slotA, observedSlots[0]);
+        Assert.Equal(["A:1"], GetSeries(exportedItems));
+
+        // A's reclaim completes, and the next measurement for A is exported by the point that replaces it.
+        counter.Add(1, tagA);
+
+        exportedItems.Clear();
+        Assert.True(meterProvider.ForceFlush());
+
+        Assert.Equal(["A:1"], GetSeries(exportedItems));
+
+        static List<string> GetSeries(List<Metric> metrics)
+        {
+            var series = new List<string>();
+
+            foreach (ref readonly var metricPoint in Assert.Single(metrics).GetMetricPoints())
+            {
+                series.Add($"{metricPoint.Tags.KeyAndValues[0].Value}:{metricPoint.GetSumLong()}");
+            }
+
+            return series;
+        }
+    }
+
     [Theory]
     [InlineData(1)]
     [InlineData(2)]

@@ -215,6 +215,10 @@ internal sealed class AggregatorStore
 
     internal DateTimeOffset EndTimeInclusive { get; private set; }
 
+    // Test hook invoked by SnapshotDeltaWithMetricPointReclaim with the slot of a MetricPoint it has
+    // observed with a status of NoCollectPending, before it tries to claim the MetricPoint to reclaim it.
+    internal Action<int>? DeltaReclaimCandidateObserved { get; set; }
+
     internal double[] HistogramBounds => this.histogramExplicitBounds.Bounds;
 
     // Using this filter to indicate On/Off
@@ -305,29 +309,35 @@ internal sealed class AggregatorStore
             var slot = this.ToSlot(i);
             ref var metricPoint = ref this.metricPoints[slot];
 
-            // Skip a point created during this collect cycle, even if its slot (which was reclaimed
-            // and reused) is still to be visited. Otherwise, a point which replaces one that this
-            // loop has already claimed and exported (see DeferredReclaim below) would be exported
-            // too, so the same series would be exported twice in a single collect.
-            if (metricPoint.LookupData is { } lookupData && lookupData.CollectCycle == collectCycle)
+            // Skip a slot that is free and a point created during this collect cycle, even if its
+            // slot (which was reclaimed and reused) is still to be visited. Otherwise, a point which
+            // replaces one that this loop has already claimed and exported (see DeferredReclaim below)
+            // would be exported too, so the same series would be exported twice in a single collect.
+            //
+            // LookupData is read only once: a point can be published into a free slot at any time,
+            // so if it were read again it could belong to a point created after this check.
+            // A slot's LookupData is only changed from non-null by ReclaimMetricPoint on this thread.
+            var lookupData = metricPoint.LookupData;
+            if (lookupData == null || lookupData.CollectCycle == collectCycle)
             {
                 continue;
             }
 
             if (metricPoint.MetricPointStatus == MetricPointStatus.NoCollectPending)
             {
+                this.DeltaReclaimCandidateObserved?.Invoke(slot);
+
                 // Reclaim the MetricPoint if it was marked for it in the previous collect cycle
-                if (metricPoint.LookupData != null && metricPoint.LookupData.DeferredReclaim)
+                if (lookupData.DeferredReclaim)
                 {
                     this.ReclaimMetricPoint(ref metricPoint, slot);
                     continue;
                 }
 
                 // Check if the MetricPoint could be reclaimed in the current Collect cycle.
-                // If metricPoint.LookupData is `null` then the MetricPoint is already reclaimed and in the queue.
                 // If the Collect thread is successfully able to compare and swap the reference count from zero to int.MinValue, it means that
                 // the MetricPoint can be reused for other tags.
-                if (metricPoint.LookupData != null && Interlocked.CompareExchange(ref metricPoint.ReferenceCount, int.MinValue, 0) == 0)
+                if (Interlocked.CompareExchange(ref metricPoint.ReferenceCount, int.MinValue, 0) == 0)
                 {
                     // This is similar to double-checked locking. For some rare case, the Collect thread might read the status as `NoCollectPending`,
                     // and then get switched out before it could set the ReferenceCount to `int.MinValue`. In the meantime, an Update thread could come in
@@ -349,7 +359,7 @@ internal sealed class AggregatorStore
                         // The MetricPoint still has an unexported measurement. Take its Snapshot
                         // and mark it to be reclaimed in the next Collect cycle.
 
-                        metricPoint.LookupData.DeferredReclaim = true;
+                        lookupData.DeferredReclaim = true;
 
                         this.TakeMetricPointSnapshot(ref metricPoint, outputDelta: true);
 
