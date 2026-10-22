@@ -18,7 +18,7 @@ Notes](../../RELEASENOTES.md).
 * Fixed a race where collecting a cumulative metric concurrently with the
   creation of a new `MetricPoint` could export a `MetricPoint` that was not yet
   fully initialized, could case a `NullReferenceException` when enumerating `Tags`.
-  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+  ([#8018](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8018))
 
 ## 1.20.1
 
