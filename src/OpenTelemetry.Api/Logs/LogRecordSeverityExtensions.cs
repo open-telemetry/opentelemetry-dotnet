@@ -87,7 +87,7 @@ internal
         FatalShortName,
         Fatal2ShortName,
         Fatal3ShortName,
-        Fatal4ShortName
+        Fatal4ShortName,
     ];
 
     /// <summary>

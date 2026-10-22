@@ -1116,10 +1116,9 @@ public class PrometheusHttpListenerTests
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
             Assert.True(response.Content.Headers.Contains("Last-Modified"));
 
-            contentType ??=
-                requestOpenMetrics ?
-                "application/openmetrics-text; version=1.0.0; charset=utf-8; escaping=underscores" :
-                "text/plain; version=0.0.4; charset=utf-8";
+            contentType ??= requestOpenMetrics
+                ? "application/openmetrics-text; version=1.0.0; charset=utf-8; escaping=underscores"
+                : "text/plain; version=0.0.4; charset=utf-8";
 
             Assert.NotNull(response.Content);
             Assert.NotNull(response.Content.Headers.ContentType);

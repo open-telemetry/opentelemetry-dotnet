@@ -15,16 +15,16 @@ internal abstract class JsonStringArrayTagWriter<TTagState> : TagWriter<TTagStat
     {
     }
 
-    protected sealed override void WriteArrayTag(ref TTagState writer, string key, ref JsonArrayTagWriterState array)
+    protected sealed override void WriteArrayTag(ref TTagState state, string key, ref JsonArrayTagWriterState value)
     {
-        var result = array.Stream.TryGetBuffer(out var buffer);
+        var result = value.Stream.TryGetBuffer(out var buffer);
 
         Debug.Assert(result, "result was false");
 
-        this.WriteArrayTag(ref writer, key, buffer);
+        this.WriteArrayTag(ref state, key, buffer);
     }
 
-    protected abstract void WriteArrayTag(ref TTagState writer, string key, ArraySegment<byte> arrayUtf8JsonBytes);
+    protected abstract void WriteArrayTag(ref TTagState state, string key, ArraySegment<byte> arrayUtf8JsonBytes);
 
     protected override bool TryWriteByteArrayTag(ref TTagState state, string key, ReadOnlySpan<byte> value)
     {

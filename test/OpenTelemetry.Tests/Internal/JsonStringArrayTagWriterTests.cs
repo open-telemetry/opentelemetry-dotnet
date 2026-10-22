@@ -165,23 +165,23 @@ public class JsonStringArrayTagWriterTests
 
         public static TestTagWriter Instance { get; } = new();
 
-        protected override void WriteIntegralTag(ref Tag tag, string key, long value)
+        protected override void WriteIntegralTag(ref Tag state, string key, long value)
             => throw new NotImplementedException();
 
-        protected override void WriteFloatingPointTag(ref Tag tag, string key, double value)
+        protected override void WriteFloatingPointTag(ref Tag state, string key, double value)
             => throw new NotImplementedException();
 
-        protected override void WriteBooleanTag(ref Tag tag, string key, bool value)
+        protected override void WriteBooleanTag(ref Tag state, string key, bool value)
             => throw new NotImplementedException();
 
-        protected override void WriteStringTag(ref Tag tag, string key, ReadOnlySpan<char> value)
+        protected override void WriteStringTag(ref Tag state, string key, ReadOnlySpan<char> value)
             => throw new NotImplementedException();
 
-        protected override void WriteArrayTag(ref Tag tag, string key, ArraySegment<byte> arrayUtf8JsonBytes)
+        protected override void WriteArrayTag(ref Tag state, string key, ArraySegment<byte> arrayUtf8JsonBytes)
         {
 #pragma warning disable IDE0370 // Suppression is unnecessary
-            tag.Key = key;
-            tag.Value = Encoding.UTF8.GetString(arrayUtf8JsonBytes.Array!, 0, arrayUtf8JsonBytes.Count);
+            state.Key = key;
+            state.Value = Encoding.UTF8.GetString(arrayUtf8JsonBytes.Array!, 0, arrayUtf8JsonBytes.Count);
 #pragma warning restore IDE0370 // Suppression is unnecessary
         }
 
@@ -192,7 +192,7 @@ public class JsonStringArrayTagWriterTests
         protected override bool TryWriteEmptyTag(ref Tag state, string key, object? value)
             => throw new NotImplementedException();
 
-        protected override bool TryWriteByteArrayTag(ref Tag consoleTag, string key, ReadOnlySpan<byte> value) => false;
+        protected override bool TryWriteByteArrayTag(ref Tag state, string key, ReadOnlySpan<byte> value) => false;
 
         protected override void WriteKvListTag(ref Tag state, string key, IEnumerable<KeyValuePair<string, object?>> kvList, int? tagValueMaxLength)
             => throw new NotImplementedException();

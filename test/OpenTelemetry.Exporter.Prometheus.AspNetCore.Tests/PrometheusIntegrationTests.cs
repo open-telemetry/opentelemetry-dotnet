@@ -226,41 +226,43 @@ public class PrometheusIntegrationTests(PromToolFixture promtool, ITestOutputHel
                 translationStrategy is PrometheusAspNetCoreTranslationStrategy.NoUTF8EscapingWithSuffixes &&
                 !scrapeProtocol.Contains("0.0.", StringComparison.Ordinal);
 
-            HashSet<string> expectedSeries = usesUtf8Names
-                ?
-                [
+            HashSet<string> utf8Series =
+            [
 #if NET10_0_OR_GREATER
-                    "aspnetcore.memory_pool.allocated_bytes_total",
+                "aspnetcore.memory_pool.allocated_bytes_total",
 #endif
-                    "http.server.active_requests",
-                    "http.server.request.duration_seconds_bucket",
-                    "http.server.request.duration_seconds_count",
-                    "http.server.request.duration_seconds_sum",
-                    "kestrel.active_connections",
-                    "kestrel.connection.duration_seconds_bucket",
-                    "kestrel.connection.duration_seconds_count",
-                    "kestrel.connection.duration_seconds_sum",
-                    "processed_bytes_total",
-                    "queue_balance",
-                    "temperature_celsius",
-                ]
-                :
-                [
+                "http.server.active_requests",
+                "http.server.request.duration_seconds_bucket",
+                "http.server.request.duration_seconds_count",
+                "http.server.request.duration_seconds_sum",
+                "kestrel.active_connections",
+                "kestrel.connection.duration_seconds_bucket",
+                "kestrel.connection.duration_seconds_count",
+                "kestrel.connection.duration_seconds_sum",
+                "processed_bytes_total",
+                "queue_balance",
+                "temperature_celsius",
+            ];
+
+            HashSet<string> underscoreSeries =
+            [
 #if NET10_0_OR_GREATER
-                    "aspnetcore_memory_pool_allocated_bytes_total",
+                "aspnetcore_memory_pool_allocated_bytes_total",
 #endif
-                    "http_server_active_requests",
-                    "http_server_request_duration_seconds_bucket",
-                    "http_server_request_duration_seconds_count",
-                    "http_server_request_duration_seconds_sum",
-                    "kestrel_active_connections",
-                    "kestrel_connection_duration_seconds_bucket",
-                    "kestrel_connection_duration_seconds_count",
-                    "kestrel_connection_duration_seconds_sum",
-                    "processed_bytes_total",
-                    "queue_balance",
-                    "temperature_celsius",
-                ];
+                "http_server_active_requests",
+                "http_server_request_duration_seconds_bucket",
+                "http_server_request_duration_seconds_count",
+                "http_server_request_duration_seconds_sum",
+                "kestrel_active_connections",
+                "kestrel_connection_duration_seconds_bucket",
+                "kestrel_connection_duration_seconds_count",
+                "kestrel_connection_duration_seconds_sum",
+                "processed_bytes_total",
+                "queue_balance",
+                "temperature_celsius",
+            ];
+
+            var expectedSeries = usesUtf8Names ? utf8Series : underscoreSeries;
 
             HashSet<string> actualSeries = [];
 

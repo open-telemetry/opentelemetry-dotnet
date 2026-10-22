@@ -13,9 +13,9 @@ internal sealed class MyProcessor : BaseProcessor<LogRecord>
         this.name = name;
     }
 
-    public override void OnEnd(LogRecord record)
+    public override void OnEnd(LogRecord data)
     {
-        Console.WriteLine($"{this.name}.OnEnd({record})");
+        Console.WriteLine($"{this.name}.OnEnd({data})");
     }
 
     protected override bool OnForceFlush(int timeoutMilliseconds)

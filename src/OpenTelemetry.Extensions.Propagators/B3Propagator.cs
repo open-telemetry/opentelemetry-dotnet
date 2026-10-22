@@ -236,10 +236,10 @@ public sealed class B3Propagator : TextMapPropagator
             return header is not { Length: > 0 } || string.IsNullOrWhiteSpace(header)
                 ? context
                 : !TryExtractSingleHeaderContext(header, out var traceId, out var spanId, out var traceOptions)
-                ? context
-                : new PropagationContext(
-                    new ActivityContext(traceId, spanId, traceOptions, isRemote: true),
-                    context.Baggage);
+                    ? context
+                    : new PropagationContext(
+                        new ActivityContext(traceId, spanId, traceOptions, isRemote: true),
+                        context.Baggage);
         }
         catch (Exception e)
         {
