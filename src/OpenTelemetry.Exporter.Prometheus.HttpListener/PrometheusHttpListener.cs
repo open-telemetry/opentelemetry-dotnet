@@ -93,9 +93,9 @@ internal sealed class PrometheusHttpListener : IDisposable
             this.httpListener.Start();
 
             // link the passed in token if not null
-            this.tokenSource = token == CancellationToken.None ?
-                new CancellationTokenSource() :
-                CancellationTokenSource.CreateLinkedTokenSource(token);
+            this.tokenSource = token == CancellationToken.None
+                ? new CancellationTokenSource()
+                : CancellationTokenSource.CreateLinkedTokenSource(token);
 
             var workerToken = this.tokenSource.Token;
             this.workerThread = Task.Factory.StartNew(

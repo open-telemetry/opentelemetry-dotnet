@@ -40,45 +40,45 @@ internal sealed class ConsoleTagWriter : JsonStringArrayTagWriter<ConsoleTagWrit
         return false;
     }
 
-    protected override void WriteIntegralTag(ref ConsoleTag consoleTag, string key, long value)
+    protected override void WriteIntegralTag(ref ConsoleTag state, string key, long value)
     {
-        consoleTag.Key = key;
-        consoleTag.Value = value.ToString(CultureInfo.InvariantCulture);
-        consoleTag.IsJsonLiteral = true;
+        state.Key = key;
+        state.Value = value.ToString(CultureInfo.InvariantCulture);
+        state.IsJsonLiteral = true;
     }
 
-    protected override void WriteFloatingPointTag(ref ConsoleTag consoleTag, string key, double value)
+    protected override void WriteFloatingPointTag(ref ConsoleTag state, string key, double value)
     {
-        consoleTag.Key = key;
-        consoleTag.Value = value.ToString(CultureInfo.InvariantCulture);
+        state.Key = key;
+        state.Value = value.ToString(CultureInfo.InvariantCulture);
 
         // JSON has no representation for NaN or infinity, so those are emitted as strings.
-        consoleTag.IsJsonLiteral = !double.IsNaN(value) && !double.IsInfinity(value);
+        state.IsJsonLiteral = !double.IsNaN(value) && !double.IsInfinity(value);
     }
 
-    protected override void WriteBooleanTag(ref ConsoleTag consoleTag, string key, bool value)
+    protected override void WriteBooleanTag(ref ConsoleTag state, string key, bool value)
     {
-        consoleTag.Key = key;
-        consoleTag.Value = value ? "true" : "false";
-        consoleTag.IsJsonLiteral = true;
+        state.Key = key;
+        state.Value = value ? "true" : "false";
+        state.IsJsonLiteral = true;
     }
 
-    protected override void WriteStringTag(ref ConsoleTag consoleTag, string key, ReadOnlySpan<char> value)
+    protected override void WriteStringTag(ref ConsoleTag state, string key, ReadOnlySpan<char> value)
     {
-        consoleTag.Key = key;
-        consoleTag.Value = value.ToString();
-        consoleTag.IsJsonLiteral = false;
+        state.Key = key;
+        state.Value = value.ToString();
+        state.IsJsonLiteral = false;
     }
 
-    protected override void WriteArrayTag(ref ConsoleTag consoleTag, string key, ArraySegment<byte> arrayUtf8JsonBytes)
+    protected override void WriteArrayTag(ref ConsoleTag state, string key, ArraySegment<byte> arrayUtf8JsonBytes)
     {
-        consoleTag.Key = key;
+        state.Key = key;
 #if NET
-        consoleTag.Value = Encoding.UTF8.GetString(arrayUtf8JsonBytes.Array!, 0, arrayUtf8JsonBytes.Count);
+        state.Value = Encoding.UTF8.GetString(arrayUtf8JsonBytes.Array!, 0, arrayUtf8JsonBytes.Count);
 #else
-        consoleTag.Value = Encoding.UTF8.GetString(arrayUtf8JsonBytes.Array, 0, arrayUtf8JsonBytes.Count);
+        state.Value = Encoding.UTF8.GetString(arrayUtf8JsonBytes.Array, 0, arrayUtf8JsonBytes.Count);
 #endif
-        consoleTag.IsJsonLiteral = true;
+        state.IsJsonLiteral = true;
     }
 
     protected override void OnUnsupportedTagDropped(
@@ -86,11 +86,11 @@ internal sealed class ConsoleTagWriter : JsonStringArrayTagWriter<ConsoleTagWrit
         string tagValueTypeFullName)
         => this.onUnsupportedTagDropped(tagKey, tagValueTypeFullName);
 
-    protected override bool TryWriteEmptyTag(ref ConsoleTag consoleTag, string key, object? value)
+    protected override bool TryWriteEmptyTag(ref ConsoleTag state, string key, object? value)
     {
-        consoleTag.Key = key;
-        consoleTag.Value = null;
-        consoleTag.IsJsonLiteral = false;
+        state.Key = key;
+        state.Value = null;
+        state.IsJsonLiteral = false;
         return true;
     }
 

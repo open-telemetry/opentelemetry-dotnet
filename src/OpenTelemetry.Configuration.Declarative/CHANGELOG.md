@@ -56,6 +56,13 @@ Notes](../../RELEASENOTES.md).
   unresolved mapping-key aliases during parsing.
   ([#7904](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7904))
 
+* Reports each setting the schema defines that is present in the document but
+  not applied by this package. A stable setting is logged as an error and a
+  setting under development as a warning, naming the setting with its line and
+  column. Loading still succeeds. A document based on a starter template now
+  produces several error-level events until more sections are supported.
+  ([#8009](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8009))
+
 * Dropped support for .NET 8.0 and 9.0.
   ([#6899](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6899))
 

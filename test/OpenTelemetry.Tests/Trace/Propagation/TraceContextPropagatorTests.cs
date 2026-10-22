@@ -738,7 +738,7 @@ public class TraceContextPropagatorTests
             "bar01=01,bar02=02,bar03=03,bar04=04,bar05=05,bar06=06,bar07=07,bar08=08,bar09=09,bar10=10",
             "bar11=11,bar12=12,bar13=13,bar14=14,bar15=15,bar16=16,bar17=17,bar18=18,bar19=19,bar20=20",
             "bar21=21,bar22=22,bar23=23,bar24=24,bar25=25,bar26=26,bar27=27,bar28=28,bar29=29,bar30=30",
-            "bar31=31,bar32=32"
+            "bar31=31,bar32=32",
         ]);
         var expected =
             "bar01=01,bar02=02,bar03=03,bar04=04,bar05=05,bar06=06,bar07=07,bar08=08,bar09=09,bar10=10" + "," +
@@ -752,7 +752,7 @@ public class TraceContextPropagatorTests
             "bar01=01,bar02=02,bar03=03,bar04=04,bar05=05,bar06=06,bar07=07,bar08=08,bar09=09,bar10=10",
             "bar11=11,bar12=12,bar13=13,bar14=14,bar15=15,bar16=16,bar17=17,bar18=18,bar19=19,bar20=20",
             "bar21=21,bar22=22,bar23=23,bar24=24,bar25=25,bar26=26,bar27=27,bar28=28,bar29=29,bar30=30",
-            "bar31=31,bar32=32,bar33=33"
+            "bar31=31,bar32=32,bar33=33",
         ]);
         Assert.Empty(output2);
     }

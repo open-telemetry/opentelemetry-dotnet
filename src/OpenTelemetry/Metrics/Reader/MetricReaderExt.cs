@@ -8,9 +8,9 @@ using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Metrics;
 
-/// <summary>
+/// <content>
 /// MetricReader base class.
-/// </summary>
+/// </content>
 public abstract partial class MetricReader
 {
     private readonly Dictionary<string, int> metricStreamNames = [with(StringComparer.OrdinalIgnoreCase)];

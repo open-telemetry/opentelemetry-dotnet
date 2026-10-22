@@ -10,9 +10,10 @@ namespace OpenTelemetry.Configuration.Declarative.Tests;
 [Collection(EnvVarsCollectionDefinition.Name)]
 public sealed class DeclarativeConfigurationReaderTests
 {
-    private const int UnknownSectionEventId = 2;
     private const int UndefinedRootPropertyEventId = 42;
     private const int UndefinedPropertyRetainedEventId = 43;
+    private const int ConfiguredPropertyNotAppliedEventId = 44;
+    private const int DevelopmentPropertyNotAppliedEventId = 45;
 
     [Fact]
     public void Translate_DisabledTrue_SetsOtelSdkDisabled()
@@ -1455,7 +1456,7 @@ public sealed class DeclarativeConfigurationReaderTests
     }
 
     [Fact]
-    public void Read_SchemaDefinedUnappliedRootSection_ReportsTheUnknownSectionEvent()
+    public void Read_SchemaDefinedUnappliedRootSection_IsRecordedAsNotAppliedWithoutAnEvent()
     {
         const string yaml = """
             file_format: "1.2"
@@ -1467,12 +1468,14 @@ public sealed class DeclarativeConfigurationReaderTests
             """;
 
         using var listener = new TestEventListener(OpenTelemetryDeclarativeConfigurationEventSource.Log, EventLevel.Verbose);
+        using var factory = new DeclarativeYamlTestFileFactory();
 
-        _ = ReadConfiguration(yaml);
+        var document = DeclarativeConfigurationReader.Read(new FilePath(factory.CreateYamlFile(yaml)));
 
-        var evt = Assert.Single(listener.CurrentMessages, e => e.EventId == UnknownSectionEventId);
-        Assert.Equal("tracer_provider", evt.Payload![0]);
-        Assert.DoesNotContain(listener.CurrentMessages, e => e.EventId == UndefinedRootPropertyEventId);
+        var unapplied = Assert.Single(document.UnappliedProperties);
+        Assert.Equal("tracer_provider", unapplied.Path);
+        Assert.Equal(SchemaStability.Stable, unapplied.Stability);
+        Assert.DoesNotContain(listener.CurrentMessages, e => e.EventId is UndefinedRootPropertyEventId or ConfiguredPropertyNotAppliedEventId or DevelopmentPropertyNotAppliedEventId);
     }
 
     private static ReadOnlyDictionary<string, string?> ReadConfiguration(string yaml)

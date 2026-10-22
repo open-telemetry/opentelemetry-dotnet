@@ -385,9 +385,9 @@ public class TraceContextPropagator : TextMapPropagator
 
             hasTraceState = true;
 
-            return list.Count == 1 ?
-                TryExtractSingleTracestate(list[0], out tracestateResult) :
-                TryExtractMultipleTracestate(list, out tracestateResult);
+            return list.Count == 1
+                ? TryExtractSingleTracestate(list[0], out tracestateResult)
+                : TryExtractMultipleTracestate(list, out tracestateResult);
         }
 
         if (tracestateCollection is IReadOnlyList<string> readOnlyList)
@@ -399,10 +399,9 @@ public class TraceContextPropagator : TextMapPropagator
 
             hasTraceState = true;
 
-            return
-                readOnlyList.Count == 1 ?
-                TryExtractSingleTracestate(readOnlyList[0], out tracestateResult) :
-                TryExtractMultipleTracestate(readOnlyList, out tracestateResult);
+            return readOnlyList.Count == 1
+                ? TryExtractSingleTracestate(readOnlyList[0], out tracestateResult)
+                : TryExtractMultipleTracestate(readOnlyList, out tracestateResult);
         }
 
         using var enumerator = tracestateCollection.GetEnumerator();
@@ -414,9 +413,9 @@ public class TraceContextPropagator : TextMapPropagator
         hasTraceState = true;
         var singleTraceState = enumerator.Current;
 
-        return enumerator.MoveNext() ?
-            TryExtractMultipleTracestate(EnumerateFrom(singleTraceState, enumerator), out tracestateResult) :
-            TryExtractSingleTracestate(singleTraceState, out tracestateResult);
+        return enumerator.MoveNext()
+            ? TryExtractMultipleTracestate(EnumerateFrom(singleTraceState, enumerator), out tracestateResult)
+            : TryExtractSingleTracestate(singleTraceState, out tracestateResult);
     }
 
     private static IEnumerable<string> EnumerateFrom(string first, IEnumerator<string> enumerator)
