@@ -235,10 +235,19 @@ internal abstract class OtlpExportClient : IExportClient
     {
         var remaining = deadlineUtc - DateTime.UtcNow;
 
-        // The deadline is already in the past when the exporter has no timeout of
-        // its own (for example an HttpClient with an infinite Timeout), so only the
-        // caller's token applies then, as it does if the deadline is too far away to schedule.
-        if (remaining <= TimeSpan.Zero || remaining.TotalMilliseconds >= int.MaxValue)
+        if (remaining <= TimeSpan.Zero)
+        {
+            // Do not start a request once the deadline has passed, for example
+            // because serializing the batch used all of the time that was allowed.
+            const string Message = "The export deadline was reached before the request was sent.";
+            throw new TaskCanceledException(Message, new TimeoutException(Message));
+        }
+
+        // There is no deadline (DateTime.MaxValue) when neither the exporter nor its
+        // caller limits the export (for example an HttpClient with an infinite Timeout),
+        // so only the caller's token applies then, as it does if the deadline is too far
+        // away to schedule.
+        if (remaining.TotalMilliseconds >= int.MaxValue)
         {
             return this.SendHttpRequest(request, cancellationToken);
         }

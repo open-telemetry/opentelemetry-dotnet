@@ -14,6 +14,13 @@ internal sealed class OtlpExporterRetryTransmissionHandler : OtlpExporterTransmi
 
     protected override bool OnSubmitRequestFailure(byte[] request, int contentLength, ExportClientResponse response)
     {
+        if (response.DeadlineUtc == DateTime.MaxValue)
+        {
+            // Without a deadline (for example an HttpClient with an infinite Timeout and no timeout
+            // from the caller) nothing would bound the retries, so the request is not retried.
+            return false;
+        }
+
         var nextRetryDelayMilliseconds = OtlpRetry.InitialBackoffMilliseconds;
         while (RetryHelper.ShouldRetryRequest(response, nextRetryDelayMilliseconds, out var retryResult))
         {

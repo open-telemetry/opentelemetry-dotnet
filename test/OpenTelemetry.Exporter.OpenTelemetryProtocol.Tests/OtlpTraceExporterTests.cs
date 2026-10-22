@@ -1288,6 +1288,41 @@ public sealed class OtlpTraceExporterTests : IDisposable
     }
 
     [Fact]
+    public void Export_SerializationTime_CountsTowardsExportDeadline()
+    {
+        const int ExporterTimeoutMilliseconds = 1_000;
+
+        var exportClientMock = new TestExportClient();
+        var exporterOptions = new OtlpExporterOptions();
+        using var transmissionHandler = new OtlpExporterTransmissionHandler(exportClientMock, exporterOptions.TimeoutMilliseconds);
+#pragma warning disable CA2000 // Dispose objects before losing scope
+        using var processor = new BatchActivityExportProcessor(
+            new OtlpTraceExporter(exporterOptions, DefaultSdkLimitOptions, DefaultExperimentalOptions, transmissionHandler),
+            exporterTimeoutMilliseconds: ExporterTimeoutMilliseconds);
+#pragma warning restore CA2000 // Dispose objects before losing scope
+
+        var slowTag = new SlowToString(TimeSpan.FromMilliseconds(500));
+
+        using var activity = new Activity("activity")
+        {
+            ActivityTraceFlags = ActivityTraceFlags.Recorded,
+        };
+
+        activity.SetTag("slow", slowTag);
+
+        processor.OnEnd(activity);
+        Assert.True(processor.ForceFlush());
+
+        Assert.True(exportClientMock.SendExportRequestCalled);
+        Assert.NotNull(slowTag.FirstCalledAtUtc);
+
+        // The deadline started before the tag was serialized, rather than when the request was sent
+        Assert.True(
+            exportClientMock.LastDeadlineUtc <= slowTag.FirstCalledAtUtc.Value.AddMilliseconds(ExporterTimeoutMilliseconds),
+            $"The deadline {exportClientMock.LastDeadlineUtc:O} is later than {ExporterTimeoutMilliseconds}ms after serialization started at {slowTag.FirstCalledAtUtc.Value:O}.");
+    }
+
+    [Fact]
     public void Shutdown_ClientShutdownIsCalled()
     {
         var exportClientMock = new TestExportClient();
@@ -1596,5 +1631,17 @@ public sealed class OtlpTraceExporterTests : IDisposable
     private sealed class ToStringThrows
     {
         public override string ToString() => throw new InvalidOperationException("Nope.");
+    }
+
+    private sealed class SlowToString(TimeSpan delay)
+    {
+        public DateTime? FirstCalledAtUtc { get; private set; }
+
+        public override string ToString()
+        {
+            this.FirstCalledAtUtc ??= DateTime.UtcNow;
+            Thread.Sleep(delay);
+            return "slow";
+        }
     }
 }

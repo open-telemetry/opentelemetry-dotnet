@@ -79,6 +79,10 @@ public sealed class OtlpLogExporter : BaseExporter<LogRecord>
         // Prevents the exporter's gRPC and HTTP operations from being instrumented.
         using var scope = SuppressInstrumentationScope.Begin();
 
+        // The deadline starts before the batch is serialized, so that the time taken
+        // to serialize it counts towards the time the export is allowed to take.
+        var deadlineUtc = this.transmissionHandler.GetDeadlineUtc(this.ExportTimeoutMilliseconds);
+
         byte[]? buffer = null;
         var serializationSucceeded = false;
         var writePosition = 0;
@@ -138,7 +142,7 @@ public sealed class OtlpLogExporter : BaseExporter<LogRecord>
                 BinaryPrimitives.WriteUInt32BigEndian(data, (uint)dataLength);
             }
 
-            if (!this.transmissionHandler.TrySubmitRequest(buffer, writePosition, this.ExportTimeoutMilliseconds))
+            if (!this.transmissionHandler.TrySubmitRequest(buffer, writePosition, deadlineUtc))
             {
                 return ExportResult.Failure;
             }

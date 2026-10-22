@@ -139,8 +139,7 @@ internal abstract class BatchExportWorker<T> : IDisposable
             using (var batch = new Batch<T>(this.CircularBuffer, this.MaxExportBatchSize))
             {
                 this.exportStarted?.Invoke(batch.Count);
-                this.Exporter.ExportTimeoutMilliseconds = this.ExporterTimeoutMilliseconds;
-                this.Exporter.Export(batch);
+                this.Exporter.Export(batch, this.ExporterTimeoutMilliseconds);
             }
         }
     }

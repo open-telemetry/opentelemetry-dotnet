@@ -24,7 +24,9 @@ Notes](../../RELEASENOTES.md).
   (`OTEL_METRIC_EXPORT_TIMEOUT`) or
   `BatchExportProcessorOptions<T>.ExporterTimeoutMilliseconds`
   (`OTEL_BSP_EXPORT_TIMEOUT`, `OTEL_BLRP_EXPORT_TIMEOUT`). The request is now
-  canceled when the shorter of the timeouts elapses.
+  canceled when the shorter of the timeouts elapses. The time taken to
+  serialize the telemetry now counts towards the timeout, and no request is
+  sent once it has elapsed.
   ([#7996](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7996))
 
 ## 1.20.1

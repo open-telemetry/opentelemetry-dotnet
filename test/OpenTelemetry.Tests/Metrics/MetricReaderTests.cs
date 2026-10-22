@@ -134,9 +134,14 @@ public class MetricReaderTests
     }
 
     [Theory]
-    [InlineData(Timeout.Infinite)]
-    [InlineData(5_000)]
-    public void Collect_PassesRemainingTimeoutToExporter(int timeoutMilliseconds)
+    [InlineData(Timeout.Infinite, null, Timeout.Infinite)]
+    [InlineData(5_000, null, 5_000)]
+    [InlineData(Timeout.Infinite, Timeout.Infinite, Timeout.Infinite)]
+    [InlineData(Timeout.Infinite, 0, Timeout.Infinite)]
+    [InlineData(Timeout.Infinite, 1_234, 1_234)]
+    [InlineData(5_000, 1_234, 1_234)]
+    [InlineData(1_234, 5_000, 1_234)]
+    public void Collect_PassesRemainingTimeoutToExporter(int timeoutMilliseconds, int? periodicExportTimeoutMilliseconds, int expectedTimeoutMilliseconds)
     {
         int? exportTimeoutMilliseconds = null;
 
@@ -145,16 +150,22 @@ public class MetricReaderTests
 #pragma warning restore CA2000 // Dispose objects before losing scope
         exporter.OnExportFunc = _ =>
         {
-            exportTimeoutMilliseconds = exporter.ExportTimeoutMilliseconds;
+            exportTimeoutMilliseconds ??= exporter.ExportTimeoutMilliseconds;
             return ExportResult.Success;
         };
+
+        // The export timeout of a periodic reader also applies to exports which
+        // are not started by its worker, so the interval is long enough to never elapse.
+#pragma warning disable CA2000 // Dispose objects before losing scope
+        BaseExportingMetricReader reader = periodicExportTimeoutMilliseconds is { } periodicTimeout
+            ? new PeriodicExportingMetricReader(exporter, exportIntervalMilliseconds: int.MaxValue, exportTimeoutMilliseconds: periodicTimeout)
+            : new BaseExportingMetricReader(exporter);
+#pragma warning restore CA2000 // Dispose objects before losing scope
 
         using var meter = new Meter(Utils.GetCurrentMethodName());
         using var provider = Sdk.CreateMeterProviderBuilder()
             .AddMeter(meter.Name)
-#pragma warning disable CA2000 // Dispose objects before losing scope
-            .AddReader(new BaseExportingMetricReader(exporter))
-#pragma warning restore CA2000 // Dispose objects before losing scope
+            .AddReader(reader)
             .Build();
 
         meter.CreateCounter<long>("test_counter").Add(1);
@@ -163,14 +174,17 @@ public class MetricReaderTests
 
         Assert.NotNull(exportTimeoutMilliseconds);
 
-        if (timeoutMilliseconds == Timeout.Infinite)
+        if (expectedTimeoutMilliseconds == Timeout.Infinite)
         {
             Assert.Equal(Timeout.Infinite, exportTimeoutMilliseconds);
         }
         else
         {
-            Assert.InRange(exportTimeoutMilliseconds.Value, 1, timeoutMilliseconds);
+            Assert.InRange(exportTimeoutMilliseconds.Value, 1, expectedTimeoutMilliseconds);
         }
+
+        // The timeout only applies to the export it was passed to
+        Assert.Equal(Timeout.Infinite, exporter.ExportTimeoutMilliseconds);
     }
 
     private static Task<bool> RunOnDedicatedThread(Func<bool> collect)

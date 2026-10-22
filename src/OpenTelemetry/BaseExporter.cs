@@ -36,17 +36,17 @@ public abstract class BaseExporter<T> : IDisposable
     public BaseProvider? ParentProvider { get; internal set; }
 
     /// <summary>
-    /// Gets or sets the number of milliseconds the caller of <see cref="Export"/> allows
+    /// Gets the number of milliseconds the caller of <see cref="Export(in Batch{T})"/> allows
     /// the export to take, or <c>Timeout.Infinite</c> when the caller does not set a limit.
     /// </summary>
     /// <remarks>
-    /// <see cref="Export"/> has no timeout parameter. This is set by the
-    /// processor or reader immediately before <see cref="Export"/> is called
+    /// <see cref="Export(in Batch{T})"/> has no timeout parameter. This is set by
+    /// <see cref="Export(in Batch{T}, int)"/> for the duration of the export
     /// (the time left of a <c>ForceFlush</c>/<c>Shutdown</c> timeout, or the
     /// configured export timeout) so that exporters which are able to cancel
     /// their work can honor it.
     /// </remarks>
-    internal int ExportTimeoutMilliseconds { get; set; } = Timeout.Infinite;
+    internal int ExportTimeoutMilliseconds { get; private set; } = Timeout.Infinite;
 
     /// <summary>
     /// Exports a batch of telemetry objects.
@@ -130,6 +130,33 @@ public abstract class BaseExporter<T> : IDisposable
     {
         this.Dispose(true);
         GC.SuppressFinalize(this);
+    }
+
+    /// <summary>
+    /// Exports a batch of telemetry objects, allowing the export to take no
+    /// longer than the specified timeout.
+    /// </summary>
+    /// <param name="batch">Batch of telemetry objects to export.</param>
+    /// <param name="timeoutMilliseconds">
+    /// The number of milliseconds the export is allowed to take, or
+    /// <c>Timeout.Infinite</c> when there is no limit.
+    /// </param>
+    /// <returns>Result of the export operation.</returns>
+    internal ExportResult Export(in Batch<T> batch, int timeoutMilliseconds)
+    {
+        // The timeout only applies to this export, so that a later call to
+        // Export(in Batch<T>) made directly does not inherit it.
+        var previousTimeoutMilliseconds = this.ExportTimeoutMilliseconds;
+        this.ExportTimeoutMilliseconds = timeoutMilliseconds;
+
+        try
+        {
+            return this.Export(batch);
+        }
+        finally
+        {
+            this.ExportTimeoutMilliseconds = previousTimeoutMilliseconds;
+        }
     }
 
     /// <summary>

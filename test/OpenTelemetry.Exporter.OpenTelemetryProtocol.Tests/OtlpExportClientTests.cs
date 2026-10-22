@@ -323,8 +323,9 @@ public class OtlpExportClientTests
 
         var payload = "hello world"u8.ToArray();
 
-        // The transmission handler's deadline is in the past when HttpClient.Timeout is infinite
-        var deadlineUtc = DateTime.UtcNow.AddMilliseconds(httpClient.Timeout.TotalMilliseconds);
+        // The transmission handler has no deadline when HttpClient.Timeout is infinite
+        using var transmissionHandler = new OtlpExporterTransmissionHandler(exportClient, httpClient.Timeout.TotalMilliseconds);
+        var deadlineUtc = transmissionHandler.GetDeadlineUtc(Timeout.Infinite);
 
         // Act
         var response = exportClient.SendExportRequest(payload, payload.Length, deadlineUtc, TestContext.Current.CancellationToken);
@@ -333,6 +334,36 @@ public class OtlpExportClientTests
         Assert.False(response.Success);
         Assert.Contains(listener.Messages, e => e.EventId == HttpRequestFailedEventId);
         Assert.DoesNotContain(listener.Messages, e => e.EventId == RequestTimedOutEventId);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void SendExportRequest_DeadlineHasPassed_DoesNotSendRequest(bool useGrpc)
+    {
+        // Arrange
+        const int RequestTimedOutEventId = 19;
+
+        using var listener = new TestEventListener(OpenTelemetryProtocolExporterEventSource.Log, EventLevel.Warning);
+
+        using var testHandler = new UnsuccessfulResponseHttpMessageHandler("error");
+        using var httpClient = new HttpClient(testHandler, disposeHandler: false) { Timeout = Timeout.InfiniteTimeSpan };
+
+        var options = new OtlpExporterOptions { Endpoint = new Uri("http://localhost:4317") };
+
+        OtlpExportClient exportClient = useGrpc
+            ? new OtlpGrpcExportClient(options, httpClient, string.Empty)
+            : new OtlpHttpExportClient(options, httpClient, string.Empty);
+
+        var payload = "hello world"u8.ToArray();
+
+        // Act
+        var response = exportClient.SendExportRequest(payload, payload.Length, DateTime.UtcNow.AddMilliseconds(-1), TestContext.Current.CancellationToken);
+
+        // Assert
+        Assert.False(response.Success);
+        Assert.Equal(0, testHandler.RequestCount);
+        Assert.Contains(listener.Messages, e => e.EventId == RequestTimedOutEventId);
     }
 
     private sealed class UnresponsiveHttpMessageHandler : HttpMessageHandler
@@ -377,6 +408,8 @@ public class OtlpExportClientTests
             this.body = body;
         }
 
+        public int RequestCount { get; private set; }
+
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
             => Task.FromResult(this.CreateResponse(cancellationToken));
 
@@ -387,6 +420,8 @@ public class OtlpExportClientTests
 
         private HttpResponseMessage CreateResponse(CancellationToken cancellationToken)
         {
+            this.RequestCount++;
+
             // Like a real handler, do not send a request which has already been canceled
             cancellationToken.ThrowIfCancellationRequested();
             return new(HttpStatusCode.BadRequest) { Content = new StringContent(this.body) };

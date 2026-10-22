@@ -213,6 +213,9 @@ public class BatchExportActivityProcessorTests
         processor.Shutdown();
 
         Assert.Equal(1234, exportTimeoutMilliseconds);
+
+        // The timeout only applies to the export it was passed to
+        Assert.Equal(Timeout.Infinite, exporter.ExportTimeoutMilliseconds);
     }
 
     private static async Task WaitForMinimumCountAsync(List<Activity> collection, int minimum)

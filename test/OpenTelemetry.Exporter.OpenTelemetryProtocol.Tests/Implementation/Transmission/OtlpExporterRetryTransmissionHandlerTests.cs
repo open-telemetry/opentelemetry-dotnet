@@ -66,6 +66,23 @@ public class OtlpExporterRetryTransmissionHandlerTests
         Assert.False(httpHandler.RetryCanceled);
     }
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void TrySubmitRequest_NoDeadline_DoesNotRetry(bool useGrpc)
+    {
+        // Nothing would bound the retries of a request which has no deadline
+        using var httpHandler = new RetriedRequestHttpMessageHandler(useGrpc, stallRetry: false);
+        using var httpClient = new HttpClient(httpHandler, disposeHandler: false) { Timeout = Timeout.InfiniteTimeSpan };
+        var exportClient = CreateExportClient(useGrpc, httpClient);
+        using var transmissionHandler = new OtlpExporterRetryTransmissionHandler(exportClient, httpClient.Timeout.TotalMilliseconds);
+
+        var result = transmissionHandler.TrySubmitRequest([0, 0, 0, 0, 0], 5);
+
+        Assert.False(result);
+        Assert.Equal(1, httpHandler.SendCount);
+    }
+
     [Fact]
     public void TrySubmitRequest_HttpTimeoutWithExpiredDeadline_DoesNotRetry()
     {
@@ -146,21 +163,31 @@ public class OtlpExporterRetryTransmissionHandlerTests
     [InlineData(10_000, 10_000, 10_000)]
     [InlineData(10_000, 30_000, 10_000)]
     [InlineData(Timeout.Infinite, Timeout.Infinite, Timeout.Infinite)]
+    [InlineData(Timeout.Infinite, 0, Timeout.Infinite)]
     [InlineData(Timeout.Infinite, 500, 500)]
-    public void TrySubmitRequest_DeadlineIsTheShorterOfTheTimeouts(int exporterTimeoutMilliseconds, int timeoutMilliseconds, int expectedTimeoutMilliseconds)
+    public void GetDeadlineUtc_IsTheShorterOfTheTimeouts(int exporterTimeoutMilliseconds, int timeoutMilliseconds, int expectedTimeoutMilliseconds)
     {
         var exportClient = new TestExportClient();
         using var transmissionHandler = new OtlpExporterRetryTransmissionHandler(exportClient, exporterTimeoutMilliseconds);
 
         var before = DateTime.UtcNow;
-        var result = transmissionHandler.TrySubmitRequest([1, 2, 3], 3, timeoutMilliseconds);
+        var deadlineUtc = transmissionHandler.GetDeadlineUtc(timeoutMilliseconds);
         var after = DateTime.UtcNow;
 
-        Assert.True(result);
-        Assert.InRange(
-            exportClient.LastDeadlineUtc,
-            before.AddMilliseconds(expectedTimeoutMilliseconds),
-            after.AddMilliseconds(expectedTimeoutMilliseconds));
+        if (expectedTimeoutMilliseconds == Timeout.Infinite)
+        {
+            Assert.Equal(DateTime.MaxValue, deadlineUtc);
+        }
+        else
+        {
+            Assert.InRange(
+                deadlineUtc,
+                before.AddMilliseconds(expectedTimeoutMilliseconds),
+                after.AddMilliseconds(expectedTimeoutMilliseconds));
+        }
+
+        Assert.True(transmissionHandler.TrySubmitRequest([1, 2, 3], 3, deadlineUtc));
+        Assert.Equal(deadlineUtc, exportClient.LastDeadlineUtc);
     }
 
     private static IExportClient CreateExportClient(bool useGrpc, HttpClient httpClient)
