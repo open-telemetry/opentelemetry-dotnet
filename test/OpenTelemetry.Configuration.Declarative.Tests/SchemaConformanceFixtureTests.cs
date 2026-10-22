@@ -10,6 +10,7 @@ using YamlDotNet.RepresentationModel;
 
 namespace OpenTelemetry.Configuration.Declarative.Tests;
 
+[Collection(EnvVarsCollectionDefinition.Name)]
 public sealed partial class SchemaConformanceFixtureTests
 {
     private const int UndefinedPropertyEventId = 25;

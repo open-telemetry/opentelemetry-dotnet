@@ -11,6 +11,12 @@ Notes](../../RELEASENOTES.md).
   retried request stalls.
   ([#7977](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7977))
 
+* **Breaking:** The span status description (`Activity.StatusDescription` or
+  the `otel.status_description` tag) is now truncated to the configured span
+  attribute value length limit (for example
+  `OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT`) instead of being exported in full.
+  ([#7995](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7995))
+
 ## 1.20.1
 
 Released 2026-Oct-20
