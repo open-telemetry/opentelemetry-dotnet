@@ -3,6 +3,7 @@
 
 using System.Diagnostics.Tracing;
 using System.Globalization;
+using System.Text;
 using System.Text.RegularExpressions;
 using OpenTelemetry.Tests;
 using YamlDotNet.RepresentationModel;
@@ -174,6 +175,24 @@ public sealed partial class SchemaConformanceFixtureTests
             expectedKeys.OrderBy(k => k, StringComparer.Ordinal),
             document.Properties.Keys.OrderBy(k => k, StringComparer.Ordinal));
         AssertNoPropertyDiagnostics(listener);
+    }
+
+    [Fact]
+    public Task Read_AllFixtures_UnappliedPropertiesMatchTheSnapshot()
+    {
+        var report = new StringBuilder();
+        foreach (var relativePath in EnumerateFixtures("examples").Concat(EnumerateFixtures("snippets")))
+        {
+            report.Append(relativePath).Append('\n');
+            foreach (var (path, stability, _) in Read(ReadFixture(relativePath)).UnappliedProperties)
+            {
+                report.Append("  ").Append(stability).Append(' ').Append(path).Append('\n');
+            }
+        }
+
+        return Verify(report.ToString())
+            .UseDirectory("snapshots")
+            .UseFileName("UnappliedProperties");
     }
 
     [Fact]
