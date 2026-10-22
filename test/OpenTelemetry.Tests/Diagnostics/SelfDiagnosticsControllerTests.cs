@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics.Tracing;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -477,6 +478,45 @@ public sealed class SelfDiagnosticsControllerTests : IDisposable
         controller.Logger!.Log(LogLevel.Warning, default, "after dispose", null, static (m, _) => m);
 
         Assert.DoesNotContain("after dispose", ReadLogs(directory), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void AutomaticConfigurationReload_EnablesAndMovesTheFileSink()
+    {
+        var firstDirectory = this.CreateDirectory();
+        var secondDirectory = this.CreateDirectory();
+        var configuration = new ConfigurationBuilder().AddInMemoryCollection().Build();
+        var services = new ServiceCollection();
+
+        services.AddSingleton<IConfiguration>(configuration);
+        services.AddOpenTelemetrySharedProviderBuilderServices();
+
+        using var provider = services.BuildServiceProvider();
+        using var controller = new SelfDiagnosticsController();
+        using var registration = controller.Register(provider.GetRequiredService<IOptionsMonitor<SelfDiagnosticsOptions>>());
+
+        Assert.Null(controller.Logger);
+
+        configuration["OpenTelemetry:SelfDiagnostics:LogDirectory"] = firstDirectory;
+        configuration["OpenTelemetry:SelfDiagnostics:MinimumLevel"] = "info";
+        configuration.Reload();
+
+        Assert.NotNull(controller.Logger);
+        controller.Logger!.Log(LogLevel.Information, default, "first automatic directory", null, static (m, _) => m);
+        Assert.True(SelfDiagnosticsTestHelpers.WaitUntil(() => ReadLogs(firstDirectory).Contains("first automatic directory", StringComparison.Ordinal)), "The first automatic directory log entry was not found.");
+
+        configuration["OpenTelemetry:SelfDiagnostics:LogDirectory"] = secondDirectory;
+        configuration["OpenTelemetry:SelfDiagnostics:MinimumLevel"] = "Error";
+        configuration.Reload();
+
+        Assert.True(SelfDiagnosticsTestHelpers.WaitUntil(() => !controller.Logger.IsEnabled(LogLevel.Warning) && controller.Logger.IsEnabled(LogLevel.Error)));
+
+        controller.Logger.Log(LogLevel.Warning, default, "filtered after automatic reload", null, static (m, _) => m);
+        controller.Logger.Log(LogLevel.Error, default, "second automatic directory", null, static (m, _) => m);
+
+        Assert.True(SelfDiagnosticsTestHelpers.WaitUntil(() => ReadLogs(secondDirectory).Contains("second automatic directory", StringComparison.Ordinal)), "The second automatic directory log entry was not found.");
+        Assert.DoesNotContain("filtered after automatic reload", ReadLogs(secondDirectory), StringComparison.Ordinal);
+        Assert.DoesNotContain("second automatic directory", ReadLogs(firstDirectory), StringComparison.Ordinal);
     }
 
     [Fact]

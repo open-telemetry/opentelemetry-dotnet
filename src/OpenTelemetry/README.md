@@ -127,45 +127,12 @@ a rolling log file, to the console, or to both. It is disabled by default.
 > [!NOTE]
 > Self-diagnostics are not supported on browser-based platforms (e.g. Blazor WebAssembly).
 
-The quickest way to enable it is with environment variables:
-
-```shell
-# Write to rolling log files in ./otel-logs
-OTEL_DOTNET_SELF_DIAGNOSTICS_LOG_DIRECTORY=./otel-logs
-
-# Or write to stdout and stderr instead, at a lower level
-OTEL_DOTNET_SELF_DIAGNOSTICS_SINKS=stdout,stderr
-OTEL_LOG_LEVEL=debug
-```
-
-`MinimumLevel` defaults to `Warning`, which is intended to be safe to leave
-enabled continuously; raise it only while investigating. This diverges from the
-OpenTelemetry specification default for `OTEL_LOG_LEVEL` (`info`) - set
-`OTEL_LOG_LEVEL=info` to take the specification default. With no sink enabled
-the SDK is silent at any level.
-
-It can also be configured in code through the options pipeline:
-
-```csharp
-services.Configure<SelfDiagnosticsOptions>(options =>
-{
-    options.MinimumLevel = LogLevel.Debug;
-    options.LogDirectory = "/var/log/otel";
-});
-```
-
-For the full reference - every option and environment variable, the output
-format, what to attach to a bug report, the environment variable redaction
-rules, and runtime reconfiguration - see:
-[Troubleshooting](../../docs/troubleshooting/README.md).
-
-> [!NOTE]
-> The legacy `OTEL_DIAGNOSTICS.json` file is still honored and now routes
-> through the same pipeline, unless a provider configures a sink through the
-> options above. It is superseded by those options and will be removed in a
-> future major version. See
-> [Legacy self-diagnostics
-> mechanism](../../docs/troubleshooting/README.md#legacy-self-diagnostics-mechanism).
+See the [troubleshooting guide](../../docs/troubleshooting/README.md) for setup
+examples using environment variables, `appsettings.json`, or code, along with
+the full options reference, runtime configuration changes, and guidance on
+reading and sharing diagnostic output. It also covers the legacy
+`OTEL_DIAGNOSTICS.json` configuration mechanism, which is superseded by these
+options and will be removed in a future major version.
 
 ## References
 

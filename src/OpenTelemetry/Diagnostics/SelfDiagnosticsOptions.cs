@@ -13,31 +13,20 @@ namespace OpenTelemetry.SelfDiagnostics;
 /// </summary>
 /// <remarks>
 /// <para>
-/// By default all sinks are disabled (silent). Enable one or more sinks to receive
-/// SDK self-diagnostics output. The options instance is reloadable - changes pushed
-/// through <c>IOptionsMonitor&lt;SelfDiagnosticsOptions&gt;</c> take effect at runtime
-/// without rebuilding the provider.
+/// Self-diagnostics is off by default. To enable it, set <see cref="LogDirectory"/>,
+/// <see cref="LogToStdout"/>, or <see cref="LogToStderr"/>. Setting <see cref="MinimumLevel"/>
+/// alone produces no output.
 /// </para>
 /// <para>
-/// Environment variable defaults are applied before any <c>Configure&lt;SelfDiagnosticsOptions&gt;</c>
-/// callbacks, which always take precedence:
-/// <list type="bullet">
-///   <item><c>OTEL_LOG_LEVEL</c> sets <see cref="MinimumLevel"/>.</item>
-///   <item><c>OTEL_DOTNET_SELF_DIAGNOSTICS_SINKS</c> selects the sinks. When the list includes
-///   <c>file</c> and <c>OTEL_DOTNET_SELF_DIAGNOSTICS_LOG_DIRECTORY</c> is unset, the SDK tries
-///   <see cref="GetDefaultLogDirectory"/>.</item>
-///   <item><c>OTEL_DOTNET_SELF_DIAGNOSTICS_LOG_DIRECTORY</c> sets <see cref="LogDirectory"/> and
-///   takes precedence over the platform default.</item>
-///   <item><c>OTEL_DOTNET_SELF_DIAGNOSTICS_ENV_VARS</c> sets <see cref="EnvironmentVariables"/>.</item>
-/// </list>
-/// </para>
-/// <para>
-/// Only <c>OTEL_LOG_LEVEL</c> is shared with the wider ecosystem, and it activates nothing on its
-/// own: with no sink selected the SDK stays silent whatever level is set.
+/// Options can also be set from <c>OTEL_*</c> environment variables or the
+/// <c>OpenTelemetry:SelfDiagnostics</c> configuration section. Values set in code take
+/// precedence, and changes made through <c>IOptionsMonitor</c> apply without rebuilding the
+/// provider. See the troubleshooting guide for the full list of variables and precedence rules.
 /// </para>
 /// </remarks>
 public sealed class SelfDiagnosticsOptions
 {
+    internal const string ConfigurationSectionPath = "OpenTelemetry:SelfDiagnostics";
     internal const string LogLevelEnvVarName = "OTEL_LOG_LEVEL";
     internal const string SinksEnvVarName = "OTEL_DOTNET_SELF_DIAGNOSTICS_SINKS";
     internal const string LogDirectoryEnvVarName = "OTEL_DOTNET_SELF_DIAGNOSTICS_LOG_DIRECTORY";
@@ -66,10 +55,21 @@ public sealed class SelfDiagnosticsOptions
     {
     }
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="SelfDiagnosticsOptions"/> class,
+    /// applying environment-variable defaults from <paramref name="configuration"/>.
+    /// </summary>
+    /// <param name="configuration">The configuration to read <c>OTEL_*</c> environment variables from.</param>
+    /// <param name="defaultLogDirectoryResolver">Resolves the folder used when the file sink is requested without a directory.</param>
+    /// <param name="reportConfigurationError">Called when the file sink cannot be enabled; defaults to writing to standard error.</param>
+    /// <param name="section">The <c>OpenTelemetry:SelfDiagnostics</c> section, so its <c>LogDirectory</c> value can take precedence over the environment variables; <see langword="null"/> for named options.</param>
+    /// <param name="appliedVariables">Receives the names of the environment variables whose values were applied; <see langword="null"/> when not needed.</param>
     internal SelfDiagnosticsOptions(
         IConfiguration configuration,
         Func<string?> defaultLogDirectoryResolver,
-        Action<string>? reportConfigurationError = null)
+        Action<string>? reportConfigurationError = null,
+        IConfiguration? section = null,
+        ISet<string>? appliedVariables = null)
     {
         Guard.ThrowIfNull(configuration);
         Guard.ThrowIfNull(defaultLogDirectoryResolver);
@@ -78,93 +78,71 @@ public sealed class SelfDiagnosticsOptions
             this,
             configuration,
             defaultLogDirectoryResolver,
-            reportConfigurationError);
+            reportConfigurationError,
+            section,
+            appliedVariables);
 
         this.ConfigurationWarnings = warnings is null ? NoWarnings : [.. warnings];
     }
 
     /// <summary>
-    /// Gets or sets the minimum log level. Events below this level are discarded.
-    /// Defaults to <see cref="LogLevel.Warning"/>.
+    /// Gets or sets the minimum log level. Events below this level are discarded, and
+    /// <see cref="LogLevel.None"/> disables logging. Defaults to <see cref="LogLevel.Warning"/>.
     /// </summary>
     /// <remarks>
-    /// <para>
-    /// This deliberately diverges from the OpenTelemetry specification, whose default for
-    /// <c>OTEL_LOG_LEVEL</c> is <c>info</c>. <see cref="LogLevel.Information"/> and below are
-    /// considerably more verbose, and that verbosity costs log volume, disk, and sink throughput
-    /// without usually adding diagnostic value until something is actually being investigated.
-    /// </para>
-    /// <para>
-    /// Set <c>OTEL_LOG_LEVEL=info</c>, or assign this property, to take the specification default.
-    /// </para>
+    /// This differs from the OpenTelemetry specification default of <c>info</c>; set
+    /// <c>OTEL_LOG_LEVEL=info</c> to match it.
     /// </remarks>
     public LogLevel MinimumLevel { get; set; } = LogLevel.Warning;
 
     /// <summary>
-    /// Gets or sets the folder where self-diagnostics log files are written.
-    /// Set this to use a specific folder. Leave it <see langword="null"/> or empty to leave
-    /// file logging unset; if <c>OTEL_DOTNET_SELF_DIAGNOSTICS_SINKS</c> requests <c>file</c>,
-    /// the SDK may still choose a default folder.
+    /// Gets or sets the folder where self-diagnostics log files are written. Setting a non-empty
+    /// value enables file logging. Defaults to <see langword="null"/> (no file logging).
     /// </summary>
     /// <remarks>
-    /// <para>
-    /// When <c>OTEL_DOTNET_SELF_DIAGNOSTICS_SINKS</c> includes <c>file</c> and
-    /// <c>OTEL_DOTNET_SELF_DIAGNOSTICS_LOG_DIRECTORY</c> is unset, the environment-variable
-    /// constructor tries to fill this property from <see cref="GetDefaultLogDirectory"/>.
-    /// From code, assign <see cref="GetDefaultLogDirectory"/> (or an explicit path) yourself;
-    /// a blank <see cref="SelfDiagnosticsOptions"/> instance does not pick a default folder
-    /// on its own.
-    /// </para>
+    /// Use <see cref="GetDefaultLogDirectory"/> to log to the standard per-user location.
     /// </remarks>
     public string? LogDirectory { get; set; }
 
     /// <summary>
-    /// Gets or sets the maximum size of a single log file in kilobytes before it rolls
-    /// over to a new file. Defaults to 10240 (10 MiB). A value less than or equal to zero
-    /// disables size-based rollover. Files are never truncated; a new file is opened when
-    /// the limit is reached. Positive values are not clamped to a minimum. A file may exceed
-    /// the limit by its preamble and by the entry that crosses the boundary, so very small
-    /// values can cause a rollover after nearly every entry.
+    /// Gets or sets the size in kilobytes at which the current log file is closed and a new one
+    /// is started. Defaults to 10240 (10 MiB). A value less than or equal to zero disables
+    /// size-based rollover.
     /// </summary>
     public int FileSizeLimitKilobytes { get; set; } = DefaultFileSizeLimitKilobytes;
 
     /// <summary>
-    /// Gets or sets the maximum number of rolling log files to retain. Defaults to 10.
-    /// When a new file is opened the oldest is deleted if this limit would be exceeded.
-    /// Values less than or equal to zero disable automatic pruning, so files are retained
-    /// until they are removed externally.
+    /// Gets or sets the maximum number of log files to keep. When a new file is started, the
+    /// oldest files are deleted to stay within this limit. Defaults to 10. A value less than
+    /// or equal to zero keeps all files.
     /// </summary>
-    /// <remarks>
-    /// <para>
-    /// The default retains a bounded history so long-running deployments and repeated
-    /// reproductions cannot fill the disk. Set a value less than or equal to zero to retain
-    /// every rolled file indefinitely instead, or a different positive value to change the
-    /// number retained.
-    /// </para>
-    /// </remarks>
     public int MaxRetainedFiles { get; set; } = DefaultMaxRetainedFiles;
 
     /// <summary>
     /// Gets or sets a value indicating whether SDK diagnostics are written to standard output.
-    /// When only this flag is set all entries are written to standard output. When both this flag and
-    /// <see cref="LogToStderr"/> are set, entries at <see cref="LogLevel.Warning"/> and below are written to
-    /// standard output and entries above <see cref="LogLevel.Warning"/> are written to standard error.
     /// </summary>
+    /// <remarks>
+    /// When both this and <see cref="LogToStderr"/> are set, <see cref="LogLevel.Error"/> and
+    /// <see cref="LogLevel.Critical"/> entries go to standard error and all other entries go to
+    /// standard output.
+    /// </remarks>
     public bool LogToStdout { get; set; }
 
     /// <summary>
     /// Gets or sets a value indicating whether SDK diagnostics are written to standard error.
-    /// When only this flag is set all entries are written to standard error. When both this flag and
-    /// <see cref="LogToStdout"/> are set, entries above <see cref="LogLevel.Warning"/> are written to standard
-    /// error and entries at <see cref="LogLevel.Warning"/> and below are written to standard output.
     /// </summary>
+    /// <remarks>
+    /// When both this and <see cref="LogToStdout"/> are set, <see cref="LogLevel.Error"/> and
+    /// <see cref="LogLevel.Critical"/> entries go to standard error and all other entries go to
+    /// standard output.
+    /// </remarks>
     public bool LogToStderr { get; set; }
 
     /// <summary>
     /// Gets or sets how much of the <c>OTEL_*</c> environment variable snapshot is written to
     /// the log file preamble. Defaults to <see cref="EnvironmentVariableLogMode.KnownSafeValues"/>,
     /// which lists every variable name but redacts the value of any variable the SDK does not
-    /// recognise as safe to disclose.
+    /// recognise as safe to disclose. Only applies when file logging is enabled.
     /// </summary>
     public EnvironmentVariableLogMode EnvironmentVariables { get; set; }
         = EnvironmentVariableLogMode.KnownSafeValues;
@@ -185,8 +163,7 @@ public sealed class SelfDiagnosticsOptions
     internal bool AnnounceLogFile { get; set; } = true;
 
     /// <summary>
-    /// Resolves the platform-appropriate per-user directory used when the file sink is enabled
-    /// without an explicit <see cref="LogDirectory"/>.
+    /// Gets the standard per-user folder for self-diagnostics log files on the current platform.
     /// </summary>
     /// <returns>
     /// The default log directory for the current platform, or <see langword="null"/> when no
@@ -204,11 +181,9 @@ public sealed class SelfDiagnosticsOptions
     /// </list>
     /// </para>
     /// <para>
-    /// Prefer this helper from <c>Configure&lt;SelfDiagnosticsOptions&gt;</c> callbacks so code
-    /// configuration matches the environment-variable default used when
-    /// <c>OTEL_DOTNET_SELF_DIAGNOSTICS_SINKS</c> includes <c>file</c> without a directory.
-    /// If no per-user folder can be found, file logging stays off and the SDK writes a warning
-    /// to standard error.
+    /// This is the folder used when <c>OTEL_DOTNET_SELF_DIAGNOSTICS_SINKS</c> includes
+    /// <c>file</c> without a directory. Assigning a <see langword="null"/> result to
+    /// <see cref="LogDirectory"/> leaves file logging disabled.
     /// </para>
     /// </remarks>
     public static string? GetDefaultLogDirectory()

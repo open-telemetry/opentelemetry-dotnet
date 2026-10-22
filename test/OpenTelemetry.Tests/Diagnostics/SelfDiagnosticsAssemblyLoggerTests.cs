@@ -80,14 +80,23 @@ public class SelfDiagnosticsAssemblyLoggerTests
     {
         var recording = new RecordingLogger();
 
+        // A scan would report the assemblies which are already loaded. An assembly that another
+        // test running at the same time loads can still be reported by an AssemblyLoad event that
+        // was already in flight when Dispose was called, so only the former must be absent.
+        var alreadyLoaded = AppDomain.CurrentDomain.GetAssemblies()
+            .Select(assembly => assembly.GetName().Name)
+            .Where(name => !string.IsNullOrEmpty(name))
+            .Select(name => $"Assembly loaded: {name},")
+            .ToList();
+
         var assemblyLogger = new SelfDiagnosticsAssemblyLogger(recording);
-        assemblyLogger.TryLogLoadedAssemblies();
         assemblyLogger.Dispose();
 
-        var afterDispose = recording.Entries.Count;
         assemblyLogger.TryLogLoadedAssemblies();
 
-        Assert.Equal(afterDispose, recording.Entries.Count);
+        Assert.DoesNotContain(
+            recording.Entries,
+            entry => alreadyLoaded.Any(prefix => entry.Message.StartsWith(prefix, StringComparison.Ordinal)));
     }
 
     [Fact]
