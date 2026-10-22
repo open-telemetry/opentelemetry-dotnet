@@ -12,20 +12,20 @@ namespace OpenTelemetry.Trace;
 internal ref struct SpanEventReader
 {
     private readonly Activity activity;
-    private readonly SpanLimitTotals? totals;
+    private readonly SpanLimitBatch batch;
     private readonly int attributeCountLimit;
     private readonly int? valueLengthLimit;
     private SpanItemReaderCore<ActivityEvent> core;
 
     internal SpanEventReader(
         Activity activity,
-        SpanLimitTotals? totals,
+        SpanLimitBatch batch,
         SpanItemReaderCore<ActivityEvent> core,
         int attributeCountLimit,
         int? valueLengthLimit)
     {
         this.activity = activity;
-        this.totals = totals;
+        this.batch = batch;
         this.core = core;
         this.attributeCountLimit = attributeCountLimit;
         this.valueLengthLimit = valueLengthLimit;
@@ -52,7 +52,7 @@ internal ref struct SpanEventReader
     public readonly AttributeReader CreateAttributeReader()
         => new(
             new AttributeReaderCore(
-                this.totals,
+                this.batch,
                 this.activity,
                 this.core.Current.EnumerateTagObjects(),
                 this.attributeCountLimit,

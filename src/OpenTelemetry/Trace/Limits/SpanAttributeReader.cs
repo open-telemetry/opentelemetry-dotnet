@@ -50,6 +50,8 @@ internal ref struct SpanAttributeReader
     {
         get
         {
+            this.core.ThrowIfBatchDisposed();
+
             if (this.activity.Status != ActivityStatusCode.Unset)
             {
                 return this.activity.Status;
@@ -71,6 +73,8 @@ internal ref struct SpanAttributeReader
     {
         get
         {
+            this.core.ThrowIfBatchDisposed();
+
             if (this.activity.Status != ActivityStatusCode.Unset)
             {
                 return this.activity.Status == ActivityStatusCode.Error ? this.activity.StatusDescription : null;
@@ -93,7 +97,7 @@ internal ref struct SpanAttributeReader
 
     /// <summary>
     /// Marks the attribute just read as dropped because the exporter could not write it. It is
-    /// counted as dropped and does not use up the limit.
+    /// recorded as dropped immediately and does not use up the limit.
     /// </summary>
     public void MarkDropped()
         => this.core.MarkDropped();

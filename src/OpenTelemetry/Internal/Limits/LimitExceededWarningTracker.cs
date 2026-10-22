@@ -1,30 +1,36 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Diagnostics;
 using System.Diagnostics.Tracing;
 
 namespace OpenTelemetry.Internal;
 
 /// <summary>
-/// Accumulates the items discarded due to limits and decides when a rate limited
-/// warning reporting them should be emitted.
+/// Accumulates the items discarded due to limits and allows a warning reporting them
+/// at most once every five minutes.
 /// </summary>
 internal sealed class LimitExceededWarningTracker
 {
+    private static readonly long WarningIntervalTimestampTicks = 5 * 60 * Stopwatch.Frequency;
+
     private readonly Lock pendingTotalsLock = new();
-    private readonly LimitExceededWarningRateLimiter rateLimiter;
+    private readonly Func<long> getTimestamp;
     private readonly Func<bool> isWarningEnabled;
 
     private Totals pendingTotals;
+    private long nextAllowedTimestamp;
 
-    internal LimitExceededWarningTracker(LimitExceededWarningRateLimiter rateLimiter)
-        : this(rateLimiter, static () => OpenTelemetrySdkEventSource.Log.IsEnabled(EventLevel.Warning, EventKeywords.All))
+    internal LimitExceededWarningTracker()
+        : this(
+            static () => Stopwatch.GetTimestamp(),
+            static () => OpenTelemetrySdkEventSource.Log.IsEnabled(EventLevel.Warning, EventKeywords.All))
     {
     }
 
-    internal LimitExceededWarningTracker(LimitExceededWarningRateLimiter rateLimiter, Func<bool> isWarningEnabled)
+    internal LimitExceededWarningTracker(Func<long> getTimestamp, Func<bool> isWarningEnabled)
     {
-        this.rateLimiter = rateLimiter;
+        this.getTimestamp = getTimestamp;
         this.isWarningEnabled = isWarningEnabled;
     }
 
@@ -48,12 +54,14 @@ internal sealed class LimitExceededWarningTracker
         {
             this.pendingTotals = this.pendingTotals.Add(batchTotals);
 
-            if (!this.rateLimiter.TryAcquire())
+            var currentTimestamp = this.getTimestamp();
+            if (currentTimestamp < this.nextAllowedTimestamp)
             {
                 totalsToReport = default;
                 return false;
             }
 
+            this.nextAllowedTimestamp = currentTimestamp + WarningIntervalTimestampTicks;
             totalsToReport = this.pendingTotals;
             this.pendingTotals = default;
             return true;

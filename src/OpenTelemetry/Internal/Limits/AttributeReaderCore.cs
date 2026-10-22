@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics;
+using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Internal;
 
@@ -13,7 +14,7 @@ internal struct AttributeReaderCore
     internal const string StatusCodeKey = "otel.status_code";
     internal const string StatusDescriptionKey = "otel.status_description";
 
-    private readonly SpanLimitTotals? totals;
+    private readonly SpanLimitBatch batch;
     private readonly Activity span;
     private readonly int countLimit;
     private readonly bool captureStatusTags;
@@ -24,13 +25,13 @@ internal struct AttributeReaderCore
     private bool completed;
 
     internal AttributeReaderCore(
-        SpanLimitTotals? totals,
+        SpanLimitBatch batch,
         Activity span,
         Activity.Enumerator<KeyValuePair<string, object?>> enumerator,
         int countLimit,
         bool captureStatusTags)
     {
-        this.totals = totals;
+        this.batch = batch;
         this.span = span;
         this.enumerator = enumerator;
         this.countLimit = countLimit;
@@ -77,6 +78,7 @@ internal struct AttributeReaderCore
 
     internal bool TryRead(out KeyValuePair<string, object?> attribute)
     {
+        this.ThrowIfBatchDisposed();
         this.canMarkDropped = false;
 
         if (!this.completed)
@@ -98,10 +100,10 @@ internal struct AttributeReaderCore
                     return true;
                 }
 
-                this.droppedCount++;
+                this.RecordDroppedAttribute();
             }
 
-            this.Complete();
+            this.completed = true;
         }
 
         attribute = default;
@@ -110,6 +112,8 @@ internal struct AttributeReaderCore
 
     internal void MarkDropped()
     {
+        this.ThrowIfBatchDisposed();
+
         if (!this.canMarkDropped)
         {
             throw new InvalidOperationException("MarkDropped can only be called once for each attribute returned by TryRead.");
@@ -117,11 +121,13 @@ internal struct AttributeReaderCore
 
         this.canMarkDropped = false;
         this.keptCount--;
-        this.droppedCount++;
+        this.RecordDroppedAttribute();
     }
 
     internal void EnsureCompleted()
     {
+        this.ThrowIfBatchDisposed();
+
         if (this.completed)
         {
             return;
@@ -137,12 +143,15 @@ internal struct AttributeReaderCore
 
             if (!this.captureStatusTags || !this.TryCaptureStatusTag(in tag))
             {
-                this.droppedCount++;
+                this.RecordDroppedAttribute();
             }
         }
 
-        this.Complete();
+        this.completed = true;
     }
+
+    internal readonly void ThrowIfBatchDisposed()
+        => this.batch.ThrowIfDisposed();
 
     private bool TryCaptureStatusTag(in KeyValuePair<string, object?> tag)
     {
@@ -159,9 +168,9 @@ internal struct AttributeReaderCore
         }
     }
 
-    private void Complete()
+    private void RecordDroppedAttribute()
     {
-        this.completed = true;
-        this.totals?.RecordDroppedAttributes(this.span, this.droppedCount);
+        this.droppedCount++;
+        this.batch.RecordDroppedAttributes(this.span, 1);
     }
 }

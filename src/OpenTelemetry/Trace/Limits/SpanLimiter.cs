@@ -13,7 +13,6 @@ internal sealed class SpanLimiter
     // Internal for now. Once approved this may be made public so that third party exporters can use it as well.
 
     private readonly LimitExceededWarningTracker warningTracker;
-    private SpanLimitTotals? cachedTotals;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="SpanLimiter"/> class.
@@ -22,7 +21,7 @@ internal sealed class SpanLimiter
     /// <param name="attributeLimitOptions">The general attribute limits.</param>
     /// <param name="exporterName">The exporter name, reported in drop warnings.</param>
     public SpanLimiter(SpanLimitOptions spanLimitOptions, AttributeLimitOptions attributeLimitOptions, string exporterName)
-        : this(spanLimitOptions, attributeLimitOptions, exporterName, new LimitExceededWarningTracker(new LimitExceededWarningRateLimiter()))
+        : this(spanLimitOptions, attributeLimitOptions, exporterName, new LimitExceededWarningTracker())
     {
     }
 
@@ -100,18 +99,17 @@ internal sealed class SpanLimiter
     /// </summary>
     /// <returns><see cref="SpanLimitBatch"/>.</returns>
     public SpanLimitBatch BeginBatch()
-        => new(this, Interlocked.Exchange(ref this.cachedTotals, null) ?? new SpanLimitTotals());
+        => new(this);
 
-    internal void CompleteBatch(SpanLimitTotals totals)
+    internal void ReportBatchDrops(SpanLimitBatch batch)
     {
-        // Totals are only non-zero when something was dropped, so only then do they need clearing.
-        if (totals.AffectedSpanCount > 0)
+        if (batch.AffectedSpanCount > 0)
         {
             var batchTotals = new LimitExceededWarningTracker.Totals(
-                totals.AffectedSpanCount,
-                totals.DroppedAttributeCount,
-                totals.DroppedEventCount,
-                totals.DroppedLinkCount);
+                batch.AffectedSpanCount,
+                batch.DroppedAttributeCount,
+                batch.DroppedEventCount,
+                batch.DroppedLinkCount);
 
             if (this.warningTracker.RecordAndTryGetTotals(in batchTotals, out var totalsToReport))
             {
@@ -122,10 +120,6 @@ internal sealed class SpanLimiter
                     totalsToReport.DroppedEventCount,
                     totalsToReport.DroppedLinkCount);
             }
-
-            totals.Reset();
         }
-
-        Volatile.Write(ref this.cachedTotals, totals);
     }
 }

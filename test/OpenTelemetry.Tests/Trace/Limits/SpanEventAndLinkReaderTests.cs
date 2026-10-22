@@ -188,6 +188,71 @@ public class SpanEventAndLinkReaderTests
     }
 
     [Theory]
+    [InlineData(false, "Abandoned", 2)]
+    [InlineData(false, "ReadToEnd", 3)]
+    [InlineData(false, "DroppedCount", 4)]
+    [InlineData(true, "Abandoned", 2)]
+    [InlineData(true, "ReadToEnd", 3)]
+    [InlineData(true, "DroppedCount", 4)]
+    public void MarkDropped_AttributeReaderAbandonedOrCompleted_ReportsEachDropOnce(bool isLink, string completion, int expectedDrops)
+    {
+        using var listener = ListenForWarnings();
+        var limiter = CreateLimiter(o =>
+        {
+            o.AttributePerEventCountLimit = 1;
+            o.AttributePerLinkCountLimit = 1;
+        });
+        using var activity = CreateActivity();
+        var tags = new ActivityTagsCollection
+        {
+            ["rejected1"] = 1,
+            ["rejected2"] = 2,
+            ["kept"] = 3,
+            ["excess"] = 4,
+        };
+
+        using (var limits = limiter.BeginBatch())
+        {
+            AttributeReader attributes;
+            if (isLink)
+            {
+                activity.AddLink(new ActivityLink(default, tags));
+                var links = limits.CreateLinkReader(activity);
+                Assert.True(links.TryRead(out _), "The link should be available.");
+                attributes = links.CreateAttributeReader();
+            }
+            else
+            {
+                activity.AddEvent(new ActivityEvent("event", tags: tags));
+                var events = limits.CreateEventReader(activity);
+                Assert.True(events.TryRead(out _), "The event should be available.");
+                attributes = events.CreateAttributeReader();
+            }
+
+            for (var i = 0; i < 2; i++)
+            {
+                Assert.True(attributes.TryRead(out _), $"Rejected attribute {i} should be available.");
+                attributes.MarkDropped();
+            }
+
+            if (completion == "ReadToEnd")
+            {
+                Assert.Equal(["kept"], ReadKeys(ref attributes));
+            }
+
+            if (completion != "Abandoned")
+            {
+                Assert.Equal(expectedDrops, attributes.DroppedCount);
+                Assert.Equal(expectedDrops, attributes.DroppedCount);
+            }
+
+            Assert.Empty(GetWarnings(listener));
+        }
+
+        Assert.Equal(new SpanLimitWarning("test", 1, expectedDrops, 0, 0), Assert.Single(GetWarnings(listener)));
+    }
+
+    [Theory]
     [InlineData(false, 0, 0)]
     [InlineData(false, 0, 2)]
     [InlineData(false, 2, 0)]

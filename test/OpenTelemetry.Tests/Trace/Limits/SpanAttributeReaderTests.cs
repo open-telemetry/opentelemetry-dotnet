@@ -110,6 +110,42 @@ public class SpanAttributeReaderTests
     }
 
     [Theory]
+    [InlineData("Abandoned", 2)]
+    [InlineData("ReadToEnd", 3)]
+    [InlineData("DroppedCount", 4)]
+    public void MarkDropped_ReaderAbandonedOrCompleted_ReportsEachDropOnce(string completion, int expectedDrops)
+    {
+        using var listener = ListenForWarnings();
+        var limiter = CreateLimiter(o => o.AttributeCountLimit = 1);
+        using var activity = CreateActivity("rejected1", "rejected2", "kept", "excess");
+
+        using (var limits = limiter.BeginBatch())
+        {
+            var attributes = limits.CreateAttributeReader(activity);
+            for (var i = 0; i < 2; i++)
+            {
+                Assert.True(attributes.TryRead(out _), $"Rejected attribute {i} should be available.");
+                attributes.MarkDropped();
+            }
+
+            if (completion == "ReadToEnd")
+            {
+                Assert.Equal(["kept"], ReadKeys(ref attributes));
+            }
+
+            if (completion != "Abandoned")
+            {
+                Assert.Equal(expectedDrops, attributes.DroppedCount);
+                Assert.Equal(expectedDrops, attributes.DroppedCount);
+            }
+
+            Assert.Empty(GetWarnings(listener));
+        }
+
+        Assert.Equal(new SpanLimitWarning("test", 1, expectedDrops, 0, 0), Assert.Single(GetWarnings(listener)));
+    }
+
+    [Theory]
     [InlineData("BeforeRead")]
     [InlineData("AfterMarkDropped")]
     [InlineData("AfterCompletion")]

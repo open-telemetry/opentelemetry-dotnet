@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics;
+using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Internal;
 
@@ -12,7 +13,7 @@ namespace OpenTelemetry.Internal;
 internal struct SpanItemReaderCore<T>
     where T : struct
 {
-    private readonly SpanLimitTotals? totals;
+    private readonly SpanLimitBatch batch;
     private readonly Activity span;
     private readonly int countLimit;
     private readonly bool isLinks;
@@ -24,13 +25,13 @@ internal struct SpanItemReaderCore<T>
     private bool completed;
 
     internal SpanItemReaderCore(
-        SpanLimitTotals? totals,
+        SpanLimitBatch batch,
         Activity span,
         Activity.Enumerator<T> enumerator,
         int countLimit,
         bool isLinks)
     {
-        this.totals = totals;
+        this.batch = batch;
         this.span = span;
         this.enumerator = enumerator;
         this.countLimit = countLimit;
@@ -41,9 +42,15 @@ internal struct SpanItemReaderCore<T>
     /// Gets the item returned by the last successful <see cref="TryRead"/>.
     /// </summary>
     internal readonly T Current
-        => this.hasCurrent
-            ? this.current
-            : throw new InvalidOperationException("Attributes can only be read for the item returned by the last successful TryRead.");
+    {
+        get
+        {
+            this.batch.ThrowIfDisposed();
+            return this.hasCurrent
+                ? this.current
+                : throw new InvalidOperationException("Attributes can only be read for the item returned by the last successful TryRead.");
+        }
+    }
 
     internal int DroppedCount
     {
@@ -56,6 +63,8 @@ internal struct SpanItemReaderCore<T>
 
     internal bool TryRead(out T item)
     {
+        this.batch.ThrowIfDisposed();
+
         if (!this.completed && this.enumerator.MoveNext())
         {
             if (this.readCount < this.countLimit)
@@ -77,6 +86,8 @@ internal struct SpanItemReaderCore<T>
 
     internal void EnsureCompleted()
     {
+        this.batch.ThrowIfDisposed();
+
         if (this.completed)
         {
             return;
@@ -94,11 +105,11 @@ internal struct SpanItemReaderCore<T>
 
         if (this.isLinks)
         {
-            this.totals?.RecordDroppedLinks(this.span, this.droppedCount);
+            this.batch.RecordDroppedLinks(this.span, this.droppedCount);
         }
         else
         {
-            this.totals?.RecordDroppedEvents(this.span, this.droppedCount);
+            this.batch.RecordDroppedEvents(this.span, this.droppedCount);
         }
     }
 }

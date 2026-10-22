@@ -24,7 +24,7 @@ internal static class SpanLimitTestHelpers
         configure?.Invoke(options);
 
         var tracker = new LimitExceededWarningTracker(
-            new LimitExceededWarningRateLimiter(getTimestamp ?? (static () => 0)),
+            getTimestamp ?? (static () => 0),
             isWarningEnabled ?? (static () => true));
 
         return new SpanLimiter(options, new AttributeLimitOptions(), exporterName, tracker);

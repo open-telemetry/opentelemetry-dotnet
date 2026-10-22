@@ -174,7 +174,7 @@ public class SpanLimitBatchTests
     }
 
     [Fact]
-    public async Task BeginBatch_ConcurrentBatches_KeepSeparateTotalsAndReuseClearedState()
+    public async Task BeginBatch_ConcurrentBatches_KeepSeparateTotals()
     {
         const int CallerCount = 8;
         const int BatchesPerCaller = 20;
@@ -243,6 +243,240 @@ public class SpanLimitBatchTests
         Assert.Equal(
             [new SpanLimitWarning("test", 1, 1, 0, 0), new SpanLimitWarning("test", 1, 1, 0, 0)],
             GetWarnings(listener));
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void Dispose_SharedBatch_ReportsOnceAndDoesNotCorruptOverlappingBatches(bool disposeAliasFirst)
+    {
+        using var listener = ListenForWarnings();
+        var limiter = CreateLimiter(o => o.AttributeCountLimit = 1, getTimestamp: AdvancingClock());
+        using var small = CreateActivity("kept", "dropped");
+        using var large = CreateActivity("kept", "dropped1", "dropped2");
+        var original = limiter.BeginBatch();
+        var alias = original;
+        ReadSpan(original, small);
+
+        if (disposeAliasFirst)
+        {
+            alias.Dispose();
+        }
+        else
+        {
+            original.Dispose();
+        }
+
+        var first = limiter.BeginBatch();
+        if (disposeAliasFirst)
+        {
+            original.Dispose();
+        }
+        else
+        {
+            alias.Dispose();
+        }
+
+        var second = limiter.BeginBatch();
+        ReadSpan(first, small);
+        ReadSpan(second, large);
+        first.Dispose();
+        second.Dispose();
+
+        Assert.Equal(
+            [
+                new SpanLimitWarning("test", 1, 1, 0, 0),
+                new SpanLimitWarning("test", 1, 1, 0, 0),
+                new SpanLimitWarning("test", 1, 2, 0, 0),
+            ],
+            GetWarnings(listener));
+    }
+
+    [Theory]
+    [InlineData("Reset")]
+    [InlineData("CreateAttributeReader")]
+    [InlineData("CreateEventReader")]
+    [InlineData("CreateLinkReader")]
+    public void BatchOperation_AfterAliasDisposed_ThrowsAndPreservesNextBatchTotals(string operation)
+    {
+        using var listener = ListenForWarnings();
+        var limiter = CreateLimiter(o => o.AttributeCountLimit = 1, getTimestamp: AdvancingClock());
+        using var small = CreateActivity("kept", "dropped");
+        using var large = CreateActivity("kept", "dropped1", "dropped2");
+
+        var exception = Assert.Throws<ObjectDisposedException>(() =>
+        {
+            var original = limiter.BeginBatch();
+            var alias = original;
+            ReadSpan(original, small);
+            alias.Dispose();
+
+            using var next = limiter.BeginBatch();
+            ReadSpan(next, large);
+
+            switch (operation)
+            {
+                case "Reset":
+                    original.Reset();
+                    break;
+                case "CreateAttributeReader":
+                    original.CreateAttributeReader(small);
+                    break;
+                case "CreateEventReader":
+                    original.CreateEventReader(small);
+                    break;
+                case "CreateLinkReader":
+                    original.CreateLinkReader(small);
+                    break;
+            }
+        });
+
+        Assert.Equal(typeof(SpanLimitBatch).FullName, exception.ObjectName);
+        Assert.Equal(
+            [new SpanLimitWarning("test", 1, 1, 0, 0), new SpanLimitWarning("test", 1, 2, 0, 0)],
+            GetWarnings(listener));
+    }
+
+    [Theory]
+    [InlineData("SpanAttributes.TryRead", false)]
+    [InlineData("SpanAttributes.TryRead", true)]
+    [InlineData("SpanAttributes.DroppedCount", false)]
+    [InlineData("SpanAttributes.DroppedCount", true)]
+    [InlineData("SpanAttributes.MarkDropped", false)]
+    [InlineData("SpanAttributes.MarkDropped", true)]
+    [InlineData("SpanAttributes.Status", false)]
+    [InlineData("SpanAttributes.Status", true)]
+    [InlineData("SpanAttributes.StatusDescription", false)]
+    [InlineData("SpanAttributes.StatusDescription", true)]
+    [InlineData("Events.TryRead", false)]
+    [InlineData("Events.TryRead", true)]
+    [InlineData("Events.DroppedCount", false)]
+    [InlineData("Events.DroppedCount", true)]
+    [InlineData("Events.CreateAttributeReader", false)]
+    [InlineData("Links.TryRead", false)]
+    [InlineData("Links.TryRead", true)]
+    [InlineData("Links.DroppedCount", false)]
+    [InlineData("Links.DroppedCount", true)]
+    [InlineData("Links.CreateAttributeReader", false)]
+    [InlineData("EventAttributes.TryRead", false)]
+    [InlineData("EventAttributes.DroppedCount", false)]
+    [InlineData("EventAttributes.MarkDropped", false)]
+    [InlineData("LinkAttributes.TryRead", false)]
+    [InlineData("LinkAttributes.DroppedCount", false)]
+    [InlineData("LinkAttributes.MarkDropped", false)]
+    public void ReaderOperation_AfterBatchDisposed_ThrowsObjectDisposedException(string operation, bool completeReaders)
+    {
+        var limiter = CreateLimiter();
+        using var activity = CreateActivity("a");
+        activity.SetStatus(ActivityStatusCode.Error, "failed");
+        var tags = new ActivityTagsCollection { ["a"] = 1 };
+        activity.AddEvent(new ActivityEvent("event", tags: tags));
+        activity.AddLink(new ActivityLink(default, tags));
+
+        var exception = Assert.Throws<ObjectDisposedException>(() =>
+        {
+            var limits = limiter.BeginBatch();
+            var attributes = limits.CreateAttributeReader(activity);
+            Assert.True(attributes.TryRead(out _), "The span attribute should be available.");
+
+            var events = limits.CreateEventReader(activity);
+            Assert.True(events.TryRead(out _), "The event should be available.");
+            var eventAttributes = events.CreateAttributeReader();
+            Assert.True(eventAttributes.TryRead(out _), "The event attribute should be available.");
+
+            var links = limits.CreateLinkReader(activity);
+            Assert.True(links.TryRead(out _), "The link should be available.");
+            var linkAttributes = links.CreateAttributeReader();
+            Assert.True(linkAttributes.TryRead(out _), "The link attribute should be available.");
+
+            if (completeReaders)
+            {
+                Assert.False(attributes.TryRead(out _), "The span attribute reader should be exhausted.");
+                Assert.False(eventAttributes.TryRead(out _), "The event attribute reader should be exhausted.");
+                Assert.False(events.TryRead(out _), "The event reader should be exhausted.");
+                Assert.False(linkAttributes.TryRead(out _), "The link attribute reader should be exhausted.");
+                Assert.False(links.TryRead(out _), "The link reader should be exhausted.");
+            }
+
+            limits.Dispose();
+
+            switch (operation)
+            {
+                case "SpanAttributes.TryRead":
+                    attributes.TryRead(out _);
+                    break;
+                case "SpanAttributes.DroppedCount":
+                    _ = attributes.DroppedCount;
+                    break;
+                case "SpanAttributes.MarkDropped":
+                    attributes.MarkDropped();
+                    break;
+                case "SpanAttributes.Status":
+                    _ = attributes.Status;
+                    break;
+                case "SpanAttributes.StatusDescription":
+                    _ = attributes.StatusDescription;
+                    break;
+                case "Events.TryRead":
+                    events.TryRead(out _);
+                    break;
+                case "Events.DroppedCount":
+                    _ = events.DroppedCount;
+                    break;
+                case "Events.CreateAttributeReader":
+                    events.CreateAttributeReader();
+                    break;
+                case "Links.TryRead":
+                    links.TryRead(out _);
+                    break;
+                case "Links.DroppedCount":
+                    _ = links.DroppedCount;
+                    break;
+                case "Links.CreateAttributeReader":
+                    links.CreateAttributeReader();
+                    break;
+                case "EventAttributes.TryRead":
+                    eventAttributes.TryRead(out _);
+                    break;
+                case "EventAttributes.DroppedCount":
+                    _ = eventAttributes.DroppedCount;
+                    break;
+                case "EventAttributes.MarkDropped":
+                    eventAttributes.MarkDropped();
+                    break;
+                case "LinkAttributes.TryRead":
+                    linkAttributes.TryRead(out _);
+                    break;
+                case "LinkAttributes.DroppedCount":
+                    _ = linkAttributes.DroppedCount;
+                    break;
+                case "LinkAttributes.MarkDropped":
+                    linkAttributes.MarkDropped();
+                    break;
+            }
+        });
+
+        Assert.Equal(typeof(SpanLimitBatch).FullName, exception.ObjectName);
+    }
+
+    [Fact]
+    public void Reset_AfterExplicitDrop_DiscardsPreviousAttemptTotals()
+    {
+        using var listener = ListenForWarnings();
+        var limiter = CreateLimiter(o => o.AttributeCountLimit = 1);
+        using var activity = CreateActivity("a", "b");
+
+        using (var limits = limiter.BeginBatch())
+        {
+            var attributes = limits.CreateAttributeReader(activity);
+            Assert.True(attributes.TryRead(out _), "The first attribute should be available.");
+            attributes.MarkDropped();
+
+            limits.Reset();
+            ReadSpan(limits, activity);
+        }
+
+        Assert.Equal(new SpanLimitWarning("test", 1, 1, 0, 0), Assert.Single(GetWarnings(listener)));
     }
 
     [Fact]

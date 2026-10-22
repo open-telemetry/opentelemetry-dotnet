@@ -8,13 +8,41 @@ namespace OpenTelemetry.Internal.Tests;
 public class LimitExceededWarningTrackerTests
 {
     [Fact]
+    public void RecordAndTryGetTotals_AtIntervalBoundaries_ReportsAccumulatedTotals()
+    {
+        var interval = 5 * 60 * Stopwatch.Frequency;
+        var timestamp = 0L;
+        var tracker = new LimitExceededWarningTracker(() => timestamp, static () => true);
+        var batchTotals = new LimitExceededWarningTracker.Totals(1, 2, 3, 4);
+
+        Assert.True(tracker.RecordAndTryGetTotals(batchTotals, out var initialTotals), "The first batch should be reported.");
+        Assert.Equal(batchTotals, initialTotals);
+        Assert.False(tracker.RecordAndTryGetTotals(batchTotals, out var suppressedTotals), "A second batch should be suppressed in the same interval.");
+        Assert.Equal(default, suppressedTotals);
+
+        timestamp = interval - 1;
+        Assert.False(tracker.RecordAndTryGetTotals(batchTotals, out _), "A batch should be suppressed before the interval elapses.");
+
+        timestamp = interval;
+        Assert.True(tracker.RecordAndTryGetTotals(batchTotals, out var intervalTotals), "A batch should be reported at the interval boundary.");
+        Assert.Equal(new LimitExceededWarningTracker.Totals(3, 6, 9, 12), intervalTotals);
+
+        timestamp = (2 * interval) - 1;
+        Assert.False(tracker.RecordAndTryGetTotals(batchTotals, out _), "A batch should be suppressed before the next interval elapses.");
+
+        timestamp = 2 * interval;
+        Assert.True(tracker.RecordAndTryGetTotals(batchTotals, out var nextIntervalTotals), "A batch should be reported at the next interval boundary.");
+        Assert.Equal(new LimitExceededWarningTracker.Totals(2, 4, 6, 8), nextIntervalTotals);
+    }
+
+    [Fact]
     public async Task RecordAndTryGetTotals_ConcurrentSuppressedBatches_AccumulatesAllCounters()
     {
         const int CallerCount = 16;
         const int WarningIntervalSeconds = 5 * 60;
 
         var timestamp = 0L;
-        var tracker = new LimitExceededWarningTracker(new LimitExceededWarningRateLimiter(() => timestamp), static () => true);
+        var tracker = new LimitExceededWarningTracker(() => timestamp, static () => true);
 
         Assert.True(tracker.RecordAndTryGetTotals(new(1, 2, 3, 4), out var initialTotals), "The initial batch should be reported.");
         Assert.Equal(new LimitExceededWarningTracker.Totals(1, 2, 3, 4), initialTotals);
@@ -49,7 +77,7 @@ public class LimitExceededWarningTrackerTests
         const int CallerCount = 8;
         var timestamp = 0L;
         var tracker = new LimitExceededWarningTracker(
-            new LimitExceededWarningRateLimiter(() => timestamp),
+            () => timestamp,
             static () => true);
 
         Assert.True(tracker.RecordAndTryGetTotals(new(1, 1, 10, 100), out _), "The initial batch should emit a warning and begin the suppression interval.");
@@ -93,7 +121,7 @@ public class LimitExceededWarningTrackerTests
     public void RecordAndTryGetTotals_WarningsDisabled_DoesNotAccumulateOrConsumeInterval()
     {
         var isWarningEnabled = false;
-        var tracker = new LimitExceededWarningTracker(new LimitExceededWarningRateLimiter(static () => 0), () => isWarningEnabled);
+        var tracker = new LimitExceededWarningTracker(static () => 0, () => isWarningEnabled);
 
         Assert.False(tracker.RecordAndTryGetTotals(new(1, 2, 3, 4), out _), "A batch should not be reported while warnings are disabled.");
 
