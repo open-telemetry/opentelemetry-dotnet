@@ -80,9 +80,9 @@ internal static class OpenTelemetryTracingListener
         // Programmatic calls adding sources to the SDK (either by calling AddSource directly or
         // indirectly through helpers such as 'AddInstrumentation' extensions) are always favored
         // over external registrations, so that an Activity is never processed twice by the same provider.
-        builder.Sample = (ref options) => bridge.GetProviderFor(options.Source) is { } provider ?
-            provider.OnSample(ref options) :
-            ActivitySamplingResult.None;
+        builder.Sample = (ref options) => bridge.GetProviderFor(options.Source) is { } provider
+            ? provider.OnSample(ref options)
+            : ActivitySamplingResult.None;
 
         builder.ActivityStarted = activity => bridge.GetProviderFor(activity.Source)?.OnActivityStarted(activity);
 
@@ -109,10 +109,9 @@ internal static class OpenTelemetryTracingListener
             // Legacy activities (those with no ActivitySource) never go through sampling and always
             // report data as requested, so they are only handled by the provider's own listener
             // when they have been explicitly opted into using AddLegacySource.
-            return provider is not null &&
-                !string.IsNullOrEmpty(source.Name) &&
-                !provider.IsListeningTo(source) ?
-                provider : null;
+            return provider is not null && !string.IsNullOrEmpty(source.Name) && !provider.IsListeningTo(source)
+                ? provider
+                : null;
         }
     }
 
