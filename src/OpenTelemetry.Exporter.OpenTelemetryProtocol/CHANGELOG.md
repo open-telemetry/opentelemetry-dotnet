@@ -17,6 +17,9 @@ Notes](../../RELEASENOTES.md).
   `OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT`) instead of being exported in full.
   ([#7995](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7995))
 
+* Removed endpoint paths from the OTLP exporter's internal diagnostic logs.
+  ([#8016](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8016))
+
 ## 1.20.1
 
 Released 2026-Oct-20
