@@ -41,6 +41,7 @@ internal static class TestHttpServer
         private readonly Task httpListenerTask;
         private readonly HttpListener listener;
         private readonly AutoResetEvent initialized = new(false);
+        private readonly Lock syncRoot = new();
 
         private volatile bool disposing;
 
@@ -61,7 +62,11 @@ internal static class TestHttpServer
         {
             try
             {
-                this.disposing = true;
+                lock (this.syncRoot)
+                {
+                    this.disposing = true;
+                }
+
                 this.listener.Close();
                 this.httpListenerTask?.Wait();
                 this.initialized.Dispose();
@@ -78,7 +83,23 @@ internal static class TestHttpServer
             {
                 try
                 {
-                    var ctxTask = this.listener.GetContextAsync();
+                    Task<HttpListenerContext> ctxTask;
+
+                    // The managed HttpListener used on Linux and macOS has a race: Close() drains the
+                    // queue of pending GetContextAsync() calls before it marks the listener as closed,
+                    // so a call that slips in between is queued but never completed, and Dispose()
+                    // would then wait for this loop forever. Holding the lock while checking `disposing`
+                    // and calling GetContextAsync() means the call is either queued before Close() runs
+                    // (so Close() completes it) or not made at all.
+                    lock (this.syncRoot)
+                    {
+                        if (this.disposing)
+                        {
+                            return;
+                        }
+
+                        ctxTask = this.listener.GetContextAsync();
+                    }
 
                     this.initialized.Set();
 
