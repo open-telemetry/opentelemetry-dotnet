@@ -18,11 +18,11 @@ Notes](../../RELEASENOTES.md).
 * Fixed a race where collecting a metric with delta temporality concurrently
   with the creation of a new `MetricPoint` could reclaim the `MetricPoint`
   while it was being created, losing the measurement.
-  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+  ([#8019](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8019))
 
 * Fixed a race where collecting a metric with delta temporality could export
   the same series twice in a single collection.
-  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+  ([#8019](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8019))
 
 ## 1.20.1
 
