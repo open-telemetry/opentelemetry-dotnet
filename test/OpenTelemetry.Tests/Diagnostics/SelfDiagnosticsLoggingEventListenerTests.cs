@@ -27,6 +27,7 @@ public class SelfDiagnosticsLoggingEventListenerTests
     private const string CriticalSubscriptionSourceName = "OpenTelemetry-SelfDiagnosticsListenerTests-CriticalSubscription";
     private const string DisposedUpdateSourceName = "OpenTelemetry-SelfDiagnosticsListenerTests-DisposedUpdate";
     private const string OversizedMessageSourceName = "OpenTelemetry-SelfDiagnosticsListenerTests-OversizedMessage";
+    private const string LogAlwaysSourceName = "OpenTelemetry-SelfDiagnosticsListenerTests-LogAlways";
 
     [Fact]
     public void SelfDescribingEvent_RendersPayloadNamesAndValues()
@@ -60,7 +61,7 @@ public class SelfDiagnosticsLoggingEventListenerTests
 
         Assert.True(
             SelfDiagnosticsTestHelpers.WaitUntil(() => context.Sink.Written.Any(item => item.Entry.EventId.Id == 2)),
-            "expected the Error event (id 2) to be delivered");
+            "Expected the Error event (ID 2) to be delivered.");
         Assert.DoesNotContain(context.Sink.Written, item => item.Entry.EventId.Id == 1);
     }
 
@@ -134,7 +135,7 @@ public class SelfDiagnosticsLoggingEventListenerTests
         Assert.True(
             SelfDiagnosticsTestHelpers.WaitUntil(
                 () => EntriesFrom(context.Sink, MappedLevelSourceName).Count >= 2),
-            $"expected at least 2 entries from {MappedLevelSourceName}, found {EntriesFrom(context.Sink, MappedLevelSourceName).Count}");
+            $"Expected at least 2 entries from {MappedLevelSourceName}, but found {EntriesFrom(context.Sink, MappedLevelSourceName).Count}.");
 
         var entries = EntriesFrom(context.Sink, MappedLevelSourceName);
 
@@ -142,6 +143,29 @@ public class SelfDiagnosticsLoggingEventListenerTests
 
         // LogAlways carries no severity of its own, so Information is the neutral landing spot.
         Assert.Equal(LogLevel.Information, entries.Single(entry => entry.EventId.Id == 2).Level);
+    }
+
+    [Theory]
+    [InlineData(LogLevel.Warning)]
+    [InlineData(LogLevel.Error)]
+    [InlineData(LogLevel.Critical)]
+    public void LogAlwaysEvents_AreCapturedAboveTheirMappedLevel(LogLevel minimumLevel)
+    {
+        // EventSource delivers LogAlways events at every subscribed level; mapping them to
+        // Information must not let the minimum-level filter drop them again.
+        using var context = ListenerTestContext.Create(minimumLevel, minimumLevel);
+
+        using var eventSource = new LogAlwaysEventSource();
+
+        eventSource.LogAlwaysEvent("log always event");
+        eventSource.CriticalEvent("critical marker");
+
+        Assert.True(
+            SelfDiagnosticsTestHelpers.WaitUntil(() => WasWritten(context.Sink, "critical marker")),
+            "Expected the Critical marker to be delivered.");
+
+        var entry = Assert.Single(EntriesFrom(context.Sink, LogAlwaysSourceName), e => e.EventId.Id == 1);
+        Assert.Equal(LogLevel.Information, entry.Level);
     }
 
     [Fact]
@@ -160,10 +184,10 @@ public class SelfDiagnosticsLoggingEventListenerTests
 
         Assert.True(
             SelfDiagnosticsTestHelpers.WaitUntil(() => WasWritten(context.Sink, "marker one")),
-            "expected marker one to arrive before asserting verbose was suppressed");
+            "Expected marker one before checking Verbose event suppression.");
         Assert.False(
             WasWritten(context.Sink, "verbose before update"),
-            $"expected Verbose event to be suppressed at Warning subscription; sink entries: {DescribeSinkMessages(context.Sink)}");
+            $"Expected the Verbose event to be suppressed at the Warning subscription level. Sink entries: {DescribeSinkMessages(context.Sink)}.");
 
         // Re-subscribing an already-subscribed source at Debug maps to EventLevel.Verbose.
         context.Listener.UpdateLevel(LogLevel.Debug);
@@ -171,7 +195,7 @@ public class SelfDiagnosticsLoggingEventListenerTests
 
         Assert.True(
             SelfDiagnosticsTestHelpers.WaitUntil(() => WasWritten(context.Sink, "verbose after update")),
-            "expected verbose after update once the subscription level was lowered");
+            "Expected the Verbose event after lowering the subscription level.");
 
         // None disables the subscription. The marker is written directly so it still queues behind
         // the suppressed event and keeps the negative assertion deterministic.
@@ -181,10 +205,10 @@ public class SelfDiagnosticsLoggingEventListenerTests
 
         Assert.True(
             SelfDiagnosticsTestHelpers.WaitUntil(() => WasWritten(context.Sink, "marker two")),
-            "expected marker two to arrive before asserting verbose was suppressed after disable");
+            "Expected marker two before checking suppression after disabling the subscription.");
         Assert.False(
             WasWritten(context.Sink, "verbose after disable"),
-            $"expected Verbose event to be suppressed after disabling subscription; sink entries: {DescribeSinkMessages(context.Sink)}");
+            $"Expected the Verbose event to be suppressed after disabling the subscription. Sink entries: {DescribeSinkMessages(context.Sink)}.");
     }
 
     [Fact]
@@ -207,17 +231,17 @@ public class SelfDiagnosticsLoggingEventListenerTests
         relay.EnableEvents(eventSource, EventLevel.Verbose, EventKeywords.All);
         eventSource.ForeignEvent("must not be logged");
 
-        Assert.True(relay.Relayed, "the foreign event was never relayed into the listener");
+        Assert.True(relay.Relayed, "The foreign event was never relayed into the listener.");
 
         // Marker after the relayed event: pipeline is live, so absence below is rejection not race.
         WriteMarker(context.Logger, "foreign marker");
 
         Assert.True(
             SelfDiagnosticsTestHelpers.WaitUntil(() => WasWritten(context.Sink, "foreign marker")),
-            "expected foreign marker to arrive before asserting the foreign event was ignored");
+            "Expected the foreign marker before checking that the foreign event was ignored.");
         Assert.False(
             WasWritten(context.Sink, "must not be logged"),
-            $"expected foreign EventSource event to be ignored; sink entries: {DescribeSinkMessages(context.Sink)}");
+            $"Expected the foreign EventSource event to be ignored. Sink entries: {DescribeSinkMessages(context.Sink)}.");
         Assert.DoesNotContain(
             context.Sink.Written,
             item => item.Entry.Message.StartsWith(ForeignSourceName, StringComparison.Ordinal));
@@ -251,11 +275,11 @@ public class SelfDiagnosticsLoggingEventListenerTests
         WriteMarker(context.Logger, "empty payload marker");
         Assert.True(
             SelfDiagnosticsTestHelpers.WaitUntil(() => WasWritten(context.Sink, "empty payload marker")),
-            "expected empty payload marker to arrive before checking for the EventSource entry");
+            "Expected the empty payload marker before checking for the EventSource entry.");
 
         Assert.True(
             EntriesFrom(context.Sink, EmptyPayloadSourceName).Count >= 1,
-            "expected an entry from the self-describing source with empty payload");
+            "Expected an entry from the self-describing source with an empty payload.");
     }
 
     [Fact]
@@ -274,7 +298,7 @@ public class SelfDiagnosticsLoggingEventListenerTests
         Assert.True(
             SelfDiagnosticsTestHelpers.WaitUntil(
                 () => EntriesFrom(context.Sink, CriticalSubscriptionSourceName).Any(e => e.EventId.Id == 1)),
-            $"expected a Critical event (id 1) from {CriticalSubscriptionSourceName}");
+            $"Expected a Critical event (ID 1) from {CriticalSubscriptionSourceName}.");
         Assert.DoesNotContain(
             EntriesFrom(context.Sink, CriticalSubscriptionSourceName),
             e => e.EventId.Id == 2);
@@ -311,7 +335,7 @@ public class SelfDiagnosticsLoggingEventListenerTests
     {
         Assert.True(
             SelfDiagnosticsTestHelpers.WaitUntil(() => WasWritten(sink, messageTail)),
-            $"no entry ending with '{messageTail}' was delivered");
+            $"No entry ending with '{messageTail}' was delivered.");
 
         return sink.Written
             .First(item => item.Entry.Message.EndsWith(messageTail, StringComparison.Ordinal))
@@ -411,6 +435,16 @@ public class SelfDiagnosticsLoggingEventListenerTests
         public void NoPayloadEvent() => this.WriteEvent(1);
     }
 
+    [EventSource(Name = LogAlwaysSourceName)]
+    private sealed class LogAlwaysEventSource : EventSource
+    {
+        [Event(1, Level = EventLevel.LogAlways, Message = "{0}")]
+        public void LogAlwaysEvent(string message) => this.WriteEvent(1, message);
+
+        [Event(2, Level = EventLevel.Critical, Message = "{0}")]
+        public void CriticalEvent(string message) => this.WriteEvent(2, message);
+    }
+
     [EventSource(Name = CriticalSubscriptionSourceName)]
     private sealed class CriticalSubscriptionEventSource : EventSource
     {
@@ -506,7 +540,7 @@ public class SelfDiagnosticsLoggingEventListenerTests
             var listener = new SelfDiagnosticsLoggingEventListener(logger, listenerLevel);
             Assert.True(
                 applied.Wait(TimeSpan.FromSeconds(5)),
-                "Configuration was not applied by the pump within the timeout");
+                "Configuration was not applied by the pump within the timeout.");
 
             return new ListenerTestContext(sink, dispatcher, logger, listener);
         }

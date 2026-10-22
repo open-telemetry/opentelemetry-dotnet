@@ -131,7 +131,8 @@ See the [troubleshooting guide](../../docs/troubleshooting/README.md) for setup
 examples using environment variables, `appsettings.json`, or code, along with
 the full options reference, runtime configuration changes, and guidance on
 reading and sharing diagnostic output. It also covers the legacy
-`OTEL_DIAGNOSTICS.json` configuration mechanism.
+`OTEL_DIAGNOSTICS.json` configuration mechanism, which is superseded by these
+options and will be removed in a future major version.
 
 ## References
 

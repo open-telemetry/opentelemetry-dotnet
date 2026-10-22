@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Options;
 using OpenTelemetry.Internal;
 
 using LogLevel = Microsoft.Extensions.Logging.LogLevel;
@@ -149,12 +148,19 @@ public sealed class SelfDiagnosticsOptions
         = EnvironmentVariableLogMode.KnownSafeValues;
 
     /// <summary>
-    /// Gets messages describing environment variable values that could not be applied.
-    /// These are surfaced in the log file preamble when a file sink is active. When the file
-    /// sink cannot be enabled (for example because no default log directory could be resolved),
-    /// the same messages are also written to standard error so the failure is not silent.
+    /// Gets or sets messages describing configuration sources and values that could not be applied.
+    /// These are surfaced in the log file preamble when a file sink is active. Environment
+    /// variable configuration errors are also written to standard error when the file sink
+    /// cannot be enabled (for example because no default log directory could be resolved).
     /// </summary>
-    internal IReadOnlyList<string> ConfigurationWarnings { get; private set; } = NoWarnings;
+    internal IReadOnlyList<string> ConfigurationWarnings { get; set; } = NoWarnings;
+
+    /// <summary>
+    /// Gets or sets a value indicating whether the file sink writes the path of each new log
+    /// file to standard error. Disabled for the legacy <c>OTEL_DIAGNOSTICS.json</c> configuration,
+    /// whose log directory is chosen explicitly and which never wrote to standard error.
+    /// </summary>
+    internal bool AnnounceLogFile { get; set; } = true;
 
     /// <summary>
     /// Gets the standard per-user folder for self-diagnostics log files on the current platform.
@@ -196,7 +202,8 @@ public sealed class SelfDiagnosticsOptions
             false,
             false,
             EnvironmentVariableLogMode.KnownSafeValues,
-            NoWarnings);
+            NoWarnings,
+            true);
 
         private SelfDiagnosticsConfiguration(
             LogLevel minimumLevel,
@@ -206,7 +213,8 @@ public sealed class SelfDiagnosticsOptions
             bool logToStdout,
             bool logToStderr,
             EnvironmentVariableLogMode environmentVariables,
-            IReadOnlyList<string> configurationWarnings)
+            IReadOnlyList<string> configurationWarnings,
+            bool announceLogFile)
         {
             this.MinimumLevel = minimumLevel;
             this.LogDirectory = logDirectory;
@@ -216,6 +224,7 @@ public sealed class SelfDiagnosticsOptions
             this.LogToStderr = logToStderr;
             this.EnvironmentVariables = environmentVariables;
             this.ConfigurationWarnings = configurationWarnings;
+            this.AnnounceLogFile = announceLogFile;
         }
 
         internal LogLevel MinimumLevel { get; }
@@ -233,6 +242,8 @@ public sealed class SelfDiagnosticsOptions
         internal EnvironmentVariableLogMode EnvironmentVariables { get; }
 
         internal IReadOnlyList<string> ConfigurationWarnings { get; }
+
+        internal bool AnnounceLogFile { get; }
 
         internal bool HasConfiguredSink
             => !string.IsNullOrEmpty(this.LogDirectory)
@@ -256,228 +267,8 @@ public sealed class SelfDiagnosticsOptions
                 options.LogToStdout,
                 options.LogToStderr,
                 options.EnvironmentVariables,
-                options.ConfigurationWarnings);
-        }
-    }
-
-    /// <summary>
-    /// Coordinates process-global configuration supplied by independently-owned providers.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// Ownership goes to the most recently registered provider that actually configured a sink,
-    /// falling back to the most recent registration when none has. Selecting on configured-sink
-    /// rather than purely on recency matters because every provider build registers: without it,
-    /// an unrelated <c>Sdk.CreateTracerProviderBuilder().Build()</c> in a library, a health
-    /// check, or a parallel test would take ownership with default (silent) options and
-    /// silently switch off the diagnostics the application had asked for.
-    /// </para>
-    /// </remarks>
-    internal sealed class SelfDiagnosticsConfigurationCoordinator : IDisposable
-    {
-        private readonly Lock syncLock = new();
-        private readonly List<Registration> registrations = [];
-        private readonly Action<SelfDiagnosticsConfiguration> applyConfiguration;
-
-        private object? activeRegistrationIdentity;
-        private bool disposed;
-
-        internal SelfDiagnosticsConfigurationCoordinator(Action<SelfDiagnosticsConfiguration> applyConfiguration)
-        {
-            this.applyConfiguration = applyConfiguration;
-        }
-
-        public void Dispose()
-        {
-            Registration[] registrations;
-
-            lock (this.syncLock)
-            {
-                if (this.disposed)
-                {
-                    return;
-                }
-
-                this.disposed = true;
-                registrations = [.. this.registrations];
-                this.registrations.Clear();
-                this.activeRegistrationIdentity = null;
-
-                foreach (var registration in registrations)
-                {
-                    registration.Registered = false;
-                }
-            }
-
-            foreach (var registration in registrations)
-            {
-                registration.DisposeSubscription();
-            }
-        }
-
-        internal IDisposable Register(IOptionsMonitor<SelfDiagnosticsOptions> monitor)
-        {
-            Guard.ThrowIfNull(monitor);
-
-            var registration = new Registration(this, monitor);
-            registration.Subscribe();
-
-            lock (this.syncLock)
-            {
-                if (this.disposed)
-                {
-                    registration.DisposeSubscription();
-                    throw new ObjectDisposedException(nameof(SelfDiagnosticsConfigurationCoordinator));
-                }
-
-                registration.Registered = true;
-                this.registrations.Add(registration);
-                this.ReevaluateActiveUnderLock(changed: registration);
-            }
-
-            return registration;
-        }
-
-        /// <summary>
-        /// Recomputes which registration owns the process-global configuration and applies its
-        /// configuration when either the owner changed or the current owner's own configuration
-        /// changed. Must be called while holding <see cref="syncLock"/>.
-        /// </summary>
-        /// <param name="changed">The registration whose configuration just changed, if any.</param>
-        private void ReevaluateActiveUnderLock(Registration? changed)
-        {
-            var selectedIndex = this.SelectActiveUnderLock();
-            var selectedRegistration = selectedIndex >= 0 ? this.registrations[selectedIndex] : null;
-            var selectedIdentity = selectedRegistration?.Identity;
-            var ownerChanged = !ReferenceEquals(selectedIdentity, this.activeRegistrationIdentity);
-            this.activeRegistrationIdentity = selectedIdentity;
-
-            if (!ownerChanged && (changed is null || !ReferenceEquals(changed, selectedRegistration)))
-            {
-                // The owner is unchanged and the change came from a registration that does not
-                // own the configuration. Re-applying an identical configuration would churn the
-                // sink set for no reason.
-                return;
-            }
-
-            this.applyConfiguration(
-                selectedRegistration?.GetLatestConfiguration() ?? SelfDiagnosticsConfiguration.Disabled);
-        }
-
-        private int SelectActiveUnderLock()
-        {
-            for (var i = this.registrations.Count - 1; i >= 0; i--)
-            {
-                if (this.registrations[i].GetLatestConfiguration().HasConfiguredSink)
-                {
-                    return i;
-                }
-            }
-
-            return this.registrations.Count > 0
-                ? this.registrations.Count - 1
-                : -1;
-        }
-
-        private void ConfigurationChanged(Registration registration)
-        {
-            lock (this.syncLock)
-            {
-                if (!this.disposed && registration.Registered)
-                {
-                    this.ReevaluateActiveUnderLock(changed: registration);
-                }
-            }
-        }
-
-        private void Unregister(Registration registration)
-        {
-            lock (this.syncLock)
-            {
-                if (!registration.Registered)
-                {
-                    return;
-                }
-
-                registration.Registered = false;
-                this.registrations.Remove(registration);
-
-                if (!this.disposed)
-                {
-                    // The registration is already out of the list, so if it was the owner the
-                    // re-selection below cannot pick it again and the owner-changed path applies.
-                    this.ReevaluateActiveUnderLock(changed: null);
-                }
-            }
-        }
-
-        private sealed class Registration : IDisposable
-        {
-            private readonly SelfDiagnosticsConfigurationCoordinator owner;
-            private readonly IOptionsMonitor<SelfDiagnosticsOptions> monitor;
-            private readonly Lock configurationLock = new();
-
-            private SelfDiagnosticsConfiguration latestConfiguration = SelfDiagnosticsConfiguration.Disabled;
-#pragma warning disable CA2213 // Disposed through an atomic exchange in Dispose/DisposeSubscription.
-            private IDisposable? subscription;
-#pragma warning restore CA2213
-            private int disposed;
-
-            internal Registration(
-                SelfDiagnosticsConfigurationCoordinator owner,
-                IOptionsMonitor<SelfDiagnosticsOptions> monitor)
-            {
-                this.owner = owner;
-                this.monitor = monitor;
-            }
-
-            // Stable sentinel token used by the coordinator to track the active owner via
-            // ReferenceEquals. Separate from the Registration reference itself so the
-            // coordinator field can be typed as object? without a circular dependency.
-            internal object Identity { get; } = new();
-
-            internal bool Registered { get; set; }
-
-            public void Dispose()
-            {
-                if (Interlocked.Exchange(ref this.disposed, 1) != 0)
-                {
-                    return;
-                }
-
-                this.owner.Unregister(this);
-                Interlocked.Exchange(ref this.subscription, null)?.Dispose();
-            }
-
-            internal void Subscribe()
-            {
-                this.Publish(this.monitor.CurrentValue);
-                this.subscription = this.monitor.OnChange((options, _) => this.Publish(options));
-                this.Publish(this.monitor.CurrentValue);
-            }
-
-            internal SelfDiagnosticsConfiguration GetLatestConfiguration()
-            {
-                lock (this.configurationLock)
-                {
-                    return this.latestConfiguration;
-                }
-            }
-
-            internal void DisposeSubscription() =>
-                Interlocked.Exchange(ref this.subscription, null)?.Dispose();
-
-            private void Publish(SelfDiagnosticsOptions options)
-            {
-                var configuration = SelfDiagnosticsConfiguration.Create(options);
-
-                lock (this.configurationLock)
-                {
-                    this.latestConfiguration = configuration;
-                }
-
-                this.owner.ConfigurationChanged(this);
-            }
+                options.ConfigurationWarnings,
+                options.AnnounceLogFile);
         }
     }
 }

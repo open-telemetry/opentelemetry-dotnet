@@ -1,6 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Buffers;
 using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Tracing;
 using System.Globalization;
@@ -15,8 +16,6 @@ namespace OpenTelemetry.Internal;
 internal sealed partial class SelfDiagnosticsConfigParser
 {
     public const string ConfigFileName = "OTEL_DIAGNOSTICS.json";
-    private const int FileSizeLowerLimit = 1024;  // Lower limit for log file size in KB: 1MB
-    private const int FileSizeUpperLimit = 128 * 1024;  // Upper limit for log file size in KB: 128MB
 
     /// <summary>
     /// ConfigBufferSize is the maximum bytes of config file that will be read.
@@ -26,7 +25,6 @@ internal sealed partial class SelfDiagnosticsConfigParser
     private const string LogDirectoryRegexPattern = @"""LogDirectory""\s*:\s*""(?<LogDirectory>.*?)""";
     private const string FileSizeRegexPattern = @"""FileSize""\s*:\s*(?<FileSize>\d+)";
     private const string LogLevelRegexPattern = @"""LogLevel""\s*:\s*""(?<LogLevel>.*?)""";
-    private const string FormatMessageRegexPattern = @"""FormatMessage""\s*:\s*(?:""(?<FormatMessage>.*?)""|(?<FormatMessage>true|false))";
 
 #if !NET
     private static readonly Regex LogDirectoryRegex = new(LogDirectoryRegexPattern, RegexOptions.IgnoreCase | RegexOptions.Compiled);
@@ -34,128 +32,38 @@ internal sealed partial class SelfDiagnosticsConfigParser
     private static readonly Regex FileSizeRegex = new(FileSizeRegexPattern, RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
     private static readonly Regex LogLevelRegex = new(LogLevelRegexPattern, RegexOptions.IgnoreCase | RegexOptions.Compiled);
-
-    private static readonly Regex FormatMessageRegex = new(FormatMessageRegexPattern, RegexOptions.IgnoreCase | RegexOptions.Compiled);
 #endif
 
-    private readonly string? configFilePath;
-
-    // This class is called in SelfDiagnosticsConfigRefresher.UpdateLogFileFromConfiguration
-    // in both main thread and the worker thread.
-    // In theory the variable won't be access at the same time because worker thread first Task.Delay for a few seconds.
-    private byte[]? configBuffer;
+    private readonly Func<string?> configFileLocator;
 
     public SelfDiagnosticsConfigParser()
-        : this(configFilePath: null)
+        : this(() => LocateConfigFile(Environment.CurrentDirectory, AppContext.BaseDirectory))
     {
+    }
+
+    internal SelfDiagnosticsConfigParser(Func<string?> configFileLocator)
+    {
+        Guard.ThrowIfNull(configFileLocator);
+        this.configFileLocator = configFileLocator;
     }
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="SelfDiagnosticsConfigParser"/> class.
+    /// Returns the path of the config file in <paramref name="workingDirectory"/>, falling back to
+    /// <paramref name="baseDirectory"/>, or <see langword="null"/> when neither has one.
     /// </summary>
-    /// <param name="configFilePath">
-    /// The configuration file to read, or <see langword="null"/> to look for
-    /// <see cref="ConfigFileName"/> in the current working directory and then
-    /// in the application base directory. Tests pass an explicit path so that
-    /// they do not share the process-wide file with the SDK's own refresher.
-    /// </param>
-    internal SelfDiagnosticsConfigParser(string? configFilePath)
+    /// <param name="workingDirectory">The directory searched first.</param>
+    /// <param name="baseDirectory">The directory searched when the working directory has no file.</param>
+    /// <returns>The config file path, or <see langword="null"/>.</returns>
+    internal static string? LocateConfigFile(string workingDirectory, string baseDirectory)
     {
-        this.configFilePath = configFilePath;
-    }
-
-    public bool TryGetConfiguration(
-        [NotNullWhen(true)] out string? logDirectory,
-        out int fileSizeInKB,
-        out EventLevel logLevel,
-        out bool formatMessage)
-    {
-        logDirectory = null;
-        fileSizeInKB = 0;
-        logLevel = EventLevel.LogAlways;
-        formatMessage = false;
-        try
+        var path = Path.Combine(workingDirectory, ConfigFileName);
+        if (File.Exists(path))
         {
-            var configFilePath = this.configFilePath ?? ConfigFileName;
-
-            // First check using current working directory
-            if (!File.Exists(configFilePath))
-            {
-                // An explicitly configured path is not searched for anywhere else.
-                if (this.configFilePath is not null)
-                {
-                    return false;
-                }
-
-                configFilePath = Path.Combine(AppContext.BaseDirectory, ConfigFileName);
-
-                // Second check using application base directory
-                if (!File.Exists(configFilePath))
-                {
-                    return false;
-                }
-            }
-
-            using var file = File.Open(configFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
-
-            var buffer = this.configBuffer;
-            if (buffer == null)
-            {
-                buffer = new byte[ConfigBufferSize]; // Fail silently if OOM
-                this.configBuffer = buffer;
-            }
-
-            var bytesRead = 0;
-            var totalBytesRead = 0;
-
-            while (totalBytesRead < buffer.Length)
-            {
-                bytesRead = file.Read(buffer, totalBytesRead, buffer.Length - totalBytesRead);
-                if (bytesRead == 0)
-                {
-                    break;
-                }
-
-                totalBytesRead += bytesRead;
-            }
-
-            var configJson = Encoding.UTF8.GetString(buffer, 0, totalBytesRead);
-
-            if (!TryParseLogDirectory(configJson, out logDirectory))
-            {
-                return false;
-            }
-
-            if (!TryParseFileSize(configJson, out fileSizeInKB))
-            {
-                return false;
-            }
-
-            if (fileSizeInKB < FileSizeLowerLimit)
-            {
-                fileSizeInKB = FileSizeLowerLimit;
-            }
-
-            if (fileSizeInKB > FileSizeUpperLimit)
-            {
-                fileSizeInKB = FileSizeUpperLimit;
-            }
-
-            if (!TryParseLogLevel(configJson, out var logLevelString))
-            {
-                return false;
-            }
-
-            // FormatMessage is optional, defaults to false
-            _ = TryParseFormatMessage(configJson, out formatMessage);
-
-            return Enum.TryParse(logLevelString, out logLevel);
+            return path;
         }
-        catch (Exception)
-        {
-            // do nothing on failure to open/read/parse config file
-            return false;
-        }
+
+        path = Path.Combine(baseDirectory, ConfigFileName);
+        return File.Exists(path) ? path : null;
     }
 
     internal static bool TryParseLogDirectory(
@@ -185,18 +93,76 @@ internal sealed partial class SelfDiagnosticsConfigParser
         return logLevelResult.Success && !string.IsNullOrWhiteSpace(logLevel);
     }
 
-    internal static bool TryParseFormatMessage(string configJson, out bool formatMessage)
+    internal bool TryGetConfiguration(out SelfDiagnosticsLegacyConfiguration configuration)
     {
-        formatMessage = false;
-        var formatMessageResult = GetFormatMessageRegex().Match(configJson);
-        if (formatMessageResult.Success)
+        configuration = default;
+        try
         {
-            var formatMessageValue = formatMessageResult.Groups["FormatMessage"].Value;
-            return bool.TryParse(formatMessageValue, out formatMessage);
-        }
+            var configFilePath = this.configFileLocator();
+            if (configFilePath is null)
+            {
+                return false;
+            }
 
-        return true;
+            configFilePath = Path.GetFullPath(configFilePath);
+
+            using var file = File.Open(configFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+
+            var buffer = ArrayPool<byte>.Shared.Rent(ConfigBufferSize);
+            string configJson;
+            try
+            {
+                var totalBytesRead = 0;
+                while (totalBytesRead < ConfigBufferSize)
+                {
+                    var bytesRead = file.Read(buffer, totalBytesRead, ConfigBufferSize - totalBytesRead);
+                    if (bytesRead == 0)
+                    {
+                        break;
+                    }
+
+                    totalBytesRead += bytesRead;
+                }
+
+                configJson = Encoding.UTF8.GetString(buffer, 0, totalBytesRead);
+            }
+            finally
+            {
+                ArrayPool<byte>.Shared.Return(buffer);
+            }
+
+            if (!TryParseLogDirectory(configJson, out var logDirectory)
+                || !TryParseFileSize(configJson, out var fileSizeKilobytes)
+                || !TryParseLogLevel(configJson, out var logLevelString)
+                || !Enum.TryParse<EventLevel>(logLevelString, out var logLevel)
+                || logLevel < EventLevel.LogAlways)
+            {
+                return false;
+            }
+
+            configuration = new SelfDiagnosticsLegacyConfiguration(
+                configFilePath,
+                Path.GetFullPath(logDirectory),
+                fileSizeKilobytes,
+                logLevel,
+                logLevelString,
+                formatMessageSpecified: ContainsFormatMessageKey(configJson));
+            return true;
+        }
+        catch (Exception)
+        {
+            // Missing, unreadable and invalid legacy configuration (including an unusable
+            // directory) stays disabled.
+            return false;
+        }
     }
+
+    private static bool ContainsFormatMessageKey(string configJson)
+#if NET || NETSTANDARD2_1_OR_GREATER
+        => configJson.Contains("\"FormatMessage\"", StringComparison.OrdinalIgnoreCase);
+#else
+        => configJson.IndexOf("\"FormatMessage\"", StringComparison.OrdinalIgnoreCase) >= 0;
+#endif
 
 #if NET
     [GeneratedRegex(LogDirectoryRegexPattern, RegexOptions.IgnoreCase)]
@@ -207,16 +173,11 @@ internal sealed partial class SelfDiagnosticsConfigParser
 
     [GeneratedRegex(LogLevelRegexPattern, RegexOptions.IgnoreCase)]
     private static partial Regex GetLogLevelRegex();
-
-    [GeneratedRegex(FormatMessageRegexPattern, RegexOptions.IgnoreCase)]
-    private static partial Regex GetFormatMessageRegex();
 #else
     private static Regex GetLogDirectoryRegex() => LogDirectoryRegex;
 
     private static Regex GetFileSizeRegex() => FileSizeRegex;
 
     private static Regex GetLogLevelRegex() => LogLevelRegex;
-
-    private static Regex GetFormatMessageRegex() => FormatMessageRegex;
 #endif
 }
