@@ -501,35 +501,46 @@ public class MetricPointReclaimTests
 
         using var meterProvider = Sdk.CreateMeterProviderBuilder()
             .AddMeter(meter.Name)
-            .AddView("counter", new MetricStreamConfiguration { CardinalityLimit = 2 })
+            .AddView("counter", new MetricStreamConfiguration { CardinalityLimit = 3 })
             .AddInMemoryExporter(exportedItems, metricReaderOptions => metricReaderOptions.TemporalityPreference = MetricReaderTemporalityPreference.Delta)
             .Build();
 
         var tagA = new KeyValuePair<string, object?>("key", "A");
+        var tagSentinel = new KeyValuePair<string, object?>("key", "S");
         var tagB = new KeyValuePair<string, object?>("key", "B");
 
+        // A snapshot visits the slots in the order in which they were first handed out, so it
+        // visits A, then the sentinel and then B.
         counter.Add(1, tagA);
+        counter.Add(1, tagSentinel);
         counter.Add(1, tagB);
         Assert.True(meterProvider.ForceFlush());
 
         var store = exportedItems[0].AggregatorStore;
-        var slotA = Assert.Single(store.TagsToMetricPointIndexDictionaryDelta!.Values, lookupData => Equals(lookupData.GivenTags.KeyValuePairs[0].Value, "A")).Index;
+        var slotA = GetSlot(store, "A");
+        var slotSentinel = GetSlot(store, "S");
+        var slotB = GetSlot(store, "B");
 
-        // Keep A alive and let B be reclaimed, so that B's slot is free.
+        // Keep A and the sentinel alive and let B be reclaimed, so that B's slot is the only free slot.
         counter.Add(1, tagA);
+        counter.Add(1, tagSentinel);
         Assert.True(meterProvider.ForceFlush());
-        Assert.Single(store.TagsToMetricPointIndexDictionaryDelta!);
+        Assert.Equal(2, store.TagsToMetricPointIndexDictionaryDelta!.Count);
 
         var observedSlots = new List<int>();
+        var slotsOfA = new List<int>();
 
         store.DeltaReclaimCandidateObserved = slot =>
         {
             observedSlots.Add(slot);
 
-            // For A, a measurement races with the snapshot claiming A, so the snapshot exports A and
-            // defers its reclaim. For any slot visited afterwards, a measurement for A creates the point
-            // that replaces A in a free slot, which must not be exported by this snapshot too.
+            // For A, the measurement races with the snapshot claiming A, so the snapshot exports A and
+            // defers its reclaim. For the sentinel, A has been claimed, so the measurement creates the
+            // point that replaces A in B's free slot. The snapshot visits that slot next, and must not
+            // export the replacement too.
             counter.Add(1, tagA);
+
+            slotsOfA.Add(GetSlot(store, "A"));
         };
 
         exportedItems.Clear();
@@ -543,16 +554,23 @@ public class MetricPointReclaimTests
             store.DeltaReclaimCandidateObserved = null;
         }
 
-        Assert.Equal(slotA, observedSlots[0]);
+        Assert.Equal([slotA, slotSentinel], observedSlots);
+
+        // A's replacement was created in B's slot while the snapshot was in progress.
+        Assert.Equal([slotA, slotB], slotsOfA);
+
         Assert.Equal(["A:1"], GetSeries(exportedItems));
 
-        // A's reclaim completes, and the next measurement for A is exported by the point that replaces it.
-        counter.Add(1, tagA);
-
+        // A's reclaim completes, and the measurement recorded while the sentinel was visited is only
+        // exported by this collect, by the point that replaced A.
         exportedItems.Clear();
         Assert.True(meterProvider.ForceFlush());
 
         Assert.Equal(["A:1"], GetSeries(exportedItems));
+        Assert.Equal(slotB, GetSlot(store, "A"));
+
+        static int GetSlot(AggregatorStore store, string tagValue)
+            => Assert.Single(store.TagsToMetricPointIndexDictionaryDelta!.Values, lookupData => Equals(lookupData.GivenTags.KeyValuePairs[0].Value, tagValue)).Index;
 
         static List<string> GetSeries(List<Metric> metrics)
         {
