@@ -539,6 +539,146 @@ public sealed class OtlpTraceExporterTests : IDisposable
         Assert.Equal(1u, otlpSpan.DroppedAttributesCount);
     }
 
+    [Theory]
+    [InlineData("Span")]
+    [InlineData("Event")]
+    [InlineData("Link")]
+    public void ToOtlpSpan_RejectedAttributeBeforeCountLimit_WritesFollowingValidAttribute(string target)
+    {
+        var options = new SdkLimitOptions
+        {
+            SpanAttributeCountLimit = 1,
+            SpanEventAttributeCountLimit = 1,
+            SpanLinkAttributeCountLimit = 1,
+        };
+
+        var tags = new ActivityTagsCollection
+        {
+            ["rejected"] = new ToStringThrows(),
+            ["kept"] = "value",
+            ["overflow"] = 1,
+        };
+
+        using var activity = new Activity("test");
+
+        if (target == "Span")
+        {
+            foreach (var tag in tags)
+            {
+                activity.SetTag(tag.Key, tag.Value);
+            }
+        }
+        else if (target == "Event")
+        {
+            activity.AddEvent(new ActivityEvent("event", tags: tags));
+        }
+        else
+        {
+            activity.AddLink(new ActivityLink(default, tags));
+        }
+
+        var span = ToOtlpSpan(options, activity);
+        Assert.NotNull(span);
+
+        var attributes = span.Attributes;
+        var droppedCount = span.DroppedAttributesCount;
+        if (target == "Event")
+        {
+            var activityEvent = Assert.Single(span.Events);
+            attributes = activityEvent.Attributes;
+            droppedCount = activityEvent.DroppedAttributesCount;
+        }
+        else if (target == "Link")
+        {
+            var link = Assert.Single(span.Links);
+            attributes = link.Attributes;
+            droppedCount = link.DroppedAttributesCount;
+        }
+
+        Assert.Equal(
+            new OtlpCommon.KeyValue { Key = "kept", Value = new OtlpCommon.AnyValue { StringValue = "value" } },
+            Assert.Single(attributes));
+        Assert.Equal(2u, droppedCount);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void CreateSpanLimiter_DistinctOrUnlimitedOptions_AppliesEachLimitIndependently(bool unlimited)
+    {
+        var options = new SdkLimitOptions
+        {
+            AttributeCountLimit = unlimited ? null : 6,
+            AttributeValueLengthLimit = unlimited ? null : 7,
+            SpanAttributeCountLimit = unlimited ? null : 1,
+            SpanAttributeValueLengthLimit = unlimited ? null : 3,
+            SpanEventCountLimit = unlimited ? null : 2,
+            SpanLinkCountLimit = unlimited ? null : 3,
+            SpanEventAttributeCountLimit = unlimited ? null : 4,
+            SpanLinkAttributeCountLimit = unlimited ? null : 5,
+        };
+
+        var tags = new ActivityTagsCollection();
+        for (var i = 0; i < 7; i++)
+        {
+            tags.Add($"key{i}", "12345678");
+        }
+
+        using var source = new ActivitySource(new ActivitySourceOptions(nameof(this.CreateSpanLimiter_DistinctOrUnlimitedOptions_AppliesEachLimitIndependently))
+        {
+            Tags = tags,
+        });
+
+        using var activity = source.StartActivity("test");
+
+        Assert.NotNull(activity);
+
+        foreach (var tag in tags)
+        {
+            activity.SetTag(tag.Key, tag.Value);
+        }
+
+        for (var i = 0; i < 4; i++)
+        {
+            activity.AddEvent(new ActivityEvent($"event{i}", tags: tags));
+        }
+
+        for (var i = 0; i < 5; i++)
+        {
+            activity.AddLink(new ActivityLink(default, tags));
+        }
+
+        using var batch = new Batch<Activity>([activity], 1);
+
+        var request = CreateTraceExportRequest(options, batch, Resource.Empty);
+        var scopeSpans = Assert.Single(Assert.Single(request.ResourceSpans).ScopeSpans);
+
+        AssertAttributes(scopeSpans.Scope.Attributes, scopeSpans.Scope.DroppedAttributesCount, unlimited ? 7 : 6, unlimited ? "12345678" : "1234567");
+
+        var span = Assert.Single(scopeSpans.Spans);
+        var expectedValue = unlimited ? "12345678" : "123";
+
+        AssertAttributes(span.Attributes, span.DroppedAttributesCount, unlimited ? 7 : 1, expectedValue);
+        Assert.Equal(unlimited ? 4 : 2, span.Events.Count);
+        Assert.Equal(unlimited ? 0u : 2u, span.DroppedEventsCount);
+        Assert.All(span.Events, e => AssertAttributes(e.Attributes, e.DroppedAttributesCount, unlimited ? 7 : 4, expectedValue));
+        Assert.Equal(unlimited ? 5 : 3, span.Links.Count);
+        Assert.Equal(unlimited ? 0u : 2u, span.DroppedLinksCount);
+        Assert.All(span.Links, link => AssertAttributes(link.Attributes, link.DroppedAttributesCount, unlimited ? 7 : 5, expectedValue));
+
+        static void AssertAttributes(RepeatedField<OtlpCommon.KeyValue> attributes, uint droppedCount, int expectedCount, string expectedValue)
+        {
+            Assert.Equal(
+                Enumerable.Range(0, expectedCount).Select(i => new OtlpCommon.KeyValue
+                {
+                    Key = $"key{i}",
+                    Value = new OtlpCommon.AnyValue { StringValue = expectedValue },
+                }),
+                attributes);
+            Assert.Equal((uint)(7 - expectedCount), droppedCount);
+        }
+    }
+
     [Fact]
     public void SpanEventAndLinkAttributesWithThrowingToStringAreDroppedTest()
     {
@@ -1013,7 +1153,7 @@ public sealed class OtlpTraceExporterTests : IDisposable
             var buffer = ProtobufSerializer.RentBuffer(50);
             try
             {
-                var writePosition = ProtobufOtlpTraceSerializer.WriteTraceData(ref buffer, 0, sdkOptions, ResourceBuilder.CreateEmpty().Build(), batch);
+                var writePosition = ProtobufOtlpTraceSerializer.WriteTraceData(ref buffer, 0, sdkOptions.CreateSpanLimiter("test"), ResourceBuilder.CreateEmpty().Build(), batch);
                 using var stream = new MemoryStream(buffer, 0, writePosition);
                 var tracesData = OtlpTrace.TracesData.Parser.ParseFrom(stream);
                 var request = new OtlpCollector.ExportTraceServiceRequest();
@@ -1048,7 +1188,7 @@ public sealed class OtlpTraceExporterTests : IDisposable
     [InlineData(StatusCode.Error, "Error", "Error description.")]
     [InlineData(StatusCode.Error, "Error", "150 Character String - aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")]
     [Obsolete("Remove when ActivityExtensions status APIs are removed")]
-    public void ToOtlpSpanStatusTagTest(StatusCode expectedStatusCode, string statusCodeTagValue, string statusDescription)
+    public void ToOtlpSpan_LegacyStatusTags_ResolvesStatusAndDescription(StatusCode expectedStatusCode, string statusCodeTagValue, string statusDescription)
     {
         using var activitySource = new ActivitySource(nameof(this.ToOtlpSpanTest));
         using var activity = activitySource.StartActivity("Name");
@@ -1059,16 +1199,20 @@ public sealed class OtlpTraceExporterTests : IDisposable
         var otlpSpan = ToOtlpSpan(DefaultSdkLimitOptions, activity);
 
         Assert.NotNull(otlpSpan);
-        Assert.NotNull(otlpSpan.Status);
-        Assert.Equal((int)expectedStatusCode, (int)otlpSpan.Status.Code);
+
+        // An explicit Unset is treated as no status, so no status is written. Receivers read a
+        // missing status as Unset.
+        Assert.Equal(expectedStatusCode == StatusCode.Unset, otlpSpan.Status == null);
+        var status = otlpSpan.Status ?? new OtlpTrace.Status();
+        Assert.Equal((int)expectedStatusCode, (int)status.Code);
 
         if (expectedStatusCode == StatusCode.Error)
         {
-            Assert.Equal(statusDescription, otlpSpan.Status.Message);
+            Assert.Equal(statusDescription, status.Message);
         }
         else
         {
-            Assert.Empty(otlpSpan.Status.Message);
+            Assert.Empty(status.Message);
         }
     }
 
@@ -1077,7 +1221,7 @@ public sealed class OtlpTraceExporterTests : IDisposable
     [InlineData(StatusCode.Ok, "oK")]
     [InlineData(StatusCode.Error, "ERROR")]
     [Obsolete("Remove when ActivityExtensions status APIs are removed")]
-    public void ToOtlpSpanStatusTagIsCaseInsensitiveTest(StatusCode expectedStatusCode, string statusCodeTagValue)
+    public void ToOtlpSpan_LegacyStatusTag_ResolvesCodeCaseInsensitively(StatusCode expectedStatusCode, string statusCodeTagValue)
     {
         using var activitySource = new ActivitySource(nameof(this.ToOtlpSpanTest));
         using var activity = activitySource.StartActivity("Name");
@@ -1087,8 +1231,10 @@ public sealed class OtlpTraceExporterTests : IDisposable
         var otlpSpan = ToOtlpSpan(DefaultSdkLimitOptions, activity);
 
         Assert.NotNull(otlpSpan);
-        Assert.NotNull(otlpSpan.Status);
-        Assert.Equal((int)expectedStatusCode, (int)otlpSpan.Status.Code);
+
+        // An explicit Unset is treated as no status, so no status is written.
+        Assert.Equal(expectedStatusCode == StatusCode.Unset, otlpSpan.Status == null);
+        Assert.Equal((int)expectedStatusCode, (int)(otlpSpan.Status?.Code ?? OtlpTrace.Status.Types.StatusCode.Unset));
     }
 
     [Fact]
@@ -1512,7 +1658,8 @@ public sealed class OtlpTraceExporterTests : IDisposable
     private static OtlpTrace.Span? ToOtlpSpan(SdkLimitOptions sdkOptions, Activity activity)
     {
         var buffer = new byte[4096];
-        var writePosition = ProtobufOtlpTraceSerializer.WriteSpan(buffer, 0, sdkOptions, activity);
+        using var spanLimitBatch = sdkOptions.CreateSpanLimiter("test").BeginBatch();
+        var writePosition = ProtobufOtlpTraceSerializer.WriteSpan(buffer, 0, spanLimitBatch, activity);
         using var stream = new MemoryStream(buffer, 0, writePosition);
         var scopeSpans = OtlpTrace.ScopeSpans.Parser.ParseFrom(stream);
         return scopeSpans.Spans.FirstOrDefault();
@@ -1535,7 +1682,7 @@ public sealed class OtlpTraceExporterTests : IDisposable
         var buffer = ProtobufSerializer.RentBuffer(4096);
         try
         {
-            var writePosition = ProtobufOtlpTraceSerializer.WriteTraceData(ref buffer, 0, sdkOptions, resource, batch);
+            var writePosition = ProtobufOtlpTraceSerializer.WriteTraceData(ref buffer, 0, sdkOptions.CreateSpanLimiter("test"), resource, batch);
             using var stream = new MemoryStream(buffer, 0, writePosition);
             var tracesData = OtlpTrace.TracesData.Parser.ParseFrom(stream);
             var request = new OtlpCollector.ExportTraceServiceRequest();

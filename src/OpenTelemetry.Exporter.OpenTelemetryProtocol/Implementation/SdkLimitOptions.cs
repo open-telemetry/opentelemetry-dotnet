@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using Microsoft.Extensions.Configuration;
+using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 
@@ -159,6 +160,32 @@ internal sealed class SdkLimitOptions
             this.logRecordAttributeCountLimitSet = true;
             this.logRecordAttributeCountLimit = value;
         }
+    }
+
+    /// <summary>
+    /// Creates the span limiter for an exporter from these options.
+    /// </summary>
+    /// <param name="exporterName">The exporter name, reported in drop warnings.</param>
+    /// <returns><see cref="SpanLimiter"/>.</returns>
+    internal SpanLimiter CreateSpanLimiter(string exporterName)
+    {
+        var spanLimitOptions = new SpanLimitOptions
+        {
+            AttributeCountLimit = this.SpanAttributeCountLimit ?? int.MaxValue,
+            AttributeValueLengthLimit = this.SpanAttributeValueLengthLimit,
+            EventCountLimit = this.SpanEventCountLimit ?? int.MaxValue,
+            LinkCountLimit = this.SpanLinkCountLimit ?? int.MaxValue,
+            AttributePerEventCountLimit = this.SpanEventAttributeCountLimit ?? int.MaxValue,
+            AttributePerLinkCountLimit = this.SpanLinkAttributeCountLimit ?? int.MaxValue,
+        };
+
+        var attributeLimitOptions = new AttributeLimitOptions
+        {
+            AttributeCountLimit = this.AttributeCountLimit ?? int.MaxValue,
+            AttributeValueLengthLimit = this.AttributeValueLengthLimit,
+        };
+
+        return new SpanLimiter(spanLimitOptions, attributeLimitOptions, exporterName);
     }
 
     private static void SetIntConfigValue(IConfiguration configuration, string key, Action<int?> setter, int? defaultValue)

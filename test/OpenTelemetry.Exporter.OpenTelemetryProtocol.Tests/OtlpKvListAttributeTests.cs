@@ -396,11 +396,12 @@ public sealed class OtlpKvListAttributeTests : IDisposable
 
         var buffer = new byte[4096];
         int writePosition;
+        using var spanLimitsBatch = new SdkLimitOptions().CreateSpanLimiter("test").BeginBatch();
         while (true)
         {
             try
             {
-                writePosition = ProtobufOtlpTraceSerializer.WriteSpan(buffer, 0, new SdkLimitOptions(), activity);
+                writePosition = ProtobufOtlpTraceSerializer.WriteSpan(buffer, 0, spanLimitsBatch, activity);
                 break;
             }
             catch (Exception ex) when (ex is IndexOutOfRangeException or ArgumentException)
@@ -447,7 +448,8 @@ public sealed class OtlpKvListAttributeTests : IDisposable
 
         var buffer = new byte[1_000_000];
 
-        var writePosition = ProtobufOtlpTraceSerializer.WriteSpan(buffer, 0, new SdkLimitOptions(), activity);
+        using var spanLimitBatch = new SdkLimitOptions().CreateSpanLimiter("test").BeginBatch();
+        var writePosition = ProtobufOtlpTraceSerializer.WriteSpan(buffer, 0, spanLimitBatch, activity);
 
         using var stream = new MemoryStream(buffer, 0, writePosition);
         var scopeSpans = OtlpTrace.ScopeSpans.Parser.ParseFrom(stream);

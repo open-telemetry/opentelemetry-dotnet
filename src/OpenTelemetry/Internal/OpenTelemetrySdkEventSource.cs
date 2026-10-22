@@ -348,6 +348,10 @@ internal sealed class OpenTelemetrySdkEventSource : EventSource, IConfigurationE
     public void ResourceSchemaUrlMergeConflict(string oldSchemaUrl, string updatingSchemaUrl)
         => this.WriteEvent(59, oldSchemaUrl, updatingSchemaUrl);
 
+    [Event(60, Message = "Since the previous limit warning or exporter initialization, exporter '{0}' discarded {2} attribute(s), {3} event(s), and {4} link(s) from {1} span(s) because of span limits or unsupported attribute values.", Level = EventLevel.Warning)]
+    public void SpanLimitsExceeded(string exporterName, long spanCount, long droppedAttributeCount, long droppedEventCount, long droppedLinkCount)
+        => this.WriteEvent(60, exporterName, spanCount, droppedAttributeCount, droppedEventCount, droppedLinkCount);
+
     void IConfigurationExtensionsLogger.LogInvalidConfigurationValue(string key, string value)
         => this.InvalidConfigurationValue(key, value);
 

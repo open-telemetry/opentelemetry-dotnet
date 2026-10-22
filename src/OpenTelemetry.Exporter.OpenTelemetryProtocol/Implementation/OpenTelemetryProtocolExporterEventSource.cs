@@ -212,6 +212,24 @@ internal sealed class OpenTelemetryProtocolExporterEventSource : EventSource, IC
     void IConfigurationExtensionsLogger.LogInvalidConfigurationValue(string key, string value)
         => this.InvalidConfigurationValue(key, value);
 
+    internal static string RedactEndpointUri(Uri endpoint)
+    {
+        var authority = endpoint.GetComponents(UriComponents.SchemeAndServer, UriFormat.UriEscaped);
+        var path = endpoint.AbsolutePath;
+
+        return path switch
+        {
+            "" or "/" => authority,
+            "/v1/traces"
+                or "/v1/metrics"
+                or "/v1/logs"
+                or "/opentelemetry.proto.collector.trace.v1.TraceService/Export"
+                or "/opentelemetry.proto.collector.metrics.v1.MetricsService/Export"
+                or "/opentelemetry.proto.collector.logs.v1.LogsService/Export" => string.Concat(authority, path),
+            _ => string.Concat(authority, path[0] == '/' ? "/[REDACTED]" : "[REDACTED]"),
+        };
+    }
+
 #if NET
     [Event(26, Message = "{0} loaded successfully from '{1}'.", Level = EventLevel.Informational)]
     internal void MtlsCertificateLoaded(string certificateType, string filePath) =>
@@ -385,22 +403,4 @@ internal sealed class OpenTelemetryProtocolExporterEventSource : EventSource, IC
         Level = EventLevel.Warning)]
     internal void RetryDeadlineExceeded()
         => this.WriteEvent(43);
-
-    private static string RedactEndpointUri(Uri endpoint)
-    {
-        var authority = endpoint.GetComponents(UriComponents.SchemeAndServer, UriFormat.UriEscaped);
-        var path = endpoint.AbsolutePath;
-
-        return path switch
-        {
-            "" or "/" => authority,
-            "/v1/traces"
-                or "/v1/metrics"
-                or "/v1/logs"
-                or "/opentelemetry.proto.collector.trace.v1.TraceService/Export"
-                or "/opentelemetry.proto.collector.metrics.v1.MetricsService/Export"
-                or "/opentelemetry.proto.collector.logs.v1.LogsService/Export" => string.Concat(authority, path),
-            _ => string.Concat(authority, path[0] == '/' ? "/[REDACTED]" : "[REDACTED]"),
-        };
-    }
 }
