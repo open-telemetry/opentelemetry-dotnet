@@ -20,9 +20,9 @@ public struct MetricPoint
 
     private const int DefaultSimpleReservoirPoolSize = 1;
 
-    private readonly AggregatorStore aggregatorStore;
-
     private readonly AggregationType aggType;
+
+    private AggregatorStore aggregatorStore;
 
     private MetricPointOptionalComponents? mpComponents;
 
@@ -155,7 +155,7 @@ public struct MetricPoint
     // Snapshot method can use this to skip trying to reclaim indices which have already been reclaimed and added to the queue.
     internal LookupData? LookupData { readonly get; private set; }
 
-    internal readonly bool IsInitialized => this.aggregatorStore != null;
+    internal bool IsInitialized => Volatile.Read(ref this.aggregatorStore) != null;
 
     /// <summary>
     /// Gets the sum long value associated with the metric point.
@@ -355,6 +355,31 @@ public struct MetricPoint
     {
         exemplars = this.mpComponents?.Exemplars ?? ReadOnlyExemplarCollection.Empty;
         return exemplars.MaximumCount > 0;
+    }
+
+    /// <summary>
+    /// Copies a newly created <see cref="MetricPoint"/> into its storage location.
+    /// </summary>
+    /// <remarks>
+    /// A <see cref="MetricPoint"/> is constructed in a temporary and then block-copied into
+    /// its storage, and the copy writes the fields in memory layout order rather than the order
+    /// in which the constructor assigned them. A concurrent collect could therefore observe
+    /// <see cref="IsInitialized"/> as <see langword="true"/> before the rest of the fields (such
+    /// as <see cref="Tags"/>) have been written. The other fields are copied first, and then the
+    /// aggregator store is published with release semantics.
+    /// <para/>
+    /// Must only be used for a storage location that has never held a <see cref="MetricPoint"/>.
+    /// </remarks>
+    /// <param name="destination">The storage location of the <see cref="MetricPoint"/>.</param>
+    /// <param name="metricPoint">The newly created <see cref="MetricPoint"/>.</param>
+    internal static void Publish(ref MetricPoint destination, MetricPoint metricPoint)
+    {
+        var aggregatorStore = metricPoint.aggregatorStore;
+
+        metricPoint.aggregatorStore = null!;
+        destination = metricPoint;
+
+        Volatile.Write(ref destination.aggregatorStore, aggregatorStore);
     }
 
     internal readonly MetricPoint Copy()
