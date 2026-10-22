@@ -6,6 +6,7 @@ using System.Net.Http;
 #endif
 using System.Diagnostics.Tracing;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
+using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient.Grpc;
 using OpenTelemetry.PersistentStorage.Abstractions;
 using OpenTelemetry.PersistentStorage.FileSystem;
 using OpenTelemetry.Tests;
@@ -27,23 +28,49 @@ public class EventSourceTests
     public void EventSourceTests_PersistentStorageEventSource() =>
         EventSourceTestHelper.ValidateEventSourceIds<PersistentStorageEventSource>();
 
-    [Fact]
-    public void EventSourceTests_OpenTelemetryProtocolExporterEventSource_RedactsSensitiveEndpointComponents()
+    [Theory]
+    [InlineData(
+        "https://user:secret@example.com:4318/ingest/token/v1/traces?api-key=abc123#fragment",
+        "https://example.com:4318")]
+    [InlineData(
+        "https://user:secret@example.com/ingest/token/v1/metrics?api-key=abc123#fragment",
+        "https://example.com")]
+    [InlineData("http://user:secret@[::1]:4318/ingest/token/v1/logs?api-key=abc123#fragment", "http://[::1]:4318")]
+    [InlineData(
+        "http://example.com/ingest/token/opentelemetry.proto.collector.trace.v1.TraceService/Export",
+        "http://example.com")]
+    [InlineData("otel-user:S3cretPass@127.0.0.1:9/v1/traces", "otel-user:")]
+    [InlineData("http://example.com:4318", "http://example.com:4318")]
+    [InlineData("https://example.com/v1/traces", "https://example.com")]
+    public void EventSourceTests_OpenTelemetryProtocolExporterEventSource_RedactsSensitiveEndpointComponents(
+        string endpoint,
+        string expectedEndpoint)
     {
         using var listener = new TestEventListener();
         listener.EnableEvents(OpenTelemetryProtocolExporterEventSource.Log, EventLevel.Verbose, EventKeywords.All);
 
-        OpenTelemetryProtocolExporterEventSource.Log.FailedToReachCollector(
-            new Uri("https://user:secret@example.com:4318/v1/traces?api-key=abc123#fragment"),
-            new HttpRequestException("boom"));
+        var uri = new Uri(endpoint);
+        var exception = new HttpRequestException("boom");
+        var log = OpenTelemetryProtocolExporterEventSource.Log;
 
-        var exportFailureEvent = Assert.Single(listener.Messages, e => e.EventId == 2);
+        log.FailedToReachCollector(uri, exception);
+        log.TransientHttpError(uri, exception);
+        log.HttpRequestFailed(uri, "response", exception);
+        log.OperationUnexpectedlyCanceled(uri, exception);
+        log.RequestTimedOut(uri, exception);
+        log.ResponseDeserializationFailed(uri);
+        log.ExportSuccess(uri, "success");
+        log.ExportFailure(uri, "failure", Status.DefaultCancelled);
+        log.ResponseDiscardedDueToSizeLimit(uri, 1024, 512);
 
-        Assert.NotNull(exportFailureEvent.Payload);
-        Assert.NotEmpty(exportFailureEvent.Payload);
+        var messages = listener.CurrentMessages;
+        Assert.Equal([2, 16, 17, 18, 19, 20, 21, 23, 40], messages.Select(message => message.EventId));
 
-        var endpoint = Assert.IsType<string>(exportFailureEvent.Payload[0]);
-
-        Assert.Equal("https://example.com:4318/v1/traces", endpoint);
+        Assert.All(messages, message =>
+        {
+            Assert.NotNull(message.Payload);
+            Assert.NotEmpty(message.Payload);
+            Assert.Equal(expectedEndpoint, Assert.IsType<string>(message.Payload[0]));
+        });
     }
 }

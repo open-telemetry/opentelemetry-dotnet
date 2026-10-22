@@ -387,5 +387,5 @@ internal sealed class OpenTelemetryProtocolExporterEventSource : EventSource, IC
         => this.WriteEvent(43);
 
     private static string RedactEndpointUri(Uri endpoint)
-        => endpoint.GetComponents(UriComponents.SchemeAndServer | UriComponents.Path, UriFormat.UriEscaped);
+        => endpoint.GetComponents(UriComponents.SchemeAndServer, UriFormat.UriEscaped);
 }
