@@ -123,7 +123,12 @@ public sealed class MetricPointTests : IDisposable
 
             MetricPoint.Publish(
                 ref metricPoints[i],
-                new MetricPoint(this.metric.AggregatorStore, AggregationType.HistogramWithBuckets, tags, bounds, Metric.DefaultExponentialHistogramMaxBuckets, Metric.DefaultExponentialHistogramMaxScale));
+                this.metric.AggregatorStore,
+                AggregationType.HistogramWithBuckets,
+                tags,
+                bounds,
+                Metric.DefaultExponentialHistogramMaxBuckets,
+                Metric.DefaultExponentialHistogramMaxScale);
         }
 
         Volatile.Write(ref current, Count);

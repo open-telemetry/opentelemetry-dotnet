@@ -358,7 +358,7 @@ public struct MetricPoint
     }
 
     /// <summary>
-    /// Copies a newly created <see cref="MetricPoint"/> into its storage location.
+    /// Creates a new <see cref="MetricPoint"/> in the specified storage location.
     /// </summary>
     /// <remarks>
     /// A <see cref="MetricPoint"/> is constructed in a temporary and then block-copied into
@@ -369,12 +369,38 @@ public struct MetricPoint
     /// aggregator store is published with release semantics.
     /// <para/>
     /// Must only be used for a storage location that has never held a <see cref="MetricPoint"/>.
+    /// <para/>
+    /// This method is not inlined so that the temporary <see cref="MetricPoint"/> does not
+    /// enlarge the stack frames (which are zeroed on every call) of the methods on the hot
+    /// path for recording measurements that create new <see cref="MetricPoint"/>s.
     /// </remarks>
     /// <param name="destination">The storage location of the <see cref="MetricPoint"/>.</param>
-    /// <param name="metricPoint">The newly created <see cref="MetricPoint"/>.</param>
-    internal static void Publish(ref MetricPoint destination, MetricPoint metricPoint)
+    /// <param name="aggregatorStore">The aggregator store of the <see cref="MetricPoint"/>.</param>
+    /// <param name="aggType">The aggregation type of the <see cref="MetricPoint"/>.</param>
+    /// <param name="tagKeysAndValues">The tags of the <see cref="MetricPoint"/>.</param>
+    /// <param name="histogramExplicitBounds">The explicit bounds of the histogram.</param>
+    /// <param name="exponentialHistogramMaxSize">The maximum size of the exponential histogram.</param>
+    /// <param name="exponentialHistogramMaxScale">The maximum scale of the exponential histogram.</param>
+    /// <param name="lookupData">The optional lookup data of the <see cref="MetricPoint"/>.</param>
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    internal static void Publish(
+        ref MetricPoint destination,
+        AggregatorStore aggregatorStore,
+        AggregationType aggType,
+        KeyValuePair<string, object?>[]? tagKeysAndValues,
+        HistogramExplicitBounds histogramExplicitBounds,
+        int exponentialHistogramMaxSize,
+        int exponentialHistogramMaxScale,
+        LookupData? lookupData = null)
     {
-        var aggregatorStore = metricPoint.aggregatorStore;
+        var metricPoint = new MetricPoint(
+            aggregatorStore,
+            aggType,
+            tagKeysAndValues,
+            histogramExplicitBounds,
+            exponentialHistogramMaxSize,
+            exponentialHistogramMaxScale,
+            lookupData);
 
         metricPoint.aggregatorStore = null!;
         destination = metricPoint;
