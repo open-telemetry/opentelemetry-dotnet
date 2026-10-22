@@ -81,9 +81,9 @@ internal static class DeclarativeConfigurationReader
 
         // Validate file_format before reading the rest of the document so a YAML number is rejected
         // before the package falls through to the generic missing-file_format path.
-        var rawFileFormat = new YamlPropertyReader(context)
-            .ReadString(root, YamlKeys.FileFormat)
-            .TryGetValue(out var fmt) ? fmt : null;
+        var rawFileFormat = new YamlPropertyReader(context).ReadString(root, YamlKeys.FileFormat).TryGetValue(out var fmt)
+            ? fmt
+            : null;
         var fileFormat = FileFormatValidator.Validate(
             rawFileFormat,
             OpenTelemetryDeclarativeConfigurationEventSource.Log.FileFormatWarning);

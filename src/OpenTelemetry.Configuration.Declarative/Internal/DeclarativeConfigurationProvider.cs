@@ -10,6 +10,7 @@ namespace OpenTelemetry.Configuration.Declarative;
 /// declarative configuration YAML file. The file is read at most once; subsequent
 /// <see cref="Load"/> calls are ignored.
 /// </summary>
+/// <param name="accessor">The <see cref="DeclarativeConfigurationDocumentAccessor"/> to read the configuration document from.</param>
 internal sealed class DeclarativeConfigurationProvider(DeclarativeConfigurationDocumentAccessor accessor) : ConfigurationProvider
 {
     private bool loaded;

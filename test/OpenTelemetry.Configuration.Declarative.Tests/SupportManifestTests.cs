@@ -257,11 +257,11 @@ public sealed class SupportManifestTests
             ? [
                 new("resource.detection/development", SchemaStability.Experimental, new(3, 3)),
                 new("attribute_limits", SchemaStability.Stable, new(4, 1)),
-            ]
+              ]
             : [
                 new("attribute_limits", SchemaStability.Stable, new(2, 1)),
                 new("resource.detection/development", SchemaStability.Experimental, new(4, 3)),
-            ];
+              ];
 
         Assert.Equal(expected, unapplied);
     }

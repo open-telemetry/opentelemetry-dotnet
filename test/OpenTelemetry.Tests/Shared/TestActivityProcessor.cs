@@ -26,14 +26,14 @@ internal sealed class TestActivityProcessor : BaseProcessor<Activity>
 
     public bool DisposedCalled { get; private set; }
 
-    public override void OnStart(Activity span)
+    public override void OnStart(Activity data)
     {
-        this.StartAction?.Invoke(span);
+        this.StartAction?.Invoke(data);
     }
 
-    public override void OnEnd(Activity span)
+    public override void OnEnd(Activity data)
     {
-        this.EndAction?.Invoke(span);
+        this.EndAction?.Invoke(data);
     }
 
     protected override bool OnForceFlush(int timeoutMilliseconds)
