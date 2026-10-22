@@ -7,7 +7,7 @@ namespace OpenTelemetry.Tests.Stress;
 
 internal sealed class DummyProcessor : BaseProcessor<LogRecord>
 {
-    public override void OnEnd(LogRecord record)
+    public override void OnEnd(LogRecord data)
     {
     }
 }

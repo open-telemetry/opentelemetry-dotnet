@@ -107,10 +107,9 @@ public class MetricPointReclaimTests
             Assert.True(meterProvider.ForceFlush());
         }
 
-        long expectedSum =
-            emitMetricWithNoDimensions ?
-            MaxNumberOfDistinctMetricPoints * (100 + 25) :
-            MaxNumberOfDistinctMetricPoints * 100;
+        long expectedSum = emitMetricWithNoDimensions
+            ? MaxNumberOfDistinctMetricPoints * (100 + 25)
+            : MaxNumberOfDistinctMetricPoints * 100;
 
         Assert.Equal(0, exporter.DroppedMeasurements);
         Assert.InRange(exporter.MaxLookupDictionaryCount, 0, MeterProviderBuilderSdk.DefaultCardinalityLimit * 2);
@@ -1328,15 +1327,18 @@ public class MetricPointReclaimTests
             "a",
             new CollidingTagValue(value, blockLookup, blockComparison: true, lookupBlocked, continueLookup));
 
-        return tagCount == 1
-            ? [tagA]
-            :
-            [
-                new KeyValuePair<string, object?>(
-                    "b",
-                    new CollidingTagValue(value, blockLookup, blockComparison: false, lookupBlocked, continueLookup)),
-                tagA,
-            ];
+        if (tagCount == 1)
+        {
+            return [tagA];
+        }
+
+        return
+        [
+            new KeyValuePair<string, object?>(
+                "b",
+                new CollidingTagValue(value, blockLookup, blockComparison: false, lookupBlocked, continueLookup)),
+            tagA,
+        ];
     }
 
     private sealed class GateHashedValue(object callerGate, ManualResetEventSlim hashRequested, int blockingHashOrdinal)

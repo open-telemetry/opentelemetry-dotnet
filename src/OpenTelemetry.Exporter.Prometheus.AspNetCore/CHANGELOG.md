@@ -14,6 +14,15 @@ Notes](../../RELEASENOTES.md).
   for such metrics; exported metric names are unchanged.
   ([#7993](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7993))
 
+* Fixed scrapes that negotiate different response formats within the
+  `ScrapeResponseCacheDurationMilliseconds` window each triggering their own
+  metrics collection. A collection now also writes the response for other
+  formats whose scrapes arrived alongside a previous collection, so scrapes
+  that keep arriving together are served from the cache. Fresh cached responses
+  remain available while another format is serialized, even if that
+  serialization fails.
+  ([#7994](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7994))
+
 ## 1.20.1-beta.1
 
 Released 2026-Oct-20

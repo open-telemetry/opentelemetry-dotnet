@@ -387,20 +387,20 @@ internal sealed class OpenTelemetrySdkEventSource : EventSource, IConfigurationE
             base.OnEventSourceCreated(eventSource);
         }
 
-        protected override void OnEventWritten(EventWrittenEventArgs e)
+        protected override void OnEventWritten(EventWrittenEventArgs eventData)
         {
-            if (!this.eventSources.ContainsKey(e.EventSource.Name))
+            if (!this.eventSources.ContainsKey(eventData.EventSource.Name))
             {
                 return;
             }
 
-            var message = e.Message;
+            var message = eventData.Message;
 
-            if (message != null && e.Payload != null && e.Payload.Count > 0)
+            if (message != null && eventData.Payload != null && eventData.Payload.Count > 0)
             {
                 try
                 {
-                    message = string.Format(CultureInfo.CurrentCulture, message, [.. e.Payload]);
+                    message = string.Format(CultureInfo.CurrentCulture, message, [.. eventData.Payload]);
                 }
                 catch (FormatException)
                 {
@@ -410,7 +410,7 @@ internal sealed class OpenTelemetrySdkEventSource : EventSource, IConfigurationE
                 }
             }
 
-            Debug.WriteLine($"{e.EventSource.Name} - Level: [{e.Level}], EventId: [{e.EventId}], EventName: [{e.EventName}], Message: [{message}]");
+            Debug.WriteLine($"{eventData.EventSource.Name} - Level: [{eventData.Level}], EventId: [{eventData.EventId}], EventName: [{eventData.EventName}], Message: [{message}]");
         }
     }
 #endif

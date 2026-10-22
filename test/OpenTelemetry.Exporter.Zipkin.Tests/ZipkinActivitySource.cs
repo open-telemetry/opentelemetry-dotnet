@@ -80,18 +80,18 @@ internal static class ZipkinActivitySource
 
         var linkedSpanId = ActivitySpanId.CreateFromString("888915b6286b9c41".AsSpan());
 
-        var tags = setAttributes ?
-                attributes.Select(kvp => new KeyValuePair<string, object?>(kvp.Key, kvp.Value))
-                : null;
-        var links = addLinks ?
-                new[]
-                {
-                    new ActivityLink(new(
-                        traceId,
-                        linkedSpanId,
-                        ActivityTraceFlags.Recorded)),
-                }
-                : null;
+        var tags = setAttributes
+            ? attributes.Select(kvp => new KeyValuePair<string, object?>(kvp.Key, kvp.Value))
+            : null;
+        var links = addLinks
+            ? new[]
+            {
+                new ActivityLink(new(
+                    traceId,
+                    linkedSpanId,
+                    ActivityTraceFlags.Recorded)),
+            }
+            : null;
 
         var activity = ActivitySource.StartActivity(
             "Name",

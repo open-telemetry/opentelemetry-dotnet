@@ -1399,19 +1399,19 @@ public sealed class LogRecordTests
             this.fieldToUpdate = fieldToUpdate;
         }
 
-        public override void OnEnd(LogRecord logRecord)
+        public override void OnEnd(LogRecord data)
         {
             if (this.fieldToUpdate == Field.State)
             {
-                logRecord.State = new List<KeyValuePair<string, object?>> { new("newStateKey", "newStateValue") };
+                data.State = new List<KeyValuePair<string, object?>> { new("newStateKey", "newStateValue") };
             }
             else if (this.fieldToUpdate == Field.StateValues)
             {
-                logRecord.StateValues = [new("newStateValueKey", "newStateValueValue")];
+                data.StateValues = [new("newStateValueKey", "newStateValueValue")];
             }
             else
             {
-                logRecord.FormattedMessage = "OpenTelemetry Good Night!";
+                data.FormattedMessage = "OpenTelemetry Good Night!";
             }
         }
     }

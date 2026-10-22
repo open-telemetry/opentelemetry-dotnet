@@ -3,12 +3,14 @@
 
 using System.Diagnostics.Tracing;
 using System.Globalization;
+using System.Text;
 using System.Text.RegularExpressions;
 using OpenTelemetry.Tests;
 using YamlDotNet.RepresentationModel;
 
 namespace OpenTelemetry.Configuration.Declarative.Tests;
 
+[Collection(EnvVarsCollectionDefinition.Name)]
 public sealed partial class SchemaConformanceFixtureTests
 {
     private const int UndefinedPropertyEventId = 25;
@@ -176,6 +178,24 @@ public sealed partial class SchemaConformanceFixtureTests
     }
 
     [Fact]
+    public Task Read_AllFixtures_UnappliedPropertiesMatchTheSnapshot()
+    {
+        var report = new StringBuilder();
+        foreach (var relativePath in EnumerateFixtures("examples").Concat(EnumerateFixtures("snippets")))
+        {
+            report.Append(relativePath).Append('\n');
+            foreach (var (path, stability, _) in Read(ReadFixture(relativePath)).UnappliedProperties)
+            {
+                report.Append("  ").Append(stability).Append(' ').Append(path).Append('\n');
+            }
+        }
+
+        return Verify(report.ToString())
+            .UseDirectory("snapshots")
+            .UseFileName("UnappliedProperties");
+    }
+
+    [Fact]
     public void Read_MigrationFixture_UsesDefaultsRegardlessOfProcessEnvironment()
     {
         using var envScope = EnvironmentVariableScope.Create(
@@ -276,10 +296,12 @@ public sealed partial class SchemaConformanceFixtureTests
     }
 
     private static List<string> EnumerateFixtures(string directory) =>
-        [.. typeof(SchemaConformanceFixtureTests).Assembly.GetManifestResourceNames()
-            .Where(name => name.StartsWith(FixtureResourcePrefix + directory + "/", StringComparison.Ordinal))
-            .Select(name => name.Substring(FixtureResourcePrefix.Length))
-            .OrderBy(path => path, StringComparer.Ordinal)];
+        [
+            .. typeof(SchemaConformanceFixtureTests).Assembly.GetManifestResourceNames()
+                .Where(name => name.StartsWith(FixtureResourcePrefix + directory + "/", StringComparison.Ordinal))
+                .Select(name => name.Substring(FixtureResourcePrefix.Length))
+                .OrderBy(path => path, StringComparer.Ordinal),
+        ];
 
     private static string ReadFixture(string relativePath)
     {
@@ -297,10 +319,12 @@ public sealed partial class SchemaConformanceFixtureTests
 #endif
 
     private static List<string> GetTopLevelKeys(string yaml) =>
-        [.. yaml.Split(["\r\n", "\n"], StringSplitOptions.None)
-            .Select(line => GetTopLevelKeyRegex().Match(line))
-            .Where(match => match.Success)
-            .Select(match => match.Groups[1].Value)];
+        [
+            .. yaml.Split(["\r\n", "\n"], StringSplitOptions.None)
+                .Select(line => GetTopLevelKeyRegex().Match(line))
+                .Where(match => match.Success)
+                .Select(match => match.Groups[1].Value),
+        ];
 
     // Locate the authored mapping, then edit only the text so diagnostic positions remain meaningful.
     private static (string Yaml, int Line, int Column) InsertUndefinedKey(string snippet, string parentPath)

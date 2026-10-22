@@ -16,13 +16,15 @@ public sealed class DeclarativeConfigurationDocument
         DeclarativeConfiguration model,
         ReadOnlyDictionary<string, string?> flatKeys,
         ConfigProperties properties,
-        Dictionary<string, string?>? referencedEnvironmentVariables = null)
+        Dictionary<string, string?>? referencedEnvironmentVariables = null,
+        IReadOnlyList<UnappliedProperty>? unappliedProperties = null)
     {
         this.Model = model;
         this.FlatKeys = flatKeys;
         this.Properties = properties;
         this.referencedEnvironmentVariables = referencedEnvironmentVariables
             ?? new Dictionary<string, string?>(OtelEnvironmentVariables.NameComparer);
+        this.UnappliedProperties = unappliedProperties ?? [];
     }
 
     /// <summary>
@@ -39,6 +41,11 @@ public sealed class DeclarativeConfigurationDocument
     /// Gets the flat <c>OTEL_*</c> key projection derived from <see cref="Model"/>.
     /// </summary>
     internal ReadOnlyDictionary<string, string?> FlatKeys { get; }
+
+    /// <summary>
+    /// Gets the schema-defined properties present in the document that this package does not apply.
+    /// </summary>
+    internal IReadOnlyList<UnappliedProperty> UnappliedProperties { get; }
 
     /// <summary>
     /// Determines whether the document references an environment variable through substitution.
