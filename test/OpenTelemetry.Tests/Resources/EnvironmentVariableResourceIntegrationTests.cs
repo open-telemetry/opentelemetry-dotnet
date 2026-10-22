@@ -21,7 +21,8 @@ public sealed class EnvironmentVariableResourceIntegrationTests
         // the pipeline between Environment and the SDK's exported resource.
         using (EnvironmentVariableScope.Create([
             ("OTEL_SERVICE_NAME", "e2e-env-var-service"),
-            ("OTEL_RESOURCE_ATTRIBUTES", "deployment.environment=test,region=eu-west")]))
+            ("OTEL_RESOURCE_ATTRIBUTES", "deployment.environment=test,region=eu-west"),
+        ]))
         {
             using var tracerProvider = Sdk.CreateTracerProviderBuilder().Build();
 
@@ -92,7 +93,8 @@ public sealed class EnvironmentVariableResourceIntegrationTests
     {
         using var environmentVariableScope = EnvironmentVariableScope.Create([
             ("OTEL_RESOURCE_ATTRIBUTES", "otel_mixed_key=from_environment"),
-            ("OTEL_SERVICE_NAME", "service-from-environment")]);
+            ("OTEL_SERVICE_NAME", "service-from-environment"),
+        ]);
 
         var resource = BuildResource(
             new Dictionary<string, string?>

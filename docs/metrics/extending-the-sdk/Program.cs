@@ -21,7 +21,7 @@ internal static class Program
             "MyProcessWorkingSetGauge",
             () => new List<Measurement<long>>()
             {
-                new(process.WorkingSet64, new("process.id", process.Id), new("process.bitness", IntPtr.Size << 3)),
+                new(process.WorkingSet64, new("process.id", process.Id), new("process.bitness", Environment.Is64BitProcess ? 64 : 32)),
             });
     }
 

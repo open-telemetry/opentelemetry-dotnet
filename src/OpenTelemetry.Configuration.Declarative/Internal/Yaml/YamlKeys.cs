@@ -14,6 +14,8 @@ internal static class YamlKeys
     internal const string Attributes = "attributes";
     internal const string AttributesList = "attributes_list";
     internal const string SchemaUrl = "schema_url";
+    internal const string InstrumentationDevelopment = "instrumentation/development";
+    internal const string Distribution = "distribution";
     internal const string Name = "name";
     internal const string Value = "value";
     internal const string Type = "type";

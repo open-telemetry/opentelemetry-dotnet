@@ -75,7 +75,9 @@ public class OtlpMetricExporter : BaseExporter<Metric>
 
     /// <inheritdoc />
 #pragma warning disable CA1725 // Parameter names should match base declaration
+#pragma warning disable SA1315 // Parameters should match inherited names
     public override ExportResult Export(in Batch<Metric> metrics)
+#pragma warning restore SA1315 // Parameters should match inherited names
 #pragma warning restore CA1725 // Parameter names should match base declaration
     {
         // Prevents the exporter's gRPC and HTTP operations from being instrumented.

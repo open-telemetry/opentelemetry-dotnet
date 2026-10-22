@@ -15,10 +15,12 @@ public class BaseExportingMetricReader : MetricReader
 #pragma warning restore CA1708 // Identifiers should differ by more than case
 {
 #pragma warning disable CA1051 // Do not declare visible instance fields
+#pragma warning disable SA1304 // Non-private readonly fields should begin with upper-case letter
     /// <summary>
     /// Gets the exporter used by the metric reader.
     /// </summary>
     protected readonly BaseExporter<Metric> exporter;
+#pragma warning restore SA1304 // Non-private readonly fields should begin with upper-case letter
 #pragma warning restore CA1051 // Do not declare visible instance fields
 
     private readonly string exportCalledMessage;
