@@ -41,7 +41,13 @@ internal static class TestHttpServer
         private readonly Task httpListenerTask;
         private readonly HttpListener listener;
         private readonly AutoResetEvent initialized = new(false);
+#if NET9_0_OR_GREATER
         private readonly Lock syncRoot = new();
+#else
+        // Not the OpenTelemetry.Lock shim, as this file is linked into projects that see
+        // more than one copy of it through InternalsVisibleTo, which makes it ambiguous.
+        private readonly object syncRoot = new();
+#endif
 
         private volatile bool disposing;
 
@@ -85,6 +91,7 @@ internal static class TestHttpServer
                 {
                     Task<HttpListenerContext> ctxTask;
 
+                    // Workaround for https://github.com/dotnet/runtime/issues/136293.
                     // The managed HttpListener used on Linux and macOS has a race: Close() drains the
                     // queue of pending GetContextAsync() calls before it marks the listener as closed,
                     // so a call that slips in between is queued but never completed, and Dispose()
