@@ -15,6 +15,10 @@ Notes](../../RELEASENOTES.md).
   `OpenTelemetry:SelfDiagnostics` configuration section, when present.
   ([#8008](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8008))
 
+* Fixed wildcard matching timeouts that could prevent configured source, meter,
+  legacy activity, or metric view patterns from matching.
+  ([#8014](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8014))
+
 ## 1.20.1
 
 Released 2026-Oct-20
