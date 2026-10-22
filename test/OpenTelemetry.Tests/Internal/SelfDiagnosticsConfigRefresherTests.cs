@@ -350,7 +350,9 @@ public sealed class SelfDiagnosticsConfigRefresherTests : IDisposable
 
         public int WriteAttempts { get; private set; }
 
+#pragma warning disable SA1315 // Parameters should match inherited names - the name is 'array' on .NET Framework and 'buffer' on .NET
         public override void Write(byte[] buffer, int offset, int count)
+#pragma warning restore SA1315 // Parameters should match inherited names - the name is 'array' on .NET Framework and 'buffer' on .NET
         {
             this.WriteAttempts++;
             if (this.FailWrites)

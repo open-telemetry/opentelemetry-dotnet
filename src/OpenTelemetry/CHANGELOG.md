@@ -11,6 +11,10 @@ Notes](../../RELEASENOTES.md).
   .NET Framework.
   ([#7983](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7983))
 
+* `SelfDiagnosticsOptions` is now automatically bound from the
+  `OpenTelemetry:SelfDiagnostics` configuration section, when present.
+  ([#8008](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8008))
+
 ## 1.20.1
 
 Released 2026-Oct-20

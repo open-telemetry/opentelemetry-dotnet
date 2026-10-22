@@ -77,9 +77,8 @@ public class MetricExemplarTests : MetricTestsBase
             .SetExemplarFilter(ExemplarFilterType.AlwaysOn)
             .AddView(i =>
             {
-                return
-                    i.Name.StartsWith("testCounter", StringComparison.Ordinal) ?
-                    new MetricStreamConfiguration
+                return i.Name.StartsWith("testCounter", StringComparison.Ordinal)
+                    ? new MetricStreamConfiguration
                     {
                         ExemplarReservoirFactory = () => new SimpleFixedSizeExemplarReservoir(3),
                     }
@@ -185,7 +184,7 @@ public class MetricExemplarTests : MetricTestsBase
         (double Value, bool ExpectTraceId)[] measurementValues =
         [
             (18D, false),
-            (19D, false)
+            (19D, false),
         ];
 
         var measurementIndex = 0;
@@ -783,10 +782,9 @@ public class MetricExemplarTests : MetricTestsBase
                     TagKeys = enableTagFiltering ? ["key1"] : null,
                     ExemplarReservoirFactory = () =>
                     {
-                        return
-                            testExemplarReservoir != null ?
-                            throw new InvalidOperationException() :
-                            (ExemplarReservoir)(testExemplarReservoir = new TestExemplarReservoir());
+                        return testExemplarReservoir != null
+                            ? throw new InvalidOperationException()
+                            : (ExemplarReservoir)(testExemplarReservoir = new TestExemplarReservoir());
                     },
                 })
             .AddInMemoryExporter(exportedItems));
