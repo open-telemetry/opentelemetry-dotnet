@@ -7,6 +7,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
 using OpenTelemetry.Tests;
 using OpenTelemetry.Trace;
 
@@ -480,4 +481,86 @@ public sealed class DeclarativeConfigurationHostIntegrationTests
             resource.Attributes,
             a => a.Key == "service.name" && (string)a.Value == "from-yaml");
     }
+
+    [Theory]
+    [InlineData("OTEL_RESOURCE_ATTRIBUTES", "env.attribute=from-env", "env.attribute")]
+    [InlineData("OTEL_SERVICE_NAME", "from-env", "service.name")]
+    public void ModernHost_ProcessEnvironmentResourceVariable_IsMasked(
+        string envVarName,
+        string envVarValue,
+        string attributeKey)
+    {
+        // The resource environment detectors fall back to the process environment when the host
+        // configuration has no value for their key. A masked key must not trigger that fallback.
+        using var envScope = EnvironmentVariableScope.Create(envVarName, envVarValue);
+        using var yamlFile = DeclarativeYamlTestFile.CreateDeclarativeYaml(disabled: false);
+
+        var builder = Host.CreateApplicationBuilder();
+        builder.AddOpenTelemetry()
+            .UseDeclarativeConfiguration(yamlFile.Path)
+            .WithTracing();
+
+        using var host = builder.Build();
+
+        Assert.Equal(" ", host.Services.GetRequiredService<IConfiguration>()[envVarName]);
+        var resource = host.Services.GetRequiredService<TracerProvider>().GetResource();
+        AssertEnvironmentValueNotInResource(resource, attributeKey);
+    }
+
+    [Theory]
+    [InlineData("OTEL_RESOURCE_ATTRIBUTES", "env.attribute=from-env", "env.attribute")]
+    [InlineData("OTEL_SERVICE_NAME", "from-env", "service.name")]
+    public void ConfigurationRootInstance_ProcessEnvironmentResourceVariable_IsMasked(
+        string envVarName,
+        string envVarValue,
+        string attributeKey)
+    {
+        using var envScope = EnvironmentVariableScope.Create(envVarName, envVarValue);
+        using var yamlFile = DeclarativeYamlTestFile.CreateDeclarativeYaml(disabled: false);
+
+        var root = new ConfigurationBuilder()
+            .AddEnvironmentVariables()
+            .Build();
+
+        var services = new ServiceCollection();
+        services.AddSingleton<IConfiguration>(root);
+        services.AddOpenTelemetry()
+            .UseDeclarativeConfiguration(yamlFile.Path)
+            .WithTracing();
+
+        using var serviceProvider = services.BuildServiceProvider();
+
+        var resource = serviceProvider.GetRequiredService<TracerProvider>().GetResource();
+        AssertEnvironmentValueNotInResource(resource, attributeKey);
+    }
+
+    [Theory]
+    [InlineData("OTEL_RESOURCE_ATTRIBUTES", "env.attribute=from-env", "env.attribute")]
+    [InlineData("OTEL_SERVICE_NAME", "from-env", "service.name")]
+    public void ProcessEnvironmentResourceVariable_IsMasked_ResourceNotInDocument(
+        string envVarName,
+        string envVarValue,
+        string attributeKey)
+    {
+        using var envScope = EnvironmentVariableScope.Create(envVarName, envVarValue);
+        using var yamlFile = DeclarativeYamlTestFile.CreateDeclarativeYaml(disabled: false);
+
+        var config = new ConfigurationBuilder()
+            .AddEnvironmentVariables()
+            .AddOpenTelemetryDeclarativeConfiguration(yamlFile.Path)
+            .Build();
+
+        Assert.Equal(" ", config[envVarName]);
+
+        using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+            .ConfigureServices(s => s.AddSingleton<IConfiguration>(config))
+            .Build();
+
+        AssertEnvironmentValueNotInResource(tracerProvider.GetResource(), attributeKey);
+    }
+
+    private static void AssertEnvironmentValueNotInResource(Resource resource, string attributeKey) =>
+        Assert.DoesNotContain(
+            resource.Attributes,
+            a => a.Key == attributeKey && a.Value as string == "from-env");
 }
