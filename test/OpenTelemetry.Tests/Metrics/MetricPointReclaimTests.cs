@@ -411,6 +411,83 @@ public class MetricPointReclaimTests
         Assert.Equal(Interlocked.Read(ref recordedSum), Interlocked.Read(ref exportedSum));
     }
 
+    // Regression test for two races between a delta snapshot and the creation of new metric points:
+    //
+    // 1. A metric point is block-copied into its slot, so a snapshot could observe a partially written
+    //    point whose LookupData was written but whose ReferenceCount of 1 was not, and reclaim it while
+    //    it was still being created, losing the measurement.
+    // 2. A snapshot that claimed and exported a metric point with an unexported measurement (deferring
+    //    its reclaim) could also export the metric point that replaced it for the next measurement for
+    //    the same tags, exporting the same series twice in a single collect.
+    //
+    // This is a stress test: it asserts that no measurement is lost and that no series is exported
+    // more than once by a single collect.
+    [SkipOnNetFrameworkArmFact]
+    public void SeriesAreExportedOnceWhenSnapshotRacesWithMetricPointCreation()
+    {
+        const int Rounds = 500;
+        const int NumberOfUpdateThreads = 4;
+        const int MeasurementsPerSeries = 2;
+
+        // Stay below the default cardinality limit so every series gets its own metric point.
+        const int SeriesPerThread = 1900;
+
+        for (var round = 0; round < Rounds; round++)
+        {
+            // Use a new meter for each round, so that the metric points are created in slots that have never held a metric point
+            using var meter = new Meter($"{Utils.GetCurrentMethodName()}.{round}");
+            using var exporter = new SeriesCapturingExporter();
+            using var metricReader = new BaseExportingMetricReader(exporter)
+            {
+                TemporalityPreference = MetricReaderTemporalityPreference.Delta,
+            };
+
+            using var meterProvider = Sdk.CreateMeterProviderBuilder()
+                .AddMeter(meter.Name)
+                .AddReader(metricReader)
+                .Build();
+
+            var remaining = NumberOfUpdateThreads;
+            var threads = new Thread[NumberOfUpdateThreads];
+
+            for (var t = 0; t < threads.Length; t++)
+            {
+                // Each counter has a single update thread, so the only races are with the snapshot.
+                var counter = meter.CreateCounter<long>($"counter{t}");
+
+                threads[t] = new Thread(() =>
+                {
+                    for (var i = 0; i < SeriesPerThread; i++)
+                    {
+                        for (var j = 0; j < MeasurementsPerSeries; j++)
+                        {
+                            counter.Add(1, new KeyValuePair<string, object?>("key", i));
+                        }
+                    }
+
+                    Interlocked.Decrement(ref remaining);
+                });
+
+                threads[t].Start();
+            }
+
+            while (Volatile.Read(ref remaining) > 0)
+            {
+                metricReader.Collect();
+            }
+
+            foreach (var thread in threads)
+            {
+                thread.Join();
+            }
+
+            Assert.True(meterProvider.ForceFlush());
+
+            Assert.Equal(NumberOfUpdateThreads * SeriesPerThread * MeasurementsPerSeries, exporter.Sum);
+            Assert.Equal(0, exporter.DuplicateSeries);
+        }
+    }
+
     [Theory]
     [InlineData(1)]
     [InlineData(2)]
@@ -1505,6 +1582,39 @@ public class MetricPointReclaimTests
                 foreach (ref readonly var metricPoint in metric.GetMetricPoints())
                 {
                     this.onSum(metricPoint.GetSumLong());
+                }
+            }
+
+            return ExportResult.Success;
+        }
+    }
+
+    private sealed class SeriesCapturingExporter : BaseExporter<Metric>
+    {
+        public long Sum;
+        public int DuplicateSeries;
+
+        public override ExportResult Export(in Batch<Metric> batch)
+        {
+            foreach (var metric in batch)
+            {
+                var series = new HashSet<object?>();
+
+                foreach (ref readonly var metricPoint in metric.GetMetricPoints())
+                {
+                    this.Sum += metricPoint.GetSumLong();
+
+                    object? key = null;
+
+                    foreach (var tag in metricPoint.Tags)
+                    {
+                        key = tag.Value;
+                    }
+
+                    if (!series.Add(key))
+                    {
+                        this.DuplicateSeries++;
+                    }
                 }
             }
 
