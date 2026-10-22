@@ -128,6 +128,48 @@ public class MetricViewTests : MetricTestsBase
     }
 
     [Fact]
+    public void AddViewWithWildcardPatternMatchesWithoutTimingOut()
+    {
+        var exportedItems = new List<Metric>();
+
+        using var meter = new Meter(new MeterOptions(Utils.GetCurrentMethodName()));
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
+            .AddMeter(meter.Name)
+            .AddView("a*a*a*a*a*a*a*bc", MetricStreamConfiguration.Drop)
+            .AddInMemoryExporter(exportedItems));
+
+        // Views match a prefix. A timeout while exploring the suffix would
+        // incorrectly publish the instrument instead of dropping it.
+        meter.CreateCounter<long>("aaaaaaabc" + new string('a', 200)).Add(1);
+        Assert.True(meterProvider.ForceFlush(MaxTimeToAllowForFlush));
+
+        Assert.Empty(exportedItems);
+    }
+
+    [Theory]
+    [InlineData("a*b*c", "a.b.b.c.d", true)]
+    [InlineData("a*b*c", "A.B.C", true)]
+    [InlineData("a*b*c", "a.c.b", false)]
+    [InlineData("a*b*c", "x.a.b.c", false)]
+    [InlineData("a?*", "a.b", false)]
+    [InlineData("a**b***c", "a.x.y.b.z.c.tail", true)]
+    public void AddViewWithWildcardPatternPreservesSelection(string pattern, string name, bool isSelected)
+    {
+        var exportedItems = new List<Metric>();
+
+        using var meter = new Meter(new MeterOptions(Utils.GetCurrentMethodName()));
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
+            .AddMeter(meter.Name)
+            .AddView(pattern, MetricStreamConfiguration.Drop)
+            .AddInMemoryExporter(exportedItems));
+
+        meter.CreateCounter<long>(name).Add(1);
+        Assert.True(meterProvider.ForceFlush(MaxTimeToAllowForFlush));
+
+        Assert.Equal(isSelected ? 0 : 1, exportedItems.Count);
+    }
+
+    [Fact]
     public void AddViewWithExceptionInUserCallbackAppliedDefault()
     {
         var exportedItems = new List<Metric>();

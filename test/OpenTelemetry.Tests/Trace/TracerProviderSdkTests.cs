@@ -1603,6 +1603,26 @@ public sealed class TracerProviderSdkTests : IDisposable
     }
 
     [Fact]
+    public void LegacySourceMatchesLaterPatternWithoutTimingOut()
+    {
+        var prefix = Utils.GetCurrentMethodName();
+        var exportedItems = new List<Activity>();
+
+        using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+            .AddLegacySource(prefix + "*a*a*a*a*a*a*a*b")
+            .AddLegacySource(prefix + "*x")
+            .SetSampler(new AlwaysOnSampler())
+            .AddInMemoryExporter(exportedItems)
+            .Build();
+
+        using var activity = new Activity(prefix + new string('a', 1000) + "x");
+        activity.Start();
+        activity.Stop();
+
+        Assert.Same(activity, Assert.Single(exportedItems));
+    }
+
+    [Fact]
     public void BuilderTypeDoesNotChangeTest()
     {
         var originalBuilder = new TestTracerProviderBuilder();
