@@ -178,7 +178,6 @@ internal static class SupportManifest
                 {
                     this.Unapplied.Add(new(YamlPath.Index(path, i), stability, sequence[i].Position));
                 }
-
             }
             else
             {
