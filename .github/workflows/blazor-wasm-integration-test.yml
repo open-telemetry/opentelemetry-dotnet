@@ -79,7 +79,7 @@ jobs:
           if ($attempt -eq $attempts) {
             throw "Failed to install Playwright after $attempts attempts."
           }
-          Write-Host "::warning::Playwright install attempt $attempt failed with exit code $LASTEXITCODE, retrying."
+          Write-Output "::warning::Playwright install attempt $attempt failed with exit code $LASTEXITCODE, retrying."
           Start-Sleep -Seconds 10
         }
 
