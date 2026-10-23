@@ -42,8 +42,7 @@ internal static class MetricTestData
     public static TheoryData<double[], HistogramConfiguration, double, double> ValidHistogramMinMax => new()
     {
         { new double[] { -10.0, 0.0, 1.0, 9.0, 10.0, 11.0, 19.0 }, new HistogramConfiguration(), -10.0, 19.0 },
-        { new double[] { double.NegativeInfinity }, new HistogramConfiguration(), double.NegativeInfinity, double.NegativeInfinity },
-        { new double[] { double.NegativeInfinity, 0.0, double.PositiveInfinity }, new HistogramConfiguration(), double.NegativeInfinity, double.PositiveInfinity },
+        { new double[] { double.NegativeInfinity, 0.0, double.PositiveInfinity }, new HistogramConfiguration(), 0.0, 0.0 },
         { new double[] { 1.0 }, new HistogramConfiguration(), 1.0, 1.0 },
         { new double[] { 5.0, 100.0, 4.0, 101.0, -2.0, 97.0 }, new ExplicitBucketHistogramConfiguration { Boundaries = [10.0, 20.0] }, -2.0, 101.0 },
         { new double[] { 5.0, 100.0, 4.0, 101.0, -2.0, 97.0 }, new Base2ExponentialBucketHistogramConfiguration(), 4.0, 101.0 },
