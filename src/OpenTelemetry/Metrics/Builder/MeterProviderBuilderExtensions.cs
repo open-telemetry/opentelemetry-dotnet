@@ -169,17 +169,13 @@ public static class MeterProviderBuilderExtensions
                 if (instrumentName.Contains('*'))
 #endif
                 {
-#if NET || NETSTANDARD2_1_OR_GREATER
-                    var pattern = '^' + Regex.Escape(instrumentName).Replace("\\*", ".*", StringComparison.Ordinal);
-#else
-                    var pattern = '^' + Regex.Escape(instrumentName).Replace("\\*", ".*");
-#endif
+                    var pattern = '^' + WildcardHelper.ConvertToRegexPattern(instrumentName, questionMarkIsWildcard: false);
 
                     // RegexOptions.NonBacktracking is not used as it retains a much larger automaton
                     // per Regex instance than a backtracking regex, which can lead to an
                     // OutOfMemoryException in applications that build many providers with wildcard
-                    // views over their lifetime. The match timeout bounds worst-case matching time
-                    // to protect against catastrophic backtracking.
+                    // views over their lifetime. Atomic groups in ConvertToRegexPattern prevent
+                    // backtracking between stars, with the match timeout retained as a safety net.
                     // See https://github.com/open-telemetry/opentelemetry-dotnet/issues/7787.
                     var regex = new Regex(pattern, RegexOptions.Compiled | RegexOptions.IgnoreCase, TimeSpan.FromSeconds(1));
                     meterProviderBuilderSdk.AddView(instrument => WildcardHelper.IsMatch(regex, instrument.Name) ? metricStreamConfiguration : null);
