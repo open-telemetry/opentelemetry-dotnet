@@ -396,7 +396,7 @@ public sealed class AppleAppFixture : IAsyncLifetime
                 Configuration,
                 "--framework",
                 AppleTargetFramework(),
-                "-p:RuntimeIdentifier=" + runtimeIdentifier
+                "-p:RuntimeIdentifier=" + runtimeIdentifier,
             ],
             repoRoot,
             BuildTimeout);

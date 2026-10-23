@@ -27,7 +27,7 @@ jobs:
       uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
       with:
         distribution: temurin
-        java-version: 25.0.4+101.0.LTS
+        java-version: 25.0.5+8.0.LTS
 
     - name: Checkout code
       uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -49,6 +49,20 @@ jobs:
     - name: Install android workload
       shell: bash
       run: dotnet workload install android
+
+    - name: Install Android emulator and system image
+      shell: bash
+      run: |
+        sdkmanager="${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager"
+        yes | "${sdkmanager}" --licenses > /dev/null || true
+        for attempt in 1 2 3; do
+          if "${sdkmanager}" --install emulator 'system-images;android-34;google_apis;x86_64' --channel=0 > /dev/null; then
+            exit 0
+          fi
+          echo "::warning::Attempt ${attempt} to install the Android emulator and system image failed."
+          sleep $((attempt * 15))
+        done
+        exit 1
 
     - name: Run Android end-to-end tests on the emulator
       uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0

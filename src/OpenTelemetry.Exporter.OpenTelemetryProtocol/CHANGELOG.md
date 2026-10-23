@@ -17,6 +17,10 @@ Notes](../../RELEASENOTES.md).
   `OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT`) instead of being exported in full.
   ([#7995](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7995))
 
+* Redacted nonstandard OTLP endpoint paths in internal diagnostic logs with
+  `[REDACTED]`, while retaining standard HTTP and gRPC service paths.
+  ([#8016](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8016))
+
 * Fixed exports continuing until `OtlpExporterOptions.TimeoutMilliseconds`
   elapsed when a shorter timeout applied to them, such as the timeout passed
   to `MeterProvider.ForceFlush()`,
