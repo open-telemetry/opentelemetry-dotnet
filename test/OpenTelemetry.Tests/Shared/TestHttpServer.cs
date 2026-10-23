@@ -41,6 +41,13 @@ internal static class TestHttpServer
         private readonly Task httpListenerTask;
         private readonly HttpListener listener;
         private readonly AutoResetEvent initialized = new(false);
+#if NET9_0_OR_GREATER
+        private readonly Lock syncRoot = new();
+#else
+        // Not the OpenTelemetry.Lock shim, as this file is linked into projects that see
+        // more than one copy of it through InternalsVisibleTo, which makes it ambiguous.
+        private readonly object syncRoot = new();
+#endif
 
         private volatile bool disposing;
 
@@ -61,7 +68,11 @@ internal static class TestHttpServer
         {
             try
             {
-                this.disposing = true;
+                lock (this.syncRoot)
+                {
+                    this.disposing = true;
+                }
+
                 this.listener.Close();
                 this.httpListenerTask?.Wait();
                 this.initialized.Dispose();
@@ -78,7 +89,24 @@ internal static class TestHttpServer
             {
                 try
                 {
-                    var ctxTask = this.listener.GetContextAsync();
+                    Task<HttpListenerContext> ctxTask;
+
+                    // Workaround for https://github.com/dotnet/runtime/issues/136293.
+                    // The managed HttpListener used on Linux and macOS has a race: Close() drains the
+                    // queue of pending GetContextAsync() calls before it marks the listener as closed,
+                    // so a call that slips in between is queued but never completed, and Dispose()
+                    // would then wait for this loop forever. Holding the lock while checking `disposing`
+                    // and calling GetContextAsync() means the call is either queued before Close() runs
+                    // (so Close() completes it) or not made at all.
+                    lock (this.syncRoot)
+                    {
+                        if (this.disposing)
+                        {
+                            return;
+                        }
+
+                        ctxTask = this.listener.GetContextAsync();
+                    }
 
                     this.initialized.Set();
 

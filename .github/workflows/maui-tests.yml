@@ -50,6 +50,20 @@ jobs:
       shell: bash
       run: dotnet workload install maui-android
 
+    - name: Install Android emulator and system image
+      shell: bash
+      run: |
+        sdkmanager="${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager"
+        yes | "${sdkmanager}" --licenses > /dev/null || true
+        for attempt in 1 2 3; do
+          if "${sdkmanager}" --install emulator 'system-images;android-34;google_apis;x86_64' --channel=0 > /dev/null; then
+            exit 0
+          fi
+          echo "::warning::Attempt ${attempt} to install the Android emulator and system image failed."
+          sleep $((attempt * 15))
+        done
+        exit 1
+
     - name: Run MAUI end-to-end tests on the emulator
       uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
       with:
