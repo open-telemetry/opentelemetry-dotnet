@@ -19,7 +19,7 @@ namespace OpenTelemetry.Maui.TestApp;
 /// the tests run.
 /// </remarks>
 [Application]
-public class MainApplication(IntPtr handle, JniHandleOwnership ownership) : MauiApplication(handle, ownership)
+public class MainApplication(nint handle, JniHandleOwnership ownership) : MauiApplication(handle, ownership)
 {
     protected override MauiApp CreateMauiApp() => MauiProgram.CreateMauiApp();
 }

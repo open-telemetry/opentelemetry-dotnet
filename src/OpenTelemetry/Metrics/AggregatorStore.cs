@@ -72,6 +72,10 @@ internal sealed class AggregatorStore
     // Only written under the delta dictionary lock. Slots with a higher ordinal have never held
     // a MetricPoint, so a delta Snapshot does not need to visit them.
     private int deltaOrdinalHighWaterMark = 1;
+
+    // Incremented at the start of each delta Snapshot, so that MetricPoints created
+    // while a Snapshot is visiting the slots can be identified and left for the next one.
+    private int deltaCollectCycle;
     private volatile bool zeroTagMetricPointInitialized;
     private volatile bool overflowTagMetricPointInitialized;
 
@@ -193,7 +197,16 @@ internal sealed class AggregatorStore
             // Index 0 and 1 are reserved for no tags and overflow
             for (var i = 2; i < this.NumberOfMetricPoints; i++)
             {
-                this.availableMetricPoints.Enqueue(this.ToSlot(i));
+                var slot = this.ToSlot(i);
+
+                // Mark the unused MetricPoint as reclaimed, as it would be if it had been used before.
+                // A new MetricPoint is block-copied into its slot, so the Snapshot method can observe
+                // a partially written MetricPoint whose LookupData has been written but whose
+                // ReferenceCount of 1 has not. If the ReferenceCount were still zero, the Snapshot
+                // method could reclaim the MetricPoint while it is being created.
+                this.metricPoints[slot].ReferenceCount = int.MinValue;
+
+                this.availableMetricPoints.Enqueue(slot);
             }
 
             this.lookupAggregatorStore = this.LookupAggregatorStoreForDeltaWithReclaim;
@@ -211,6 +224,10 @@ internal sealed class AggregatorStore
     internal DateTimeOffset StartTimeExclusive { get; private set; }
 
     internal DateTimeOffset EndTimeInclusive { get; private set; }
+
+    // Test hook invoked by SnapshotDeltaWithMetricPointReclaim with the slot of a MetricPoint it has
+    // observed with a status of NoCollectPending, before it tries to claim the MetricPoint to reclaim it.
+    internal Action<int>? DeltaReclaimCandidateObserved { get; set; }
 
     internal double[] HistogramBounds => this.histogramExplicitBounds.Bounds;
 
@@ -271,6 +288,10 @@ internal sealed class AggregatorStore
 
     internal void SnapshotDeltaWithMetricPointReclaim()
     {
+        // This is a full fence, so a thread that observes a MetricPoint claimed by this
+        // Snapshot (by its negative ReferenceCount) also observes the new collect cycle.
+        var collectCycle = Interlocked.Increment(ref this.deltaCollectCycle);
+
         // Index = 0 is reserved for the case where no dimensions are provided.
         ref var metricPointWithNoTags = ref this.metricPoints[0];
         if (metricPointWithNoTags.MetricPointStatus != MetricPointStatus.NoCollectPending)
@@ -306,20 +327,35 @@ internal sealed class AggregatorStore
             var slot = this.ToSlot(i);
             ref var metricPoint = ref this.metricPoints[slot];
 
+            // Skip a slot that is free and a point created during this collect cycle, even if its
+            // slot (which was reclaimed and reused) is still to be visited. Otherwise, a point which
+            // replaces one that this loop has already claimed and exported (see DeferredReclaim below)
+            // would be exported too, so the same series would be exported twice in a single collect.
+            //
+            // LookupData is read only once: a point can be published into a free slot at any time,
+            // so if it were read again it could belong to a point created after this check.
+            // A slot's LookupData is only changed from non-null by ReclaimMetricPoint on this thread.
+            var lookupData = metricPoint.LookupData;
+            if (lookupData == null || lookupData.CollectCycle == collectCycle)
+            {
+                continue;
+            }
+
             if (metricPoint.MetricPointStatus == MetricPointStatus.NoCollectPending)
             {
+                this.DeltaReclaimCandidateObserved?.Invoke(slot);
+
                 // Reclaim the MetricPoint if it was marked for it in the previous collect cycle
-                if (metricPoint.LookupData != null && metricPoint.LookupData.DeferredReclaim)
+                if (lookupData.DeferredReclaim)
                 {
                     this.ReclaimMetricPoint(ref metricPoint, slot);
                     continue;
                 }
 
                 // Check if the MetricPoint could be reclaimed in the current Collect cycle.
-                // If metricPoint.LookupData is `null` then the MetricPoint is already reclaimed and in the queue.
                 // If the Collect thread is successfully able to compare and swap the reference count from zero to int.MinValue, it means that
                 // the MetricPoint can be reused for other tags.
-                if (metricPoint.LookupData != null && Interlocked.CompareExchange(ref metricPoint.ReferenceCount, int.MinValue, 0) == 0)
+                if (Interlocked.CompareExchange(ref metricPoint.ReferenceCount, int.MinValue, 0) == 0)
                 {
                     // This is similar to double-checked locking. For some rare case, the Collect thread might read the status as `NoCollectPending`,
                     // and then get switched out before it could set the ReferenceCount to `int.MinValue`. In the meantime, an Update thread could come in
@@ -341,7 +377,7 @@ internal sealed class AggregatorStore
                         // The MetricPoint still has an unexported measurement. Take its Snapshot
                         // and mark it to be reclaimed in the next Collect cycle.
 
-                        metricPoint.LookupData.DeferredReclaim = true;
+                        lookupData.DeferredReclaim = true;
 
                         this.TakeMetricPointSnapshot(ref metricPoint, outputDelta: true);
 
@@ -605,7 +641,7 @@ internal sealed class AggregatorStore
                 {
                     if (this.OutputDelta)
                     {
-                        var lookupData = new LookupData(0, Tags.EmptyTags, Tags.EmptyTags);
+                        var lookupData = new LookupData(0, Tags.EmptyTags, Tags.EmptyTags, Volatile.Read(ref this.deltaCollectCycle));
                         this.metricPoints[0] = new MetricPoint(this, this.aggType, null, this.histogramExplicitBounds, this.exponentialHistogramMaxSize, this.exponentialHistogramMaxScale, lookupData);
                     }
                     else
@@ -633,7 +669,7 @@ internal sealed class AggregatorStore
 
                     if (this.OutputDelta)
                     {
-                        var lookupData = new LookupData(1, tags, tags);
+                        var lookupData = new LookupData(1, tags, tags, Volatile.Read(ref this.deltaCollectCycle));
                         this.metricPoints[1] = new MetricPoint(this, this.aggType, keyValuePairs, this.histogramExplicitBounds, this.exponentialHistogramMaxSize, this.exponentialHistogramMaxScale, lookupData);
                     }
                     else
@@ -893,7 +929,7 @@ internal sealed class AggregatorStore
 
                                 index = this.DequeueAvailableMetricPoint();
 
-                                lookupData = new LookupData(index, sortedTags, givenTags);
+                                lookupData = new LookupData(index, sortedTags, givenTags, Volatile.Read(ref this.deltaCollectCycle));
 
                                 ref var metricPoint = ref this.metricPoints[index];
                                 metricPoint = new MetricPoint(this, this.aggType, sortedTags.KeyValuePairs, this.histogramExplicitBounds, this.exponentialHistogramMaxSize, this.exponentialHistogramMaxScale, lookupData);
@@ -965,7 +1001,7 @@ internal sealed class AggregatorStore
 
                             index = this.DequeueAvailableMetricPoint();
 
-                            lookupData = new LookupData(index, Tags.EmptyTags, givenTags);
+                            lookupData = new LookupData(index, Tags.EmptyTags, givenTags, Volatile.Read(ref this.deltaCollectCycle));
 
                             ref var metricPoint = ref this.metricPoints[index];
                             metricPoint = new MetricPoint(this, this.aggType, givenTags.KeyValuePairs, this.histogramExplicitBounds, this.exponentialHistogramMaxSize, this.exponentialHistogramMaxScale, lookupData);
@@ -1086,7 +1122,7 @@ internal sealed class AggregatorStore
                     return false;
                 }
 
-                lookupData = new LookupData(index, sortedTags, givenTags);
+                lookupData = new LookupData(index, sortedTags, givenTags, Volatile.Read(ref this.deltaCollectCycle));
 
                 ref var metricPoint = ref this.metricPoints[index];
                 metricPoint = new MetricPoint(this, this.aggType, sortedTags.KeyValuePairs, this.histogramExplicitBounds, this.exponentialHistogramMaxSize, this.exponentialHistogramMaxScale, lookupData);
@@ -1117,7 +1153,7 @@ internal sealed class AggregatorStore
                     return false;
                 }
 
-                lookupData = new LookupData(index, Tags.EmptyTags, givenTags);
+                lookupData = new LookupData(index, Tags.EmptyTags, givenTags, Volatile.Read(ref this.deltaCollectCycle));
 
                 ref var metricPoint = ref this.metricPoints[index];
                 metricPoint = new MetricPoint(this, this.aggType, givenTags.KeyValuePairs, this.histogramExplicitBounds, this.exponentialHistogramMaxSize, this.exponentialHistogramMaxScale, lookupData);

@@ -3,6 +3,7 @@
 
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Text;
 using System.Text.RegularExpressions;
 
 namespace OpenTelemetry;
@@ -65,20 +66,63 @@ internal static class WildcardHelper
 
         var convertedPattern = string.Join(
             "|",
-#if NET || NETSTANDARD2_1_OR_GREATER
-            from p in patterns select "(?:" + Regex.Escape(p).Replace("\\*", ".*", StringComparison.Ordinal).Replace("\\?", ".", StringComparison.Ordinal) + ')');
-#else
-            from p in patterns select "(?:" + Regex.Escape(p).Replace("\\*", ".*").Replace("\\?", ".") + ')');
-#endif
+            from p in patterns select "(?:" + ConvertToRegexPattern(p) + ')');
 
         var pattern = "^(?:" + convertedPattern + ")$";
 
         // RegexOptions.NonBacktracking is not used as it has a fixed automata-size limit that many
         // source patterns can exceed and it retains a much larger automaton per Regex instance
         // than a backtracking regex, which can lead to an OutOfMemoryException in applications.
-        // The match timeout bounds worst-case matching time to protect against catastrophic backtracking.
+        // Atomic groups in ConvertToRegexPattern prevent backtracking between stars.
+        // The match timeout remains as a safety net.
         // See https://github.com/open-telemetry/opentelemetry-dotnet/issues/7787.
         return new Regex(pattern, RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.IgnoreCase, RegexMatchTimeout);
+    }
+
+    /// <summary>
+    /// Converts a wildcard pattern to an unanchored regular expression pattern
+    /// without backtracking between <c>*</c> wildcards.
+    /// </summary>
+    /// <param name="pattern">The wildcard pattern to convert.</param>
+    /// <param name="questionMarkIsWildcard">Whether <c>?</c> matches a single character or is literal.</param>
+    /// <returns>The regular expression pattern.</returns>
+    public static string ConvertToRegexPattern(string pattern, bool questionMarkIsWildcard = true)
+    {
+        var segments = pattern.Split('*');
+        var lastIndex = segments.Length - 1;
+        var builder = new StringBuilder();
+
+        for (var i = 0; i <= lastIndex; i++)
+        {
+            var segment = Regex.Escape(segments[i]);
+
+            if (questionMarkIsWildcard)
+            {
+#if NET || NETSTANDARD2_1_OR_GREATER
+                segment = segment.Replace("\\?", ".", StringComparison.Ordinal);
+#else
+                segment = segment.Replace("\\?", ".");
+#endif
+            }
+
+            if (i == 0)
+            {
+                builder.Append(segment);
+            }
+            else if (i == lastIndex)
+            {
+                builder.Append(".*").Append(segment);
+            }
+            else if (segment.Length > 0)
+            {
+                // Segments between stars have a fixed width. Commit to the first
+                // match so a later failure cannot redistribute characters among
+                // preceding stars. The final star can still find a matching suffix.
+                builder.Append("(?>.*?").Append(segment).Append(')');
+            }
+        }
+
+        return builder.ToString();
     }
 
     public static bool IsMatch(Regex regex, string input)
