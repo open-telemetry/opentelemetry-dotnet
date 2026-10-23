@@ -15,6 +15,15 @@ Notes](../../RELEASENOTES.md).
   `OpenTelemetry:SelfDiagnostics` configuration section, when present.
   ([#8008](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8008))
 
+* Fixed a race where collecting a metric with delta temporality concurrently
+  with the creation of a new `MetricPoint` could reclaim the `MetricPoint`
+  while it was being created, losing the measurement.
+  ([#8019](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8019))
+
+* Fixed a race where collecting a metric with delta temporality could export
+  the same series twice in a single collection.
+  ([#8019](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8019))
+
 ## 1.20.1
 
 Released 2026-Oct-20
