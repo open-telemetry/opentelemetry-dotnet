@@ -95,7 +95,7 @@ commit only the benchmark change(s) and not the change to the main code itself.
 
 # Compare a specific branch against a specific baseline, with memory
 # diagnostics, across multiple TFMs (net4xx runtimes only work on Windows)
-./benchmark.ps1 @("*MyBenchmarks*") -Target my-feature -Baseline main -EnableMemoryDiagnoser -Runtimes @("net10.0", "net472")
+./benchmark.ps1 @("*MyBenchmarks*") -Target my-feature -Baseline main -EnableMemoryDiagnoser -Runtimes @("net11.0", "net472")
 ```
 
 Key parameters (`Get-Help ./benchmark.ps1 -Full` for the complete list):
@@ -120,7 +120,7 @@ want the script to switch branches at all, run the project directly instead
 (see `test/Benchmarks/README.md`):
 
 ```sh
-dotnet run -c Release -f net10.0 --project test/Benchmarks -- --filter "*MyBenchmarks*" --memory
+dotnet run -c Release -f net11.0 --project test/Benchmarks -- --filter "*MyBenchmarks*" --memory
 ```
 
 See the

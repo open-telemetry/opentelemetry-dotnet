@@ -3,11 +3,8 @@
 
 #if NET
 using System.Buffers.Text;
-#if NET9_0_OR_GREATER
 using System.Collections.Frozen;
-#else
 using System.Collections.Immutable;
-#endif
 #endif
 using System.Buffers;
 using System.Collections;
@@ -68,12 +65,7 @@ internal abstract class TextFormatSerializer
 #if NET
     private static readonly SearchValues<char> UnicodeVerbatimChars = SearchValues.Create(BuildAsciiVerbatimChars(escapeQuotationMarks: false));
     private static readonly SearchValues<char> LabelValueVerbatimChars = SearchValues.Create(BuildAsciiVerbatimChars(escapeQuotationMarks: true));
-#endif
-
-#if NET9_0_OR_GREATER
     private static readonly FrozenSet<string> ReservedScopeLabelNames = FrozenSet.Create(["otel_scope_name", "otel_scope_schema_url", "otel_scope_version"]);
-#elif NET
-    private static readonly ImmutableHashSet<string> ReservedScopeLabelNames = ["otel_scope_name", "otel_scope_schema_url", "otel_scope_version"];
 #else
     private static readonly HashSet<string> ReservedScopeLabelNames = ["otel_scope_name", "otel_scope_schema_url", "otel_scope_version"];
     private static readonly long UnixEpochTicks = new DateTimeOffset(1970, 1, 1, 0, 0, 0, TimeSpan.Zero).Ticks;
