@@ -35,6 +35,13 @@ public class TestInstrumentation : Instrumentation
     {
         base.OnStart();
 
+        // Android calls Instrumentation.OnCreate() before Application.OnCreate(), which
+        // is where MauiApplication builds the MAUI application host, and Start() runs
+        // OnStart() on a new thread. Wait for the main thread to become idle, which it
+        // only does once it has finished binding the application, so that the tests
+        // cannot run against a host that does not exist yet.
+        this.WaitForIdleSync();
+
         var consumer = new ResultConsumer(this);
         using var bundle = new Bundle();
 
