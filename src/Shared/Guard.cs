@@ -14,7 +14,7 @@ using System.Runtime.CompilerServices;
 #if !NET
 namespace System.Runtime.CompilerServices
 {
-    /// <summary>Allows capturing of all of the expressions passed to a method.</summary>
+    /// <summary>Allows capturing of the expressions passed to a method.</summary>
     [AttributeUsage(AttributeTargets.Parameter, AllowMultiple = false, Inherited = false)]
     internal sealed class CallerArgumentExpressionAttribute : Attribute
     {
