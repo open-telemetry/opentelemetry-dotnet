@@ -35,10 +35,20 @@ public sealed class DeclarativeConfigurationProviderTests
 
         // resource.attributes goes through DeclarativeResourceDetector, not the flat projection,
         // but strict mode still claims the key: it is in scope, so it masks rather than falls through.
+        // Resource keys use non-empty whitespace to suppress process environment fallback
+        // even through chained configuration; other masked keys read as null.
         Assert.True(
             provider.TryGet(OtelEnvironmentVariables.ResourceAttributes, out var resourceAttributes),
             "Expected the provider to claim the resource attributes key.");
-        Assert.Null(resourceAttributes);
+        Assert.Equal(" ", resourceAttributes);
+        Assert.True(
+            provider.TryGet(OtelEnvironmentVariables.ServiceName, out var serviceName),
+            "Expected the provider to claim the service name key.");
+        Assert.Equal(" ", serviceName);
+        Assert.True(
+            provider.TryGet("OTEL_TRACES_SAMPLER", out var sampler),
+            "Expected the provider to claim the sampler key.");
+        Assert.Null(sampler);
     }
 
     [Fact]
@@ -56,7 +66,30 @@ public sealed class DeclarativeConfigurationProviderTests
         Assert.True(
             provider.TryGet(OtelEnvironmentVariables.ResourceAttributes, out var resourceAttributes),
             "Expected the provider to claim the resource attributes key.");
-        Assert.Null(resourceAttributes);
+        Assert.Equal(" ", resourceAttributes);
+    }
+
+    [Theory]
+    [InlineData("OTEL_RESOURCE_ATTRIBUTES")]
+    [InlineData("otel_resource_attributes")]
+    [InlineData("OTEL_SERVICE_NAME")]
+    [InlineData("otel_service_name")]
+    public void ResourceMask_IsNonEmptyWhitespace_BeforeAndAfterLoad(string key)
+    {
+        using var yamlFile = DeclarativeYamlTestFile.CreateDeclarativeYaml();
+        var provider = new DeclarativeConfigurationProvider(
+            new DeclarativeConfigurationDocumentAccessor(new FilePath(yamlFile.Path)));
+
+        Assert.True(provider.TryGet(key, out var beforeLoad));
+        Assert.Equal(" ", beforeLoad);
+
+        provider.Load();
+
+        Assert.True(provider.TryGet(key, out var afterLoad), "Expected the provider to claim the key after load.");
+        Assert.Equal(" ", afterLoad);
+        Assert.DoesNotContain(
+            provider.GetChildKeys([key], parentPath: null),
+            child => string.Equals(child, key, StringComparison.OrdinalIgnoreCase));
     }
 
     [Fact]
