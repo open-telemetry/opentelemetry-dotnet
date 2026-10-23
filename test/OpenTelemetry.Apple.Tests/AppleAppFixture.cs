@@ -424,10 +424,6 @@ public sealed class AppleAppFixture : IAsyncLifetime
             this.simulatorBootedByFixture = simulator;
         }
 
-        // Remove any previously installed copy so that the app's data container -
-        // where the on-device run writes its results - starts out empty.
-        this.Run("xcrun", ["simctl", "uninstall", simulator, BundleIdentifier], repoRoot, SimulatorCommandTimeout);
-
         var (installExitCode, _, _) = this.Run("xcrun", ["simctl", "install", simulator, appBundle], repoRoot, SimulatorCommandTimeout);
 
         if (installExitCode != 0)
@@ -437,6 +433,15 @@ public sealed class AppleAppFixture : IAsyncLifetime
         }
 
         var resultsDirectory = this.ResultsDirectory(simulator);
+
+        // Delete the results of any previous run from the app's data container (which
+        // 'simctl install' preserves when replacing an existing copy of the app) so that
+        // they cannot be mistaken for the results of this run. This is done from the host
+        // rather than with 'simctl uninstall', which can hang on a freshly booted simulator.
+        if (resultsDirectory is not null && Directory.Exists(resultsDirectory))
+        {
+            Directory.Delete(resultsDirectory, recursive: true);
+        }
 
         // '--console-pty' streams the app's stdout and stderr, which is captured for
         // diagnostics. The run is treated as finished once the results have been
