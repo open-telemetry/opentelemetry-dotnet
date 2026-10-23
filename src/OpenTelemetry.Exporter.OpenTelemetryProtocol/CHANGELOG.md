@@ -29,7 +29,9 @@ Notes](../../RELEASENOTES.md).
     other users. Each directory and symbolic link in its path must be owned by
     the current user or by root, and those directories must not be writable
     by their group or by other users unless they have the sticky bit set (such
-    as `/tmp`).
+    as `/tmp`). These checks can be disabled by setting the new
+    `OTEL_DOTNET_EXPERIMENTAL_OTLP_DISK_RETRY_CHECK_PERMISSIONS` setting to
+    `false`.
   ([#7964](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7964))
 
 ## 1.20.1

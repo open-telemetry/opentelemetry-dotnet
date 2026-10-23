@@ -323,7 +323,7 @@ internal static class PersistentStorageHelper
             && IsTimestamp(name.Substring(0, dashIndex));
     }
 
-    internal static string CreateSubdirectory(string path)
+    internal static string CreateSubdirectory(string path, bool checkPermissions)
     {
         try
         {
@@ -346,7 +346,16 @@ internal static class PersistentStorageHelper
 
                 // A directory that already exists may have been created by another user before the
                 // application first started, so it is only used if no other user can change its contents.
-                EnsureDirectoryIsPrivate(path);
+                if (checkPermissions)
+                {
+                    EnsureDirectoryIsPrivate(path);
+                }
+                else
+                {
+                    PersistentStorageEventSource.Log.PersistentStorageWarning(
+                        nameof(PersistentStorageHelper),
+                        $"The permissions of directory {path} were not checked.");
+                }
             }
 #else
             Directory.CreateDirectory(path);

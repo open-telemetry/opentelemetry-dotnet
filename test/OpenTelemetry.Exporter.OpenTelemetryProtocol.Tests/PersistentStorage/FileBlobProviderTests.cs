@@ -588,6 +588,28 @@ public class FileBlobProviderTests
     [Theory]
     [InlineData(UnixFileMode.GroupWrite)]
     [InlineData(UnixFileMode.OtherWrite)]
+    [InlineData(UnixFileMode.OtherWrite | UnixFileMode.StickyBit)]
+    public void Constructor_ExistingDirectoryWritableByOtherUsersWithoutPermissionChecks_DoesNotThrow(UnixFileMode mode)
+    {
+        if (OperatingSystem.IsWindows())
+        {
+            Assert.Skip("Unix file modes do not apply on Windows.");
+            return;
+        }
+
+        using var root = new TemporaryDirectory();
+
+        var path = Path.Combine(root.Path, "traces");
+        CreateDirectory(path, OwnerOnly | mode);
+
+        using var provider = new FileBlobProvider(path, checkPermissions: false);
+
+        Assert.True(provider.TryCreateBlob([1, 2, 3], out _));
+    }
+
+    [Theory]
+    [InlineData(UnixFileMode.GroupWrite)]
+    [InlineData(UnixFileMode.OtherWrite)]
     public void Constructor_DirectoryInDirectoryWritableByOtherUsers_Throws(UnixFileMode mode)
     {
         if (OperatingSystem.IsWindows())

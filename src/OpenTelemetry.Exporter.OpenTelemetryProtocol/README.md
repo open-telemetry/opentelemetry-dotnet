@@ -721,7 +721,9 @@ want to solicit feedback from the community.
       directory in its path is not owned by the current user or by root, or is
       writable by its group or by other users without having the sticky bit
       set. On Windows and .NET Framework, ensure that the access control list of
-      the directory only allows the application's user to write to it.
+      the directory only allows the application's user to write to it. These
+      checks can be disabled using
+      `OTEL_DOTNET_EXPERIMENTAL_OTLP_DISK_RETRY_CHECK_PERMISSIONS`.
 
       The OTLP exporter utilizes a forked version of the
       [OpenTelemetry.PersistentStorage.FileSystem](https://github.com/open-telemetry/opentelemetry-dotnet-contrib/tree/main/src/OpenTelemetry.PersistentStorage.FileSystem)
@@ -743,8 +745,26 @@ want to solicit feedback from the community.
 
       Added in **TBD** (Unreleased).
 
+  * `OTEL_DOTNET_EXPERIMENTAL_OTLP_DISK_RETRY_CHECK_PERMISSIONS`
+
+    When set to `false`, the permissions of the directory used for disk retry
+    are not checked when running on .NET on non-Windows platforms, and the
+    exporter is created even if the directory could be changed by another user.
+    This may be needed where the directory is on a volume whose permissions
+    cannot be restricted, such as a Kubernetes `emptyDir` volume or a directory
+    shared with the root group on OpenShift. The default value is `true`.
+
+    Added in **TBD** (Unreleased).
+
 > [!NOTE]
 > Disk retry is not supported on browser-based platforms.
+
+> [!WARNING]
+> Setting `OTEL_DOTNET_EXPERIMENTAL_OTLP_DISK_RETRY_CHECK_PERMISSIONS` to
+> `false` is a security risk. Any other user who can write to the disk retry
+> directory, or replace it or any directory in its path, can have telemetry of
+> their choosing sent with the exporter's headers and credentials, and can
+> prevent the stored telemetry from being sent.
 
 * Logs
 
