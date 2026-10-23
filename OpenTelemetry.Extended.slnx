@@ -61,6 +61,7 @@
     <File Path="build/RELEASING.md" />
     <File Path="build/stylecop.json" />
     <File Path="build/UnstableCoreLibraries.proj" />
+    <File Path="build/xunit.runner.json" />
     <File Path="Directory.Packages.props" />
   </Folder>
   <Folder Name="/build/docs/">

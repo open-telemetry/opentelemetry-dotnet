@@ -211,15 +211,17 @@ public sealed class OtlpKvListAttributeTests : IDisposable
         Assert.Equal("prod", values[1].Value.StringValue);
     }
 
-    [Fact]
-    public void StringDictionaryWithNullValueAsKvList()
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void StringKeyValuePairsWithNullValueAsKvList(bool asArray)
     {
         var dict = new Dictionary<string, string?>
         {
             ["present"] = "value",
             ["missing"] = null,
         };
-        var kvp = new KeyValuePair<string, object?>("key", dict);
+        var kvp = new KeyValuePair<string, object?>("key", asArray ? dict.ToArray() : dict);
 
         Assert.True(TryTransformTag(kvp, out var attribute));
         Assert.Equal(OtlpCommon.AnyValue.ValueOneofCase.KvlistValue, attribute.Value.ValueCase);

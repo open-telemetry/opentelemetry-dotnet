@@ -33,6 +33,10 @@ Notes](../../RELEASENOTES.md).
   sent once it has elapsed.
   ([#7996](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7996))
 
+* Fixed arrays of string-valued key/value pairs being
+  exported as arrays of strings instead of maps.
+  ([#7694](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7694))
+
 * Hardened the experimental disk retry feature.
   * **Breaking:** When running on .NET on non-Windows platforms, creating the
     exporter now throws an `UnauthorizedAccessException` if the retry
