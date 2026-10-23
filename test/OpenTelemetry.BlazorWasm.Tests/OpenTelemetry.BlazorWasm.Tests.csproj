@@ -19,6 +19,7 @@
   <ItemGroup>
     <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Shared\TcpPortProvider.cs" Link="Includes\TcpPortProvider.cs" />
     <Compile Include="$(RepoRoot)\test\Shared\OtlpHttpCollector.cs" Link="Includes\OtlpHttpCollector.cs" />
+    <Compile Include="$(RepoRoot)\test\Shared\TemporaryDirectory.cs" Link="Includes\TemporaryDirectory.cs" />
   </ItemGroup>
 
   <ItemGroup>
