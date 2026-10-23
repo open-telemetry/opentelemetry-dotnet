@@ -101,6 +101,9 @@ internal abstract class TagWriter<TTagState, TArrayState>
             case IEnumerable<KeyValuePair<string, object?>> kvList:
                 return this.TryWriteKvListTagWithinDepthLimit(ref state, key, value, kvList, tagValueMaxLength);
 
+            case IEnumerable<KeyValuePair<string, string?>> stringKvList:
+                return this.TryWriteKvListTagWithinDepthLimit(ref state, key, value, AdaptStringKvList(stringKvList), tagValueMaxLength);
+
             case Array array:
                 if (value.GetType() == typeof(byte[]))
                 {
@@ -152,9 +155,6 @@ internal abstract class TagWriter<TTagState, TArrayState>
                 this.WriteSpanFormattableTag(ref state, key, m, bufferLength: 32, tagValueMaxLength);
                 break;
 #endif
-
-            case IEnumerable<KeyValuePair<string, string?>> stringKvList:
-                return this.TryWriteKvListTagWithinDepthLimit(ref state, key, value, AdaptStringKvList(stringKvList), tagValueMaxLength);
 
             case IDictionary dictionary:
                 return this.TryWriteKvListTagWithinDepthLimit(ref state, key, value, AdaptDictionary(dictionary), tagValueMaxLength);

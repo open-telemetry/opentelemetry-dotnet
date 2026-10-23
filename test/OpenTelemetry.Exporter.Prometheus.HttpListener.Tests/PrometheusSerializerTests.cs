@@ -122,6 +122,9 @@ public sealed partial class PrometheusSerializerTests
             """{\"flag\":true,\"dbl\":1.5,\"nan\":\"NaN\",\"empty\":null}"""
         },
         { new Dictionary<string, string?> { ["a"] = "b" }, """{\"a\":\"b\"}""" },
+        { Array.Empty<KeyValuePair<string, string?>>(), "{}" },
+        { new KeyValuePair<string, string?>[] { new("a", "b") }, """{\"a\":\"b\"}""" },
+        { new object[] { new KeyValuePair<string, string?>[] { new("a", "b") } }, """[{\"a\":\"b\"}]""" },
         { new Hashtable { ["a"] = 1 }, """{\"a\":1}""" },
         { new double[] { double.NaN, double.PositiveInfinity, double.NegativeInfinity, 1.5 }, """[\"NaN\",\"Infinity\",\"-Infinity\",1.5]""" },
         { new object[] { LabelValueArrayCase }, "[[1,2,3]]" },

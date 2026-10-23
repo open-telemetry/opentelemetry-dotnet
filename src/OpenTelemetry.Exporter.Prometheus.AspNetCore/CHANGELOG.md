@@ -30,6 +30,10 @@ Notes](../../RELEASENOTES.md).
   JSON-encoded.
   ([#7694](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7694))
 
+* Fixed arrays of string-valued key/value pairs being
+  serialized as JSON arrays of strings instead of JSON objects.
+  ([#7694](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7694))
+
 ## 1.20.1-beta.1
 
 Released 2026-Oct-20
