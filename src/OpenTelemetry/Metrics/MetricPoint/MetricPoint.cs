@@ -278,6 +278,36 @@ public struct MetricPoint
     }
 
     /// <summary>
+    /// Attempts to retrieve the sum value of the histogram associated with the metric point.
+    /// </summary>
+    /// <remarks>
+    /// Applies to <see cref="MetricType.Histogram"/> and <see cref="MetricType.ExponentialHistogram"/> metric types.
+    /// </remarks>
+    /// <param name="sum">The histogram sum value if available.</param>
+    /// <returns><see langword="true"/> if sum is available; <see langword="false"/> otherwise.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public readonly bool TryGetHistogramSum(out double sum)
+    {
+        if (!this.aggregatorStore.RecordSum ||
+            this.aggType is not AggregationType.HistogramWithBuckets and
+                not AggregationType.Histogram and
+                not AggregationType.HistogramWithMinMaxBuckets and
+                not AggregationType.HistogramWithMinMax and
+                not AggregationType.Base2ExponentialHistogram and
+                not AggregationType.Base2ExponentialHistogramWithMinMax)
+        {
+            sum = 0;
+            return false;
+        }
+
+        sum = this.mpComponents!.HistogramBuckets != null
+            ? this.mpComponents.HistogramBuckets.SnapshotSum
+            : this.mpComponents.Base2ExponentialBucketHistogram!.SnapshotSum;
+
+        return true;
+    }
+
+    /// <summary>
     /// Gets the buckets of the histogram associated with the metric point.
     /// </summary>
     /// <remarks>
@@ -979,7 +1009,10 @@ public struct MetricPoint
         unchecked
         {
             this.runningValue.AsLong++;
-            histogramBuckets.RunningSum += number;
+            if (this.aggregatorStore.RecordSum)
+            {
+                histogramBuckets.RunningSum += number;
+            }
         }
 
         // Set while still holding the lock, see above.
@@ -1002,7 +1035,10 @@ public struct MetricPoint
         unchecked
         {
             this.runningValue.AsLong++;
-            histogramBuckets.RunningSum += number;
+            if (this.aggregatorStore.RecordSum)
+            {
+                histogramBuckets.RunningSum += number;
+            }
         }
 
         histogramBuckets.RunningMin = Math.Min(histogramBuckets.RunningMin, number);
@@ -1029,7 +1065,11 @@ public struct MetricPoint
         unchecked
         {
             this.runningValue.AsLong++;
-            histogramBuckets.RunningSum += number;
+            if (this.aggregatorStore.RecordSum)
+            {
+                histogramBuckets.RunningSum += number;
+            }
+
             histogramBuckets.RunningBucketCounts[bucketIndex]++;
         }
 
@@ -1054,7 +1094,11 @@ public struct MetricPoint
         unchecked
         {
             this.runningValue.AsLong++;
-            histogramBuckets.RunningSum += number;
+            if (this.aggregatorStore.RecordSum)
+            {
+                histogramBuckets.RunningSum += number;
+            }
+
             histogramBuckets.RunningBucketCounts[bucketIndex]++;
         }
 
@@ -1070,12 +1114,6 @@ public struct MetricPoint
 
     private void UpdateBase2ExponentialHistogram(double number, ReadOnlySpan<KeyValuePair<string, object?>> tags = default, bool offerExemplar = false)
     {
-        if (number < 0)
-        {
-            this.CompleteUpdateWithoutMeasurement();
-            return;
-        }
-
         var histogram = this.mpComponents!.Base2ExponentialBucketHistogram!;
 
         // Offer the exemplar before the update, as for UpdateHistogram().
@@ -1086,7 +1124,11 @@ public struct MetricPoint
         unchecked
         {
             this.runningValue.AsLong++;
-            histogram.RunningSum += number;
+            if (this.aggregatorStore.RecordSum)
+            {
+                histogram.RunningSum += number;
+            }
+
             histogram.Record(number);
         }
 
@@ -1099,12 +1141,6 @@ public struct MetricPoint
 
     private void UpdateBase2ExponentialHistogramWithMinMax(double number, ReadOnlySpan<KeyValuePair<string, object?>> tags = default, bool offerExemplar = false)
     {
-        if (number < 0)
-        {
-            this.CompleteUpdateWithoutMeasurement();
-            return;
-        }
-
         var histogram = this.mpComponents!.Base2ExponentialBucketHistogram!;
 
         // Offer the exemplar before the update, as for UpdateHistogram().
@@ -1115,7 +1151,11 @@ public struct MetricPoint
         unchecked
         {
             this.runningValue.AsLong++;
-            histogram.RunningSum += number;
+            if (this.aggregatorStore.RecordSum)
+            {
+                histogram.RunningSum += number;
+            }
+
             histogram.Record(number);
         }
 
