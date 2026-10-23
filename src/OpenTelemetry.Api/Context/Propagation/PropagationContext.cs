@@ -46,7 +46,9 @@ public readonly struct PropagationContext : IEquatable<PropagationContext>
     public static bool operator !=(PropagationContext left, PropagationContext right) => !(left == right);
 
     /// <inheritdoc/>
+#pragma warning disable SA1315 // Parameters should match inherited names
     public bool Equals(PropagationContext value) =>
+#pragma warning restore SA1315 // Parameters should match inherited names
         this.ActivityContext == value.ActivityContext &&
         this.Baggage == value.Baggage;
 

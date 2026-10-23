@@ -20,7 +20,7 @@ namespace OpenTelemetry.Maui.TestApp;
 [Instrumentation(Name = "io.opentelemetry.dotnet.maui.TestInstrumentation")]
 public class TestInstrumentation : Instrumentation
 {
-    protected TestInstrumentation(IntPtr handle, JniHandleOwnership ownership)
+    protected TestInstrumentation(nint handle, JniHandleOwnership ownership)
         : base(handle, ownership)
     {
     }
@@ -48,7 +48,7 @@ public class TestInstrumentation : Instrumentation
             var builder = await TestApplication.CreateBuilderAsync(
                 [
                     "--results-directory", resultsPath,
-                    "--report-trx"
+                    "--report-trx",
                 ]);
 
             builder.AddMSTest(() => [this.GetType().Assembly]);

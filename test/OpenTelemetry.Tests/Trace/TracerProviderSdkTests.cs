@@ -1486,10 +1486,10 @@ public sealed class TracerProviderSdkTests : IDisposable
     [InlineData(false)]
     public void TracerProviderSdkBuildsWithSDKResource(bool useConfigure)
     {
-        using var tracerProvider = useConfigure ?
-            Sdk.CreateTracerProviderBuilder().SetResourceBuilder(
-                ResourceBuilder.CreateDefault().AddTelemetrySdk()).Build() :
-            Sdk.CreateTracerProviderBuilder().ConfigureResource(r => r.AddTelemetrySdk()).Build();
+        using var tracerProvider = useConfigure
+            ? Sdk.CreateTracerProviderBuilder().SetResourceBuilder(
+                ResourceBuilder.CreateDefault().AddTelemetrySdk()).Build()
+            : Sdk.CreateTracerProviderBuilder().ConfigureResource(r => r.AddTelemetrySdk()).Build();
         var resource = tracerProvider.GetResource();
         var attributes = resource.Attributes;
 

@@ -107,10 +107,9 @@ public class MetricPointReclaimTests
             Assert.True(meterProvider.ForceFlush());
         }
 
-        long expectedSum =
-            emitMetricWithNoDimensions ?
-            MaxNumberOfDistinctMetricPoints * (100 + 25) :
-            MaxNumberOfDistinctMetricPoints * 100;
+        long expectedSum = emitMetricWithNoDimensions
+            ? MaxNumberOfDistinctMetricPoints * (100 + 25)
+            : MaxNumberOfDistinctMetricPoints * 100;
 
         Assert.Equal(0, exporter.DroppedMeasurements);
         Assert.InRange(exporter.MaxLookupDictionaryCount, 0, MeterProviderBuilderSdk.DefaultCardinalityLimit * 2);
@@ -410,6 +409,180 @@ public class MetricPointReclaimTests
         }
 
         Assert.Equal(Interlocked.Read(ref recordedSum), Interlocked.Read(ref exportedSum));
+    }
+
+    // Regression test for two races between a delta snapshot and the creation of new metric points:
+    //
+    // 1. A metric point is block-copied into its slot, so a snapshot could observe a partially written
+    //    point whose LookupData was written but whose ReferenceCount of 1 was not, and reclaim it while
+    //    it was still being created, losing the measurement.
+    // 2. A snapshot that claimed and exported a metric point with an unexported measurement (deferring
+    //    its reclaim) could also export the metric point that replaced it for the next measurement for
+    //    the same tags, exporting the same series twice in a single collect.
+    //
+    // This is a stress test: it asserts that no measurement is lost and that no series is exported
+    // more than once by a single collect.
+    [SkipOnNetFrameworkArmFact]
+    public void SeriesAreExportedOnceWhenSnapshotRacesWithMetricPointCreation()
+    {
+        const int Rounds = 500;
+        const int NumberOfUpdateThreads = 4;
+        const int MeasurementsPerSeries = 2;
+
+        // Stay below the default cardinality limit so every series gets its own metric point.
+        const int SeriesPerThread = 1900;
+
+        for (var round = 0; round < Rounds; round++)
+        {
+            // Use a new meter for each round, so that the metric points are created in slots that have never held a metric point
+            using var meter = new Meter($"{Utils.GetCurrentMethodName()}.{round}");
+            using var exporter = new SeriesCapturingExporter();
+            using var metricReader = new BaseExportingMetricReader(exporter)
+            {
+                TemporalityPreference = MetricReaderTemporalityPreference.Delta,
+            };
+
+            using var meterProvider = Sdk.CreateMeterProviderBuilder()
+                .AddMeter(meter.Name)
+                .AddReader(metricReader)
+                .Build();
+
+            var remaining = NumberOfUpdateThreads;
+            var threads = new Thread[NumberOfUpdateThreads];
+
+            for (var t = 0; t < threads.Length; t++)
+            {
+                // Each counter has a single update thread, so the only races are with the snapshot.
+                var counter = meter.CreateCounter<long>($"counter{t}");
+
+                threads[t] = new Thread(() =>
+                {
+                    for (var i = 0; i < SeriesPerThread; i++)
+                    {
+                        for (var j = 0; j < MeasurementsPerSeries; j++)
+                        {
+                            counter.Add(1, new KeyValuePair<string, object?>("key", i));
+                        }
+                    }
+
+                    Interlocked.Decrement(ref remaining);
+                });
+
+                threads[t].Start();
+            }
+
+            while (Volatile.Read(ref remaining) > 0)
+            {
+                metricReader.Collect();
+            }
+
+            foreach (var thread in threads)
+            {
+                thread.Join();
+            }
+
+            Assert.True(meterProvider.ForceFlush());
+
+            Assert.Equal(NumberOfUpdateThreads * SeriesPerThread * MeasurementsPerSeries, exporter.Sum);
+            Assert.Equal(0, exporter.DuplicateSeries);
+        }
+    }
+
+    [Fact]
+    public void SeriesIsExportedOnceWhenReplacementIsCreatedInFreeSlotDuringSnapshot()
+    {
+        // Regression test for a snapshot exporting a metric point that was created in a free slot after the
+        // snapshot had checked the slot. If the point replaced one that the same snapshot had already claimed
+        // and exported (deferring its reclaim), the same series would be exported twice in a single collect.
+        var exportedItems = new List<Metric>();
+
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+        var counter = meter.CreateCounter<long>("counter");
+
+        using var meterProvider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddView("counter", new MetricStreamConfiguration { CardinalityLimit = 3 })
+            .AddInMemoryExporter(exportedItems, metricReaderOptions => metricReaderOptions.TemporalityPreference = MetricReaderTemporalityPreference.Delta)
+            .Build();
+
+        var tagA = new KeyValuePair<string, object?>("key", "A");
+        var tagSentinel = new KeyValuePair<string, object?>("key", "S");
+        var tagB = new KeyValuePair<string, object?>("key", "B");
+
+        // A snapshot visits the slots in the order in which they were first handed out, so it
+        // visits A, then the sentinel and then B.
+        counter.Add(1, tagA);
+        counter.Add(1, tagSentinel);
+        counter.Add(1, tagB);
+        Assert.True(meterProvider.ForceFlush());
+
+        var store = exportedItems[0].AggregatorStore;
+        var slotA = GetSlot(store, "A");
+        var slotSentinel = GetSlot(store, "S");
+        var slotB = GetSlot(store, "B");
+
+        // Keep A and the sentinel alive and let B be reclaimed, so that B's slot is the only free slot.
+        counter.Add(1, tagA);
+        counter.Add(1, tagSentinel);
+        Assert.True(meterProvider.ForceFlush());
+        Assert.Equal(2, store.TagsToMetricPointIndexDictionaryDelta!.Count);
+
+        var observedSlots = new List<int>();
+        var slotsOfA = new List<int>();
+
+        store.DeltaReclaimCandidateObserved = slot =>
+        {
+            observedSlots.Add(slot);
+
+            // For A, the measurement races with the snapshot claiming A, so the snapshot exports A and
+            // defers its reclaim. For the sentinel, A has been claimed, so the measurement creates the
+            // point that replaces A in B's free slot. The snapshot visits that slot next, and must not
+            // export the replacement too.
+            counter.Add(1, tagA);
+
+            slotsOfA.Add(GetSlot(store, "A"));
+        };
+
+        exportedItems.Clear();
+
+        try
+        {
+            Assert.True(meterProvider.ForceFlush());
+        }
+        finally
+        {
+            store.DeltaReclaimCandidateObserved = null;
+        }
+
+        Assert.Equal([slotA, slotSentinel], observedSlots);
+
+        // A's replacement was created in B's slot while the snapshot was in progress.
+        Assert.Equal([slotA, slotB], slotsOfA);
+
+        Assert.Equal(["A:1"], GetSeries(exportedItems));
+
+        // A's reclaim completes, and the measurement recorded while the sentinel was visited is only
+        // exported by this collect, by the point that replaced A.
+        exportedItems.Clear();
+        Assert.True(meterProvider.ForceFlush());
+
+        Assert.Equal(["A:1"], GetSeries(exportedItems));
+        Assert.Equal(slotB, GetSlot(store, "A"));
+
+        static int GetSlot(AggregatorStore store, string tagValue)
+            => Assert.Single(store.TagsToMetricPointIndexDictionaryDelta!.Values, lookupData => Equals(lookupData.GivenTags.KeyValuePairs[0].Value, tagValue)).Index;
+
+        static List<string> GetSeries(List<Metric> metrics)
+        {
+            var series = new List<string>();
+
+            foreach (ref readonly var metricPoint in Assert.Single(metrics).GetMetricPoints())
+            {
+                series.Add($"{metricPoint.Tags.KeyAndValues[0].Value}:{metricPoint.GetSumLong()}");
+            }
+
+            return series;
+        }
     }
 
     [Theory]
@@ -1328,15 +1501,18 @@ public class MetricPointReclaimTests
             "a",
             new CollidingTagValue(value, blockLookup, blockComparison: true, lookupBlocked, continueLookup));
 
-        return tagCount == 1
-            ? [tagA]
-            :
-            [
-                new KeyValuePair<string, object?>(
-                    "b",
-                    new CollidingTagValue(value, blockLookup, blockComparison: false, lookupBlocked, continueLookup)),
-                tagA,
-            ];
+        if (tagCount == 1)
+        {
+            return [tagA];
+        }
+
+        return
+        [
+            new KeyValuePair<string, object?>(
+                "b",
+                new CollidingTagValue(value, blockLookup, blockComparison: false, lookupBlocked, continueLookup)),
+            tagA,
+        ];
     }
 
     private sealed class GateHashedValue(object callerGate, ManualResetEventSlim hashRequested, int blockingHashOrdinal)
@@ -1503,6 +1679,39 @@ public class MetricPointReclaimTests
                 foreach (ref readonly var metricPoint in metric.GetMetricPoints())
                 {
                     this.onSum(metricPoint.GetSumLong());
+                }
+            }
+
+            return ExportResult.Success;
+        }
+    }
+
+    private sealed class SeriesCapturingExporter : BaseExporter<Metric>
+    {
+        public long Sum;
+        public int DuplicateSeries;
+
+        public override ExportResult Export(in Batch<Metric> batch)
+        {
+            foreach (var metric in batch)
+            {
+                var series = new HashSet<object?>();
+
+                foreach (ref readonly var metricPoint in metric.GetMetricPoints())
+                {
+                    this.Sum += metricPoint.GetSumLong();
+
+                    object? key = null;
+
+                    foreach (var tag in metricPoint.Tags)
+                    {
+                        key = tag.Value;
+                    }
+
+                    if (!series.Add(key))
+                    {
+                        this.DuplicateSeries++;
+                    }
                 }
             }
 

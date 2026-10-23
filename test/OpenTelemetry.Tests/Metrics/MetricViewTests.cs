@@ -360,10 +360,9 @@ public class MetricViewTests : MetricTestsBase
         using var container = BuildMeterProvider(out var meterProvider, builder => builder
             .AddMeter(meter1.Name)
             .AddMeter(meter2.Name)
-            .AddView((instrument) => instrument.Meter.Name.Equals(meter2.Name, StringComparison.OrdinalIgnoreCase)
-                                     && instrument.Name.Equals("name1", StringComparison.OrdinalIgnoreCase)
-                                     ? new MetricStreamConfiguration() { Name = "name1_Renamed", Description = "new description" }
-                                     : null)
+            .AddView((instrument) => instrument.Meter.Name.Equals(meter2.Name, StringComparison.OrdinalIgnoreCase) && instrument.Name.Equals("name1", StringComparison.OrdinalIgnoreCase)
+                ? new MetricStreamConfiguration() { Name = "name1_Renamed", Description = "new description" }
+                : null)
             .AddInMemoryExporter(exportedItems));
 
         // Without views only 1 stream would be

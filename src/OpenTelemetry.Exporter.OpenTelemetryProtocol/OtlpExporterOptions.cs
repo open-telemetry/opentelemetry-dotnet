@@ -67,7 +67,7 @@ public class OtlpExporterOptions : IOtlpExporterOptions
     private static readonly string BaseUserAgent = $"OTel-OTLP-Exporter-Dotnet/{typeof(OtlpExporterOptions).Assembly.GetPackageVersion()}";
     private static readonly KeyValuePair<string, string>[] DefaultHeaders =
     [
-        new("User-Agent", BaseUserAgent)
+        new("User-Agent", BaseUserAgent),
     ];
 
     private OtlpExportProtocol? protocol;

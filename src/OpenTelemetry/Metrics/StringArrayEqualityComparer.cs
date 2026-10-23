@@ -7,28 +7,28 @@ namespace OpenTelemetry.Metrics;
 
 internal sealed class StringArrayEqualityComparer : IEqualityComparer<string[]>
 {
-    public bool Equals(string[]? strings1, string[]? strings2)
+    public bool Equals(string[]? x, string[]? y)
     {
-        if (ReferenceEquals(strings1, strings2))
+        if (ReferenceEquals(x, y))
         {
             return true;
         }
 
-        if (strings1 is null || strings2 is null)
+        if (x is null || y is null)
         {
             return false;
         }
 
-        var len1 = strings1.Length;
+        var len1 = x.Length;
 
-        if (len1 != strings2.Length)
+        if (len1 != y.Length)
         {
             return false;
         }
 
         for (var i = 0; i < len1; i++)
         {
-            if (!string.Equals(strings1[i], strings2[i], StringComparison.Ordinal))
+            if (!string.Equals(x[i], y[i], StringComparison.Ordinal))
             {
                 return false;
             }
@@ -37,27 +37,27 @@ internal sealed class StringArrayEqualityComparer : IEqualityComparer<string[]>
         return true;
     }
 
-    public int GetHashCode(string[] strings)
+    public int GetHashCode(string[] obj)
     {
-        Debug.Assert(strings != null, "strings was null");
+        Debug.Assert(obj != null, "obj was null");
 
 #if NET || NETSTANDARD2_1_OR_GREATER
         HashCode hashCode = default;
 
-        for (var i = 0; i < strings.Length; i++)
+        for (var i = 0; i < obj.Length; i++)
         {
-            hashCode.Add(strings[i]);
+            hashCode.Add(obj[i]);
         }
 
         var hash = hashCode.ToHashCode();
 #else
         var hash = 17;
 
-        for (var i = 0; i < strings!.Length; i++)
+        for (var i = 0; i < obj!.Length; i++)
         {
             unchecked
             {
-                hash = (hash * 31) + (strings[i]?.GetHashCode() ?? 0);
+                hash = (hash * 31) + (obj[i]?.GetHashCode() ?? 0);
             }
         }
 #endif

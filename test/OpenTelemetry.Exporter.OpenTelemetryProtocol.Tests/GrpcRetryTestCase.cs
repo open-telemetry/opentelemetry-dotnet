@@ -59,7 +59,7 @@ public class GrpcRetryTestCase
                 new(StatusCode.Unavailable, expectedNextRetryDelayMilliseconds: 2250),
                 new(StatusCode.Unavailable, expectedNextRetryDelayMilliseconds: 3375),
                 new(StatusCode.Unavailable, expectedNextRetryDelayMilliseconds: 5000),
-                new(StatusCode.Unavailable, expectedNextRetryDelayMilliseconds: 5000)
+                new(StatusCode.Unavailable, expectedNextRetryDelayMilliseconds: 5000),
             ],
             expectedRetryAttempts: 5),
 
@@ -70,7 +70,7 @@ public class GrpcRetryTestCase
                 new(StatusCode.Unavailable, expectedNextRetryDelayMilliseconds: 2250),
                 new(StatusCode.Unavailable, expectedNextRetryDelayMilliseconds: 3375),
                 new(StatusCode.PermissionDenied, expectedSuccess: false),
-                new(StatusCode.Unavailable, expectedNextRetryDelayMilliseconds: 5000)
+                new(StatusCode.Unavailable, expectedNextRetryDelayMilliseconds: 5000),
             ],
             expectedRetryAttempts: 4),
 
@@ -86,7 +86,7 @@ public class GrpcRetryTestCase
                 new(StatusCode.Unavailable, expectedNextRetryDelayMilliseconds: 2532),
                 new(StatusCode.Unavailable, expectedNextRetryDelayMilliseconds: 3798),
                 new(StatusCode.Unavailable, expectedNextRetryDelayMilliseconds: 5000),
-                new(StatusCode.Unavailable, expectedNextRetryDelayMilliseconds: 5000)
+                new(StatusCode.Unavailable, expectedNextRetryDelayMilliseconds: 5000),
             ],
             expectedRetryAttempts: 9),
     ];
