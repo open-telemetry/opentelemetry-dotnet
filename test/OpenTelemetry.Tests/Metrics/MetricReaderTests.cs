@@ -133,6 +133,62 @@ public class MetricReaderTests
         Assert.True(firstCollectResult);
     }
 
+    [Theory]
+    [InlineData(Timeout.Infinite, null, Timeout.Infinite)]
+    [InlineData(5_000, null, 5_000)]
+    [InlineData(Timeout.Infinite, Timeout.Infinite, Timeout.Infinite)]
+    [InlineData(Timeout.Infinite, 0, Timeout.Infinite)]
+    [InlineData(Timeout.Infinite, 1_234, 1_234)]
+    [InlineData(5_000, 1_234, 1_234)]
+    [InlineData(1_234, 5_000, 1_234)]
+    public void Collect_PassesRemainingTimeoutToExporter(int timeoutMilliseconds, int? periodicExportTimeoutMilliseconds, int expectedTimeoutMilliseconds)
+    {
+        DateTime? exportDeadlineUtc = null;
+
+#pragma warning disable CA2000 // Dispose objects before losing scope
+        var exporter = new DelegatingExporter<Metric>();
+#pragma warning restore CA2000 // Dispose objects before losing scope
+        exporter.OnExportFunc = _ =>
+        {
+            exportDeadlineUtc ??= exporter.ExportDeadlineUtc;
+            return ExportResult.Success;
+        };
+
+        // The export timeout of a periodic reader also applies to exports which
+        // are not started by its worker, so the interval is long enough to never elapse.
+#pragma warning disable CA2000 // Dispose objects before losing scope
+        BaseExportingMetricReader reader = periodicExportTimeoutMilliseconds is { } periodicTimeout
+            ? new PeriodicExportingMetricReader(exporter, exportIntervalMilliseconds: int.MaxValue, exportTimeoutMilliseconds: periodicTimeout)
+            : new BaseExportingMetricReader(exporter);
+#pragma warning restore CA2000 // Dispose objects before losing scope
+
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddReader(reader)
+            .Build();
+
+        meter.CreateCounter<long>("test_counter").Add(1);
+
+        var before = DateTime.UtcNow;
+        Assert.True(provider.ForceFlush(timeoutMilliseconds));
+        var after = DateTime.UtcNow;
+
+        Assert.NotNull(exportDeadlineUtc);
+
+        if (expectedTimeoutMilliseconds == Timeout.Infinite)
+        {
+            Assert.Equal(DateTime.MaxValue, exportDeadlineUtc);
+        }
+        else
+        {
+            Assert.InRange(exportDeadlineUtc.Value, before, after.AddMilliseconds(expectedTimeoutMilliseconds));
+        }
+
+        // The deadline only applies to the export it was passed to
+        Assert.Equal(DateTime.MaxValue, exporter.ExportDeadlineUtc);
+    }
+
     private static Task<bool> RunOnDedicatedThread(Func<bool> collect)
         => Task.Factory.StartNew(collect, CancellationToken.None, TaskCreationOptions.LongRunning, TaskScheduler.Default);
 

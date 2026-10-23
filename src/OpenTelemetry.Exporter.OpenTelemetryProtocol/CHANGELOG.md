@@ -21,6 +21,22 @@ Notes](../../RELEASENOTES.md).
   `[REDACTED]`, while retaining standard HTTP and gRPC service paths.
   ([#8016](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8016))
 
+* Fixed exports continuing until `OtlpExporterOptions.TimeoutMilliseconds`
+  elapsed when a shorter timeout applied to them, such as the timeout passed
+  to `MeterProvider.ForceFlush()`,
+  `PeriodicExportingMetricReaderOptions.ExportTimeoutMilliseconds`
+  (`OTEL_METRIC_EXPORT_TIMEOUT`) or
+  `BatchExportProcessorOptions<T>.ExporterTimeoutMilliseconds`
+  (`OTEL_BSP_EXPORT_TIMEOUT`, `OTEL_BLRP_EXPORT_TIMEOUT`). The request is now
+  canceled when the shorter of the timeouts elapses. The time taken to
+  serialize the telemetry now counts towards the timeout, and no request is
+  sent once it has elapsed.
+  ([#7996](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7996))
+
+* Fixed arrays of string-valued key/value pairs being
+  exported as arrays of strings instead of maps.
+  ([#7694](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7694))
+
 ## 1.20.1
 
 Released 2026-Oct-20
