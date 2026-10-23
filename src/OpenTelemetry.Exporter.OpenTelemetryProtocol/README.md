@@ -759,6 +759,8 @@ want to solicit feedback from the community.
 > [!NOTE]
 > Disk retry is not supported on browser-based platforms.
 
+<!-- Comment to separate the notes -->
+
 > [!WARNING]
 > Setting `OTEL_DOTNET_EXPERIMENTAL_OTLP_DISK_RETRY_CHECK_PERMISSIONS` to
 > `false` is a security risk. Any other user who can write to the disk retry
