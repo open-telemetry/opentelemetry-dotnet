@@ -19,6 +19,9 @@ public sealed class BlazorWasmAppFixture : IAsyncLifetime
 
     internal OtlpHttpCollector Collector { get; private set; } = null!;
 
+    private static bool IsRunningInGitHubActions
+        => !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("GITHUB_ACTIONS"));
+
     public async ValueTask InitializeAsync()
     {
         InstallPlaywright();
@@ -72,7 +75,10 @@ public sealed class BlazorWasmAppFixture : IAsyncLifetime
 
     private static void InstallPlaywright()
     {
-        string[] arguments = OperatingSystem.IsLinux()
+        // In GitHub Actions the browser's system dependencies are installed by the
+        // workflow before the tests run, where a slow or stalled 'apt-get' is visible
+        // and can be retried, rather than here where it cannot be killed once it hangs.
+        string[] arguments = OperatingSystem.IsLinux() && !IsRunningInGitHubActions
             ? ["install", "chromium", "--with-deps"]
             : ["install", "chromium"];
 
@@ -208,7 +214,17 @@ public sealed class BlazorWasmAppFixture : IAsyncLifetime
 
         if (!process.WaitForExit(timeout))
         {
-            process.Kill(entireProcessTree: true);
+            try
+            {
+                process.Kill(entireProcessTree: true);
+            }
+            catch (Exception ex) when (ex is AggregateException or InvalidOperationException or System.ComponentModel.Win32Exception)
+            {
+                // Best effort, as children started with sudo (e.g. apt-get when installing
+                // Playwright's dependencies) cannot be killed and fail with EPERM, which
+                // would otherwise hide the timeout and the output captured from the process.
+            }
+
             throw new InvalidOperationException(
                 $"Process timed out after {timeout}.{Environment.NewLine}{stdout}{Environment.NewLine}{stderr}");
         }
