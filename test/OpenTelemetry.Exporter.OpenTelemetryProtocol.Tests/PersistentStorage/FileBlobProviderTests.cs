@@ -2,6 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Runtime.InteropServices;
+#if NET
+using System.Runtime.Versioning;
+#endif
 using OpenTelemetry.PersistentStorage.FileSystem;
 using OpenTelemetry.Tests;
 
@@ -9,6 +12,10 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests.PersistentStorage;
 
 public class FileBlobProviderTests
 {
+#if NET
+    private const UnixFileMode OwnerOnly = UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute;
+
+#endif
     [Fact]
     public void TryCreateBlob_WhenWriteExceedsEmptyStorageLimit_RejectsWithoutPersisting()
     {
@@ -557,6 +564,227 @@ public class FileBlobProviderTests
         Assert.Equal(UnixFileMode.None, File.GetUnixFileMode(blobPath) & GroupAndOther);
     }
 
+    [Theory]
+    [InlineData(UnixFileMode.GroupWrite)]
+    [InlineData(UnixFileMode.OtherWrite)]
+    [InlineData(UnixFileMode.OtherWrite | UnixFileMode.StickyBit)]
+    public void Constructor_ExistingDirectoryWritableByOtherUsers_Throws(UnixFileMode mode)
+    {
+        if (OperatingSystem.IsWindows())
+        {
+            Assert.Skip("Unix file modes do not apply on Windows.");
+            return;
+        }
+
+        using var root = new TemporaryDirectory();
+
+        // Another user could plant blobs in the directory that would be sent with the exporter's credentials
+        var path = Path.Combine(root.Path, "traces");
+        CreateDirectory(path, OwnerOnly | mode);
+
+        Assert.Throws<UnauthorizedAccessException>(() => new FileBlobProvider(path));
+    }
+
+    [Theory]
+    [InlineData(UnixFileMode.GroupWrite)]
+    [InlineData(UnixFileMode.OtherWrite)]
+    [InlineData(UnixFileMode.OtherWrite | UnixFileMode.StickyBit)]
+    public void Constructor_ExistingDirectoryWritableByOtherUsersWithoutPermissionChecks_DoesNotThrow(UnixFileMode mode)
+    {
+        if (OperatingSystem.IsWindows())
+        {
+            Assert.Skip("Unix file modes do not apply on Windows.");
+            return;
+        }
+
+        using var root = new TemporaryDirectory();
+
+        var path = Path.Combine(root.Path, "traces");
+        CreateDirectory(path, OwnerOnly | mode);
+
+        using var provider = new FileBlobProvider(path, checkPermissions: false);
+
+        Assert.True(provider.TryCreateBlob([1, 2, 3], out _));
+    }
+
+    [Theory]
+    [InlineData(UnixFileMode.GroupWrite)]
+    [InlineData(UnixFileMode.OtherWrite)]
+    public void Constructor_DirectoryInDirectoryWritableByOtherUsers_Throws(UnixFileMode mode)
+    {
+        if (OperatingSystem.IsWindows())
+        {
+            Assert.Skip("Unix file modes do not apply on Windows.");
+            return;
+        }
+
+        using var root = new TemporaryDirectory();
+
+        // Another user could replace the directory with one of their own after it has been verified
+        var parent = Path.Combine(root.Path, "retry");
+        CreateDirectory(parent, OwnerOnly | mode);
+
+        var path = Path.Combine(parent, "traces");
+
+        Assert.Throws<UnauthorizedAccessException>(() => new FileBlobProvider(path));
+    }
+
+    [Fact]
+    public void Constructor_DirectoryInStickyDirectoryWritableByOtherUsers_DoesNotThrow()
+    {
+        if (OperatingSystem.IsWindows())
+        {
+            Assert.Skip("Unix file modes do not apply on Windows.");
+            return;
+        }
+
+        using var root = new TemporaryDirectory();
+
+        // Like /tmp, other users cannot replace a directory they do not own in a directory with the sticky bit set
+        var parent = Path.Combine(root.Path, "retry");
+        CreateDirectory(parent, OwnerOnly | UnixFileMode.GroupWrite | UnixFileMode.OtherWrite | UnixFileMode.StickyBit);
+
+        var path = Path.Combine(parent, "traces");
+        using var provider = new FileBlobProvider(path);
+
+        Assert.True(provider.TryCreateBlob([1, 2, 3], out _));
+    }
+
+    [Fact]
+    public void Constructor_ExistingDirectoryOwnedByAnotherUser_Throws()
+    {
+        if (OperatingSystem.IsWindows())
+        {
+            Assert.Skip("Unix file modes do not apply on Windows.");
+            return;
+        }
+
+        if (Environment.IsPrivilegedProcess)
+        {
+            Assert.Skip("The root directory is owned by the current user.");
+            return;
+        }
+
+        // The root directory is owned by root and is not writable by other users
+        var path = Path.GetPathRoot(Path.GetTempPath())!;
+
+        Assert.Throws<UnauthorizedAccessException>(() => new FileBlobProvider(path));
+    }
+
+    [Fact]
+    public void Constructor_SymbolicLinkToPrivateDirectory_DoesNotThrow()
+    {
+        if (OperatingSystem.IsWindows())
+        {
+            Assert.Skip("Unix file modes do not apply on Windows.");
+            return;
+        }
+
+        using var root = new TemporaryDirectory();
+
+        var target = Path.Combine(root.Path, "target");
+        CreateDirectory(target, OwnerOnly);
+
+        var path = Path.Combine(root.Path, "traces");
+        Directory.CreateSymbolicLink(path, "target");
+
+        using var provider = new FileBlobProvider(path);
+
+        Assert.True(provider.TryCreateBlob([1, 2, 3], out _));
+        Assert.Single(Directory.GetFiles(target));
+    }
+
+    [Fact]
+    public void Constructor_SymbolicLinkToDirectoryWritableByOtherUsers_Throws()
+    {
+        if (OperatingSystem.IsWindows())
+        {
+            Assert.Skip("Unix file modes do not apply on Windows.");
+            return;
+        }
+
+        using var root = new TemporaryDirectory();
+
+        var target = Path.Combine(root.Path, "shared");
+        CreateDirectory(target, OwnerOnly | UnixFileMode.OtherWrite);
+
+        var path = Path.Combine(root.Path, "traces");
+        Directory.CreateSymbolicLink(path, target);
+
+        Assert.Throws<UnauthorizedAccessException>(() => new FileBlobProvider(path));
+    }
+
+    [Fact]
+    public void Constructor_SymbolicLinkWithParentSegmentAfterSymbolicLink_VerifiesDirectoryTheOperatingSystemUses()
+    {
+        if (OperatingSystem.IsWindows())
+        {
+            Assert.Skip("Unix file modes do not apply on Windows.");
+            return;
+        }
+
+        using var root = new TemporaryDirectory();
+
+        var shared = Path.Combine(root.Path, "shared");
+        var target = Path.Combine(shared, "target");
+
+        CreateDirectory(shared, OwnerOnly | UnixFileMode.OtherWrite);
+        CreateDirectory(target, OwnerOnly);
+        Directory.CreateSymbolicLink(Path.Combine(root.Path, "link"), target);
+
+        // The operating system resolves "link/.." in the target of a link to the shared directory, not to the root directory
+        Directory.CreateSymbolicLink(Path.Combine(root.Path, "retry"), "link/..");
+
+        var path = Path.Combine(root.Path, "retry", "traces");
+
+        Assert.Throws<UnauthorizedAccessException>(() => new FileBlobProvider(path));
+        Assert.True(Directory.Exists(Path.Combine(shared, "traces")));
+    }
+
+    [Fact]
+    public void Constructor_ParentSegment_VerifiesDirectoryTheFileSystemApisUse()
+    {
+        if (OperatingSystem.IsWindows())
+        {
+            Assert.Skip("Unix file modes do not apply on Windows.");
+            return;
+        }
+
+        using var root = new TemporaryDirectory();
+
+        var shared = Path.Combine(root.Path, "shared");
+        var target = Path.Combine(shared, "target");
+
+        CreateDirectory(shared, OwnerOnly | UnixFileMode.OtherWrite);
+        CreateDirectory(target, OwnerOnly);
+        Directory.CreateSymbolicLink(Path.Combine(root.Path, "link"), target);
+
+        // .NET removes "link/.." from a path before using it, unlike the operating system
+        var path = Path.Combine(root.Path, "link", "..", "traces");
+        using var provider = new FileBlobProvider(path);
+
+        Assert.True(provider.TryCreateBlob([1, 2, 3], out _));
+        Assert.Single(Directory.GetFiles(Path.Combine(root.Path, "traces")));
+        Assert.False(Directory.Exists(Path.Combine(shared, "traces")));
+    }
+
+    [Fact]
+    public void Constructor_SymbolicLinkLoop_Throws()
+    {
+        if (OperatingSystem.IsWindows())
+        {
+            Assert.Skip("Unix file modes do not apply on Windows.");
+            return;
+        }
+
+        using var root = new TemporaryDirectory();
+
+        Directory.CreateSymbolicLink(Path.Combine(root.Path, "a"), "b");
+        Directory.CreateSymbolicLink(Path.Combine(root.Path, "b"), "a");
+
+        Assert.ThrowsAny<IOException>(() => new FileBlobProvider(Path.Combine(root.Path, "a", "traces")));
+    }
+
     [Fact]
     public void TryRead_BlobThatIsSymbolicLink_DoesNotReadIt()
     {
@@ -579,6 +807,14 @@ public class FileBlobProviderTests
         Assert.True(provider.TryGetBlob(out var blob));
         Assert.False(blob.TryRead(out var data));
         Assert.Null(data);
+    }
+
+    [UnsupportedOSPlatform("windows")]
+    private static void CreateDirectory(string path, UnixFileMode mode)
+    {
+        // The mode is set after the directory is created, as the mode it is created with is restricted by the umask
+        Directory.CreateDirectory(path);
+        File.SetUnixFileMode(path, mode);
     }
 #endif
 }

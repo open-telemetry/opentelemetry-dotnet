@@ -331,6 +331,80 @@ public class OtlpExporterOptionsExtensionsTests
     }
 
     [Theory]
+    [InlineData(null, true)]
+    [InlineData("true", true)]
+    [InlineData("TRUE", true)]
+    [InlineData("false", false)]
+    [InlineData("False", false)]
+    [InlineData("invalid", true)]
+    public void ExperimentalOptions_DiskRetryCheckPermissions_IsReadFromConfiguration(string? value, bool expected)
+    {
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(
+            new Dictionary<string, string?>
+            {
+                [ExperimentalOptions.OtlpRetryEnvVar] = "disk",
+                [ExperimentalOptions.OtlpDiskRetryDirectoryPathEnvVar] = Path.GetTempPath(),
+                [ExperimentalOptions.OtlpDiskRetryCheckPermissionsEnvVar] = value,
+            })
+            .Build();
+
+        var options = new ExperimentalOptions(configuration);
+
+        Assert.Equal(expected, options.DiskRetryCheckPermissions);
+    }
+
+#if NET
+    [Theory]
+    [InlineData(null)]
+    [InlineData("true")]
+    [InlineData("false")]
+    public void GetTransmissionHandler_DiskRetryWithDirectoryWritableByOtherUsers_ChecksPermissionsUnlessDisabled(string? checkPermissions)
+    {
+        if (OperatingSystem.IsWindows())
+        {
+            Assert.Skip("Unix file modes do not apply on Windows.");
+            return;
+        }
+
+        const UnixFileMode WritableByAll =
+            UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute |
+            UnixFileMode.GroupRead | UnixFileMode.GroupWrite | UnixFileMode.GroupExecute |
+            UnixFileMode.OtherRead | UnixFileMode.OtherWrite | UnixFileMode.OtherExecute;
+
+        using var root = new TemporaryDirectory();
+
+        // For example, a Kubernetes emptyDir volume
+        var retryRootPath = Path.Combine(root.Path, "retry");
+        Directory.CreateDirectory(retryRootPath);
+        File.SetUnixFileMode(retryRootPath, WritableByAll);
+
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(
+            new Dictionary<string, string?>
+            {
+                [ExperimentalOptions.OtlpRetryEnvVar] = "disk",
+                [ExperimentalOptions.OtlpDiskRetryDirectoryPathEnvVar] = retryRootPath,
+                [ExperimentalOptions.OtlpDiskRetryCheckPermissionsEnvVar] = checkPermissions,
+            })
+            .Build();
+
+        var exporterOptions = new OtlpExporterOptions();
+        var experimentalOptions = new ExperimentalOptions(configuration);
+
+        if (checkPermissions == "false")
+        {
+            using var transmissionHandler = exporterOptions.GetExportTransmissionHandler(experimentalOptions, OtlpSignalType.Traces);
+            Assert.StartsWith(retryRootPath, GetStorageDirectoryPath(transmissionHandler), StringComparison.Ordinal);
+        }
+        else
+        {
+            Assert.Throws<UnauthorizedAccessException>(() => exporterOptions.GetExportTransmissionHandler(experimentalOptions, OtlpSignalType.Traces));
+        }
+    }
+#endif
+
+    [Theory]
     [InlineData("Traces", "traces")]
     [InlineData("Logs", "logs")]
     [InlineData("Metrics", "metrics")]

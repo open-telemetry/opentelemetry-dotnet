@@ -1,6 +1,9 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+#if NET
+using System.Formats.Tar;
+#endif
 using System.Globalization;
 using System.Runtime.CompilerServices;
 #if !NETFRAMEWORK
@@ -18,6 +21,12 @@ internal static class PersistentStorageHelper
     private const string TemporaryExtension = ".tmp";
     private const string TimestampFormat = "yyyy-MM-ddTHHmmss.fffffffZ";
     private const int GuidLength = 32;
+
+#if NET
+    private const int MaximumSymbolicLinks = 40;
+    private const int RootUserId = 0;
+    private const UnixFileMode GroupOrOtherWrite = UnixFileMode.GroupWrite | UnixFileMode.OtherWrite;
+#endif
 
     private static readonly TimeSpan MaximumPastTimestampOffset = TimeSpan.FromDays(100 * 365);
     private static readonly TimeSpan MaximumFutureTimestampOffset = TimeSpan.FromDays(365);
@@ -314,7 +323,7 @@ internal static class PersistentStorageHelper
             && IsTimestamp(name.Substring(0, dashIndex));
     }
 
-    internal static string CreateSubdirectory(string path)
+    internal static string CreateSubdirectory(string path, bool checkPermissions)
     {
         try
         {
@@ -334,6 +343,19 @@ internal static class PersistentStorageHelper
                 Directory.CreateDirectory(
                     path,
                     UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute);
+
+                // A directory that already exists may have been created by another user before the
+                // application first started, so it is only used if no other user can change its contents.
+                if (checkPermissions)
+                {
+                    EnsureDirectoryIsPrivate(path);
+                }
+                else
+                {
+                    PersistentStorageEventSource.Log.PersistentStorageWarning(
+                        nameof(PersistentStorageHelper),
+                        $"The permissions of directory {path} were not checked.");
+                }
             }
 #else
             Directory.CreateDirectory(path);
@@ -575,4 +597,197 @@ internal static class PersistentStorageHelper
         // In case of failure, return DateTime.MinValue so that the lease file can be removed as expired
         return DateTime.SpecifyKind(DateTime.MinValue, DateTimeKind.Utc);
     }
+
+#if NET
+    /// <summary>
+    /// Ensures that no user other than the current user (or root) can change the contents of a directory.
+    /// </summary>
+    /// <remarks>
+    /// Every blob in the storage directory is sent with the exporter's credentials, and blobs cannot authenticate
+    /// themselves, so the directory has to be the boundary. It must be owned by the current user and must not be writable
+    /// by other users. Every directory and symbolic link that is traversed to reach it must also be owned by the current
+    /// user or root, and must not be writable by other users unless it has the sticky bit set (such as <c>/tmp</c>), so
+    /// that no other user can replace the directory, or any directory it is in, after it has been verified.
+    /// </remarks>
+    /// <param name="path">The path of the directory.</param>
+    /// <exception cref="UnauthorizedAccessException">The directory could be changed by another user.</exception>
+    private static void EnsureDirectoryIsPrivate(string path)
+    {
+        var userId = GetCurrentUserId();
+        var links = 0;
+
+        // The path is normalized the same way that the file system APIs normalize it before they use it
+        var directory = ResolveDirectory(Path.GetFullPath(path), userId, ref links);
+        var entry = GetFileSystemEntry(directory);
+
+        if (entry.Uid != userId)
+        {
+            throw new UnauthorizedAccessException($"The directory '{path}' is not owned by the current user.");
+        }
+
+        if ((entry.Mode & GroupOrOtherWrite) != 0)
+        {
+            throw new UnauthorizedAccessException($"The directory '{path}' can be written to by other users.");
+        }
+    }
+
+    private static string ResolveDirectory(string path, int userId, ref int links)
+    {
+        var current = Path.GetPathRoot(path)!;
+
+        VerifyAncestor(current, GetFileSystemEntry(current), userId);
+
+        foreach (var name in path.Substring(current.Length).Split(Path.DirectorySeparatorChar, StringSplitOptions.RemoveEmptyEntries))
+        {
+            if (name == ".")
+            {
+                continue;
+            }
+
+            if (name == "..")
+            {
+                // Only the target of a symbolic link can still contain '..', which the operating system resolves relative to
+                // the directory it has resolved so far. The current directory has no symbolic links in its path, so its
+                // parent is the directory that '..' refers to.
+                current = Path.GetDirectoryName(current) ?? current;
+                continue;
+            }
+
+            var candidate = Path.Combine(current, name);
+            var entry = GetFileSystemEntry(candidate);
+
+            VerifyAncestor(candidate, entry, userId);
+
+            if (entry.EntryType == TarEntryType.SymbolicLink)
+            {
+                if (++links > MaximumSymbolicLinks)
+                {
+                    throw new IOException($"Too many levels of symbolic links were found resolving '{path}'.");
+                }
+
+                // A relative link target is relative to the directory that contains the link
+                current = ResolveDirectory(Path.Combine(current, entry.LinkName), userId, ref links);
+            }
+            else
+            {
+                current = candidate;
+            }
+        }
+
+        return current;
+    }
+
+    private static void VerifyAncestor(string path, PosixTarEntry entry, int userId)
+    {
+        if (entry.Uid != userId && entry.Uid != RootUserId)
+        {
+            throw new UnauthorizedAccessException($"The path '{path}' is owned by another user.");
+        }
+
+        if (entry.EntryType == TarEntryType.SymbolicLink)
+        {
+            // The permissions of a symbolic link are not used, and only the owner of the directory that
+            // contains it (or the owner of the link if that directory has the sticky bit set) can replace it.
+            return;
+        }
+
+        if (entry.EntryType != TarEntryType.Directory)
+        {
+            throw new IOException($"The path '{path}' is not a directory.");
+        }
+
+        if ((entry.Mode & GroupOrOtherWrite) != 0 && (entry.Mode & UnixFileMode.StickyBit) == 0)
+        {
+            throw new UnauthorizedAccessException($"The directory '{path}' can be written to by other users.");
+        }
+    }
+
+    private static int GetCurrentUserId()
+    {
+        if (Environment.IsPrivilegedProcess)
+        {
+            return RootUserId;
+        }
+
+        // .NET has no API that returns the user ID of the process. On Linux, it is read from the process' status.
+        if (TryGetUserIdFromProcFileSystem(out var userId))
+        {
+            return userId;
+        }
+
+        // Otherwise, a directory is created for the purpose and its owner is used. The directory is created with a unique
+        // name in the current user's temporary directory, so no other user can replace it before its owner is read.
+        var directory = Directory.CreateTempSubdirectory("otel-");
+
+        try
+        {
+            return GetFileSystemEntry(directory.FullName).Uid;
+        }
+        finally
+        {
+            directory.Delete();
+        }
+    }
+
+    private static bool TryGetUserIdFromProcFileSystem(out int userId)
+    {
+        userId = default;
+
+        if (!OperatingSystem.IsLinux())
+        {
+            return false;
+        }
+
+        try
+        {
+            // The line is formatted as "Uid:\t{real}\t{effective}\t{saved}\t{file system}"
+            foreach (var line in File.ReadLines("/proc/self/status"))
+            {
+                if (line.StartsWith("Uid:", StringComparison.Ordinal))
+                {
+                    var values = line.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries);
+
+                    return values.Length > 2
+                        && int.TryParse(values[2], NumberStyles.None, CultureInfo.InvariantCulture, out userId);
+                }
+            }
+        }
+        catch (Exception)
+        {
+            // The proc file system is not available
+        }
+
+        return false;
+    }
+
+    private static PosixTarEntry GetFileSystemEntry(string path)
+    {
+        // Only directories and symbolic links are expected, so the entry is not read if it is anything else. Otherwise,
+        // the contents of a regular file would be copied into the archive below.
+        var attributes = File.GetAttributes(path);
+
+        if ((attributes & (FileAttributes.Directory | FileAttributes.ReparsePoint)) == 0)
+        {
+            throw new IOException($"The path '{path}' is not a directory.");
+        }
+
+        // .NET has no API that returns the owner of a file system entry, but tar archives record the owner, permissions
+        // and type of each entry they contain, and TarWriter reads them from the file system without following symbolic
+        // links. The entry is written to an in-memory archive and then read back. The PAX format is used so that user IDs
+        // of any size can be represented.
+        using var stream = new MemoryStream();
+
+        using (var writer = new TarWriter(stream, TarEntryFormat.Pax, leaveOpen: true))
+        {
+            writer.WriteEntry(path, entryName: "entry");
+        }
+
+        stream.Position = 0;
+
+        using var reader = new TarReader(stream);
+
+        return reader.GetNextEntry() as PosixTarEntry
+            ?? throw new IOException($"The owner of '{path}' could not be determined.");
+    }
+#endif
 }
