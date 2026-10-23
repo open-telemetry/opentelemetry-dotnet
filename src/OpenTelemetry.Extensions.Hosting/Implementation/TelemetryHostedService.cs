@@ -9,16 +9,44 @@ using Microsoft.Extensions.Hosting;
 
 namespace OpenTelemetry.Extensions.Hosting.Implementation;
 
-internal sealed class TelemetryHostedService(ITelemetryHostInitializer initializer) : IHostedService
+internal sealed class TelemetryHostedService(ITelemetryHostInitializer initializer) : IHostedLifecycleService
 {
-    public Task StartAsync(CancellationToken cancellationToken)
+    private bool initialized;
+
+    public Task StartingAsync(CancellationToken cancellationToken)
     {
-        // The sole purpose of this HostedService is to ensure all
-        // instrumentations, exporters, etc., are created and started.
-        initializer.Initialize();
+        // Initialize as early as possible so that telemetry emitted by other
+        // services during IHostedLifecycleService.StartingAsync is captured.
+        this.Initialize();
         return Task.CompletedTask;
     }
 
+    public Task StartAsync(CancellationToken cancellationToken)
+    {
+        // Fallback for hosts which do not invoke the IHostedLifecycleService
+        // methods.
+        this.Initialize();
+        return Task.CompletedTask;
+    }
+
+    public Task StartedAsync(CancellationToken cancellationToken)
+        => Task.CompletedTask;
+
+    public Task StoppingAsync(CancellationToken cancellationToken)
+        => Task.CompletedTask;
+
     public Task StopAsync(CancellationToken cancellationToken)
         => Task.CompletedTask;
+
+    public Task StoppedAsync(CancellationToken cancellationToken)
+        => Task.CompletedTask;
+
+    private void Initialize()
+    {
+        if (!this.initialized)
+        {
+            initializer.Initialize();
+            this.initialized = true;
+        }
+    }
 }

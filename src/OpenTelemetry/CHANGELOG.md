@@ -38,6 +38,11 @@ Notes](../../RELEASENOTES.md).
   started by the reader itself, such as those of `MeterProvider.ForceFlush()`.
   ([#7996](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7996))
 
+* Fixed a race where collecting a cumulative metric concurrently with the
+  creation of a new `MetricPoint` could export a `MetricPoint` that was not yet
+  fully initialized, could case a `NullReferenceException` when enumerating `Tags`.
+  ([#8018](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8018))
+
 * Non-finite histogram measurements (`NaN`, `+Inf`, `-Inf`) are now dropped
   rather than recorded, so they can no longer permanently corrupt the sum,
   min, and max of a cumulative histogram stream. This aligns the explicit-bucket
