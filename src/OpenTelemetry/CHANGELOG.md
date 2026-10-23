@@ -15,6 +15,19 @@ Notes](../../RELEASENOTES.md).
   `OpenTelemetry:SelfDiagnostics` configuration section, when present.
   ([#8008](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8008))
 
+* Fixed a race where collecting a metric with delta temporality concurrently
+  with the creation of a new `MetricPoint` could reclaim the `MetricPoint`
+  while it was being created, losing the measurement.
+  ([#8019](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8019))
+
+* Fixed a race where collecting a metric with delta temporality could export
+  the same series twice in a single collection.
+  ([#8019](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8019))
+
+* Fixed wildcard matching timeouts that could prevent configured source, meter,
+  legacy activity, or metric view patterns from matching.
+  ([#8014](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8014))
+
 * **Breaking Change** Dropped support for `net8.0` and `net9.0`.
   ([#6899](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6899))
 

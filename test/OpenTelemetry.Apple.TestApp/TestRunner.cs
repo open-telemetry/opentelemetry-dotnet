@@ -67,7 +67,7 @@ internal static class TestRunner
                 [
                     .. args,
                     "--results-directory", resultsDirectory,
-                    "--report-trx"
+                    "--report-trx",
                 ]).ConfigureAwait(false);
 
             builder.AddMSTest(() => [typeof(TestRunner).Assembly]);
