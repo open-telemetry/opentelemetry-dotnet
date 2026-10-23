@@ -132,6 +132,8 @@ public sealed partial class PrometheusSerializerTests
         { new object[] { new KeyValuePair<string, object?>[] { new("a", 1) } }, """[{\"a\":1}]""" },
         { new List<KeyValuePair<string, object?>> { new("a", 1), new("A", 2), new("a", 3) }, """{\"a\":3,\"A\":2}""" },
         { new object[] { new List<KeyValuePair<string, object?>> { new("a", 1), new("A", 2), new("a", 3) } }, """[{\"a\":3,\"A\":2}]""" },
+        { CreateReferenceKeyedDictionary(), """{\"a\":2}""" },
+        { new object[] { CreateReferenceKeyedDictionary() }, """[{\"a\":2}]""" },
     };
 
     [Fact]
@@ -2525,8 +2527,23 @@ public sealed partial class PrometheusSerializerTests
     private static Regex SdkVersion() => new("telemetry_sdk_version=\"[^\"]*\"", RegexOptions.Compiled);
 #endif
 
+    private static Dictionary<string, object?> CreateReferenceKeyedDictionary()
+        => new(new ReferenceKeyComparer())
+        {
+            // Two distinct string instances with the same text are distinct keys for the comparer
+            [new string('a', 1)] = 1,
+            [new string('a', 1)] = 2,
+        };
+
     private sealed class UnsupportedValue
     {
         public override string? ToString() => null;
+    }
+
+    private sealed class ReferenceKeyComparer : IEqualityComparer<string>
+    {
+        public bool Equals(string? x, string? y) => ReferenceEquals(x, y);
+
+        public int GetHashCode(string obj) => RuntimeHelpers.GetHashCode(obj);
     }
 }

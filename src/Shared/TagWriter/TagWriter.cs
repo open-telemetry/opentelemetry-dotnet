@@ -202,10 +202,14 @@ internal abstract class TagWriter<TTagState, TArrayState>
         // See https://github.com/open-telemetry/opentelemetry-specification/blob/v1.62.0/specification/common/README.md#mapstring-anyvalue;
         // exported maps must only contain unique keys. Keys are compared case-sensitively and, as when setting an attribute that already
         // exists, the last value for a key wins. The key keeps the position at which it first appeared.
-        if (kvList is IDictionary<string, object?> or IReadOnlyDictionary<string, object?>)
+        if (kvList is Dictionary<string, object?> dictionary &&
+            (dictionary.Comparer == EqualityComparer<string>.Default ||
+             dictionary.Comparer == StringComparer.Ordinal ||
+             dictionary.Comparer == StringComparer.OrdinalIgnoreCase))
         {
-            // The keys of a dictionary are already unique
-            return kvList;
+            // The keys of the dictionary are already unique when compared ordinally. Other comparers
+            // (e.g. ReferenceEqualityComparer) can allow keys containing the same text, so are not trusted.
+            return dictionary;
         }
 
         var items = new List<KeyValuePair<string, object?>>();
