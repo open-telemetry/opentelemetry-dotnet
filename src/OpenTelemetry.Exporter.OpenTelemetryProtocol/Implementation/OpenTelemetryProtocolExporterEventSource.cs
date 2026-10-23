@@ -387,5 +387,20 @@ internal sealed class OpenTelemetryProtocolExporterEventSource : EventSource, IC
         => this.WriteEvent(43);
 
     private static string RedactEndpointUri(Uri endpoint)
-        => endpoint.GetComponents(UriComponents.SchemeAndServer | UriComponents.Path, UriFormat.UriEscaped);
+    {
+        var authority = endpoint.GetComponents(UriComponents.SchemeAndServer, UriFormat.UriEscaped);
+        var path = endpoint.AbsolutePath;
+
+        return path switch
+        {
+            "" or "/" => authority,
+            "/v1/traces"
+                or "/v1/metrics"
+                or "/v1/logs"
+                or "/opentelemetry.proto.collector.trace.v1.TraceService/Export"
+                or "/opentelemetry.proto.collector.metrics.v1.MetricsService/Export"
+                or "/opentelemetry.proto.collector.logs.v1.LogsService/Export" => string.Concat(authority, path),
+            _ => string.Concat(authority, path[0] == '/' ? "/[REDACTED]" : "[REDACTED]"),
+        };
+    }
 }
