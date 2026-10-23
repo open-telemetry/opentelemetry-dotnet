@@ -58,7 +58,7 @@ version: bug fixes are released either as part of the next minor version or as
 an on-demand patch version. Independent of which version is next, all patch
 versions are cumulative, meaning that they represent the state of our `main`
 branch at the moment of the release. For instance, if the latest version is
-1.21.1, bug fixes are released either as part of 1.22.0 or 1.21.2.
+1.20.1, bug fixes are released either as part of 1.21.0 or 1.20.2.
 
 See [Supported Versions](https://github.com/open-telemetry/sig-security/blob/main/security-response.md#supported-versions)
 for more information.
