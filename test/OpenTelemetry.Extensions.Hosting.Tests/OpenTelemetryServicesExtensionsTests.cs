@@ -807,6 +807,61 @@ public class OpenTelemetryServicesExtensionsTests
         await host.StopAsync(TestContext.Current.CancellationToken);
     }
 
+    [Fact]
+    public async Task AddOpenTelemetry_TelemetryIsCapturedDuringStartingAsync()
+    {
+        var exportedItems = new List<Activity>();
+
+        var builder = new HostBuilder().ConfigureServices(services =>
+        {
+            services.AddHostedService<TestHostedLifecycleService>();
+            services.AddOpenTelemetry()
+                .WithTracing(builder =>
+                {
+                    builder.SetSampler(new AlwaysOnSampler());
+                    builder.AddSource(nameof(TestHostedLifecycleService));
+                    builder.AddInMemoryExporter(exportedItems);
+                });
+        });
+
+        using var host = builder.Build();
+        await host.StartAsync(TestContext.Current.CancellationToken);
+        await host.StopAsync(TestContext.Current.CancellationToken);
+
+        var activity = Assert.Single(exportedItems);
+        Assert.Equal("starting", activity.DisplayName);
+    }
+
+    [Fact]
+    public async Task AddOpenTelemetry_TelemetryHostInitializer_InvokedOnceOnStart()
+    {
+        var customInitializer = new CustomTelemetryHostInitializer();
+
+        var builder = new HostBuilder().ConfigureServices(services =>
+        {
+            services.AddSingleton<ITelemetryHostInitializer>(customInitializer);
+            services.AddOpenTelemetry();
+        });
+
+        using var host = builder.Build();
+
+        await host.StartAsync(TestContext.Current.CancellationToken);
+        await host.StopAsync(TestContext.Current.CancellationToken);
+
+        Assert.Equal(1, customInitializer.InitializeCount);
+    }
+
+    [Fact]
+    public async Task TelemetryHostedService_StartAsync_InitializesWhenStartingAsyncNotCalled()
+    {
+        var customInitializer = new CustomTelemetryHostInitializer();
+        var service = new TelemetryHostedService(customInitializer);
+
+        await service.StartAsync(TestContext.Current.CancellationToken);
+
+        Assert.Equal(1, customInitializer.InitializeCount);
+    }
+
 #pragma warning disable CA1812 // Avoid uninstantiated internal classes
     private sealed class MySampler : Sampler
 #pragma warning restore CA1812 // Avoid uninstantiated internal classes
@@ -873,10 +928,40 @@ public class OpenTelemetryServicesExtensionsTests
     }
 #endif
 
+#pragma warning disable CA1812 // Avoid uninstantiated internal classes
+    private sealed class TestHostedLifecycleService : IHostedLifecycleService, IDisposable
+#pragma warning restore CA1812 // Avoid uninstantiated internal classes
+    {
+        private readonly ActivitySource activitySource = new(nameof(TestHostedLifecycleService));
+
+        public Task StartingAsync(CancellationToken cancellationToken)
+        {
+            using (this.activitySource.StartActivity("starting"))
+            {
+            }
+
+            return Task.CompletedTask;
+        }
+
+        public Task StartAsync(CancellationToken cancellationToken) => Task.CompletedTask;
+
+        public Task StartedAsync(CancellationToken cancellationToken) => Task.CompletedTask;
+
+        public Task StoppingAsync(CancellationToken cancellationToken) => Task.CompletedTask;
+
+        public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
+
+        public Task StoppedAsync(CancellationToken cancellationToken) => Task.CompletedTask;
+
+        public void Dispose() => this.activitySource.Dispose();
+    }
+
     private sealed class CustomTelemetryHostInitializer : ITelemetryHostInitializer
     {
-        public bool Initialized { get; private set; }
+        public int InitializeCount { get; private set; }
 
-        public void Initialize() => this.Initialized = true;
+        public bool Initialized => this.InitializeCount > 0;
+
+        public void Initialize() => this.InitializeCount++;
     }
 }
