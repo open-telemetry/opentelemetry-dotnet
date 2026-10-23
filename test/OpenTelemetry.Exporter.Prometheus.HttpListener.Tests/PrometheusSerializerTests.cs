@@ -127,6 +127,11 @@ public sealed partial class PrometheusSerializerTests
         { new object[] { LabelValueArrayCase }, "[[1,2,3]]" },
         { new object[] { LabelValueByteArrayCase }, """[\"AQID\"]""" },
         { new object[] { new Dictionary<string, object?> { ["a"] = 1 } }, """[{\"a\":1}]""" },
+        { new sbyte[] { -1, 0, 127 }, "[-1,0,127]" },
+        { new object[] { new sbyte[] { -1, 0, 127 } }, "[[-1,0,127]]" },
+        { new object[] { new KeyValuePair<string, object?>[] { new("a", 1) } }, """[{\"a\":1}]""" },
+        { new List<KeyValuePair<string, object?>> { new("a", 1), new("A", 2), new("a", 3) }, """{\"a\":3,\"A\":2}""" },
+        { new object[] { new List<KeyValuePair<string, object?>> { new("a", 1), new("A", 2), new("a", 3) } }, """[{\"a\":3,\"A\":2}]""" },
     };
 
     [Fact]

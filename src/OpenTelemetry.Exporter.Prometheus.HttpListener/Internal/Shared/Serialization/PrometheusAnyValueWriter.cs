@@ -91,7 +91,7 @@ internal sealed class PrometheusAnyValueWriter : JsonStringArrayTagWriter<Promet
         {
             writer.WriteStartObject();
 
-            foreach (var kvp in kvList)
+            foreach (var kvp in DeduplicateKeys(kvList))
             {
                 AnyValue nestedValue = default;
                 if (this.TryWriteTag(ref nestedValue, kvp.Key, kvp.Value, tagValueMaxLength))

@@ -6,6 +6,13 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Fixed array-valued tags containing `NaN` or infinite floating-point values
+  being exported as `TRUNCATED`; such values are now written as JSON strings
+  (e.g. `["NaN"]`). Arrays and maps nested inside array-valued tags are now
+  written as nested JSON (with `byte[]` values Base64-encoded) instead of as
+  their .NET type name (e.g. `System.Int32[]`).
+  ([#7694](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7694))
+
 ## 1.20.1
 
 Released 2026-Oct-20

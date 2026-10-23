@@ -197,6 +197,36 @@ internal abstract class TagWriter<TTagState, TArrayState>
         return true;
     }
 
+    protected static IEnumerable<KeyValuePair<string, object?>> DeduplicateKeys(IEnumerable<KeyValuePair<string, object?>> kvList)
+    {
+        // See https://github.com/open-telemetry/opentelemetry-specification/blob/v1.62.0/specification/common/README.md#mapstring-anyvalue;
+        // exported maps must only contain unique keys. Keys are compared case-sensitively and, as when setting an attribute that already
+        // exists, the last value for a key wins. The key keeps the position at which it first appeared.
+        if (kvList is IDictionary<string, object?> or IReadOnlyDictionary<string, object?>)
+        {
+            // The keys of a dictionary are already unique
+            return kvList;
+        }
+
+        var items = new List<KeyValuePair<string, object?>>();
+        var indexes = new Dictionary<string, int>(StringComparer.Ordinal);
+
+        foreach (var kvp in kvList)
+        {
+            if (indexes.TryGetValue(kvp.Key, out var index))
+            {
+                items[index] = kvp;
+            }
+            else
+            {
+                indexes[kvp.Key] = items.Count;
+                items.Add(kvp);
+            }
+        }
+
+        return items;
+    }
+
     protected abstract bool TryWriteEmptyTag(ref TTagState state, string key, object? value);
 
     protected abstract bool TryWriteByteArrayTag(ref TTagState state, string key, ReadOnlySpan<byte> value);
@@ -512,10 +542,9 @@ internal abstract class TagWriter<TTagState, TArrayState>
             // the array writer supports embedding one (currently the JSON-based writers); when
             // it is not supported, or the nesting limit below has been reached, the "when"
             // clause is false and the switch falls through to the string-converted default.
-            case byte[] byteArray when this.arrayWriter.TryWriteByteArrayValue(ref arrayState, byteArray):
-                break;
-
-            case Array nestedArray when this.TryWriteNestedArrayValue(ref arrayState, nestedArray, tagValueMaxLength):
+            // The exact type check is needed because the runtime also allows a sbyte[] to match byte[].
+            // Maps are matched before arrays so that an array of key/value pairs is written as a map.
+            case byte[] byteArray when byteArray.GetType() == typeof(byte[]) && this.arrayWriter.TryWriteByteArrayValue(ref arrayState, byteArray):
                 break;
 
             case IEnumerable<KeyValuePair<string, object?>> nestedKvList when this.TryWriteNestedObjectValue(ref arrayState, nestedKvList, tagValueMaxLength):
@@ -525,6 +554,9 @@ internal abstract class TagWriter<TTagState, TArrayState>
                 break;
 
             case IDictionary nestedDictionary when this.TryWriteNestedObjectValue(ref arrayState, AdaptDictionary(nestedDictionary), tagValueMaxLength):
+                break;
+
+            case Array nestedArray when this.TryWriteNestedArrayValue(ref arrayState, nestedArray, tagValueMaxLength):
                 break;
 
             // All other types are converted to strings including the following
@@ -585,7 +617,7 @@ internal abstract class TagWriter<TTagState, TArrayState>
         recursionDepth++;
         try
         {
-            foreach (var kvp in kvList)
+            foreach (var kvp in DeduplicateKeys(kvList))
             {
                 this.arrayWriter.WriteNestedObjectPropertyName(ref arrayState, kvp.Key);
                 this.WriteArrayItem(ref arrayState, kvp.Value, tagValueMaxLength);

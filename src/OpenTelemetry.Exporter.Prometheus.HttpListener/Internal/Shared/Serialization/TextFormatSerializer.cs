@@ -601,7 +601,8 @@ internal abstract class TextFormatSerializer
 
             // See https://github.com/open-telemetry/opentelemetry-specification/blob/v1.60.0/specification/common/README.md#byte-arrays;
             // byte arrays are Base64-encoded rather than falling through to the array handling below.
-            case byte[] byteArrayValue:
+            // The exact type check is needed because the runtime also allows a sbyte[] to match byte[].
+            case byte[] byteArrayValue when byteArrayValue.GetType() == typeof(byte[]):
                 return WriteLabelValue(buffer, cursor, Convert.ToBase64String(byteArrayValue));
 
             // Arrays and maps are JSON-encoded, per
@@ -1437,7 +1438,7 @@ internal abstract class TextFormatSerializer
         float floatValue => GetCanonicalLabelValueString(floatValue),
         double doubleValue => GetCanonicalLabelValueString(doubleValue),
         decimal decimalValue => decimalValue.ToString(CultureInfo.InvariantCulture),
-        byte[] byteArrayValue => Convert.ToBase64String(byteArrayValue),
+        byte[] byteArrayValue when byteArrayValue.GetType() == typeof(byte[]) => Convert.ToBase64String(byteArrayValue),
         Array or IEnumerable<KeyValuePair<string, object?>> or IEnumerable<KeyValuePair<string, string?>> or IDictionary => PrometheusAnyValueWriter.Instance.ToLabelValueString(key, labelValue),
         IFormattable formattableValue => formattableValue.ToString(null, CultureInfo.InvariantCulture) ?? string.Empty,
         _ => labelValue.ToString() ?? string.Empty,
