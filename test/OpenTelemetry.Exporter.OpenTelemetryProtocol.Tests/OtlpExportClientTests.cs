@@ -325,7 +325,7 @@ public class OtlpExportClientTests
 
         // The transmission handler has no deadline when HttpClient.Timeout is infinite
         using var transmissionHandler = new OtlpExporterTransmissionHandler(exportClient, httpClient.Timeout.TotalMilliseconds);
-        var deadlineUtc = transmissionHandler.GetDeadlineUtc(Timeout.Infinite);
+        var deadlineUtc = transmissionHandler.GetDeadlineUtc(DateTime.MaxValue);
 
         // Act
         var response = exportClient.SendExportRequest(payload, payload.Length, deadlineUtc, TestContext.Current.CancellationToken);
@@ -334,6 +334,30 @@ public class OtlpExportClientTests
         Assert.False(response.Success);
         Assert.Contains(listener.Messages, e => e.EventId == HttpRequestFailedEventId);
         Assert.DoesNotContain(listener.Messages, e => e.EventId == RequestTimedOutEventId);
+    }
+
+    [Fact]
+    public void GetTimeUntilDeadline_OnlyHasNoDeadlineForMaxValue()
+    {
+        var maximumDelay = TimeSpan.FromMilliseconds(int.MaxValue);
+
+        // No deadline
+        Assert.Null(OtlpExportClient.GetTimeUntilDeadline(DateTime.MaxValue));
+
+        // A deadline which has passed
+        Assert.True(OtlpExportClient.GetTimeUntilDeadline(DateTime.UtcNow.AddMilliseconds(-1)) <= TimeSpan.Zero);
+
+        // The longest delay CancelAfter() accepts is still a deadline
+        var remaining = OtlpExportClient.GetTimeUntilDeadline(DateTime.UtcNow.Add(maximumDelay));
+        Assert.NotNull(remaining);
+        Assert.InRange(remaining.Value, maximumDelay - TimeSpan.FromMinutes(1), maximumDelay);
+
+        using var cts = new CancellationTokenSource();
+        cts.CancelAfter(remaining.Value);
+        Assert.False(cts.IsCancellationRequested);
+
+        // A deadline further away than that is reached sooner, rather than not at all
+        Assert.Equal(maximumDelay, OtlpExportClient.GetTimeUntilDeadline(DateTime.UtcNow.AddDays(30)));
     }
 
     [Theory]

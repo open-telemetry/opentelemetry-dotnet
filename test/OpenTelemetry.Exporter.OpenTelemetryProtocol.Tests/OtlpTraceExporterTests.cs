@@ -3,6 +3,9 @@
 
 using System.Diagnostics;
 using System.Diagnostics.Tracing;
+#if NETFRAMEWORK
+using System.Net.Http;
+#endif
 using Google.Protobuf.Collections;
 using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
@@ -1287,6 +1290,40 @@ public sealed class OtlpTraceExporterTests : IDisposable
         Assert.InRange(exportClientMock.LastDeadlineUtc, before.AddMilliseconds(500), after.AddMilliseconds(500));
     }
 
+    [Theory]
+    [InlineData(false, 100, ExportResult.Failure)]
+    [InlineData(true, 100, ExportResult.Failure)]
+    [InlineData(false, 30_000, ExportResult.Success)]
+    [InlineData(true, 30_000, ExportResult.Success)]
+    public void Export_ExportOverrideDelaysBaseExport_RequestIsNotSentOnceProcessorTimeoutElapses(bool useGrpc, int exporterTimeoutMilliseconds, ExportResult expected)
+    {
+        using var handler = new TestHttpMessageHandler();
+        var exporterOptions = new OtlpExporterOptions
+        {
+#pragma warning disable CS0618 // Suppressing gRPC obsolete warning
+            Protocol = useGrpc ? OtlpExportProtocol.Grpc : OtlpExportProtocol.HttpProtobuf,
+#pragma warning restore CS0618 // Suppressing gRPC obsolete warning
+            HttpClientFactory = () => new HttpClient(handler, disposeHandler: false),
+        };
+
+#pragma warning disable CA2000 // Dispose objects before losing scope
+        var exporter = new DelayedOtlpTraceExporter(exporterOptions, TimeSpan.FromMilliseconds(400));
+#pragma warning restore CA2000 // Dispose objects before losing scope
+        using var processor = new BatchActivityExportProcessor(exporter, exporterTimeoutMilliseconds: exporterTimeoutMilliseconds);
+
+        using var activity = new Activity("activity")
+        {
+            ActivityTraceFlags = ActivityTraceFlags.Recorded,
+        };
+
+        processor.OnEnd(activity);
+        Assert.True(processor.ForceFlush());
+
+        // The time the override spends before calling the base implementation counts towards the timeout
+        Assert.Equal(expected, exporter.LastResult);
+        Assert.Equal(expected == ExportResult.Success ? 1 : 0, handler.RequestCount);
+    }
+
     [Fact]
     public void Export_SerializationTime_CountsTowardsExportDeadline()
     {
@@ -1642,6 +1679,17 @@ public sealed class OtlpTraceExporterTests : IDisposable
             this.FirstCalledAtUtc ??= DateTime.UtcNow;
             Thread.Sleep(delay);
             return "slow";
+        }
+    }
+
+    private sealed class DelayedOtlpTraceExporter(OtlpExporterOptions options, TimeSpan delay) : OtlpTraceExporter(options)
+    {
+        public ExportResult? LastResult { get; private set; }
+
+        public override ExportResult Export(in Batch<Activity> activityBatch)
+        {
+            Thread.Sleep(delay);
+            return (this.LastResult = base.Export(activityBatch)).Value;
         }
     }
 }

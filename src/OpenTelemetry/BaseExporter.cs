@@ -36,17 +36,17 @@ public abstract class BaseExporter<T> : IDisposable
     public BaseProvider? ParentProvider { get; internal set; }
 
     /// <summary>
-    /// Gets the number of milliseconds the caller of <see cref="Export(in Batch{T})"/> allows
-    /// the export to take, or <c>Timeout.Infinite</c> when the caller does not set a limit.
+    /// Gets the time in UTC by which the caller of <see cref="Export(in Batch{T})"/> requires
+    /// the export to finish, or <see cref="DateTime.MaxValue"/> when the caller does not set a limit.
     /// </summary>
     /// <remarks>
     /// <see cref="Export(in Batch{T})"/> has no timeout parameter. This is set by
     /// <see cref="Export(in Batch{T}, int)"/> for the duration of the export
-    /// (the time left of a <c>ForceFlush</c>/<c>Shutdown</c> timeout, or the
+    /// (from the time left of a <c>ForceFlush</c>/<c>Shutdown</c> timeout, or the
     /// configured export timeout) so that exporters which are able to cancel
     /// their work can honor it.
     /// </remarks>
-    internal int ExportTimeoutMilliseconds { get; private set; } = Timeout.Infinite;
+    internal DateTime ExportDeadlineUtc { get; private set; } = DateTime.MaxValue;
 
     /// <summary>
     /// Exports a batch of telemetry objects.
@@ -138,16 +138,26 @@ public abstract class BaseExporter<T> : IDisposable
     /// </summary>
     /// <param name="batch">Batch of telemetry objects to export.</param>
     /// <param name="timeoutMilliseconds">
-    /// The number of milliseconds the export is allowed to take, or
+    /// The number of milliseconds the export is allowed to take, or zero or
     /// <c>Timeout.Infinite</c> when there is no limit.
     /// </param>
     /// <returns>Result of the export operation.</returns>
     internal ExportResult Export(in Batch<T> batch, int timeoutMilliseconds)
     {
-        // The timeout only applies to this export, so that a later call to
-        // Export(in Batch<T>) made directly does not inherit it.
-        var previousTimeoutMilliseconds = this.ExportTimeoutMilliseconds;
-        this.ExportTimeoutMilliseconds = timeoutMilliseconds;
+        // The deadline starts before Export(in Batch<T>) is called, so that it also
+        // includes any time an override spends before calling the base implementation.
+        // A nested export cannot extend the deadline of the export it is part of.
+        var previousDeadlineUtc = this.ExportDeadlineUtc;
+
+        if (timeoutMilliseconds > 0)
+        {
+            var deadlineUtc = DateTime.UtcNow.AddMilliseconds(timeoutMilliseconds);
+
+            if (deadlineUtc < previousDeadlineUtc)
+            {
+                this.ExportDeadlineUtc = deadlineUtc;
+            }
+        }
 
         try
         {
@@ -155,7 +165,9 @@ public abstract class BaseExporter<T> : IDisposable
         }
         finally
         {
-            this.ExportTimeoutMilliseconds = previousTimeoutMilliseconds;
+            // The deadline only applies to this export, so that a later call to
+            // Export(in Batch<T>) made directly does not inherit it.
+            this.ExportDeadlineUtc = previousDeadlineUtc;
         }
     }
 

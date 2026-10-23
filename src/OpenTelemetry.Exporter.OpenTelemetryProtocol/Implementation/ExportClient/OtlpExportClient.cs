@@ -18,6 +18,7 @@ internal abstract class OtlpExportClient : IExportClient
     internal const int MaxLoggedResponseSizeBytes = 4 * 1024;
 
     private static readonly Version Http2RequestVersion = new(2, 0);
+    private static readonly TimeSpan MaxDeadlineDelay = TimeSpan.FromMilliseconds(int.MaxValue);
 
 #if NET
     // See: https://github.com/dotnet/runtime/blob/280f2a0c60ce0378b8db49adc0eecc463d00fe5d/src/libraries/System.Net.Http/src/System/Net/Http/HttpClientHandler.AnyMobile.cs#L767
@@ -89,6 +90,31 @@ internal abstract class OtlpExportClient : IExportClient
         return true;
     }
 
+    /// <summary>
+    /// Gets how long is left until a deadline, for use with
+    /// <see cref="CancellationTokenSource.CancelAfter(TimeSpan)"/>.
+    /// </summary>
+    /// <param name="deadlineUtc">
+    /// The deadline time in UTC, or <see cref="DateTime.MaxValue"/> if there is no deadline.
+    /// </param>
+    /// <returns>
+    /// The time left until the deadline, which is zero or negative if it has passed and at most
+    /// <see cref="int.MaxValue"/> milliseconds, or <see langword="null"/> if there is no deadline.
+    /// </returns>
+    internal static TimeSpan? GetTimeUntilDeadline(DateTime deadlineUtc)
+    {
+        if (deadlineUtc == DateTime.MaxValue)
+        {
+            return null;
+        }
+
+        var remaining = deadlineUtc - DateTime.UtcNow;
+
+        // CancelAfter() does not accept a delay of more than int.MaxValue milliseconds (about 24.8 days),
+        // so a deadline further away than that is reached sooner rather than not at all.
+        return remaining > MaxDeadlineDelay ? MaxDeadlineDelay : remaining;
+    }
+
     protected internal static string? TryGetResponseBody(HttpResponseMessage? httpResponse, int maxResponseSizeBytes, CancellationToken cancellationToken) =>
         HttpClientHelpers.TryGetResponseBodyAsString(httpResponse, maxResponseSizeBytes, cancellationToken);
 
@@ -112,17 +138,15 @@ internal abstract class OtlpExportClient : IExportClient
         DateTime deadlineUtc,
         CancellationToken cancellationToken)
     {
-        var remaining = deadlineUtc - DateTime.UtcNow;
+        if (GetTimeUntilDeadline(deadlineUtc) is not { } remaining)
+        {
+            // There is no deadline, so only the caller's token applies.
+            return TryGetResponseBody(httpResponse, maxResponseSizeBytes, cancellationToken);
+        }
 
         if (remaining <= TimeSpan.Zero)
         {
             return null;
-        }
-
-        if (remaining.TotalMilliseconds >= int.MaxValue)
-        {
-            // The deadline is too far away to schedule, so only the caller's token applies.
-            return TryGetResponseBody(httpResponse, maxResponseSizeBytes, cancellationToken);
         }
 
         using var deadlineCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
@@ -233,7 +257,13 @@ internal abstract class OtlpExportClient : IExportClient
 
     protected HttpResponseMessage SendHttpRequest(HttpRequestMessage request, DateTime deadlineUtc, CancellationToken cancellationToken)
     {
-        var remaining = deadlineUtc - DateTime.UtcNow;
+        if (GetTimeUntilDeadline(deadlineUtc) is not { } remaining)
+        {
+            // There is no deadline when neither the exporter nor its caller limits the
+            // export (for example an HttpClient with an infinite Timeout), so only the
+            // caller's token applies.
+            return this.SendHttpRequest(request, cancellationToken);
+        }
 
         if (remaining <= TimeSpan.Zero)
         {
@@ -241,15 +271,6 @@ internal abstract class OtlpExportClient : IExportClient
             // because serializing the batch used all of the time that was allowed.
             const string Message = "The export deadline was reached before the request was sent.";
             throw new TaskCanceledException(Message, new TimeoutException(Message));
-        }
-
-        // There is no deadline (DateTime.MaxValue) when neither the exporter nor its
-        // caller limits the export (for example an HttpClient with an infinite Timeout),
-        // so only the caller's token applies then, as it does if the deadline is too far
-        // away to schedule.
-        if (remaining.TotalMilliseconds >= int.MaxValue)
-        {
-            return this.SendHttpRequest(request, cancellationToken);
         }
 
         // HttpClient.Timeout applies to every request and cannot be

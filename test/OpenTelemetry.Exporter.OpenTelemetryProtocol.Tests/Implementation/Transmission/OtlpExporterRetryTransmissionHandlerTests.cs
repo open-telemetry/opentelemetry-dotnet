@@ -158,20 +158,22 @@ public class OtlpExporterRetryTransmissionHandlerTests
 
     [Theory]
     [InlineData(10_000, Timeout.Infinite, 10_000)]
-    [InlineData(10_000, 0, 10_000)]
     [InlineData(10_000, 500, 500)]
     [InlineData(10_000, 10_000, 10_000)]
     [InlineData(10_000, 30_000, 10_000)]
     [InlineData(Timeout.Infinite, Timeout.Infinite, Timeout.Infinite)]
-    [InlineData(Timeout.Infinite, 0, Timeout.Infinite)]
     [InlineData(Timeout.Infinite, 500, 500)]
-    public void GetDeadlineUtc_IsTheShorterOfTheTimeouts(int exporterTimeoutMilliseconds, int timeoutMilliseconds, int expectedTimeoutMilliseconds)
+    public void GetDeadlineUtc_IsTheEarlierOfTheDeadlines(int exporterTimeoutMilliseconds, int callerTimeoutMilliseconds, int expectedTimeoutMilliseconds)
     {
         var exportClient = new TestExportClient();
         using var transmissionHandler = new OtlpExporterRetryTransmissionHandler(exportClient, exporterTimeoutMilliseconds);
 
         var before = DateTime.UtcNow;
-        var deadlineUtc = transmissionHandler.GetDeadlineUtc(timeoutMilliseconds);
+        var callerDeadlineUtc = callerTimeoutMilliseconds == Timeout.Infinite
+            ? DateTime.MaxValue
+            : before.AddMilliseconds(callerTimeoutMilliseconds);
+
+        var deadlineUtc = transmissionHandler.GetDeadlineUtc(callerDeadlineUtc);
         var after = DateTime.UtcNow;
 
         if (expectedTimeoutMilliseconds == Timeout.Infinite)

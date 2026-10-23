@@ -143,14 +143,14 @@ public class MetricReaderTests
     [InlineData(1_234, 5_000, 1_234)]
     public void Collect_PassesRemainingTimeoutToExporter(int timeoutMilliseconds, int? periodicExportTimeoutMilliseconds, int expectedTimeoutMilliseconds)
     {
-        int? exportTimeoutMilliseconds = null;
+        DateTime? exportDeadlineUtc = null;
 
 #pragma warning disable CA2000 // Dispose objects before losing scope
         var exporter = new DelegatingExporter<Metric>();
 #pragma warning restore CA2000 // Dispose objects before losing scope
         exporter.OnExportFunc = _ =>
         {
-            exportTimeoutMilliseconds ??= exporter.ExportTimeoutMilliseconds;
+            exportDeadlineUtc ??= exporter.ExportDeadlineUtc;
             return ExportResult.Success;
         };
 
@@ -170,21 +170,23 @@ public class MetricReaderTests
 
         meter.CreateCounter<long>("test_counter").Add(1);
 
+        var before = DateTime.UtcNow;
         Assert.True(provider.ForceFlush(timeoutMilliseconds));
+        var after = DateTime.UtcNow;
 
-        Assert.NotNull(exportTimeoutMilliseconds);
+        Assert.NotNull(exportDeadlineUtc);
 
         if (expectedTimeoutMilliseconds == Timeout.Infinite)
         {
-            Assert.Equal(Timeout.Infinite, exportTimeoutMilliseconds);
+            Assert.Equal(DateTime.MaxValue, exportDeadlineUtc);
         }
         else
         {
-            Assert.InRange(exportTimeoutMilliseconds.Value, 1, expectedTimeoutMilliseconds);
+            Assert.InRange(exportDeadlineUtc.Value, before, after.AddMilliseconds(expectedTimeoutMilliseconds));
         }
 
-        // The timeout only applies to the export it was passed to
-        Assert.Equal(Timeout.Infinite, exporter.ExportTimeoutMilliseconds);
+        // The deadline only applies to the export it was passed to
+        Assert.Equal(DateTime.MaxValue, exporter.ExportDeadlineUtc);
     }
 
     private static Task<bool> RunOnDedicatedThread(Func<bool> collect)

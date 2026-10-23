@@ -77,9 +77,10 @@ public class OtlpTraceExporter : BaseExporter<Activity>
         // Prevents the exporter's gRPC and HTTP operations from being instrumented.
         using var scope = SuppressInstrumentationScope.Begin();
 
-        // The deadline starts before the batch is serialized, so that the time taken
-        // to serialize it counts towards the time the export is allowed to take.
-        var deadlineUtc = this.transmissionHandler.GetDeadlineUtc(this.ExportTimeoutMilliseconds);
+        // The exporter's own timeout starts before the batch is serialized (and the
+        // caller's deadline before Export was called), so that the time taken to
+        // serialize it counts towards the time the export is allowed to take.
+        var deadlineUtc = this.transmissionHandler.GetDeadlineUtc(this.ExportDeadlineUtc);
 
         byte[]? buffer = null;
         var serializationSucceeded = false;

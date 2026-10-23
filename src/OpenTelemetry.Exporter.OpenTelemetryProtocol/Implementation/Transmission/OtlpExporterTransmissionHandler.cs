@@ -31,7 +31,7 @@ internal class OtlpExporterTransmissionHandler : IDisposable
     /// otherwise, <see langword="false"/>.
     /// </returns>
     public bool TrySubmitRequest(byte[] request, int contentLength)
-        => this.TrySubmitRequest(request, contentLength, this.GetDeadlineUtc(Timeout.Infinite));
+        => this.TrySubmitRequest(request, contentLength, this.GetDeadlineUtc(DateTime.MaxValue));
 
     /// <summary>
     /// Attempts to send an export request to the server.
@@ -63,30 +63,30 @@ internal class OtlpExporterTransmissionHandler : IDisposable
     /// <summary>
     /// Gets the deadline for an export which starts now.
     /// </summary>
-    /// <param name="timeoutMilliseconds">
-    /// The number of milliseconds the caller allows the export to take, or zero
-    /// or <see cref="Timeout.Infinite"/> when the caller does not set a limit.
-    /// The shorter of this and the exporter's own timeout is used for the deadline.
+    /// <param name="deadlineUtc">
+    /// The time in utc by which the caller requires the export to finish, or
+    /// <see cref="DateTime.MaxValue"/> when the caller does not set a limit.
+    /// The earlier of this and the deadline from the exporter's own timeout is used.
     /// </param>
     /// <returns>
     /// The deadline time in utc for the export to finish, or <see cref="DateTime.MaxValue"/>
     /// if neither the caller nor the exporter limits how long the export can take.
     /// </returns>
-    public DateTime GetDeadlineUtc(int timeoutMilliseconds)
+    public DateTime GetDeadlineUtc(DateTime deadlineUtc)
     {
-        var effectiveTimeoutMilliseconds = this.TimeoutMilliseconds;
-
         // The exporter's own timeout is not positive when it has no limit (for
-        // example an HttpClient with an infinite Timeout), so the caller's applies.
-        if (timeoutMilliseconds > 0 &&
-            (effectiveTimeoutMilliseconds <= 0 || timeoutMilliseconds < effectiveTimeoutMilliseconds))
+        // example an HttpClient with an infinite Timeout), so only the caller's applies.
+        if (this.TimeoutMilliseconds > 0)
         {
-            effectiveTimeoutMilliseconds = timeoutMilliseconds;
+            var exporterDeadlineUtc = DateTime.UtcNow.AddMilliseconds(this.TimeoutMilliseconds);
+
+            if (exporterDeadlineUtc < deadlineUtc)
+            {
+                deadlineUtc = exporterDeadlineUtc;
+            }
         }
 
-        return effectiveTimeoutMilliseconds > 0
-            ? DateTime.UtcNow.AddMilliseconds(effectiveTimeoutMilliseconds)
-            : DateTime.MaxValue;
+        return deadlineUtc;
     }
 
     /// <summary>

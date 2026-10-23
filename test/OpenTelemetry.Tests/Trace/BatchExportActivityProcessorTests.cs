@@ -189,14 +189,16 @@ public class BatchExportActivityProcessorTests
     [Fact]
     public void CheckExporterTimeoutIsPassedToExporter()
     {
-        int? exportTimeoutMilliseconds = null;
+        DateTime? exportStartedAtUtc = null;
+        DateTime? exportDeadlineUtc = null;
 
 #pragma warning disable CA2000 // Dispose objects before losing scope
         var exporter = new DelegatingExporter<Activity>();
 #pragma warning restore CA2000 // Dispose objects before losing scope
         exporter.OnExportFunc = _ =>
         {
-            exportTimeoutMilliseconds = exporter.ExportTimeoutMilliseconds;
+            exportDeadlineUtc = exporter.ExportDeadlineUtc;
+            exportStartedAtUtc = DateTime.UtcNow;
             return ExportResult.Success;
         };
 
@@ -209,13 +211,16 @@ public class BatchExportActivityProcessorTests
             ActivityTraceFlags = ActivityTraceFlags.Recorded,
         };
 
+        var before = DateTime.UtcNow;
         processor.OnEnd(activity);
         processor.Shutdown();
 
-        Assert.Equal(1234, exportTimeoutMilliseconds);
+        Assert.NotNull(exportDeadlineUtc);
+        Assert.NotNull(exportStartedAtUtc);
+        Assert.InRange(exportDeadlineUtc.Value, before.AddMilliseconds(1234), exportStartedAtUtc.Value.AddMilliseconds(1234));
 
-        // The timeout only applies to the export it was passed to
-        Assert.Equal(Timeout.Infinite, exporter.ExportTimeoutMilliseconds);
+        // The deadline only applies to the export it was passed to
+        Assert.Equal(DateTime.MaxValue, exporter.ExportDeadlineUtc);
     }
 
     private static async Task WaitForMinimumCountAsync(List<Activity> collection, int minimum)

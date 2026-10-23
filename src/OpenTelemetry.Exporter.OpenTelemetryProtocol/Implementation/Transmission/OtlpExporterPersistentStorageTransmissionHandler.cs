@@ -137,7 +137,7 @@ internal sealed class OtlpExporterPersistentStorageTransmissionHandler : OtlpExp
                     {
                         if (blob.TryLease((int)this.TimeoutMilliseconds) && blob.TryRead(out var data))
                         {
-                            var deadlineUtc = this.GetDeadlineUtc(Timeout.Infinite);
+                            var deadlineUtc = this.GetDeadlineUtc(DateTime.MaxValue);
 
                             // Note: The deadline is intentionally ignored when deciding whether to keep
                             // the blob. A retry attempt that exhausts the deadline should not cause the
