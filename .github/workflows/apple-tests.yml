@@ -116,9 +116,18 @@ jobs:
       if: ${{ failure() }}
       uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
       with:
-        name: apple-artifacts
+        name: apple-artifacts-${{ matrix.version }}
         if-no-files-found: ignore
         retention-days: 7
         path: |
           **/TestResults/**
           **/*.trx
+
+    - name: Upload simulator logs
+      if: ${{ failure() }}
+      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+      with:
+        name: apple-simulator-logs-${{ matrix.version }}
+        if-no-files-found: ignore
+        retention-days: 7
+        path: ~/Library/Logs/CoreSimulator/**
