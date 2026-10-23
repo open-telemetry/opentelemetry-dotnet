@@ -3,6 +3,7 @@
 
 using System.Diagnostics;
 using OpenTelemetry.Exporter;
+using OpenTelemetry.Tests;
 
 namespace OpenTelemetry.Trace.Tests;
 
@@ -183,6 +184,43 @@ public class BatchExportActivityProcessorTests
         processor.Shutdown();
 
         Assert.Equal(3, processor.ProcessedCount); // Verify batch was drained even though nothing was exported.
+    }
+
+    [Fact]
+    public void CheckExporterTimeoutIsPassedToExporter()
+    {
+        DateTime? exportStartedAtUtc = null;
+        DateTime? exportDeadlineUtc = null;
+
+#pragma warning disable CA2000 // Dispose objects before losing scope
+        var exporter = new DelegatingExporter<Activity>();
+#pragma warning restore CA2000 // Dispose objects before losing scope
+        exporter.OnExportFunc = _ =>
+        {
+            exportDeadlineUtc = exporter.ExportDeadlineUtc;
+            exportStartedAtUtc = DateTime.UtcNow;
+            return ExportResult.Success;
+        };
+
+        using var processor = new BatchActivityExportProcessor(
+            exporter,
+            exporterTimeoutMilliseconds: 1234);
+
+        using var activity = new Activity("start")
+        {
+            ActivityTraceFlags = ActivityTraceFlags.Recorded,
+        };
+
+        var before = DateTime.UtcNow;
+        processor.OnEnd(activity);
+        processor.Shutdown();
+
+        Assert.NotNull(exportDeadlineUtc);
+        Assert.NotNull(exportStartedAtUtc);
+        Assert.InRange(exportDeadlineUtc.Value, before.AddMilliseconds(1234), exportStartedAtUtc.Value.AddMilliseconds(1234));
+
+        // The deadline only applies to the export it was passed to
+        Assert.Equal(DateTime.MaxValue, exporter.ExportDeadlineUtc);
     }
 
     private static async Task WaitForMinimumCountAsync(List<Activity> collection, int minimum)
