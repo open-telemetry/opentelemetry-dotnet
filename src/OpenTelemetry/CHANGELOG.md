@@ -28,6 +28,16 @@ Notes](../../RELEASENOTES.md).
   legacy activity, or metric view patterns from matching.
   ([#8014](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8014))
 
+* The timeout passed to `MetricReader.Collect()` (for example by
+  `MeterProvider.ForceFlush()`), the `ExportTimeoutMilliseconds` of
+  `PeriodicExportingMetricReader` and the `ExporterTimeoutMilliseconds` of
+  `BatchExportProcessor<T>` are now made available to the exporter instead of
+  being ignored once the export has started, so that the OTLP exporter can
+  cancel an export which runs past the timeout. The `ExportTimeoutMilliseconds`
+  of `PeriodicExportingMetricReader` now also limits exports which are not
+  started by the reader itself, such as those of `MeterProvider.ForceFlush()`.
+  ([#7996](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7996))
+
 ## 1.20.1
 
 Released 2026-Oct-20
