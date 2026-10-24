@@ -7,6 +7,7 @@ using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Serializer;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Transmission;
 using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Exporter;
 
@@ -22,7 +23,7 @@ public class OtlpTraceExporter : BaseExporter<Activity>
     // towards OtlpExporterOptions.MaxRequestSizeBytes without resizing often.
     private const int InitialBufferSize = ProtobufSerializer.InitialBufferSize;
 
-    private readonly SdkLimitOptions sdkLimitOptions;
+    private readonly SpanLimiter spanLimiter;
     private readonly OtlpExporterTransmissionHandler transmissionHandler;
     private readonly int startWritePosition;
     private readonly int maxRequestSizeBytes;
@@ -50,7 +51,9 @@ public class OtlpTraceExporter : BaseExporter<Activity>
         ExperimentalOptions experimentalOptions,
         OtlpExporterTransmissionHandler? transmissionHandler = null)
     {
-        this.sdkLimitOptions = sdkLimitOptions;
+        // The endpoint tells drop warnings from different OTLP exporters apart.
+        this.spanLimiter = sdkLimitOptions.CreateSpanLimiter(
+            $"{nameof(OtlpTraceExporter)} ({OpenTelemetryProtocolExporterEventSource.RedactEndpointUri(exporterOptions.Endpoint)})");
 #pragma warning disable CS0618 // Suppressing gRPC obsolete warning
         this.startWritePosition = exporterOptions.Protocol == OtlpExportProtocol.Grpc ? GrpcStartWritePosition : 0;
 #pragma warning restore CS0618 // Suppressing gRPC obsolete warning
@@ -90,41 +93,49 @@ public class OtlpTraceExporter : BaseExporter<Activity>
         {
             buffer = this.serializationBuffer.Rent();
 
-            try
+            // Disposing the batch reports the drops. It is disposed once the request is ready to
+            // send, so retries do not delay the warning. If no request is made, the drops are
+            // discarded first.
+            using (var spanLimitBatch = this.spanLimiter.BeginBatch())
             {
-                writePosition = ProtobufOtlpTraceSerializer.WriteTraceData(
-                    ref buffer,
-                    this.startWritePosition,
-                    this.sdkLimitOptions,
-                    this.Resource,
-                    activityBatch,
-                    this.maxRequestSizeBytes + this.startWritePosition);
-                serializationSucceeded = true;
-            }
-            catch (Exception ex)
-            {
-                OpenTelemetryProtocolExporterEventSource.Log.BatchDroppedDueToSerializationFailure(
-                    OtlpSignalType.Traces,
-                    activityBatch.Count,
-                    ex);
-                return ExportResult.Failure;
-            }
+                try
+                {
+                    writePosition = ProtobufOtlpTraceSerializer.WriteTraceData(
+                        ref buffer,
+                        this.startWritePosition,
+                        spanLimitBatch,
+                        this.Resource,
+                        activityBatch,
+                        this.maxRequestSizeBytes + this.startWritePosition);
+                    serializationSucceeded = true;
+                }
+                catch (Exception ex)
+                {
+                    spanLimitBatch.Reset();
+                    OpenTelemetryProtocolExporterEventSource.Log.BatchDroppedDueToSerializationFailure(
+                        OtlpSignalType.Traces,
+                        activityBatch.Count,
+                        ex);
+                    return ExportResult.Failure;
+                }
 
-            // The serialization buffer is rented from a pool that can hand back more
-            // than was asked for, so the payload can overrun the configured limit.
-            // The specification requires that such a request is not made at all.
-            var requestSize = writePosition - this.startWritePosition;
-            if (requestSize > this.maxRequestSizeBytes)
-            {
-                OpenTelemetryProtocolExporterEventSource.Log.RequestDiscardedDueToSizeLimit(
-                    OtlpSignalType.Traces,
-                    activityBatch.Count,
-                    requestSize,
-                    this.maxRequestSizeBytes);
+                // The serialization buffer is rented from a pool that can hand back more
+                // than was asked for, so the payload can overrun the configured limit.
+                // The specification requires that such a request is not made at all.
+                var requestSize = writePosition - this.startWritePosition;
+                if (requestSize > this.maxRequestSizeBytes)
+                {
+                    spanLimitBatch.Reset();
+                    OpenTelemetryProtocolExporterEventSource.Log.RequestDiscardedDueToSizeLimit(
+                        OtlpSignalType.Traces,
+                        activityBatch.Count,
+                        requestSize,
+                        this.maxRequestSizeBytes);
 
-                // Discard the oversized buffer rather than keeping it as the size hint.
-                serializationSucceeded = false;
-                return ExportResult.Failure;
+                    // Discard the oversized buffer rather than keeping it as the size hint.
+                    serializationSucceeded = false;
+                    return ExportResult.Failure;
+                }
             }
 
             if (this.startWritePosition == GrpcStartWritePosition)

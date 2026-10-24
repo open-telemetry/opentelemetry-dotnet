@@ -25,12 +25,18 @@ internal sealed class ConsoleTagWriter : JsonStringArrayTagWriter<ConsoleTagWrit
     }
 
     public bool TryTransformTag(KeyValuePair<string, object?> tag, out KeyValuePair<string, string> result)
-        => this.TryTransformTag(tag.Key, tag.Value, out result);
+        => this.TryTransformTag(tag.Key, tag.Value, tagValueMaxLength: null, out result);
+
+    public bool TryTransformTag(KeyValuePair<string, object?> tag, int? tagValueMaxLength, out KeyValuePair<string, string> result)
+        => this.TryTransformTag(tag.Key, tag.Value, tagValueMaxLength, out result);
 
     public bool TryTransformTag(string key, object? value, out KeyValuePair<string, string> result)
+        => this.TryTransformTag(key, value, tagValueMaxLength: null, out result);
+
+    public bool TryTransformTag(string key, object? value, int? tagValueMaxLength, out KeyValuePair<string, string> result)
     {
         ConsoleTag consoleTag = default;
-        if (this.TryWriteTag(ref consoleTag, key, value))
+        if (this.TryWriteTag(ref consoleTag, key, value, tagValueMaxLength))
         {
             result = new KeyValuePair<string, string>(consoleTag.Key!, consoleTag.Value!);
             return true;
