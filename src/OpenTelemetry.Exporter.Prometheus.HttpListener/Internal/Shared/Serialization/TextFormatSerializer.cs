@@ -394,6 +394,23 @@ internal abstract class TextFormatSerializer
     {
         if (double.IsFinite(value))
         {
+            // Whole numbers below 1e15 format to the same digits as the equivalent integer
+            // (the shortest round-trip form only switches to exponent notation at 1e15),
+            // and formatting an integer is several times cheaper than the shortest
+            // round-trip search. Sums of integer-valued histograms and double counters
+            // incremented by whole amounts take this path. Negative zero must keep its
+            // sign, so it is left to the general path.
+            const double MaxIntegralDoubleFastPath = 1e15;
+
+            if (value > -MaxIntegralDoubleFastPath && value < MaxIntegralDoubleFastPath)
+            {
+                var integral = (long)value;
+                if (integral == value && (integral != 0 || BitConverter.DoubleToInt64Bits(value) >= 0))
+                {
+                    return WriteLong(buffer, cursor, integral);
+                }
+            }
+
             // The shortest round-trippable representation is used, which is what the reference
             // Prometheus client libraries emit (Go's strconv.FormatFloat with a precision of -1).
             // Formatting with 17 significant digits also round-trips, but pads shorter values out
