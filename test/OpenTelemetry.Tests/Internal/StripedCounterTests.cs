@@ -63,7 +63,7 @@ public static class StripedCounterTests
 
         for (var i = 0; i < threads; i++)
         {
-            workers[i] = Task.Run(
+            workers[i] = Task.Factory.StartNew(
                 () =>
                 {
                     var slot = counter.Enter();
@@ -71,7 +71,9 @@ public static class StripedCounterTests
                     release.Wait(TestContext.Current.CancellationToken);
                     counter.Exit(slot);
                 },
-                TestContext.Current.CancellationToken);
+                TestContext.Current.CancellationToken,
+                TaskCreationOptions.LongRunning,
+                TaskScheduler.Default);
         }
 
         entered.Wait(TestContext.Current.CancellationToken);

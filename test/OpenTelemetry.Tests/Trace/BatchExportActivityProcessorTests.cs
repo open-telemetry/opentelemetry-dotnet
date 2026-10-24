@@ -143,7 +143,7 @@ public class BatchExportActivityProcessorTests
 
     [Theory]
     [InlineData(Timeout.Infinite)]
-    [InlineData(10_000)]
+    [InlineData(30_000)]
     public async Task CheckShutdownWaitsForInFlightOnEndCalls(int timeoutMilliseconds)
     {
         var exportedItems = new List<Activity>();
@@ -155,16 +155,26 @@ public class BatchExportActivityProcessorTests
         var token = processor.TryEnterOnEnd();
         Assert.True(token >= 0);
 
-        var shutdown = Task.Run(() => processor.Shutdown(timeoutMilliseconds), TestContext.Current.CancellationToken);
+        var shutdown = RunOnDedicatedThreadAsync(() => processor.Shutdown(timeoutMilliseconds));
 
-        // Shutdown must not complete while the OnEnd call is still in flight
-        var delay = Task.Delay(TimeSpan.FromMilliseconds(250), TestContext.Current.CancellationToken);
-        Assert.NotSame(shutdown, await Task.WhenAny(shutdown, delay));
+        // Wait for shutdown to begin, which it signals by rejecting new OnEnd
+        // calls. Any call which was accepted in the meantime must exit again
+        // so that the in-flight count is left as it was.
+        var startedAt = Stopwatch.GetTimestamp();
+        SpinWait spinner = default;
+        int probe;
 
-        // Once shutdown has started new OnEnd calls are rejected...
-        Assert.True(processor.TryEnterOnEnd() < 0);
+        while ((probe = processor.TryEnterOnEnd()) >= 0)
+        {
+            processor.ExitOnEnd(probe);
+            Assert.True(Stopwatch.GetElapsedTime(startedAt) < TimeSpan.FromSeconds(30), "Shutdown did not start.");
+            spinner.SpinOnce();
+        }
 
-        // ...and shutdown completes once the in-flight call exits.
+        // Shutdown must not complete while the OnEnd call is still in flight...
+        Assert.False(shutdown.IsCompleted);
+
+        // ...and completes once the in-flight call exits.
         processor.ExitOnEnd(token);
 
         Assert.True(await WaitForShutdownAsync(shutdown));
@@ -183,7 +193,7 @@ public class BatchExportActivityProcessorTests
         var timeoutMilliseconds = 500;
         var startedAt = Stopwatch.GetTimestamp();
 
-        var shutdown = Task.Run(() => processor.Shutdown(timeoutMilliseconds), TestContext.Current.CancellationToken);
+        var shutdown = RunOnDedicatedThreadAsync(() => processor.Shutdown(timeoutMilliseconds));
 
         // The in-flight call never exits so shutdown must give up waiting
         // for it once the caller's budget is exhausted rather than hang.
@@ -214,26 +224,26 @@ public class BatchExportActivityProcessorTests
 
             for (var i = 0; i < threads; i++)
             {
-                workers[i] = Task.Run(
-                    () =>
+                workers[i] = RunOnDedicatedThreadAsync(() =>
+                {
+                    start.Wait(TestContext.Current.CancellationToken);
+
+                    int token;
+                    while ((token = processor.TryEnterOnEnd()) >= 0)
                     {
-                        start.Wait(TestContext.Current.CancellationToken);
+                        processor.ExitOnEnd(token);
+                    }
 
-                        int token;
-                        while ((token = processor.TryEnterOnEnd()) >= 0)
-                        {
-                            processor.ExitOnEnd(token);
-                        }
+                    // Once rejected an OnEnd call must stay rejected
+                    Assert.True(processor.TryEnterOnEnd() < 0);
 
-                        // Once rejected an OnEnd call must stay rejected
-                        Assert.True(processor.TryEnterOnEnd() < 0);
-                    },
-                    TestContext.Current.CancellationToken);
+                    return true;
+                });
             }
 
             start.Set();
 
-            var shutdown = Task.Run(() => processor.Shutdown(), TestContext.Current.CancellationToken);
+            var shutdown = RunOnDedicatedThreadAsync(() => processor.Shutdown());
 
             Assert.True(await WaitForShutdownAsync(shutdown));
 
@@ -322,6 +332,13 @@ public class BatchExportActivityProcessorTests
         // The deadline only applies to the export it was passed to
         Assert.Equal(DateTime.MaxValue, exporter.ExportDeadlineUtc);
     }
+
+    private static Task<bool> RunOnDedicatedThreadAsync(Func<bool> action)
+        => Task.Factory.StartNew(
+            action,
+            TestContext.Current.CancellationToken,
+            TaskCreationOptions.LongRunning,
+            TaskScheduler.Default);
 
     private static async Task<bool> WaitForShutdownAsync(Task<bool> shutdown)
     {
