@@ -1,4 +1,4 @@
-FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:11.0.100-rc.2@sha256:bfabf51e74c5a7cf2fc4eac852145db86f4867d475257d809518d6a2b0fe71e1 AS build
+FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:11.0.100-rc.3@sha256:3428fc2125ad5045b3223392a2a33de7f1f241641e20610f542c7fb648225335 AS build
 ARG SOURCE_DATE_EPOCH
 
 COPY . /src
