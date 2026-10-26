@@ -378,6 +378,215 @@ public sealed class PrometheusCollectionManagerTests
         Assert.Equal(0, exporter.CollectionManager.ActiveReaderCount);
     }
 
+    [Fact]
+    public async Task EnterCollectServesMostRecentResponseWhenItCannotJoinTheCollectionInFlight()
+    {
+        var timeout = TimeSpan.FromSeconds(30);
+
+        using var meter = CreateMeter();
+        using var provider = CreateMeterProviderWithCache(meter, scrapeResponseCacheDurationMilliseconds: 0);
+#pragma warning disable CA2000 // MeterProvider owns exporter lifecycle
+        var exporter = GetExporter(provider);
+#pragma warning restore CA2000 // MeterProvider owns exporter lifecycle
+
+        var collectCount = 0;
+        var blockCollect = false;
+        var collectStarted = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var allowCollectToContinue = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var originalCollect = exporter.Collect;
+
+        exporter.Collect = (timeout) =>
+        {
+            Interlocked.Increment(ref collectCount);
+
+            if (Volatile.Read(ref blockCollect))
+            {
+                // Stands in for a slow observable instrument callback
+                collectStarted.TrySetResult(true);
+                Assert.True(allowCollectToContinue.Task.Wait(TimeSpan.FromSeconds(5)), "The collection did not resume.");
+            }
+
+            return originalCollect!(timeout);
+        };
+
+        var counter = meter.CreateCounter<int>("counter_int");
+        counter.Add(100);
+
+        var prometheusProtocol = GetProtocol(openMetricsRequested: false);
+        var openMetricsProtocol = GetProtocol(openMetricsRequested: true);
+
+        var readers = new List<PrometheusCollectionManager.CollectionResponse>();
+        Task<PrometheusCollectionManager.CollectionResponse>? collectingScrape = null;
+
+        try
+        {
+            // Hold readers on two responses from different collections, so that neither of the
+            // buffers a response can be written to is free.
+            var first = await EnterCollectAsync(exporter, prometheusProtocol);
+            readers.Add(first);
+
+            counter.Add(100);
+
+            var second = await EnterCollectAsync(exporter, prometheusProtocol);
+            readers.Add(second);
+
+            var secondPayload = second.View.ToArray();
+
+            Assert.NotEqual(first.View.ToArray(), secondPayload);
+            Assert.Equal(2, collectCount);
+
+            // Start a collection for another format, which this format could otherwise join
+            Volatile.Write(ref blockCollect, true);
+
+#pragma warning disable CA2025 // The test awaits the scheduled work before disposing the provider/exporter.
+            collectingScrape = Task.Run(() => ScrapeAndExitAsync(exporter, openMetricsProtocol));
+#pragma warning restore CA2025 // The test awaits the scheduled work before disposing the provider/exporter.
+
+            var started = await Task.WhenAny(collectStarted.Task, Task.Delay(timeout, TestContext.Current.CancellationToken));
+            Assert.Same(collectStarted.Task, started);
+
+#pragma warning disable CA2025 // The test awaits the scheduled work before disposing the provider/exporter.
+            var scrape = EnterCollectAsync(exporter, prometheusProtocol);
+#pragma warning restore CA2025 // The test awaits the scheduled work before disposing the provider/exporter.
+
+            Volatile.Write(ref blockCollect, false);
+            allowCollectToContinue.TrySetResult(true);
+
+            var completed = await Task.WhenAny(scrape, Task.Delay(timeout, TestContext.Current.CancellationToken));
+            Assert.Same(scrape, completed);
+
+            var third = await scrape;
+            readers.Add(third);
+
+            // There was nowhere for the collection in flight to write this format, so the most
+            // recent response is served rather than collecting for it again.
+            Assert.True(third.Succeeded);
+            Assert.True(third.FromCache, "Response was not served from the previous collection.");
+            Assert.Equal(secondPayload, third.View.ToArray());
+            Assert.Equal(3, collectCount);
+        }
+        finally
+        {
+            Volatile.Write(ref blockCollect, false);
+            allowCollectToContinue.TrySetResult(true);
+
+            if (collectingScrape is not null)
+            {
+                await collectingScrape;
+            }
+
+            foreach (var reader in readers)
+            {
+                exporter.CollectionManager.ExitCollect(reader);
+            }
+        }
+
+        Assert.Equal(0, exporter.CollectionManager.ActiveReaderCount);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task EnterCollectWaitsForACollectionItCannotJoin(bool cancelWhileWaiting)
+    {
+        var timeout = TimeSpan.FromSeconds(30);
+
+        using var meter = CreateMeter();
+        using var provider = CreateMeterProviderWithCache(meter, scrapeResponseCacheDurationMilliseconds: 0);
+#pragma warning disable CA2000 // MeterProvider owns exporter lifecycle
+        var exporter = GetExporter(provider);
+#pragma warning restore CA2000 // MeterProvider owns exporter lifecycle
+
+        var collectCount = CountCollections(exporter);
+
+        var serializationStarted = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var allowSerializationToContinue = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var blockSerialization = true;
+        var labelValue = new CallbackLabelValue(() =>
+        {
+            if (Volatile.Read(ref blockSerialization))
+            {
+                serializationStarted.TrySetResult(true);
+                Assert.True(allowSerializationToContinue.Task.Wait(timeout), "Serialization did not resume.");
+            }
+
+            return "small";
+        });
+
+        meter.CreateCounter<int>("counter_int").Add(100, new KeyValuePair<string, object?>("label", labelValue));
+
+        var prometheusProtocol = GetProtocol(openMetricsRequested: false);
+        var openMetricsProtocol = GetProtocol(openMetricsRequested: true);
+
+        // Serialization only starts once the formats a collection writes are fixed, so
+        // a scrape for another format can no longer join the collection while it is blocked.
+#pragma warning disable CA2025 // The test awaits the scheduled work before disposing the provider/exporter.
+        var collectingScrape = ScrapeAndExitAsync(exporter, openMetricsProtocol);
+#pragma warning restore CA2025 // The test awaits the scheduled work before disposing the provider/exporter.
+
+        PrometheusCollectionManager.CollectionResponse response = default;
+
+        try
+        {
+            var started = await Task.WhenAny(serializationStarted.Task, Task.Delay(timeout, TestContext.Current.CancellationToken));
+            Assert.Same(serializationStarted.Task, started);
+
+            using var cts = new CancellationTokenSource();
+
+#if NET
+            var scrape = exporter.CollectionManager.EnterCollect(prometheusProtocol, cts.Token).AsTask();
+#else
+            var scrape = exporter.CollectionManager.EnterCollect(prometheusProtocol, cts.Token);
+#endif
+
+            // The scrape cannot be served by the collection in flight, nor start its own until it completes
+            Assert.False(scrape.IsCompleted, "The scrape did not wait for the collection in flight.");
+
+            if (cancelWhileWaiting)
+            {
+#if NET
+                await cts.CancelAsync();
+#else
+                cts.Cancel();
+#endif
+            }
+            else
+            {
+                Volatile.Write(ref blockSerialization, false);
+                allowSerializationToContinue.TrySetResult(true);
+            }
+
+            var completed = await Task.WhenAny(scrape, Task.Delay(timeout, TestContext.Current.CancellationToken));
+            Assert.Same(scrape, completed);
+
+            response = await scrape;
+        }
+        finally
+        {
+            Volatile.Write(ref blockSerialization, false);
+            allowSerializationToContinue.TrySetResult(true);
+
+            exporter.CollectionManager.ExitCollect(response);
+
+            await collectingScrape;
+        }
+
+        if (cancelWhileWaiting)
+        {
+            Assert.False(response.Succeeded, "The cancelled scrape succeeded.");
+            Assert.Equal(1, collectCount());
+        }
+        else
+        {
+            // Once the collection it could not join completes, the scrape collects for itself
+            Assert.True(response.Succeeded, "The scrape did not succeed.");
+            Assert.False(response.FromCache, "Response was served from the cache.");
+            Assert.Equal(2, collectCount());
+        }
+
+        Assert.Equal(0, exporter.CollectionManager.ActiveReaderCount);
+    }
+
     [Theory]
     [InlineData(true)]
     [InlineData(false)]
