@@ -43,6 +43,7 @@ public sealed class AppleAppFixture : IAsyncLifetime
     private static readonly TimeSpan PollInterval = TimeSpan.FromMilliseconds(500);
     private static readonly TimeSpan SimulatorBootTimeout = TimeSpan.FromMinutes(5);
     private static readonly TimeSpan SimulatorCommandTimeout = TimeSpan.FromMinutes(5);
+    private static readonly TimeSpan SimulatorInstallTimeout = TimeSpan.FromMinutes(2);
     private static readonly TimeSpan TestRunTimeout = TimeSpan.FromMinutes(5);
 
     private readonly StringBuilder log = new();
@@ -315,7 +316,7 @@ public sealed class AppleAppFixture : IAsyncLifetime
         {
             TryKill(process);
 
-            throw new InvalidOperationException(
+            throw new TimeoutException(
                 $"'{fileName}' timed out after {timeout}.{Environment.NewLine}{standardOutput}{standardError}");
         }
 
@@ -412,19 +413,35 @@ public sealed class AppleAppFixture : IAsyncLifetime
 
         if (!alreadyBooted)
         {
-            // 'bootstatus -b' boots the simulator if required, then waits for the boot to complete
-            var (bootExitCode, _, _) = this.Run("xcrun", ["simctl", "bootstatus", simulator, "-b"], repoRoot, SimulatorBootTimeout);
-
-            if (bootExitCode != 0)
+            if (!this.TryBootSimulator(simulator, repoRoot))
             {
-                this.Fail($"Failed to boot the iOS simulator '{simulator}' with exit code {bootExitCode}.");
                 return;
             }
 
             this.simulatorBootedByFixture = simulator;
         }
 
-        var (installExitCode, _, _) = this.Run("xcrun", ["simctl", "install", simulator, appBundle], repoRoot, SimulatorCommandTimeout);
+        int installExitCode;
+
+        try
+        {
+            (installExitCode, _, _) = this.Run("xcrun", ["simctl", "install", simulator, appBundle], repoRoot, SimulatorInstallTimeout);
+        }
+        catch (TimeoutException ex)
+        {
+            // The first app management command after the first boot of a new simulator
+            // occasionally never returns, so reboot the simulator and try once more.
+            this.log.AppendLine(ex.Message).AppendLine("Rebooting the simulator and retrying the install.");
+
+            this.Run("xcrun", ["simctl", "shutdown", simulator], repoRoot, SimulatorCommandTimeout);
+
+            if (!this.TryBootSimulator(simulator, repoRoot))
+            {
+                return;
+            }
+
+            (installExitCode, _, _) = this.Run("xcrun", ["simctl", "install", simulator, appBundle], repoRoot, SimulatorCommandTimeout);
+        }
 
         if (installExitCode != 0)
         {
@@ -474,6 +491,20 @@ public sealed class AppleAppFixture : IAsyncLifetime
         }
 
         this.DeviceRunExitCode = 0;
+    }
+
+    private bool TryBootSimulator(string simulator, string repoRoot)
+    {
+        // 'bootstatus -b' boots the simulator if required, then waits for the boot to complete
+        var (bootExitCode, _, _) = this.Run("xcrun", ["simctl", "bootstatus", simulator, "-b"], repoRoot, SimulatorBootTimeout);
+
+        if (bootExitCode != 0)
+        {
+            this.Fail($"Failed to boot the iOS simulator '{simulator}' with exit code {bootExitCode}.");
+            return false;
+        }
+
+        return true;
     }
 
     private (string Simulator, bool AlreadyBooted) ResolveSimulator()
