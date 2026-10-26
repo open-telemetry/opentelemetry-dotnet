@@ -223,6 +223,10 @@ public sealed class PrometheusCollectionManagerTests
         var exporter = GetExporter(provider);
 #pragma warning restore CA2000 // MeterProvider owns exporter lifecycle
 
+        // The collections run back to back, faster than DateTime.UtcNow ticks on .NET Framework
+        var elapsed = TimeSpan.Zero;
+        UseManualClock(exporter, () => elapsed);
+
         var collectCount = CountCollections(exporter);
 
         var counter = meter.CreateCounter<int>("counter_int");
@@ -242,6 +246,7 @@ public sealed class PrometheusCollectionManagerTests
             var firstPayload = firstResponse.View.ToArray();
 
             counter.Add(100);
+            elapsed += TimeSpan.FromMilliseconds(1);
 
             // The next scrape collects again straight away. Time-boxed, because if it waited for
             // the reader above (as it did before the fix) it would never complete.
@@ -283,6 +288,10 @@ public sealed class PrometheusCollectionManagerTests
         var exporter = GetExporter(provider);
 #pragma warning restore CA2000 // MeterProvider owns exporter lifecycle
 
+        // The collections run back to back, faster than DateTime.UtcNow ticks on .NET Framework
+        var elapsed = TimeSpan.Zero;
+        UseManualClock(exporter, () => elapsed);
+
         var collectCount = CountCollections(exporter);
 
         var counter = meter.CreateCounter<int>("counter_int");
@@ -312,6 +321,7 @@ public sealed class PrometheusCollectionManagerTests
             readers.Add(first);
 
             counter.Add(100);
+            elapsed += TimeSpan.FromMilliseconds(1);
 
             var second = await EnterWithinTimeoutAsync();
             readers.Add(second);
@@ -321,6 +331,7 @@ public sealed class PrometheusCollectionManagerTests
             var secondPayload = second.View.ToArray();
 
             counter.Add(100);
+            elapsed += TimeSpan.FromMilliseconds(1);
 
             // There is nowhere to write a new response, so the most recent one is served
             // straight away rather than waiting for the readers of the older one to exit.
@@ -343,6 +354,8 @@ public sealed class PrometheusCollectionManagerTests
             // the most recent response is still being read.
             exporter.CollectionManager.ExitCollect(first);
             readers.Remove(first);
+
+            elapsed += TimeSpan.FromMilliseconds(1);
 
             var fourth = await EnterWithinTimeoutAsync();
             readers.Add(fourth);
