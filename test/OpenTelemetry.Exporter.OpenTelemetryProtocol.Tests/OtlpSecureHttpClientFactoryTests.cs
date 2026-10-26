@@ -6,6 +6,7 @@
 using System.Net.Security;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
+using OpenTelemetry.Tests;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests;
 
@@ -34,142 +35,108 @@ public class OtlpSecureHttpClientFactoryTests
     [Fact]
     public void CreateHttpClient_ConfiguresClientCertificate_WhenValidCertificateProvided()
     {
-        var tempCertFile = Path.GetTempFileName();
-        try
+        using var directory = new TemporaryDirectory();
+        var tempCertFile = Path.Combine(directory.Path, "client.pfx");
+
+        // Create a self-signed certificate for testing
+        using var cert = CreateSelfSignedCertificate();
+        var certBytes = cert.Export(X509ContentType.Pfx);
+        File.WriteAllBytes(tempCertFile, certBytes);
+
+        var options = new OtlpMtlsOptions
         {
-            // Create a self-signed certificate for testing
-            using var cert = CreateSelfSignedCertificate();
-            var certBytes = cert.Export(X509ContentType.Pfx);
-            File.WriteAllBytes(tempCertFile, certBytes);
+            ClientCertificatePath = tempCertFile,
+            EnableCertificateChainValidation = false, // Ignore validation for test cert
+        };
 
-            var options = new OtlpMtlsOptions
-            {
-                ClientCertificatePath = tempCertFile,
-                EnableCertificateChainValidation = false, // Ignore validation for test cert
-            };
+        using var httpClient = OpenTelemetryProtocol.Implementation.OtlpSecureHttpClientFactory.CreateSecureHttpClient(options);
 
-            using var httpClient = OpenTelemetryProtocol.Implementation.OtlpSecureHttpClientFactory.CreateSecureHttpClient(options);
+        Assert.NotNull(httpClient);
 
-            Assert.NotNull(httpClient);
-
-            // Verify the HttpClientHandler has client certificates configured
-            var handlerField = typeof(HttpMessageInvoker).GetField(
-                "_handler",
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-            if (handlerField?.GetValue(httpClient) is HttpClientHandler handler)
-            {
-                Assert.NotEmpty(handler.ClientCertificates);
-            }
-        }
-        finally
+        // Verify the HttpClientHandler has client certificates configured
+        var handlerField = typeof(HttpMessageInvoker).GetField(
+            "_handler",
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        if (handlerField?.GetValue(httpClient) is HttpClientHandler handler)
         {
-            if (File.Exists(tempCertFile))
-            {
-                File.Delete(tempCertFile);
-            }
+            Assert.NotEmpty(handler.ClientCertificates);
         }
     }
 
     [Fact]
     public void CreateHttpClient_DoesNotFollowRedirects()
     {
-        var tempCertFile = Path.GetTempFileName();
+        using var directory = new TemporaryDirectory();
+        var tempCertFile = Path.Combine(directory.Path, "client.pfx");
 
-        try
+        using var cert = CreateSelfSignedCertificate();
+        File.WriteAllBytes(tempCertFile, cert.Export(X509ContentType.Pfx));
+
+        var options = new OtlpMtlsOptions
         {
-            using var cert = CreateSelfSignedCertificate();
-            File.WriteAllBytes(tempCertFile, cert.Export(X509ContentType.Pfx));
+            ClientCertificatePath = tempCertFile,
+            EnableCertificateChainValidation = false, // Ignore validation for test cert
+        };
 
-            var options = new OtlpMtlsOptions
-            {
-                ClientCertificatePath = tempCertFile,
-                EnableCertificateChainValidation = false, // Ignore validation for test cert
-            };
+        using var httpClient = OpenTelemetryProtocol.Implementation.OtlpSecureHttpClientFactory.CreateSecureHttpClient(options);
 
-            using var httpClient = OpenTelemetryProtocol.Implementation.OtlpSecureHttpClientFactory.CreateSecureHttpClient(options);
+        var handlerField = typeof(HttpMessageInvoker).GetField(
+            "_handler",
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
 
-            var handlerField = typeof(HttpMessageInvoker).GetField(
-                "_handler",
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        var handler = Assert.IsType<HttpClientHandler>(handlerField?.GetValue(httpClient), exactMatch: false);
 
-            var handler = Assert.IsType<HttpClientHandler>(handlerField?.GetValue(httpClient), exactMatch: false);
-
-            Assert.False(handler.AllowAutoRedirect);
-        }
-        finally
-        {
-            if (File.Exists(tempCertFile))
-            {
-                File.Delete(tempCertFile);
-            }
-        }
+        Assert.False(handler.AllowAutoRedirect);
     }
 
     [Fact]
     public void CreateHttpClient_CapsResponseContentBuffering()
     {
-        var tempCertFile = Path.GetTempFileName();
+        using var directory = new TemporaryDirectory();
+        var tempCertFile = Path.Combine(directory.Path, "client.pfx");
 
-        try
+        using var cert = CreateSelfSignedCertificate();
+        File.WriteAllBytes(tempCertFile, cert.Export(X509ContentType.Pfx));
+
+        var options = new OtlpMtlsOptions
         {
-            using var cert = CreateSelfSignedCertificate();
-            File.WriteAllBytes(tempCertFile, cert.Export(X509ContentType.Pfx));
+            ClientCertificatePath = tempCertFile,
+            EnableCertificateChainValidation = false, // Ignore validation for test cert
+        };
 
-            var options = new OtlpMtlsOptions
-            {
-                ClientCertificatePath = tempCertFile,
-                EnableCertificateChainValidation = false, // Ignore validation for test cert
-            };
+        using var httpClient = OpenTelemetryProtocol.Implementation.OtlpSecureHttpClientFactory.CreateSecureHttpClient(options);
 
-            using var httpClient = OpenTelemetryProtocol.Implementation.OtlpSecureHttpClientFactory.CreateSecureHttpClient(options);
-
-            Assert.Equal(4 * 1024 * 1024, httpClient.MaxResponseContentBufferSize);
-        }
-        finally
-        {
-            if (File.Exists(tempCertFile))
-            {
-                File.Delete(tempCertFile);
-            }
-        }
+        Assert.Equal(4 * 1024 * 1024, httpClient.MaxResponseContentBufferSize);
     }
 
     [Fact]
     public void CreateHttpClient_ConfiguresServerCertificateValidation_WhenCaCertificatesProvided() =>
         SkipTestIfCryptoNotSupported(() =>
         {
-            var tempTrustStoreFile = Path.GetTempFileName();
-            try
+            using var directory = new TemporaryDirectory();
+            var tempTrustStoreFile = Path.Combine(directory.Path, "ca.pem");
+
+            // Create a self-signed certificate for testing as CA root
+            using var caCert = CreateSelfSignedCertificate();
+            File.WriteAllText(tempTrustStoreFile, caCert.ExportCertificatePem());
+
+            var options = new OtlpMtlsOptions
             {
-                // Create a self-signed certificate for testing as CA root
-                using var caCert = CreateSelfSignedCertificate();
-                File.WriteAllText(tempTrustStoreFile, caCert.ExportCertificatePem());
+                CaCertificatePath = tempTrustStoreFile,
+                EnableCertificateChainValidation = false, // Avoid platform-specific chain build differences
+            };
 
-                var options = new OtlpMtlsOptions
-                {
-                    CaCertificatePath = tempTrustStoreFile,
-                    EnableCertificateChainValidation = false, // Avoid platform-specific chain build differences
-                };
+            using var httpClient = OpenTelemetryProtocol.Implementation.OtlpSecureHttpClientFactory.CreateSecureHttpClient(options);
 
-                using var httpClient = OpenTelemetryProtocol.Implementation.OtlpSecureHttpClientFactory.CreateSecureHttpClient(options);
+            Assert.NotNull(httpClient);
 
-                Assert.NotNull(httpClient);
-
-                // Verify the HttpClientHandler has server certificate validation configured
-                var handlerField = typeof(HttpMessageInvoker).GetField(
-                    "_handler",
-                    System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-                if (handlerField?.GetValue(httpClient) is HttpClientHandler handler)
-                {
-                    Assert.NotNull(handler.ServerCertificateCustomValidationCallback);
-                }
-            }
-            finally
+            // Verify the HttpClientHandler has server certificate validation configured
+            var handlerField = typeof(HttpMessageInvoker).GetField(
+                "_handler",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            if (handlerField?.GetValue(httpClient) is HttpClientHandler handler)
             {
-                if (File.Exists(tempTrustStoreFile))
-                {
-                    File.Delete(tempTrustStoreFile);
-                }
+                Assert.NotNull(handler.ServerCertificateCustomValidationCallback);
             }
         });
 
@@ -177,88 +144,71 @@ public class OtlpSecureHttpClientFactoryTests
     public void CreateHttpClient_ConfiguresServerValidation_WithCaOnly() =>
         SkipTestIfCryptoNotSupported(() =>
         {
-            var tempTrustStoreFile = Path.GetTempFileName();
+            using var directory = new TemporaryDirectory();
+            var tempTrustStoreFile = Path.Combine(directory.Path, "ca.pem");
 
-            try
+            using var caCertificate = CreateCertificateAuthority();
+            File.WriteAllText(tempTrustStoreFile, caCertificate.ExportCertificatePem());
+
+            var options = new OtlpMtlsOptions
             {
-                using var caCertificate = CreateCertificateAuthority();
-                File.WriteAllText(tempTrustStoreFile, caCertificate.ExportCertificatePem());
+                CaCertificatePath = tempTrustStoreFile,
+                EnableCertificateChainValidation = false, // Avoid platform-specific chain build differences
+            };
 
-                var options = new OtlpMtlsOptions
-                {
-                    CaCertificatePath = tempTrustStoreFile,
-                    EnableCertificateChainValidation = false, // Avoid platform-specific chain build differences
-                };
+            using var httpClient = OpenTelemetryProtocol.Implementation.OtlpSecureHttpClientFactory.CreateSecureHttpClient(options);
 
-                using var httpClient = OpenTelemetryProtocol.Implementation.OtlpSecureHttpClientFactory.CreateSecureHttpClient(options);
+            var handlerField = typeof(HttpMessageInvoker).GetField(
+                "_handler",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
 
-                var handlerField = typeof(HttpMessageInvoker).GetField(
-                    "_handler",
-                    System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            Assert.NotNull(handlerField);
 
-                Assert.NotNull(handlerField);
+            var handler = handlerField.GetValue(httpClient) as HttpClientHandler;
 
-                var handler = handlerField.GetValue(httpClient) as HttpClientHandler;
-
-                Assert.NotNull(handler);
-                Assert.Empty(handler!.ClientCertificates);
-                Assert.NotNull(handler.ServerCertificateCustomValidationCallback);
-            }
-            finally
-            {
-                if (File.Exists(tempTrustStoreFile))
-                {
-                    File.Delete(tempTrustStoreFile);
-                }
-            }
+            Assert.NotNull(handler);
+            Assert.Empty(handler!.ClientCertificates);
+            Assert.NotNull(handler.ServerCertificateCustomValidationCallback);
         });
 
     [Fact]
     public void CreateHttpClient_InvokesServerValidationCallbackAfterFactoryReturns() =>
         SkipTestIfCryptoNotSupported(() =>
         {
-            var tempTrustStoreFile = Path.GetTempFileName();
-            try
+            using var directory = new TemporaryDirectory();
+            var tempTrustStoreFile = Path.Combine(directory.Path, "ca.pem");
+
+            using var caCertificate = CreateCertificateAuthority();
+            File.WriteAllText(tempTrustStoreFile, caCertificate.ExportCertificatePem());
+
+            var options = new OtlpMtlsOptions
             {
-                using var caCertificate = CreateCertificateAuthority();
-                File.WriteAllText(tempTrustStoreFile, caCertificate.ExportCertificatePem());
+                CaCertificatePath = tempTrustStoreFile,
+                EnableCertificateChainValidation = false,
+            };
 
-                var options = new OtlpMtlsOptions
-                {
-                    CaCertificatePath = tempTrustStoreFile,
-                    EnableCertificateChainValidation = false,
-                };
+            using var httpClient = OpenTelemetryProtocol.Implementation.OtlpSecureHttpClientFactory.CreateSecureHttpClient(options);
 
-                using var httpClient = OpenTelemetryProtocol.Implementation.OtlpSecureHttpClientFactory.CreateSecureHttpClient(options);
+            var handlerField = typeof(HttpMessageInvoker).GetField(
+                "_handler",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            Assert.NotNull(handlerField);
 
-                var handlerField = typeof(HttpMessageInvoker).GetField(
-                    "_handler",
-                    System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-                Assert.NotNull(handlerField);
+            var handler = handlerField.GetValue(httpClient) as HttpClientHandler;
+            Assert.NotNull(handler);
+            Assert.NotNull(handler!.ServerCertificateCustomValidationCallback);
 
-                var handler = handlerField.GetValue(httpClient) as HttpClientHandler;
-                Assert.NotNull(handler);
-                Assert.NotNull(handler!.ServerCertificateCustomValidationCallback);
+            using var serverCertificate = CreateServerCertificate(caCertificate);
+            using var chain = new X509Chain();
+            chain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
 
-                using var serverCertificate = CreateServerCertificate(caCertificate);
-                using var chain = new X509Chain();
-                chain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
+            var validationResult = handler.ServerCertificateCustomValidationCallback(
+                new HttpRequestMessage(),
+                serverCertificate,
+                chain,
+                SslPolicyErrors.RemoteCertificateChainErrors);
 
-                var validationResult = handler.ServerCertificateCustomValidationCallback(
-                    new HttpRequestMessage(),
-                    serverCertificate,
-                    chain,
-                    SslPolicyErrors.RemoteCertificateChainErrors);
-
-                Assert.True(validationResult);
-            }
-            finally
-            {
-                if (File.Exists(tempTrustStoreFile))
-                {
-                    File.Delete(tempTrustStoreFile);
-                }
-            }
+            Assert.True(validationResult);
         });
 
     [Fact]

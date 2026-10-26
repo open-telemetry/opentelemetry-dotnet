@@ -49,6 +49,20 @@ public class PeriodicExportingMetricReader : BaseExportingMetricReader
         this.worker.Start();
     }
 
+    /// <inheritdoc/>
+    internal override bool ProcessMetrics(in Batch<Metric> metrics, int timeoutMilliseconds)
+    {
+        // The export timeout also applies to exports which are not started by the
+        // worker, such as those of MeterProvider.ForceFlush(), when it is shorter.
+        if (this.ExportTimeoutMilliseconds > 0 &&
+            (timeoutMilliseconds == Timeout.Infinite || this.ExportTimeoutMilliseconds < timeoutMilliseconds))
+        {
+            timeoutMilliseconds = this.ExportTimeoutMilliseconds;
+        }
+
+        return base.ProcessMetrics(metrics, timeoutMilliseconds);
+    }
+
     /// <inheritdoc />
     protected override bool OnShutdown(int timeoutMilliseconds)
     {

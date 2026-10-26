@@ -17,20 +17,28 @@ services:
     volumes:
       - ./test/OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests/IntegrationTest:/cfg
     command: >
-      sh -c "
+      sh -ec "
+      rm -f /tmp/certs-ready;
       mkdir -p /cfg/certs;
       cp /test/*.pem /cfg/certs/;
       chmod 644 /cfg/certs/*;
+      touch /tmp/certs-ready;
       sleep 1000;
       "
+    healthcheck:
+      test: ["CMD", "test", "-f", "/tmp/certs-ready"]
+      interval: 1s
+      timeout: 1s
+      retries: 30
 
   otel-collector:
-    image: otel/opentelemetry-collector:0.163.1@sha256:f0e23036dce3db3f9cb80d907c75a0d034cd32e93511a1943482d46129b9ae9c
+    image: otel/opentelemetry-collector:0.163.2@sha256:63e5e8eccf4268be02388ba9f2dc36b80b5e47721291293411c0e83152d75bda
     volumes:
       - ./test/OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests/IntegrationTest:/cfg
     command: --config=/cfg/otel-collector-config.yaml
     depends_on:
-      - init-service
+      init-service:
+        condition: service_healthy
 
   tests:
     image: "otel-test-image:${FRAMEWORK_VERSION:-latest}"

@@ -14,12 +14,12 @@ namespace OpenTelemetry.Maui.TestApp;
 /// <remarks>
 /// The app declares no activity: the tests are driven by
 /// <see cref="TestInstrumentation"/> rather than by any user interface. MAUI
-/// builds the host from <c>AttachBaseContext</c>, which .NET for Android calls
-/// before the instrumentation starts, so the host is always ready by the time
-/// the tests run.
+/// builds the host from <c>OnCreate</c>, which Android calls concurrently with
+/// the instrumentation starting, so <see cref="TestInstrumentation"/> waits for
+/// it to complete before running the tests.
 /// </remarks>
 [Application]
-public class MainApplication(IntPtr handle, JniHandleOwnership ownership) : MauiApplication(handle, ownership)
+public class MainApplication(nint handle, JniHandleOwnership ownership) : MauiApplication(handle, ownership)
 {
     protected override MauiApp CreateMauiApp() => MauiProgram.CreateMauiApp();
 }
