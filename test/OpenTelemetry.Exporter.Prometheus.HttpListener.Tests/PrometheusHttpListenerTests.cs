@@ -789,46 +789,8 @@ public class PrometheusHttpListenerTests
             counter.Add(1, new KeyValuePair<string, object?>("key", padding));
         }
 
-        // The scraper asks for the metrics and then never reads them. Shrink the receive
-        // buffer to (as close to) the platform's minimum as possible so back-pressure on
-        // the server's write is deterministic rather than depending on whatever the
-        // platform happens to auto-tune the socket buffers to for this connection.
-        using var stalledClient = new System.Net.Sockets.TcpClient
-        {
-            ReceiveBufferSize = 1,
-        };
-
-#if NET
-        await stalledClient.ConnectAsync(context.BaseAddress.Host, context.Port, TestContext.Current.CancellationToken);
-#else
-        await stalledClient.ConnectAsync(context.BaseAddress.Host, context.Port);
-#endif
-
-        var request = System.Text.Encoding.ASCII.GetBytes(
-            $"GET /metrics HTTP/1.1\r\nHost: localhost:{context.Port}\r\nConnection: keep-alive\r\n\r\n");
-        var stalledStream = stalledClient.GetStream();
-
-#if NET
-        await stalledStream.WriteAsync(request, TestContext.Current.CancellationToken);
-#else
-        await stalledStream.WriteAsync(request, 0, request.Length, TestContext.Current.CancellationToken);
-#endif
-
-        await stalledStream.FlushAsync(TestContext.Current.CancellationToken);
-
-        // Read just enough to confirm the response actually started (headers plus whatever
-        // part of the body fits in the receive buffer), without draining the rest of the body.
-        var buffer = new byte[512];
-
-        using (var headerCts = new CancellationTokenSource(MaxCollectWait))
-        {
-#if NET
-            var bytesRead = await stalledStream.ReadAsync(buffer, headerCts.Token);
-#else
-            var bytesRead = await stalledStream.ReadAsync(buffer, 0, buffer.Length, headerCts.Token);
-#endif
-            Assert.True(bytesRead > 0, "Expected to receive the start of the response.");
-        }
+        // The scraper asks for the metrics and then never reads them.
+        using var stalledClient = await StartScrapeThatNeverReadsAsync(context);
 
         // Prove the write is genuinely stalled
         await Task.Delay(TimeSpan.FromSeconds(1), TestContext.Current.CancellationToken);
@@ -881,6 +843,62 @@ public class PrometheusHttpListenerTests
                 $"The listener did not recover from the stalled scrape within 60 seconds. Last outcome: {lastOutcome}");
 
             await Task.Delay(500, TestContext.Current.CancellationToken);
+        }
+    }
+
+    [Fact]
+    public async Task ScrapeClientsThatStopReadingTheResponseBodyDoNotBlockOtherScrapes()
+    {
+        EnsureThreadPoolWorkerThreadsAvailable();
+
+        using var meter = new Meter(MeterName, MeterVersion);
+
+        // Use the default server-side scrape timeout, which outlasts the scrape timeout
+        // of a Prometheus server, so it cannot be what lets the other scrapes through.
+        using var context = CreateMeterProvider(meter);
+
+        // Emit a payload far larger than any socket / HTTP.sys send buffer so a response
+        // write cannot complete until the client actually drains the body.
+        var padding = new string('x', 24_576);
+        for (var x = 0; x < 500; x++)
+        {
+            var counter = meter.CreateCounter<long>("counter_long_" + x.ToString(CultureInfo.InvariantCulture));
+            counter.Add(1, new KeyValuePair<string, object?>("key", padding));
+        }
+
+        using var client = new HttpClient { BaseAddress = context.BaseAddress };
+        client.DefaultRequestHeaders.Add("X-Prometheus-Scrape-Timeout-Seconds", "10");
+
+        var stalledClients = new List<System.Net.Sockets.TcpClient>();
+
+        try
+        {
+            // Keep starting scrapes which never read their response, each one reading from
+            // whatever response the previous scrapes left behind, while other scrapes keep
+            // needing a new collection.
+            for (var i = 0; i < 3; i++)
+            {
+                stalledClients.Add(await StartScrapeThatNeverReadsAsync(context));
+
+                // Let the cached response expire so the next scrape cannot be served from it
+                await Task.Delay(TimeSpan.FromSeconds(1), TestContext.Current.CancellationToken);
+
+                using var cts = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
+                cts.CancelAfter(MaxCollectWait);
+
+                using var response = await client.GetAsync(new Uri("metrics", UriKind.Relative), cts.Token);
+
+                Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            }
+
+            Assert.All(stalledClients, (p) => Assert.True(p.Connected));
+        }
+        finally
+        {
+            foreach (var stalledClient in stalledClients)
+            {
+                stalledClient.Dispose();
+            }
         }
     }
 
@@ -1068,6 +1086,60 @@ public class PrometheusHttpListenerTests
         if (desiredWorkerThreads > workerThreads || desiredCompletionPortThreads > completionPortThreads)
         {
             ThreadPool.SetMinThreads(desiredWorkerThreads, desiredCompletionPortThreads);
+        }
+    }
+
+    private static async Task<System.Net.Sockets.TcpClient> StartScrapeThatNeverReadsAsync(MeterProviderTestContext context)
+    {
+        // Shrink the receive buffer to (as close to) the platform's minimum as possible so
+        // back-pressure on the server's write is deterministic rather than depending on whatever
+        // the platform happens to auto-tune the socket buffers to for this connection.
+        var client = new System.Net.Sockets.TcpClient
+        {
+            ReceiveBufferSize = 1,
+        };
+
+        try
+        {
+#if NET
+            await client.ConnectAsync(context.BaseAddress.Host, context.Port, TestContext.Current.CancellationToken);
+#else
+            await client.ConnectAsync(context.BaseAddress.Host, context.Port);
+#endif
+
+            var request = System.Text.Encoding.ASCII.GetBytes(
+                $"GET /metrics HTTP/1.1\r\nHost: localhost:{context.Port}\r\nConnection: keep-alive\r\n\r\n");
+            var stream = client.GetStream();
+
+#if NET
+            await stream.WriteAsync(request, TestContext.Current.CancellationToken);
+#else
+            await stream.WriteAsync(request, 0, request.Length, TestContext.Current.CancellationToken);
+#endif
+
+            await stream.FlushAsync(TestContext.Current.CancellationToken);
+
+            // Read just enough to confirm the response actually started (headers plus whatever
+            // part of the body fits in the receive buffer), without draining the rest of the body.
+            var buffer = new byte[512];
+
+            using (var headerCts = new CancellationTokenSource(MaxCollectWait))
+            {
+#if NET
+                var bytesRead = await stream.ReadAsync(buffer, headerCts.Token);
+#else
+                var bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length, headerCts.Token);
+#endif
+                Assert.True(bytesRead > 0, "Expected to receive the start of the response.");
+            }
+
+            var started = client;
+            client = null;
+            return started;
+        }
+        finally
+        {
+            client?.Dispose();
         }
     }
 

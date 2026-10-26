@@ -69,7 +69,7 @@ internal sealed class PrometheusExporterMiddleware
             using var requestCancelled = new CancellationTokenSource();
 
             // Always bound the request. A client that never drains the response body must not be
-            // able to hold the shared collection reader slot indefinitely. A client-supplied
+            // able to hold the response buffer it is read from indefinitely. A client-supplied
             // X-Prometheus-Scrape-Timeout-Seconds may only shorten this limit, never extend it.
             var scrapeTimeout = TimeSpan.FromMilliseconds(this.exporter.ScrapeResponseTimeoutMilliseconds);
             if (TryGetScrapeTimeout(httpContext.Request.Headers, out var clientTimeout) &&
@@ -153,7 +153,7 @@ internal sealed class PrometheusExporterMiddleware
             }
             finally
             {
-                this.exporter.CollectionManager.ExitCollect(protocol);
+                this.exporter.CollectionManager.ExitCollect(collectionResponse);
             }
         }
         catch (Exception ex)

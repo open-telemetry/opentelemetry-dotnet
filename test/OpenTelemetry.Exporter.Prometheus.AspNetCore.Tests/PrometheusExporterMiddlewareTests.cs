@@ -950,6 +950,57 @@ public sealed class PrometheusExporterMiddlewareTests
         }
     }
 
+    [Fact]
+    public async Task ScrapeClientsThatStopReadingTheResponseBodyDoNotBlockOtherScrapes()
+    {
+        using var meter = new Meter(MeterName, MeterVersion);
+
+        // Use the default server-side scrape timeout, which outlasts the scrape timeout
+        // of a Prometheus server, so it cannot be what lets the other scrapes through.
+        var (app, baseAddress) = await StartKestrelHostWithLargeScrapeResponseAsync(meter);
+
+        var stalledClients = new List<TcpClient>();
+
+        try
+        {
+            using var client = new HttpClient { BaseAddress = baseAddress };
+            client.DefaultRequestHeaders.Add("X-Prometheus-Scrape-Timeout-Seconds", "10");
+
+            // Keep starting scrapes which never read their response, each one reading from
+            // whatever response the previous scrapes left behind, while other scrapes keep
+            // needing a new collection.
+            for (var i = 0; i < 3; i++)
+            {
+                var stalledClient = await StartScrapeThatNeverReadsAsync(baseAddress);
+
+                Assert.NotNull(stalledClient);
+                stalledClients.Add(stalledClient);
+
+                // Let the cached response expire so the next scrape cannot be served from it
+                await Task.Delay(TimeSpan.FromSeconds(1), TestContext.Current.CancellationToken);
+
+                using var cts = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
+                cts.CancelAfter(MaxCollectWait);
+
+                using var response = await client.GetAsync(new Uri("metrics", UriKind.Relative), cts.Token);
+
+                Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            }
+
+            Assert.All(stalledClients, (p) => Assert.True(p.Connected));
+        }
+        finally
+        {
+            foreach (var stalledClient in stalledClients)
+            {
+                stalledClient.Dispose();
+            }
+
+            await app.StopAsync(TestContext.Current.CancellationToken);
+            await app.DisposeAsync();
+        }
+    }
+
     [Theory]
     [InlineData(false)]
     [InlineData(true)]

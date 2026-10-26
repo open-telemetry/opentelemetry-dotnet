@@ -34,6 +34,10 @@ Notes](../../RELEASENOTES.md).
   serialized as JSON arrays of strings instead of JSON objects.
   ([#7694](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7694))
 
+* Fixed scrape clients which stop reading their response delaying other
+  scrapes until `ScrapeResponseTimeoutMilliseconds` elapses.
+  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+
 ## 1.20.1-beta.1
 
 Released 2026-Oct-20

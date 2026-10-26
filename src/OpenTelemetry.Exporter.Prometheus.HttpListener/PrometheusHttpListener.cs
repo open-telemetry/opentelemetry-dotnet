@@ -275,7 +275,7 @@ internal sealed class PrometheusHttpListener : IDisposable
             using var requestCancelled = new CancellationTokenSource();
 
             // Always bound the request. A client that never drains the response body must not be
-            // able to hold the shared collection reader slot indefinitely. A client-supplied
+            // able to hold the response buffer it is read from indefinitely. A client-supplied
             // X-Prometheus-Scrape-Timeout-Seconds may only shorten this limit, never extend it.
             var scrapeTimeout = this.scrapeResponseTimeout;
             if (TryGetScrapeTimeout(context.Request.Headers, out var clientTimeout) &&
@@ -350,7 +350,7 @@ internal sealed class PrometheusHttpListener : IDisposable
                         // HttpListener's response stream does not reliably observe a CancellationToken once
                         // a write is in flight to HTTP.sys, so abort the response if the deadline elapses
                         // mid-write. This unblocks a write stalled because the client stopped reading the
-                        // body, so the collection reader slot is released and other scrapes are not blocked.
+                        // body, so the response buffer it is read from is released for later collections.
                         using (requestCancelled.Token.Register(
                             static (state) =>
                             {
@@ -402,7 +402,7 @@ internal sealed class PrometheusHttpListener : IDisposable
             }
             finally
             {
-                this.exporter.CollectionManager.ExitCollect(protocol);
+                this.exporter.CollectionManager.ExitCollect(collectionResponse);
             }
         }
         catch (OperationCanceledException) when (this.disposed || cancellationToken.IsCancellationRequested)

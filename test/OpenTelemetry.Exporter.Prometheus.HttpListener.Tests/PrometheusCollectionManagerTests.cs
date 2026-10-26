@@ -96,7 +96,7 @@ public sealed class PrometheusCollectionManagerTests
             }
             finally
             {
-                exporter.CollectionManager.ExitCollect(protocol);
+                exporter.CollectionManager.ExitCollect(response);
             }
         }
 
@@ -157,35 +157,30 @@ public sealed class PrometheusCollectionManagerTests
         counter.Add(100);
 
         var protocol = GetProtocol(openMetricsRequested);
-        try
+
+        // This should use the cache and ignore the second counter update.
+        var task = exporter.CollectionManager.EnterCollect(protocol, TestContext.Current.CancellationToken);
+
+        if (cacheEnabled)
         {
-            // This should use the cache and ignore the second counter update.
-            var task = exporter.CollectionManager.EnterCollect(protocol, TestContext.Current.CancellationToken);
-
-            if (cacheEnabled)
-            {
-                // A cache hit is resolved synchronously without starting a new collection.
-                Assert.True(task.IsCompleted, "Collection did not complete.");
-            }
-
-            var response = await task;
-
-            if (cacheEnabled)
-            {
-                Assert.Equal(1, runningCollectCount);
-                Assert.True(response.FromCache, "Response was not served from the cache.");
-                Assert.Equal(firstResponse.CollectionResponse.GeneratedAtUtc, response.GeneratedAtUtc);
-            }
-            else
-            {
-                Assert.Equal(2, runningCollectCount);
-                Assert.False(response.FromCache, "Response was served from the cache.");
-                Assert.True(firstResponse.CollectionResponse.GeneratedAtUtc < response.GeneratedAtUtc);
-            }
+            // A cache hit is resolved synchronously without starting a new collection.
+            Assert.True(task.IsCompleted, "Collection did not complete.");
         }
-        finally
+
+        var secondResponse = await task;
+        exporter.CollectionManager.ExitCollect(secondResponse);
+
+        if (cacheEnabled)
         {
-            exporter.CollectionManager.ExitCollect(protocol);
+            Assert.Equal(1, runningCollectCount);
+            Assert.True(secondResponse.FromCache, "Response was not served from the cache.");
+            Assert.Equal(firstResponse.CollectionResponse.GeneratedAtUtc, secondResponse.GeneratedAtUtc);
+        }
+        else
+        {
+            Assert.Equal(2, runningCollectCount);
+            Assert.False(secondResponse.FromCache, "Response was served from the cache.");
+            Assert.True(firstResponse.CollectionResponse.GeneratedAtUtc < secondResponse.GeneratedAtUtc);
         }
 
         if (cacheEnabled)
@@ -218,194 +213,156 @@ public sealed class PrometheusCollectionManagerTests
     }
 
     [Fact]
-    public async Task EnterCollectWaitsForActiveReadersToExit()
+    public async Task EnterCollectDoesNotWaitForActiveReadersToExit()
     {
+        var timeout = TimeSpan.FromSeconds(30);
+
         using var meter = CreateMeter();
-#if PROMETHEUS_HTTP_LISTENER
-        using var provider = CreateMeterProviderWithRandomPort(meter);
-#elif PROMETHEUS_ASPNETCORE
-        using var provider = Sdk.CreateMeterProviderBuilder()
-            .AddMeter(meter.Name)
-            .AddPrometheusExporter(options => options.ScrapeResponseCacheDurationMilliseconds = 0)
-            .Build();
-#endif
-
+        using var provider = CreateMeterProviderWithCache(meter, scrapeResponseCacheDurationMilliseconds: 0);
 #pragma warning disable CA2000 // MeterProvider owns exporter lifecycle
-        if (!provider.TryFindExporter(out PrometheusExporter? exporter))
+        var exporter = GetExporter(provider);
 #pragma warning restore CA2000 // MeterProvider owns exporter lifecycle
-        {
-            throw new InvalidOperationException("PrometheusExporter could not be found on MeterProvider.");
-        }
 
-        var collectCount = 0;
-        var secondCollectStarted = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
-        var originalCollect = exporter.Collect;
-        exporter.Collect = (timeout) =>
-        {
-            Interlocked.Increment(ref collectCount);
-            return originalCollect!(timeout);
-        };
+        var collectCount = CountCollections(exporter);
 
         var counter = meter.CreateCounter<int>("counter_int");
         counter.Add(100);
 
         var protocol = GetProtocol(openMetricsRequested: false);
 
-        var firstResponse = await exporter.CollectionManager.EnterCollect(protocol, TestContext.Current.CancellationToken);
-        var firstCollectExited = false;
+        // Hold a reader on the first response, standing in for a client which does not read it
+        var firstResponse = await EnterCollectAsync(exporter, protocol);
+        var secondResponse = default(PrometheusCollectionManager.CollectionResponse);
+
         try
         {
-            Assert.False(firstResponse.FromCache);
-            Assert.Equal(1, collectCount);
+            Assert.True(firstResponse.Succeeded);
+            Assert.Equal(1, collectCount());
 
-            var secondCollectTask = Task.Run(async () =>
-            {
-                secondCollectStarted.SetResult(true);
-                var response = await exporter.CollectionManager.EnterCollect(protocol);
-                try
-                {
-                    return response;
-                }
-                finally
-                {
-                    exporter.CollectionManager.ExitCollect(protocol);
-                }
-            });
+            var firstPayload = firstResponse.View.ToArray();
 
-            await secondCollectStarted.Task;
+            counter.Add(100);
 
-            var firstTimeout = TimeSpan.FromSeconds(1);
+            // The next scrape collects again straight away. Time-boxed, because if it waited for
+            // the reader above (as it did before the fix) it would never complete.
+#pragma warning disable CA2025 // The test awaits the scheduled work before disposing the provider/exporter.
+            var secondScrape = EnterCollectAsync(exporter, protocol);
+#pragma warning restore CA2025 // The test awaits the scheduled work before disposing the provider/exporter.
+            var completed = await Task.WhenAny(secondScrape, Task.Delay(timeout, TestContext.Current.CancellationToken));
 
-            using (var cts = new CancellationTokenSource(firstTimeout))
-            {
-                var completion = await Task.WhenAny(secondCollectTask, Task.Delay(firstTimeout, cts.Token));
-                Assert.NotSame(secondCollectTask, completion);
-                Assert.False(secondCollectTask.IsCompleted);
-            }
+            Assert.Same(secondScrape, completed);
 
-            Assert.Equal(1, collectCount);
+            secondResponse = await secondScrape;
 
-            exporter.CollectionManager.ExitCollect(protocol);
-            firstCollectExited = true;
-
-            var secondTimeout = TimeSpan.FromSeconds(5);
-
-            using (var cts = new CancellationTokenSource(secondTimeout))
-            {
-                var completion = await Task.WhenAny(secondCollectTask, Task.Delay(secondTimeout, cts.Token));
-                Assert.Same(secondCollectTask, completion);
-            }
-
-            var secondResponse = await secondCollectTask;
-
-            Assert.False(secondResponse.FromCache);
-            Assert.Equal(2, collectCount);
+            Assert.True(secondResponse.Succeeded);
+            Assert.False(secondResponse.FromCache, "Response was served from the cache.");
+            Assert.Equal(2, collectCount());
             Assert.True(firstResponse.GeneratedAtUtc < secondResponse.GeneratedAtUtc);
+
+            // The new response was not written over the one still being read
+            Assert.Equal(firstPayload, firstResponse.View.ToArray());
+            Assert.NotEqual(firstPayload, secondResponse.View.ToArray());
         }
         finally
         {
-            if (!firstCollectExited)
-            {
-                exporter.CollectionManager.ExitCollect(protocol);
-            }
+            exporter.CollectionManager.ExitCollect(firstResponse);
+            exporter.CollectionManager.ExitCollect(secondResponse);
         }
+
+        Assert.Equal(0, exporter.CollectionManager.ActiveReaderCount);
     }
 
     [Fact]
-    public async Task EnterCollectDoesNotBlockWaitingForActiveReadersToExit()
+    public async Task EnterCollectServesMostRecentResponseWhileEveryResponseBufferIsBeingRead()
     {
-        var testTimeout = TimeSpan.FromSeconds(30);
-        using var cts = new CancellationTokenSource(testTimeout);
+        var timeout = TimeSpan.FromSeconds(30);
 
         using var meter = CreateMeter();
-#if PROMETHEUS_HTTP_LISTENER
-        using var provider = CreateMeterProviderWithRandomPort(meter);
-#elif PROMETHEUS_ASPNETCORE
-        using var provider = Sdk.CreateMeterProviderBuilder()
-            .AddMeter(meter.Name)
-            .AddPrometheusExporter(options => options.ScrapeResponseCacheDurationMilliseconds = 0)
-            .Build();
-#endif
-
+        using var provider = CreateMeterProviderWithCache(meter, scrapeResponseCacheDurationMilliseconds: 0);
 #pragma warning disable CA2000 // MeterProvider owns exporter lifecycle
-        if (!provider.TryFindExporter(out PrometheusExporter? exporter))
+        var exporter = GetExporter(provider);
 #pragma warning restore CA2000 // MeterProvider owns exporter lifecycle
-        {
-            throw new InvalidOperationException("PrometheusExporter could not be found on MeterProvider.");
-        }
 
-        var collectCount = 0;
-        var originalCollect = exporter.Collect;
+        var collectCount = CountCollections(exporter);
 
-        exporter.Collect = (timeout) =>
-        {
-            Interlocked.Increment(ref collectCount);
-            return originalCollect!(timeout);
-        };
-
-        meter.CreateCounter<int>("counter_int").Add(100);
+        var counter = meter.CreateCounter<int>("counter_int");
+        counter.Add(100);
 
         var protocol = GetProtocol(openMetricsRequested: false);
 
-        // Hold a reader on this thread, so the next scrape cannot start
-        // a collection until it exits.
-        var firstResponse = await EnterCollectAsync(exporter, protocol);
-
-        Assert.True(firstResponse.Succeeded);
-        Assert.Equal(1, collectCount);
-
-        // The waiting is asynchronous: entering hands back an incomplete task rather
-        // than blocking the caller until the readers drain. Entering is done on a worker
-        // thread and time-boxed here, because if entering blocks (as it did before the fix)
-        // it never returns at all, as the reader being waited on is held by this thread.
-        // Doing it this way makes such a regression fail the test rather than hang CI.
-        var enteringScrape = new TaskCompletionSource<Task<PrometheusCollectionManager.CollectionResponse>>(TaskCreationOptions.RunContinuationsAsynchronously);
-
+        async Task<PrometheusCollectionManager.CollectionResponse> EnterWithinTimeoutAsync()
+        {
 #pragma warning disable CA2025 // The test awaits the scheduled work before disposing the provider/exporter.
-        _ = Task.Run(
-            () =>
-            {
-                try
-                {
-                    enteringScrape.SetResult(EnterCollectAsync(exporter, protocol));
-                }
-                catch (Exception ex)
-                {
-                    enteringScrape.SetException(ex);
-                }
-            },
-            TestContext.Current.CancellationToken);
+            var scrape = EnterCollectAsync(exporter, protocol);
 #pragma warning restore CA2025 // The test awaits the scheduled work before disposing the provider/exporter.
+            var completed = await Task.WhenAny(scrape, Task.Delay(timeout, TestContext.Current.CancellationToken));
 
-        var entered = await Task.WhenAny(enteringScrape.Task, Task.Delay(testTimeout, cts.Token));
+            Assert.Same(scrape, completed);
 
-        Assert.Same(enteringScrape.Task, entered);
+            return await scrape;
+        }
 
-        // The reader held by this thread has not exited yet, so the scrape cannot have
-        // completed unless entering a collection stopped waiting for the active reader.
-        var waitingScrape = await enteringScrape.Task;
-
-        Assert.False(waitingScrape.IsCompleted, "Entering a collection did not wait for the active reader.");
-        Assert.Equal(1, collectCount);
-
-        exporter.CollectionManager.ExitCollect(protocol);
-
-        var completion = await Task.WhenAny(waitingScrape, Task.Delay(testTimeout, cts.Token));
-
-        Assert.Same(waitingScrape, completion);
-
-        var secondResponse = await waitingScrape;
+        // Hold readers on two responses from different collections, so that neither of the
+        // buffers a response can be written to is free.
+        var readers = new List<PrometheusCollectionManager.CollectionResponse>();
 
         try
         {
-            Assert.True(secondResponse.Succeeded, "The scrape which waited for the active reader did not succeed.");
-            Assert.True(secondResponse.View.Count > 0, "The view is empty.");
-            Assert.Equal(2, collectCount);
+            var first = await EnterWithinTimeoutAsync();
+            readers.Add(first);
+
+            counter.Add(100);
+
+            var second = await EnterWithinTimeoutAsync();
+            readers.Add(second);
+
+            Assert.Equal(2, collectCount());
+
+            var secondPayload = second.View.ToArray();
+
+            counter.Add(100);
+
+            // There is nowhere to write a new response, so the most recent one is served
+            // straight away rather than waiting for the readers of the older one to exit.
+#pragma warning disable CA2025 // The test awaits the scheduled work before disposing the provider/exporter.
+            var thirdScrape = EnterCollectAsync(exporter, protocol);
+#pragma warning restore CA2025 // The test awaits the scheduled work before disposing the provider/exporter.
+
+            Assert.True(thirdScrape.IsCompleted, "The scrape waited for active readers to exit.");
+
+            var third = await thirdScrape;
+            readers.Add(third);
+
+            Assert.True(third.Succeeded);
+            Assert.True(third.FromCache, "Response was not served from the previous collection.");
+            Assert.Equal(2, collectCount());
+            Assert.Equal(second.GeneratedAtUtc, third.GeneratedAtUtc);
+            Assert.Equal(secondPayload, third.View.ToArray());
+
+            // Once the readers of the older response exit, its buffer is written again, while
+            // the most recent response is still being read.
+            exporter.CollectionManager.ExitCollect(first);
+            readers.Remove(first);
+
+            var fourth = await EnterWithinTimeoutAsync();
+            readers.Add(fourth);
+
+            Assert.True(fourth.Succeeded);
+            Assert.False(fourth.FromCache, "Response was served from the cache.");
+            Assert.Equal(3, collectCount());
+            Assert.True(third.GeneratedAtUtc < fourth.GeneratedAtUtc);
+            Assert.NotEqual(secondPayload, fourth.View.ToArray());
+            Assert.Equal(secondPayload, second.View.ToArray());
         }
         finally
         {
-            exporter.CollectionManager.ExitCollect(protocol);
+            foreach (var reader in readers)
+            {
+                exporter.CollectionManager.ExitCollect(reader);
+            }
         }
+
+        Assert.Equal(0, exporter.CollectionManager.ActiveReaderCount);
     }
 
     [Theory]
@@ -507,8 +464,8 @@ public sealed class PrometheusCollectionManagerTests
         }
         finally
         {
-            exporter.CollectionManager.ExitCollect(firstProtocol);
-            exporter.CollectionManager.ExitCollect(secondProtocol);
+            exporter.CollectionManager.ExitCollect(firstResponse);
+            exporter.CollectionManager.ExitCollect(secondResponse);
         }
     }
 
@@ -718,17 +675,18 @@ public sealed class PrometheusCollectionManagerTests
             var cachedScrape = EnterCollectAsync(exporter, prometheusProtocol);
 #pragma warning restore CA2025 // The test awaits the scheduled work before disposing the provider/exporter.
 
+            Assert.True(cachedScrape.IsCompleted, "The cached scrape waited for the collection for another format.");
+
+            response = await cachedScrape;
+
             try
             {
-                Assert.True(cachedScrape.IsCompleted, "The cached scrape waited for the collection for another format.");
-
-                response = await cachedScrape;
                 Assert.True(response.FromCache, "Response was not served from the cache.");
                 Assert.Equal(generatedAtUtc, response.GeneratedAtUtc);
             }
             finally
             {
-                exporter.CollectionManager.ExitCollect(prometheusProtocol);
+                exporter.CollectionManager.ExitCollect(response);
             }
         }
         finally
@@ -810,14 +768,8 @@ public sealed class PrometheusCollectionManagerTests
             cachedScrapeCompleted = cachedScrape.IsCompleted;
             allowSerializationToContinue.TrySetResult(true);
 
-            try
-            {
-                response = await cachedScrape;
-            }
-            finally
-            {
-                exporter.CollectionManager.ExitCollect(prometheusProtocol);
-            }
+            response = await cachedScrape;
+            exporter.CollectionManager.ExitCollect(response);
         }
         finally
         {
@@ -883,15 +835,10 @@ public sealed class PrometheusCollectionManagerTests
         counter.Add(1, new KeyValuePair<string, object?>("label", new string('x', 90_000)));
         elapsed = TimeSpan.FromMilliseconds(100);
 
-        try
-        {
-            response = await exporter.CollectionManager.EnterCollect(openMetricsProtocol, TestContext.Current.CancellationToken);
-            Assert.False(response.Succeeded, "The oversized scrape unexpectedly succeeded.");
-        }
-        finally
-        {
-            exporter.CollectionManager.ExitCollect(openMetricsProtocol);
-        }
+        response = await exporter.CollectionManager.EnterCollect(openMetricsProtocol, TestContext.Current.CancellationToken);
+        exporter.CollectionManager.ExitCollect(response);
+
+        Assert.False(response.Succeeded, "The oversized scrape unexpectedly succeeded.");
 
         response = await ScrapeAndExitAsync(exporter, prometheusProtocol);
         Assert.True(response.FromCache, "Response was not served from the cache.");
@@ -955,7 +902,7 @@ public sealed class PrometheusCollectionManagerTests
             }
             finally
             {
-                exporter.CollectionManager.ExitCollect(protocol);
+                exporter.CollectionManager.ExitCollect(response);
             }
         });
 
@@ -978,15 +925,8 @@ public sealed class PrometheusCollectionManagerTests
 
         var collectingResponse = await collectingScrape;
 
-        PrometheusCollectionManager.CollectionResponse sharingResponse;
-        try
-        {
-            sharingResponse = await sharingScrape;
-        }
-        finally
-        {
-            exporter.CollectionManager.ExitCollect(protocol);
-        }
+        var sharingResponse = await sharingScrape;
+        exporter.CollectionManager.ExitCollect(sharingResponse);
 
         // A failed collection is reported to every scrape which shared it, and is not
         // collected again on their behalf.
@@ -1051,7 +991,7 @@ public sealed class PrometheusCollectionManagerTests
                 }
                 finally
                 {
-                    exporter.CollectionManager.ExitCollect(protocol);
+                    exporter.CollectionManager.ExitCollect(response);
                 }
             }
         }
@@ -1131,7 +1071,7 @@ public sealed class PrometheusCollectionManagerTests
             }
             finally
             {
-                exporter.CollectionManager.ExitCollect(protocol);
+                exporter.CollectionManager.ExitCollect(response);
             }
         }
 
@@ -1199,7 +1139,7 @@ public sealed class PrometheusCollectionManagerTests
         }
         finally
         {
-            exporter.CollectionManager.ExitCollect(protocol);
+            exporter.CollectionManager.ExitCollect(response);
         }
     }
 
@@ -1239,7 +1179,7 @@ public sealed class PrometheusCollectionManagerTests
         }
         finally
         {
-            exporter.CollectionManager.ExitCollect(protocol);
+            exporter.CollectionManager.ExitCollect(response);
         }
     }
 
@@ -1286,7 +1226,7 @@ public sealed class PrometheusCollectionManagerTests
         }
         finally
         {
-            exporter.CollectionManager.ExitCollect(protocol);
+            exporter.CollectionManager.ExitCollect(response);
         }
 
         Assert.Null(observedValue);
@@ -1329,7 +1269,7 @@ public sealed class PrometheusCollectionManagerTests
         }
         finally
         {
-            exporter.CollectionManager.ExitCollect(protocol);
+            exporter.CollectionManager.ExitCollect(response);
         }
     }
 
@@ -1370,7 +1310,7 @@ public sealed class PrometheusCollectionManagerTests
         }
         finally
         {
-            exporter.CollectionManager.ExitCollect(protocol);
+            exporter.CollectionManager.ExitCollect(response);
         }
     }
 
@@ -1411,7 +1351,7 @@ public sealed class PrometheusCollectionManagerTests
         }
         finally
         {
-            exporter.CollectionManager.ExitCollect(protocol);
+            exporter.CollectionManager.ExitCollect(response);
         }
     }
 
@@ -1452,7 +1392,7 @@ public sealed class PrometheusCollectionManagerTests
         }
         finally
         {
-            exporter.CollectionManager.ExitCollect(protocol);
+            exporter.CollectionManager.ExitCollect(response);
         }
     }
 
@@ -1491,7 +1431,7 @@ public sealed class PrometheusCollectionManagerTests
         }
         finally
         {
-            exporter.CollectionManager.ExitCollect(protocol);
+            exporter.CollectionManager.ExitCollect(response);
         }
     }
 
@@ -1533,7 +1473,7 @@ public sealed class PrometheusCollectionManagerTests
         }
         finally
         {
-            exporter.CollectionManager.ExitCollect(protocol);
+            exporter.CollectionManager.ExitCollect(response);
         }
     }
 
@@ -1591,7 +1531,7 @@ public sealed class PrometheusCollectionManagerTests
         }
         finally
         {
-            exporter.CollectionManager.ExitCollect(protocol);
+            exporter.CollectionManager.ExitCollect(response);
         }
     }
 
@@ -1650,7 +1590,7 @@ public sealed class PrometheusCollectionManagerTests
         }
         finally
         {
-            exporter.CollectionManager.ExitCollect(protocol);
+            exporter.CollectionManager.ExitCollect(response);
         }
     }
 
@@ -1715,7 +1655,7 @@ public sealed class PrometheusCollectionManagerTests
         }
         finally
         {
-            exporter.CollectionManager.ExitCollect(protocol);
+            exporter.CollectionManager.ExitCollect(response);
         }
     }
 
@@ -1796,16 +1736,8 @@ public sealed class PrometheusCollectionManagerTests
 
     private static async Task<PrometheusCollectionManager.CollectionResponse> ScrapeAndExitAsync(PrometheusExporter exporter, PrometheusProtocol protocol)
     {
-        PrometheusCollectionManager.CollectionResponse response;
-
-        try
-        {
-            response = await EnterCollectAsync(exporter, protocol);
-        }
-        finally
-        {
-            exporter.CollectionManager.ExitCollect(protocol);
-        }
+        var response = await EnterCollectAsync(exporter, protocol);
+        exporter.CollectionManager.ExitCollect(response);
 
         Assert.True(response.Succeeded, "The scrape did not succeed.");
 
