@@ -20,13 +20,16 @@ public class OtlpUtf8SpanFormattableTagBenchmarks
     [GlobalSetup]
     public void Setup()
     {
-        this.toSerialize = [.. Enumerable.Range(0, 50).Select(i => new TestDTO(
-            Id: $"test-{i:D4}",
-            SeatId: $"seat-{i % 3}",
-            FloorPrice: 1.25 + (i * 0.5),
-            Currency: "USD",
-            Formats: i % 2 == 0 ? ["flat", "tall"] : ["large"],
-            Enabled: i % 4 != 0))];
+        this.toSerialize =
+        [
+            .. Enumerable.Range(0, 50).Select(i => new TestDTO(
+                Id: $"test-{i:D4}",
+                SeatId: $"seat-{i % 3}",
+                FloorPrice: 1.25 + (i * 0.5),
+                Currency: "USD",
+                Formats: i % 2 == 0 ? ["flat", "tall"] : ["large"],
+                Enabled: i % 4 != 0)),
+        ];
     }
 
     [Benchmark(Baseline = true)]
