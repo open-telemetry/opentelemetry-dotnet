@@ -106,6 +106,92 @@ Baggage.ClearBaggage();
 The recommended way to add Baggage is to use the `Baggage.SetBaggage()` API.
 OpenTelemetry users should not use the `Activity.AddBaggage` method.
 
+#### Baggage flow across asynchronous calls
+
+By default, `Baggage.Current` flows into child execution contexts as a snapshot.
+Assigning `Baggage.Current` or calling the static `SetBaggage`, `RemoveBaggage`,
+or `ClearBaggage` methods updates the current execution context and contexts
+subsequently forked from it. Previously forked contexts keep their own baggage.
+The same behavior applies when a static method receives an explicit `Baggage`
+argument. This describes the default `AsyncLocal` runtime context carrier;
+applications that select another `RuntimeContext.ContextSlotType` retain that
+carrier's propagation behavior.
+
+Changes made inside an awaited asynchronous method do not update the caller's
+baggage. To propagate enrichment back to a caller, return the updated baggage
+and assign it in the caller's context:
+
+```csharp
+Baggage.Current = await EnrichBaggageAsync(Baggage.Current);
+await SendRequestAsync();
+
+static async Task<Baggage> EnrichBaggageAsync(Baggage baggage)
+{
+    var tenantId = await LookupTenantIdAsync();
+    return baggage.SetBaggage("tenant.id", tenantId);
+}
+```
+
+Returning a new `Baggage` value from an instance method still requires assigning
+that value if it should become current. Synchronous helper calls update their
+caller's current execution context as before.
+
+##### Temporary compatibility option: insecure legacy flow
+
+Earlier versions shared a mutable baggage holder between inherited execution
+contexts. That allowed awaited helpers and parallel tasks to update their
+caller's baggage. Applications that require time to migrate can restore that
+behavior by enabling the `OpenTelemetry.Baggage.AllowUnsafeLegacyFlow`
+AppContext switch before the first use of `Baggage`.
+
+For SDK-style .NET applications, add the switch to the application's project
+file so the host configures it at startup:
+
+```xml
+<ItemGroup>
+  <RuntimeHostConfigurationOption
+      Include="OpenTelemetry.Baggage.AllowUnsafeLegacyFlow"
+      Value="true" />
+</ItemGroup>
+```
+
+This generates an entry in the application's `.runtimeconfig.json`
+`runtimeOptions.configProperties`. For .NET Framework applications, configure
+the switch in the application's `App.config`:
+
+```xml
+<configuration>
+  <runtime>
+    <AppContextSwitchOverrides
+        value="OpenTelemetry.Baggage.AllowUnsafeLegacyFlow=true" />
+  </runtime>
+</configuration>
+```
+
+Applications can also set the switch in startup code before any component
+uses `Baggage`:
+
+```csharp
+AppContext.SetSwitch("OpenTelemetry.Baggage.AllowUnsafeLegacyFlow", true);
+```
+
+An unset or `false` switch keeps the isolated behavior. The selected mode is
+cached when `Baggage` initializes. Configure it at startup and restart the
+application after changing it. SDK configuration, dependency injection, and
+later `AppContext.SetSwitch` calls do not update the cached mode.
+
+> [!WARNING]
+> Legacy flow is insecure for independent operations. A write can change baggage
+> seen by an operation that is already running, its parent, or its siblings.
+> This can mix baggage belonging to different users and propagate it with the
+> wrong operation. The compatibility option restores this risk; it does not
+> provide isolation between requests or messages. Use it only temporarily while
+> migrating applications, then remove it.
+
+This changes the default behavior of existing applications. The compatibility
+option provides a migration path; enabling it does not make the new default
+backward compatible.
+
 ## Introduction to OpenTelemetry .NET Tracing API
 
 .NET runtime had `Activity` class for a long time, which was meant to be used
