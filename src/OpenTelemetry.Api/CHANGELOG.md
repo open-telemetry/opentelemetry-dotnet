@@ -10,7 +10,7 @@ Notes](../../RELEASENOTES.md).
   Changes made in awaited async methods no longer update their caller's baggage.
   Enable the `OpenTelemetry.Baggage.AllowUnsafeLegacyFlow` AppContext switch at
   startup to temporarily restore insecure legacy sharing.
-  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+  ([#8042](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8042))
 
 ## 1.20.1
 
