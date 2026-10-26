@@ -36,7 +36,7 @@ Notes](../../RELEASENOTES.md).
 
 * Fixed scrape clients which stop reading their response delaying other
   scrapes until `ScrapeResponseTimeoutMilliseconds` elapses.
-  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+  ([#8041](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8041))
 
 ## 1.20.1-beta.1
 
