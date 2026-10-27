@@ -70,8 +70,8 @@ internal sealed class HistogramExplicitBounds
             return start == end
                 ? start
                 : end - start > RadixLinearSearchThreshold
-                ? this.FindBucketIndexBinary(value, start, end)
-                : this.FindBucketIndexLinear(value, start, end);
+                    ? this.FindBucketIndexBinary(value, start, end)
+                    : this.FindBucketIndexLinear(value, start, end);
         }
 
         return this.FindBucketIndexLinear(value, 0, this.Bounds.Length);

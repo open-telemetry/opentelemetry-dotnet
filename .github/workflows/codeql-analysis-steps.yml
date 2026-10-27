@@ -16,7 +16,7 @@ jobs:
       actions: read # Scan GitHub Actions workflows
       contents: read # Checkout the repository
       security-events: write # Store results in the Security tab
-    runs-on: windows-2025
+    runs-on: ubuntu-26.04
 
     strategy:
       fail-fast: ${{ inputs.trigger == 'merge_group' }}
@@ -24,14 +24,6 @@ jobs:
         language: ['actions', 'csharp']
 
     steps:
-      - name: Configure Pagefile
-        if: matrix.language == 'csharp'
-        uses: al-cheb/configure-pagefile-action@9b6da52fb72a3c6147c1aad2df22d8d905681adc # v1.5
-        with:
-          minimum-size: 8GB
-          maximum-size: 32GB
-          disk-root: "D:"
-
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -40,14 +32,15 @@ jobs:
           show-progress: false
 
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@24c54180a607b1449ed407dd24f251e4e9147c8d # v4.38.3
+        uses: github/codeql-action/init@6f2ac81f5cd81fe351a197ba0b00d91d03cd2aee # v4.39.0
         with:
           build-mode: none
+          dependency-caching: true
           languages: ${{ matrix.language }}
           queries: security-extended
 
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@24c54180a607b1449ed407dd24f251e4e9147c8d # v4.38.3
+        uses: github/codeql-action/analyze@6f2ac81f5cd81fe351a197ba0b00d91d03cd2aee # v4.39.0
         with:
           category: '/language:${{ matrix.language }}'
 

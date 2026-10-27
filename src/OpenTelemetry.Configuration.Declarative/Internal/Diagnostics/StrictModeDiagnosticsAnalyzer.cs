@@ -66,9 +66,8 @@ internal static class StrictModeDiagnosticsAnalyzer
     {
         var masked = new HashSet<ProviderEntry>();
 
-        // The mask applies only within the configuration root that holds the declarative provider.
-        // A ChainedConfigurationProvider reports a masked null or empty value as not found, so
-        // providers ahead of the chain in an enclosing root remain outside the mask.
+        // Null masks apply only within the root that holds the declarative provider. Non-empty
+        // masks and document values can also override enclosing providers through a chain.
         foreach (var entry in entries.Take(declarativeIndex))
         {
             if (entry.IsWithinSameOwnerOccurrence(declarativeEntry))
@@ -89,16 +88,18 @@ internal static class StrictModeDiagnosticsAnalyzer
         var document = declarative.Accessor.GetDocument();
         var ignored = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
 
-        foreach (var entry in entries)
+        foreach (var entry in entries.TakeWhile(entry => !ReferenceEquals(entry, declarativeEntry)))
         {
-            if (!masked.Contains(entry) || entry.Provider is DeclarativeConfigurationProvider)
+            if (entry.Provider is DeclarativeConfigurationProvider)
             {
                 continue;
             }
 
             foreach (var key in GetInScopeKeys(entry.Provider))
             {
-                if (!entry.IsExposedTo(declarativeEntry, key))
+                if (masked.Contains(entry)
+                    ? !entry.IsExposedTo(declarativeEntry, key)
+                    : !IsKeyOverriddenByDeclarativeRoute(entry, declarativeEntry, key, requireDeclarativeValue: true))
                 {
                     continue;
                 }
@@ -206,16 +207,23 @@ internal static class StrictModeDiagnosticsAnalyzer
     /// <param name="candidate">The earlier provider.</param>
     /// <param name="declarative">The declarative provider.</param>
     /// <param name="key">The configuration key.</param>
+    /// <param name="requireDeclarativeValue">
+    /// Whether the route must expose the declarative provider's value rather than a later override.
+    /// </param>
     /// <returns><see langword="true"/> if the declarative route supplies the key.</returns>
     private static bool IsKeyOverriddenByDeclarativeRoute(
         ProviderEntry candidate,
         ProviderEntry declarative,
-        string key)
+        string key,
+        bool requireDeclarativeValue = false)
     {
-        var declarativeRoute = declarative.SelfAndAncestors().FirstOrDefault(
+        var declarativeRoute = declarative.SelfAndAncestors().First(
             route => candidate.SelfAndAncestors().Any(route.HasSameOwnerOccurrence));
 
-        return declarativeRoute != null && declarativeRoute.Provider.TryGet(key, out _);
+        return declarativeRoute.Provider.TryGet(key, out var effectiveValue)
+            && (!requireDeclarativeValue
+                || (declarative.Provider.TryGet(key, out var declarativeValue)
+                    && string.Equals(effectiveValue, declarativeValue, StringComparison.Ordinal)));
     }
 
     /// <summary>

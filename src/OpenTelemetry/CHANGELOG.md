@@ -6,6 +6,43 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Fixed a race in the self-diagnostics sink dispatcher where disposing it
+  while its pump thread was exiting could throw `ArgumentNullException` on
+  .NET Framework.
+  ([#7983](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7983))
+
+* `SelfDiagnosticsOptions` is now automatically bound from the
+  `OpenTelemetry:SelfDiagnostics` configuration section, when present.
+  ([#8008](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8008))
+
+* Fixed a race where collecting a metric with delta temporality concurrently
+  with the creation of a new `MetricPoint` could reclaim the `MetricPoint`
+  while it was being created, losing the measurement.
+  ([#8019](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8019))
+
+* Fixed a race where collecting a metric with delta temporality could export
+  the same series twice in a single collection.
+  ([#8019](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8019))
+
+* Fixed wildcard matching timeouts that could prevent configured source, meter,
+  legacy activity, or metric view patterns from matching.
+  ([#8014](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8014))
+
+* The timeout passed to `MetricReader.Collect()` (for example by
+  `MeterProvider.ForceFlush()`), the `ExportTimeoutMilliseconds` of
+  `PeriodicExportingMetricReader` and the `ExporterTimeoutMilliseconds` of
+  `BatchExportProcessor<T>` are now made available to the exporter instead of
+  being ignored once the export has started, so that the OTLP exporter can
+  cancel an export which runs past the timeout. The `ExportTimeoutMilliseconds`
+  of `PeriodicExportingMetricReader` now also limits exports which are not
+  started by the reader itself, such as those of `MeterProvider.ForceFlush()`.
+  ([#7996](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7996))
+
+* Fixed a race where collecting a cumulative metric concurrently with the
+  creation of a new `MetricPoint` could export a `MetricPoint` that was not yet
+  fully initialized, could case a `NullReferenceException` when enumerating `Tags`.
+  ([#8018](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8018))
+
 ## 1.20.1
 
 Released 2026-Oct-20

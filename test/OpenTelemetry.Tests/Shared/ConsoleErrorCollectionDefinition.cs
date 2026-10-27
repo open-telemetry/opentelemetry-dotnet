@@ -5,8 +5,8 @@ namespace OpenTelemetry.Tests;
 
 /// <summary>
 /// Serialization anchor for tests that redirect the process-global
-/// <see cref="Console.Error"/> stream. Tests that call
-/// <see cref="Console.SetError"/> should carry
+/// <see cref="Console.Error"/> or <see cref="Console.Out"/> streams. Tests that call
+/// <see cref="Console.SetError"/> or <see cref="Console.SetOut"/> should carry
 /// <c>[Collection(ConsoleErrorCollectionDefinition.Name)]</c> so they run
 /// sequentially with each other, avoiding cross-class races on the shared
 /// stream.

@@ -5,3 +5,6 @@
 *.verified.xml text eol=lf working-tree-encoding=UTF-8
 *.verified.json text eol=lf working-tree-encoding=UTF-8
 *.verified.bin binary
+
+# Pinned configuration schema; the integrity test hashes the LF form
+src/OpenTelemetry.Configuration.Declarative/Schema/*.json text eol=lf

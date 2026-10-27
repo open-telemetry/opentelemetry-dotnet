@@ -1074,11 +1074,13 @@ public sealed class LogRecordTests
         Assert.Equal(string.Empty, logRecord.CategoryName);
         Assert.Equal(logRecord.CategoryName, logRecord.Logger.Name);
 
+        // AddInMemoryExporter copies each exported record. Holding on to the pooled
+        // records themselves is not safe once the provider has exported them: they go
+        // back to the process-wide pool, where a logger in a test running at the same
+        // time can rent and overwrite them before the assertions below run.
         var exportedItems = new List<LogRecord>();
         using (var loggerProvider = Sdk.CreateLoggerProviderBuilder()
-#pragma warning disable CA2000 // Dispose objects before losing scope
-            .AddProcessor(new BatchLogRecordExportProcessor(new InMemoryExporter<LogRecord>(exportedItems)))
-#pragma warning restore CA2000 // Dispose objects before losing scope
+            .AddInMemoryExporter(exportedItems)
             .Build())
         {
             var logger = loggerProvider.GetLogger("TestName");
@@ -1094,9 +1096,7 @@ public sealed class LogRecordTests
         // SchemaUrl rather than resetting them to null.
         var exportedItemsWithScope = new List<LogRecord>();
         using (var loggerProvider = Sdk.CreateLoggerProviderBuilder()
-#pragma warning disable CA2000 // Dispose objects before losing scope
-            .AddProcessor(new BatchLogRecordExportProcessor(new InMemoryExporter<LogRecord>(exportedItemsWithScope)))
-#pragma warning restore CA2000 // Dispose objects before losing scope
+            .AddInMemoryExporter(exportedItemsWithScope)
             .Build())
         {
             var logger = loggerProvider.GetLogger(new LoggerOptions
@@ -1399,19 +1399,19 @@ public sealed class LogRecordTests
             this.fieldToUpdate = fieldToUpdate;
         }
 
-        public override void OnEnd(LogRecord logRecord)
+        public override void OnEnd(LogRecord data)
         {
             if (this.fieldToUpdate == Field.State)
             {
-                logRecord.State = new List<KeyValuePair<string, object?>> { new("newStateKey", "newStateValue") };
+                data.State = new List<KeyValuePair<string, object?>> { new("newStateKey", "newStateValue") };
             }
             else if (this.fieldToUpdate == Field.StateValues)
             {
-                logRecord.StateValues = [new("newStateValueKey", "newStateValueValue")];
+                data.StateValues = [new("newStateValueKey", "newStateValueValue")];
             }
             else
             {
-                logRecord.FormattedMessage = "OpenTelemetry Good Night!";
+                data.FormattedMessage = "OpenTelemetry Good Night!";
             }
         }
     }

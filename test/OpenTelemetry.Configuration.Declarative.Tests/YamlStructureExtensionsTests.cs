@@ -36,10 +36,10 @@ public sealed class YamlStructureExtensionsTests
     }
 
     // The resolved spelling is returned, not the authored one, so a caller keying a dictionary by
-    // these strings agrees with the duplicate detection performed here. The value node is returned
-    // alongside it so a caller never has to re-zip the result against the mapping's children.
+    // these strings agrees with the duplicate detection performed here. Values and key positions
+    // are returned alongside them so callers never have to re-zip the result against the children.
     [Fact]
-    public void EnsureUniqueStringKeys_ReturnsResolvedKeysWithValuesInDocumentOrder()
+    public void EnsureUniqueStringKeys_ReturnsResolvedKeysWithValuesAndPositionsInDocumentOrder()
     {
         var stream = new YamlStream();
         stream.Load(new StringReader("beta: 1\n!!str alpha: 2\n\"gamma\": 3"));
@@ -49,6 +49,9 @@ public sealed class YamlStructureExtensionsTests
 
         Assert.Equal(["beta", "alpha", "gamma"], entries.Select(e => e.Key));
         Assert.Equal(["1", "2", "3"], entries.Select(e => ((YamlScalarNode)e.Value).Value));
+        Assert.Equal(
+            [new ConfigValuePosition(1, 1), new ConfigValuePosition(2, 1), new ConfigValuePosition(3, 1)],
+            entries.Select(e => e.KeyPosition));
     }
 
     [Fact]
@@ -59,7 +62,7 @@ public sealed class YamlStructureExtensionsTests
     }
 
     [Fact]
-    public void EnsureNoUnrecognizedProperties_NonScalarKey_Throws()
+    public void EnsureUniqueStringKeys_NonScalarKey_Throws()
     {
         var mapping = new YamlMappingNode
         {
@@ -67,6 +70,6 @@ public sealed class YamlStructureExtensionsTests
         };
 
         Assert.Throws<DeclarativeConfigurationException>(() =>
-            mapping.EnsureNoUnrecognizedProperties("root", []));
+            mapping.EnsureUniqueStringKeys("root"));
     }
 }

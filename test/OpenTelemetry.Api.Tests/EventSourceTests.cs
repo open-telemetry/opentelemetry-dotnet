@@ -6,6 +6,7 @@ using OpenTelemetry.Tests;
 
 namespace OpenTelemetry.Api.Tests;
 
+[Collection(EventSourceCollectionDefinition.Name)]
 public class EventSourceTests
 {
     [Fact]
