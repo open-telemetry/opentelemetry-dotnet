@@ -38,6 +38,11 @@ Notes](../../RELEASENOTES.md).
   started by the reader itself, such as those of `MeterProvider.ForceFlush()`.
   ([#7996](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7996))
 
+* Fixed a race where collecting a cumulative metric concurrently with the
+  creation of a new `MetricPoint` could export a `MetricPoint` that was not yet
+  fully initialized, could case a `NullReferenceException` when enumerating `Tags`.
+  ([#8018](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8018))
+
 ## 1.20.1
 
 Released 2026-Oct-20
