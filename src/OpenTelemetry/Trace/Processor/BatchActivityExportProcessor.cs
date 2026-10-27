@@ -72,7 +72,8 @@ public class BatchActivityExportProcessor : BatchExportProcessor<Activity>
             return;
         }
 
-        if (!this.TryEnterOnEnd())
+        var token = this.TryEnterOnEnd();
+        if (token < 0)
         {
             SdkSelfObservability.SpanProcessedCounter.Add(1, this.alreadyShutdownTags);
             return;
@@ -84,7 +85,7 @@ public class BatchActivityExportProcessor : BatchExportProcessor<Activity>
         }
         finally
         {
-            this.ExitOnEnd();
+            this.ExitOnEnd(token);
         }
     }
 

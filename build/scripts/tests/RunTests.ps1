@@ -1,7 +1,7 @@
 #! /usr/bin/env pwsh
 
 #Requires -PSEdition Core
-#Requires -Version 7
+#Requires -Version 7.4
 
 <#
 .SYNOPSIS
@@ -39,12 +39,34 @@ $pester = Get-Module -Name "Pester" -ListAvailable | Where-Object { $_.Version -
 
 if ($null -eq $pester) {
     Write-Output "Installing Pester $PesterVersion..."
-    Install-Module `
-        -Name "Pester" `
-        -RequiredVersion $PesterVersion `
-        -Scope CurrentUser `
-        -Force `
-        -SkipPublisherCheck
+
+    $maxAttempts = 5
+    $delaySeconds = 2
+
+    for ($attempt = 1; $attempt -le $maxAttempts; $attempt++) {
+        try {
+            Install-PSResource `
+                -Name "Pester" `
+                -Version $PesterVersion `
+                -Scope CurrentUser `
+                -TrustRepository `
+                -Quiet `
+                -ErrorAction Stop
+
+            break
+        }
+        catch {
+            if ($attempt -ge $maxAttempts) {
+                throw
+            }
+
+            Write-Warning "Failed to install Pester $PesterVersion (attempt $attempt of $maxAttempts): $($_.Exception.Message)"
+            Write-Output "Retrying in $delaySeconds seconds..."
+
+            Start-Sleep -Seconds $delaySeconds
+            $delaySeconds *= 2
+        }
+    }
 }
 
 Remove-Module -Name "Pester" -Force -ErrorAction SilentlyContinue
@@ -60,6 +82,7 @@ $coveragePaths = @(
     "finalize-publicapi.ps1",
     "post-release.psm1",
     "prepare-release.psm1",
+    "publish-packages.psm1",
     "report-unreleased-changes.ps1",
     "update-changelogs.ps1"
 ) | ForEach-Object { Join-Path -Path $scriptsDirectory -ChildPath $_ }
