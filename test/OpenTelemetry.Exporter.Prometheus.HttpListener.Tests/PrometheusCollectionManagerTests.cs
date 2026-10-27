@@ -280,16 +280,19 @@ public sealed class PrometheusCollectionManagerTests
     [Fact]
     public async Task EnterCollectServesMostRecentResponseWhileEveryResponseBufferIsBeingRead()
     {
+        const int ScrapeResponseCacheDurationMilliseconds = 300;
+
         var timeout = TimeSpan.FromSeconds(30);
 
         using var meter = CreateMeter();
-        using var provider = CreateMeterProviderWithCache(meter, scrapeResponseCacheDurationMilliseconds: 0);
+        using var provider = CreateMeterProviderWithCache(meter, ScrapeResponseCacheDurationMilliseconds);
 #pragma warning disable CA2000 // MeterProvider owns exporter lifecycle
         var exporter = GetExporter(provider);
 #pragma warning restore CA2000 // MeterProvider owns exporter lifecycle
 
-        // The collections run back to back, faster than DateTime.UtcNow ticks on .NET Framework
+        // Each scrape arrives once the previous response has expired from the cache
         var elapsed = TimeSpan.Zero;
+        var cacheExpiry = TimeSpan.FromMilliseconds(ScrapeResponseCacheDurationMilliseconds + 1);
         UseManualClock(exporter, () => elapsed);
 
         var collectCount = CountCollections(exporter);
@@ -321,7 +324,7 @@ public sealed class PrometheusCollectionManagerTests
             readers.Add(first);
 
             counter.Add(100);
-            elapsed += TimeSpan.FromMilliseconds(1);
+            elapsed += cacheExpiry;
 
             var second = await EnterWithinTimeoutAsync();
             readers.Add(second);
@@ -331,10 +334,11 @@ public sealed class PrometheusCollectionManagerTests
             var secondPayload = second.View.ToArray();
 
             counter.Add(100);
-            elapsed += TimeSpan.FromMilliseconds(1);
+            elapsed += cacheExpiry;
 
-            // There is nowhere to write a new response, so the most recent one is served
-            // straight away rather than waiting for the readers of the older one to exit.
+            // There is nowhere to write a new response, so with response caching enabled the
+            // most recent one is served straight away, even though it has expired from the
+            // cache, rather than waiting for the readers of the older one to exit.
 #pragma warning disable CA2025 // The test awaits the scheduled work before disposing the provider/exporter.
             var thirdScrape = EnterCollectAsync(exporter, protocol);
 #pragma warning restore CA2025 // The test awaits the scheduled work before disposing the provider/exporter.
@@ -355,7 +359,7 @@ public sealed class PrometheusCollectionManagerTests
             exporter.CollectionManager.ExitCollect(first);
             readers.Remove(first);
 
-            elapsed += TimeSpan.FromMilliseconds(1);
+            elapsed += cacheExpiry;
 
             var fourth = await EnterWithinTimeoutAsync();
             readers.Add(fourth);
@@ -378,8 +382,10 @@ public sealed class PrometheusCollectionManagerTests
         Assert.Equal(0, exporter.CollectionManager.ActiveReaderCount);
     }
 
-    [Fact]
-    public async Task EnterCollectServesMostRecentResponseWhenItCannotJoinTheCollectionInFlight()
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task EnterCollectWaitsForAResponseBufferWhenResponseCachingIsDisabled(bool cancelWhileWaiting)
     {
         var timeout = TimeSpan.FromSeconds(30);
 
@@ -388,6 +394,118 @@ public sealed class PrometheusCollectionManagerTests
 #pragma warning disable CA2000 // MeterProvider owns exporter lifecycle
         var exporter = GetExporter(provider);
 #pragma warning restore CA2000 // MeterProvider owns exporter lifecycle
+
+        // The collections run back to back, faster than DateTime.UtcNow ticks on .NET Framework
+        var elapsed = TimeSpan.Zero;
+        UseManualClock(exporter, () => elapsed);
+
+        var collectCount = CountCollections(exporter);
+
+        var counter = meter.CreateCounter<int>("counter_int");
+        counter.Add(100);
+
+        var protocol = GetProtocol(openMetricsRequested: false);
+
+        // Hold readers on two responses from different collections, so that neither of the
+        // buffers a response can be written to is free.
+        var readers = new List<PrometheusCollectionManager.CollectionResponse>();
+
+        try
+        {
+            var first = await EnterCollectAsync(exporter, protocol);
+            readers.Add(first);
+
+            counter.Add(100);
+            elapsed += TimeSpan.FromMilliseconds(1);
+
+            var second = await EnterCollectAsync(exporter, protocol);
+            readers.Add(second);
+
+            Assert.Equal(2, collectCount());
+
+            var secondPayload = second.View.ToArray();
+
+            counter.Add(100);
+            elapsed += TimeSpan.FromMilliseconds(1);
+
+            using var cts = new CancellationTokenSource();
+
+            // There is nowhere to write a new response, and with response caching disabled the
+            // most recent one must not be served, so the scrape waits for a buffer to be freed.
+#if NET
+            var scrape = exporter.CollectionManager.EnterCollect(protocol, cts.Token).AsTask();
+#else
+            var scrape = exporter.CollectionManager.EnterCollect(protocol, cts.Token);
+#endif
+
+            Assert.False(scrape.IsCompleted, "The scrape did not wait for a response buffer.");
+            Assert.Equal(2, collectCount());
+
+            if (cancelWhileWaiting)
+            {
+#if NET
+                await cts.CancelAsync();
+#else
+                cts.Cancel();
+#endif
+            }
+            else
+            {
+                // Once the readers of the older response exit, its buffer is written again,
+                // while the most recent response is still being read.
+                exporter.CollectionManager.ExitCollect(first);
+                readers.Remove(first);
+            }
+
+            var completed = await Task.WhenAny(scrape, Task.Delay(timeout, TestContext.Current.CancellationToken));
+            Assert.Same(scrape, completed);
+
+            var third = await scrape;
+            readers.Add(third);
+
+            if (cancelWhileWaiting)
+            {
+                Assert.False(third.Succeeded, "The cancelled scrape succeeded.");
+                Assert.Equal(2, collectCount());
+            }
+            else
+            {
+                Assert.True(third.Succeeded, "The scrape did not succeed.");
+                Assert.False(third.FromCache, "Response was served from the cache.");
+                Assert.Equal(3, collectCount());
+                Assert.True(second.GeneratedAtUtc < third.GeneratedAtUtc);
+                Assert.NotEqual(secondPayload, third.View.ToArray());
+                Assert.Equal(secondPayload, second.View.ToArray());
+            }
+        }
+        finally
+        {
+            foreach (var reader in readers)
+            {
+                exporter.CollectionManager.ExitCollect(reader);
+            }
+        }
+
+        Assert.Equal(0, exporter.CollectionManager.ActiveReaderCount);
+    }
+
+    [Fact]
+    public async Task EnterCollectServesMostRecentResponseWhenItCannotJoinTheCollectionInFlight()
+    {
+        const int ScrapeResponseCacheDurationMilliseconds = 300;
+
+        var timeout = TimeSpan.FromSeconds(30);
+
+        using var meter = CreateMeter();
+        using var provider = CreateMeterProviderWithCache(meter, ScrapeResponseCacheDurationMilliseconds);
+#pragma warning disable CA2000 // MeterProvider owns exporter lifecycle
+        var exporter = GetExporter(provider);
+#pragma warning restore CA2000 // MeterProvider owns exporter lifecycle
+
+        // Each scrape arrives once the previous response has expired from the cache
+        var elapsed = TimeSpan.Zero;
+        var cacheExpiry = TimeSpan.FromMilliseconds(ScrapeResponseCacheDurationMilliseconds + 1);
+        UseManualClock(exporter, () => elapsed);
 
         var collectCount = 0;
         var blockCollect = false;
@@ -426,6 +544,7 @@ public sealed class PrometheusCollectionManagerTests
             readers.Add(first);
 
             counter.Add(100);
+            elapsed += cacheExpiry;
 
             var second = await EnterCollectAsync(exporter, prometheusProtocol);
             readers.Add(second);
@@ -434,6 +553,8 @@ public sealed class PrometheusCollectionManagerTests
 
             Assert.NotEqual(first.View.ToArray(), secondPayload);
             Assert.Equal(2, collectCount);
+
+            elapsed += cacheExpiry;
 
             // Start a collection for another format, which this format could otherwise join
             Volatile.Write(ref blockCollect, true);
@@ -458,8 +579,9 @@ public sealed class PrometheusCollectionManagerTests
             var third = await scrape;
             readers.Add(third);
 
-            // There was nowhere for the collection in flight to write this format, so the most
-            // recent response is served rather than collecting for it again.
+            // There was nowhere for the collection in flight to write this format, so with
+            // response caching enabled the most recent response is served, even though it has
+            // expired from the cache, rather than collecting for it again.
             Assert.True(third.Succeeded);
             Assert.True(third.FromCache, "Response was not served from the previous collection.");
             Assert.Equal(secondPayload, third.View.ToArray());
