@@ -16,13 +16,6 @@ public class BaggageTests
     private const string V2 = "Value2";
     private const string V3 = "Value3";
 
-    // Each flow mode is tested in a fresh process with this setting established at startup.
-    // The caching test initializes Baggage before changing the switch. Tests in
-    // this class run serially; other classes use the already-cached flow mode.
-    private static bool AllowUnsafeLegacyFlow =>
-        AppContext.TryGetSwitch("OpenTelemetry.Baggage.AllowUnsafeLegacyFlow", out var enabled)
-        && enabled;
-
     [Fact]
     public void EmptyTest()
     {
@@ -435,10 +428,10 @@ public class BaggageTests
 
         Baggage.SetBaggage("key4", "value4");
 
-        Assert.Equal(AllowUnsafeLegacyFlow ? 4 : 2, Baggage.Current.Count);
+        Assert.Equal(2, Baggage.Current.Count);
         Assert.Equal("value1", Baggage.GetBaggage("key1"));
-        Assert.Equal(AllowUnsafeLegacyFlow ? "value2" : null, Baggage.GetBaggage("key2"));
-        Assert.Equal(AllowUnsafeLegacyFlow ? "value3" : null, Baggage.GetBaggage("key3"));
+        Assert.Null(Baggage.GetBaggage("key2"));
+        Assert.Null(Baggage.GetBaggage("key3"));
         Assert.Equal("value4", Baggage.GetBaggage("key4"));
 
         static async Task InnerTask(bool yield)
@@ -473,7 +466,7 @@ public class BaggageTests
         Baggage.Current = replacement;
         release.SetResult(true);
 
-        Assert.Equal(AllowUnsafeLegacyFlow ? replacement : original, await WaitForCompletion(child));
+        Assert.Equal(original, await WaitForCompletion(child));
         Assert.Equal(replacement, Baggage.Current);
     }
 
@@ -511,7 +504,7 @@ public class BaggageTests
         };
         release.SetResult(true);
 
-        Assert.Equal(AllowUnsafeLegacyFlow ? replacement : original, await WaitForCompletion(child));
+        Assert.Equal(original, await WaitForCompletion(child));
         Assert.Equal(replacement, Baggage.Current);
     }
 
@@ -526,9 +519,9 @@ public class BaggageTests
         var second = HandleAsync(V2);
         release.SetResult(true);
 
-        Assert.Equal(AllowUnsafeLegacyFlow ? V2 : V1, await WaitForCompletion(first));
+        Assert.Equal(V1, await WaitForCompletion(first));
         Assert.Equal(V2, await WaitForCompletion(second));
-        Assert.Equal(AllowUnsafeLegacyFlow ? V2 : null, Baggage.GetBaggage(K1));
+        Assert.Null(Baggage.GetBaggage(K1));
 
         async Task<string?> HandleAsync(string value)
         {
@@ -565,13 +558,13 @@ public class BaggageTests
     }
 
     [Fact]
-    public async Task AwaitedCurrentAssignmentHonorsFlowMode()
+    public async Task AwaitedCurrentAssignmentDoesNotChangeCaller()
     {
         Baggage.Current = Baggage.Create(new Dictionary<string, string> { [K1] = V1 });
         await EnrichAsync();
 
         Assert.Equal(V1, Baggage.GetBaggage(K1));
-        Assert.Equal(AllowUnsafeLegacyFlow ? V2 : null, Baggage.GetBaggage(K2));
+        Assert.Null(Baggage.GetBaggage(K2));
 
         static async Task EnrichAsync()
         {
@@ -606,7 +599,7 @@ public class BaggageTests
         Baggage.Current = secondContext.Baggage;
         release.SetResult(true);
 
-        Assert.Equal(AllowUnsafeLegacyFlow ? "tenant=second" : "tenant=first", await WaitForCompletion(child));
+        Assert.Equal("tenant=first", await WaitForCompletion(child));
     }
 
     [Fact]
@@ -620,35 +613,7 @@ public class BaggageTests
             Baggage.SetBaggage($"key{i}", $"value{i}");
         });
 
-        Assert.Equal(AllowUnsafeLegacyFlow ? 101 : 1, Baggage.Current.Count);
-    }
-
-    [Fact]
-    public async Task FlowModeDoesNotChangeAfterInitialization()
-    {
-        var enabled = AllowUnsafeLegacyFlow;
-        var original = Baggage.Create(new Dictionary<string, string> { [K1] = V1 });
-        var replacement = Baggage.Create(new Dictionary<string, string> { [K1] = V2 });
-        Baggage.Current = original;
-
-        try
-        {
-            AppContext.SetSwitch("OpenTelemetry.Baggage.AllowUnsafeLegacyFlow", !enabled);
-            var release = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
-            var child = Task.Run(async () =>
-            {
-                await WaitForCompletion(release.Task);
-                return Baggage.Current;
-            });
-            Baggage.Current = replacement;
-            release.SetResult(true);
-
-            Assert.Equal(enabled ? replacement : original, await WaitForCompletion(child));
-        }
-        finally
-        {
-            AppContext.SetSwitch("OpenTelemetry.Baggage.AllowUnsafeLegacyFlow", enabled);
-        }
+        Assert.Equal(1, Baggage.Current.Count);
     }
 
     private static async Task WaitForCompletion(Task task)
