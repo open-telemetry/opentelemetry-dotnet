@@ -142,7 +142,8 @@ Earlier versions shared a mutable baggage holder between inherited execution
 contexts. That allowed awaited helpers and parallel tasks to update their
 caller's baggage. Applications that require time to migrate can restore that
 behavior by enabling the `OpenTelemetry.Baggage.AllowUnsafeLegacyFlow`
-AppContext switch before the first use of `Baggage`.
+[AppContext switch](https://learn.microsoft.com/dotnet/api/system.appcontext)
+before the first use of `Baggage`.
 
 For SDK-style .NET applications, add the switch to the application's project
 file so the host configures it at startup:
@@ -156,8 +157,8 @@ file so the host configures it at startup:
 ```
 
 This generates an entry in the application's `.runtimeconfig.json`
-`runtimeOptions.configProperties`. For .NET Framework applications, configure
-the switch in the application's `App.config`:
+`runtimeOptions.configProperties`. For .NET Framework applications that use
+`App.config`, configure the switch as follows:
 
 ```xml
 <configuration>
@@ -165,6 +166,18 @@ the switch in the application's `App.config`:
     <AppContextSwitchOverrides
         value="OpenTelemetry.Baggage.AllowUnsafeLegacyFlow=true" />
   </runtime>
+</configuration>
+```
+
+For ASP.NET applications on .NET Framework, configure the switch in the
+application's `Web.config` using `appSettings`:
+
+```xml
+<configuration>
+  <appSettings>
+    <add key="AppContext.SetSwitch:OpenTelemetry.Baggage.AllowUnsafeLegacyFlow"
+         value="true" />
+  </appSettings>
 </configuration>
 ```
 
@@ -181,8 +194,8 @@ application after changing it. SDK configuration, dependency injection, and
 later `AppContext.SetSwitch` calls do not update the cached mode.
 
 > [!WARNING]
-> Legacy flow is insecure for independent operations. A write can change baggage
-> seen by an operation that is already running, its parent, or its siblings.
+> The legacy flow is insecure for independent operations. A write can change
+> baggage seen by an operation that is already running, its parent, or its siblings.
 > This can mix baggage belonging to different users and propagate it with the
 > wrong operation. The compatibility option restores this risk; it does not
 > provide isolation between requests or messages. Use it only temporarily while
