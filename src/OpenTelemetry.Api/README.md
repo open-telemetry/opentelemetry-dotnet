@@ -474,6 +474,77 @@ Propagator Api used by the instrumentation libraries is different than
 available in `System.Diagnostics`. Implementing this will have no impact on the
 propagation, if used alongside instrumentation libraries.
 
+### Environment variables as carriers
+
+The OpenTelemetry Specification defines a mechanism for using
+[environment variables as context propagation carriers](https://opentelemetry.io/docs/specs/otel/context/env-carriers/).
+
+When network protocols are not applicable, context and baggage can also be
+propagated through environment variables. Use
+`EnvironmentVariableCarrier.CurrentProcess` to read a normalized snapshot of the
+current process environment, and use `EnvironmentVariableCarrier.Set` to inject
+context into the environment dictionary of a child process. For a runnable
+end-to-end example, see
+[`examples/EnvironmentVariables`](../../examples/EnvironmentVariables/Program.cs).
+
+> [!IMPORTANT]
+> A process' environment variables may contain sensitive information, like secrets
+> or credentials. Ensure that any environment variables used for context propagation
+> are not exposed to untrusted child processes.
+>
+> See [Environment Variables as Context Propagation Carriers](https://opentelemetry.io/docs/specs/otel/context/env-carriers/#security)
+> for more information about security considerations when propagating context via
+> environment variables.
+
+```csharp
+using System.Diagnostics;
+using OpenTelemetry.Context.Propagation;
+
+var propagator = new CompositeTextMapPropagator(
+[
+    new TraceContextPropagator(),
+    new BaggagePropagator(),
+]);
+
+// Child process startup: extract from the current process' environment snapshot
+var parentContext = propagator.Extract(
+    default,
+    EnvironmentVariableCarrier.CurrentProcess,
+    EnvironmentVariableCarrier.Get);
+
+using var activity = activitySource.StartActivity(
+    "RunChildProcess",
+    ActivityKind.Internal,
+    parentContext.ActivityContext);
+
+var startInfo = new ProcessStartInfo("child.exe")
+{
+    UseShellExecute = false,
+};
+
+foreach (DictionaryEntry environmentVariable in Environment.GetEnvironmentVariables())
+{
+    startInfo.Environment[(string)environmentVariable.Key] = (string?)environmentVariable.Value;
+}
+
+// Parent process: inject into the child process environment copy
+var context = new PropagationContext(activity?.Context ?? default, Baggage.Current);
+propagator.Inject(context, startInfo.Environment, EnvironmentVariableCarrier.Set);
+```
+
+`EnvironmentVariableCarrier` normalizes keys by uppercasing ASCII letters,
+replacing non-ASCII letters, non-digits, and non-underscore characters with
+underscores, and prefixing `_` when a key would otherwise start with a digit.
+Values are treated as opaque strings and are not validated or modified by the
+carrier.
+
+When reading from a carrier, `EnvironmentVariableCarrier.Get` normalizes the
+requested key and reads only that normalized environment variable name. A
+non-normalized carrier key is not read, even when it would normalize to the
+requested key. Use `EnvironmentVariableCarrier.Capture`,
+`EnvironmentVariableCarrier.CurrentProcess`, or `EnvironmentVariableCarrier.Set`
+to ensure carrier keys are normalized.
+
 ## Introduction to OpenTelemetry .NET Metrics API
 
 Metrics in OpenTelemetry .NET are a somewhat unique implementation of the

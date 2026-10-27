@@ -6,6 +6,10 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* The experimental APIs previously covered by `OTEL1005`
+  (`EnvironmentVariableCarrier`) are now stable.
+  ([#8044](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8044))
+
 ## 1.20.1
 
 Released 2026-Oct-20
