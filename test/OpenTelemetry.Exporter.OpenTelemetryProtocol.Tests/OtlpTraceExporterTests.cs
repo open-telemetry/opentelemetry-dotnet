@@ -3,6 +3,9 @@
 
 using System.Diagnostics;
 using System.Diagnostics.Tracing;
+#if NETFRAMEWORK
+using System.Net.Http;
+#endif
 using Google.Protobuf.Collections;
 using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
@@ -18,7 +21,7 @@ using OtlpTrace = OpenTelemetry.Proto.Trace.V1;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests;
 
-[Collection("xUnitCollectionPreventingTestsThatDependOnSdkConfigurationFromRunningInParallel")]
+[Collection(EnvVarsCollectionDefinition.Name)]
 public sealed class OtlpTraceExporterTests : IDisposable
 {
     private static readonly SdkLimitOptions DefaultSdkLimitOptions = new();
@@ -787,6 +790,36 @@ public sealed class OtlpTraceExporterTests : IDisposable
         Assert.Equal("1234", linkAttribute.Value.StringValue);
     }
 
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void SpanStatusDescriptionIsTruncatedToValueLengthLimit(bool useStatusTags)
+    {
+        var sdkOptions = new SdkLimitOptions() { SpanAttributeValueLengthLimit = 4 };
+
+        using var activitySource = new ActivitySource(nameof(this.SpanStatusDescriptionIsTruncatedToValueLengthLimit));
+        using var activity = activitySource.StartActivity("root");
+
+        Assert.NotNull(activity);
+
+        if (useStatusTags)
+        {
+            activity.SetTag(SpanAttributeConstants.StatusCodeKey, "ERROR");
+            activity.SetTag(SpanAttributeConstants.StatusDescriptionKey, "12345");
+        }
+        else
+        {
+            activity.SetStatus(ActivityStatusCode.Error, "12345");
+        }
+
+        var otlpSpan = ToOtlpSpan(sdkOptions, activity);
+
+        Assert.NotNull(otlpSpan);
+        Assert.NotNull(otlpSpan.Status);
+        Assert.Equal(OtlpTrace.Status.Types.StatusCode.Error, otlpSpan.Status.Code);
+        Assert.Equal("1234", otlpSpan.Status.Message);
+    }
+
     [Fact]
     public void ToOtlpSpanTest()
     {
@@ -1232,6 +1265,101 @@ public sealed class OtlpTraceExporterTests : IDisposable
     }
 
     [Fact]
+    public void Export_ProcessorTimeoutShorterThanExporterTimeout_LimitsExportDeadline()
+    {
+        var exportClientMock = new TestExportClient();
+        var exporterOptions = new OtlpExporterOptions();
+        using var transmissionHandler = new OtlpExporterTransmissionHandler(exportClientMock, exporterOptions.TimeoutMilliseconds);
+#pragma warning disable CA2000 // Dispose objects before losing scope
+        using var processor = new BatchActivityExportProcessor(
+            new OtlpTraceExporter(exporterOptions, DefaultSdkLimitOptions, DefaultExperimentalOptions, transmissionHandler),
+            exporterTimeoutMilliseconds: 500);
+#pragma warning restore CA2000 // Dispose objects before losing scope
+
+        using var activity = new Activity("activity")
+        {
+            ActivityTraceFlags = ActivityTraceFlags.Recorded,
+        };
+
+        var before = DateTime.UtcNow;
+        processor.OnEnd(activity);
+        Assert.True(processor.ForceFlush());
+        var after = DateTime.UtcNow;
+
+        Assert.True(exportClientMock.SendExportRequestCalled);
+        Assert.InRange(exportClientMock.LastDeadlineUtc, before.AddMilliseconds(500), after.AddMilliseconds(500));
+    }
+
+    [Theory]
+    [InlineData(false, 100, ExportResult.Failure)]
+    [InlineData(true, 100, ExportResult.Failure)]
+    [InlineData(false, 30_000, ExportResult.Success)]
+    [InlineData(true, 30_000, ExportResult.Success)]
+    public void Export_ExportOverrideDelaysBaseExport_RequestIsNotSentOnceProcessorTimeoutElapses(bool useGrpc, int exporterTimeoutMilliseconds, ExportResult expected)
+    {
+        using var handler = new TestHttpMessageHandler();
+        var exporterOptions = new OtlpExporterOptions
+        {
+#pragma warning disable CS0618 // Suppressing gRPC obsolete warning
+            Protocol = useGrpc ? OtlpExportProtocol.Grpc : OtlpExportProtocol.HttpProtobuf,
+#pragma warning restore CS0618 // Suppressing gRPC obsolete warning
+            HttpClientFactory = () => new HttpClient(handler, disposeHandler: false),
+        };
+
+#pragma warning disable CA2000 // Dispose objects before losing scope
+        var exporter = new DelayedOtlpTraceExporter(exporterOptions, TimeSpan.FromMilliseconds(400));
+#pragma warning restore CA2000 // Dispose objects before losing scope
+        using var processor = new BatchActivityExportProcessor(exporter, exporterTimeoutMilliseconds: exporterTimeoutMilliseconds);
+
+        using var activity = new Activity("activity")
+        {
+            ActivityTraceFlags = ActivityTraceFlags.Recorded,
+        };
+
+        processor.OnEnd(activity);
+        Assert.True(processor.ForceFlush());
+
+        // The time the override spends before calling the base implementation counts towards the timeout
+        Assert.Equal(expected, exporter.LastResult);
+        Assert.Equal(expected == ExportResult.Success ? 1 : 0, handler.RequestCount);
+    }
+
+    [Fact]
+    public void Export_SerializationTime_CountsTowardsExportDeadline()
+    {
+        const int ExporterTimeoutMilliseconds = 1_000;
+
+        var exportClientMock = new TestExportClient();
+        var exporterOptions = new OtlpExporterOptions();
+        using var transmissionHandler = new OtlpExporterTransmissionHandler(exportClientMock, exporterOptions.TimeoutMilliseconds);
+#pragma warning disable CA2000 // Dispose objects before losing scope
+        using var processor = new BatchActivityExportProcessor(
+            new OtlpTraceExporter(exporterOptions, DefaultSdkLimitOptions, DefaultExperimentalOptions, transmissionHandler),
+            exporterTimeoutMilliseconds: ExporterTimeoutMilliseconds);
+#pragma warning restore CA2000 // Dispose objects before losing scope
+
+        var slowTag = new SlowToString(TimeSpan.FromMilliseconds(500));
+
+        using var activity = new Activity("activity")
+        {
+            ActivityTraceFlags = ActivityTraceFlags.Recorded,
+        };
+
+        activity.SetTag("slow", slowTag);
+
+        processor.OnEnd(activity);
+        Assert.True(processor.ForceFlush());
+
+        Assert.True(exportClientMock.SendExportRequestCalled);
+        Assert.NotNull(slowTag.FirstCalledAtUtc);
+
+        // The deadline started before the tag was serialized, rather than when the request was sent
+        Assert.True(
+            exportClientMock.LastDeadlineUtc <= slowTag.FirstCalledAtUtc.Value.AddMilliseconds(ExporterTimeoutMilliseconds),
+            $"The deadline {exportClientMock.LastDeadlineUtc:O} is later than {ExporterTimeoutMilliseconds}ms after serialization started at {slowTag.FirstCalledAtUtc.Value:O}.");
+    }
+
+    [Fact]
     public void Shutdown_ClientShutdownIsCalled()
     {
         var exportClientMock = new TestExportClient();
@@ -1540,5 +1668,28 @@ public sealed class OtlpTraceExporterTests : IDisposable
     private sealed class ToStringThrows
     {
         public override string ToString() => throw new InvalidOperationException("Nope.");
+    }
+
+    private sealed class SlowToString(TimeSpan delay)
+    {
+        public DateTime? FirstCalledAtUtc { get; private set; }
+
+        public override string ToString()
+        {
+            this.FirstCalledAtUtc ??= DateTime.UtcNow;
+            Thread.Sleep(delay);
+            return "slow";
+        }
+    }
+
+    private sealed class DelayedOtlpTraceExporter(OtlpExporterOptions options, TimeSpan delay) : OtlpTraceExporter(options)
+    {
+        public ExportResult? LastResult { get; private set; }
+
+        public override ExportResult Export(in Batch<Activity> activityBatch)
+        {
+            Thread.Sleep(delay);
+            return (this.LastResult = base.Export(activityBatch)).Value;
+        }
     }
 }

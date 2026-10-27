@@ -15,6 +15,7 @@ using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Configuration.Declarative.Tests;
 
+[Collection(EnvVarsCollectionDefinition.Name)]
 public sealed class StrictModeDiagnosticsTests
 {
     private const int SettingsIgnoredEventId = 36;
@@ -305,7 +306,7 @@ public sealed class StrictModeDiagnosticsTests
             .Build();
 
         var outer = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?> { ["OTEL_SERVICE_NAME"] = "outer-earlier" })
+            .AddInMemoryCollection(new Dictionary<string, string?> { ["OTEL_EXPORTER_OTLP_ENDPOINT"] = "outer-earlier" })
             .AddConfiguration(inner)
             .AddInMemoryCollection(new Dictionary<string, string?> { ["OTEL_BSP_SCHEDULE_DELAY"] = "1" })
             .Build();
@@ -313,7 +314,7 @@ public sealed class StrictModeDiagnosticsTests
         // A chained configuration reports a masked key as not found, so the enclosing root falls
         // through to its earlier providers. The diagnostics must report what is actually applied.
         Assert.Null(outer["OTEL_TRACES_SAMPLER"]);
-        Assert.Equal("outer-earlier", outer["OTEL_SERVICE_NAME"]);
+        Assert.Equal("outer-earlier", outer["OTEL_EXPORTER_OTLP_ENDPOINT"]);
 
         using var listener = CreateListener(EventLevel.Warning);
 
@@ -323,7 +324,63 @@ public sealed class StrictModeDiagnosticsTests
         Assert.Equal("OTEL_TRACES_SAMPLER", ignored.Payload![1]);
 
         var unmasked = listener.Messages.Where(e => e.EventId == LaterSourceEventId).Select(e => (string)e.Payload![2]!).ToList();
-        Assert.Equal(["OTEL_SERVICE_NAME", "OTEL_BSP_SCHEDULE_DELAY"], unmasked);
+        Assert.Equal(["OTEL_EXPORTER_OTLP_ENDPOINT", "OTEL_BSP_SCHEDULE_DELAY"], unmasked);
+    }
+
+    [Theory]
+    [InlineData("OTEL_RESOURCE_ATTRIBUTES", false)]
+    [InlineData("OTEL_RESOURCE_ATTRIBUTES", true)]
+    [InlineData("OTEL_SERVICE_NAME", false)]
+    [InlineData("OTEL_SERVICE_NAME", true)]
+    public void ChainedConfiguration_ResourceMask_IgnoresEnclosingEarlierSetting(string key, bool nested)
+    {
+        using var yamlFile = DeclarativeYamlTestFile.CreateDeclarativeYaml();
+        var inner = new ConfigurationBuilder()
+            .AddOpenTelemetryDeclarativeConfiguration(yamlFile.Path)
+            .Build();
+        var middle = new ConfigurationBuilder().AddConfiguration(inner).Build();
+        var outer = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?> { [key] = "outer-earlier" })
+            .AddConfiguration(nested ? middle : inner)
+            .Build();
+
+        Assert.Equal(" ", outer[key]);
+
+        using var listener = CreateListener(EventLevel.Warning);
+
+        StrictModeDiagnostics.Report(outer);
+
+        var ignored = Assert.Single(listener.Messages, e => e.EventId == SettingsIgnoredEventId);
+        Assert.Equal(key, ignored.Payload![1]);
+        Assert.DoesNotContain(
+            listener.Messages,
+            e => e.EventId is LaterSourceEventId or LaterEnvironmentVariablesEventId);
+    }
+
+    [Theory]
+    [InlineData("OTEL_RESOURCE_ATTRIBUTES")]
+    [InlineData("OTEL_SERVICE_NAME")]
+    public void ChainedConfiguration_ResourceMask_LaterOverrideIsReported(string key)
+    {
+        using var yamlFile = DeclarativeYamlTestFile.CreateDeclarativeYaml();
+        var inner = new ConfigurationBuilder()
+            .AddOpenTelemetryDeclarativeConfiguration(yamlFile.Path)
+            .AddInMemoryCollection(new Dictionary<string, string?> { [key] = "from-later" })
+            .Build();
+        var outer = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?> { [key] = "outer-earlier" })
+            .AddConfiguration(inner)
+            .Build();
+
+        Assert.Equal("from-later", outer[key]);
+
+        using var listener = CreateListener(EventLevel.Warning);
+
+        StrictModeDiagnostics.Report(outer);
+
+        var later = Assert.Single(listener.Messages, e => e.EventId == LaterSourceEventId);
+        Assert.Equal(key, later.Payload![2]);
+        Assert.DoesNotContain(listener.Messages, e => e.EventId == SettingsIgnoredEventId);
     }
 
     [Fact]
@@ -389,7 +446,7 @@ public sealed class StrictModeDiagnosticsTests
             .AddConfiguration(later)
             .Build();
 
-        Assert.Null(config["OTEL_SERVICE_NAME"]);
+        Assert.Equal(" ", config["OTEL_SERVICE_NAME"]);
 
         using var listener = CreateListener(EventLevel.Warning);
 
@@ -415,7 +472,7 @@ public sealed class StrictModeDiagnosticsTests
             .AddOpenTelemetryDeclarativeConfiguration(yamlFile.Path)
             .Build();
 
-        Assert.Null(outer["OTEL_SERVICE_NAME"]);
+        Assert.Equal(" ", outer["OTEL_SERVICE_NAME"]);
 
         using var listener = CreateListener(EventLevel.Warning);
 

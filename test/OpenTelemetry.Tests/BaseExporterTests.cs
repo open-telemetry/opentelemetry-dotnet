@@ -20,6 +20,68 @@ public class BaseExporterTests
         Assert.False(exceptionTestExporter.ForceFlush());
     }
 
+    [Theory]
+    [InlineData(1_000, 60_000, 1_000)]
+    [InlineData(60_000, 1_000, 1_000)]
+    [InlineData(1_000, Timeout.Infinite, 1_000)]
+    [InlineData(Timeout.Infinite, 1_000, 1_000)]
+    [InlineData(0, Timeout.Infinite, Timeout.Infinite)]
+    public void Verify_Export_DeadlineOnlyAppliesToThatExport(int timeoutMilliseconds, int nestedTimeoutMilliseconds, int expectedNestedTimeoutMilliseconds)
+    {
+        DateTime? deadlineUtc = null;
+        DateTime? nestedDeadlineUtc = null;
+        DateTime? deadlineAfterNestedUtc = null;
+
+        using var exporter = new DelegatingExporter<object>();
+        exporter.OnExportFunc = exported =>
+        {
+            if (deadlineUtc is null)
+            {
+                deadlineUtc = exporter.ExportDeadlineUtc;
+
+                exporter.Export(exported, nestedTimeoutMilliseconds);
+                deadlineAfterNestedUtc = exporter.ExportDeadlineUtc;
+
+                throw new InvalidOperationException("test exception");
+            }
+
+            nestedDeadlineUtc = exporter.ExportDeadlineUtc;
+            return ExportResult.Success;
+        };
+
+        var batch = new Batch<object>([new object()], 1);
+
+        var before = DateTime.UtcNow;
+        Assert.Throws<InvalidOperationException>(() => exporter.Export(batch, timeoutMilliseconds));
+        var after = DateTime.UtcNow;
+
+        Assert.NotNull(deadlineUtc);
+        Assert.NotNull(nestedDeadlineUtc);
+
+        if (timeoutMilliseconds > 0)
+        {
+            Assert.InRange(deadlineUtc.Value, before.AddMilliseconds(timeoutMilliseconds), after.AddMilliseconds(timeoutMilliseconds));
+        }
+        else
+        {
+            Assert.Equal(DateTime.MaxValue, deadlineUtc);
+        }
+
+        // A nested export can make the deadline earlier, but not later
+        if (expectedNestedTimeoutMilliseconds == Timeout.Infinite)
+        {
+            Assert.Equal(DateTime.MaxValue, nestedDeadlineUtc);
+        }
+        else
+        {
+            Assert.InRange(nestedDeadlineUtc.Value, before.AddMilliseconds(expectedNestedTimeoutMilliseconds), after.AddMilliseconds(expectedNestedTimeoutMilliseconds));
+        }
+
+        // Each deadline is restored once its export has finished, even if it throws
+        Assert.Equal(deadlineUtc, deadlineAfterNestedUtc);
+        Assert.Equal(DateTime.MaxValue, exporter.ExportDeadlineUtc);
+    }
+
     [Fact]
     public void Verify_Shutdown_HandlesSecond()
     {

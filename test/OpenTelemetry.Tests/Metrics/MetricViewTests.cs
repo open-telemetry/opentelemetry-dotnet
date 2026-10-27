@@ -7,6 +7,7 @@ using OpenTelemetry.Tests;
 
 namespace OpenTelemetry.Metrics.Tests;
 
+[Collection(EventSourceCollectionDefinition.Name)]
 public class MetricViewTests : MetricTestsBase
 {
     private const int MaxTimeToAllowForFlush = 10000;
@@ -124,6 +125,48 @@ public class MetricViewTests : MetricTestsBase
             .AddMeter(meter.Name)
             .AddView(instrumentName, new MetricStreamConfiguration())
             .AddInMemoryExporter(exportedItems));
+    }
+
+    [Fact]
+    public void AddViewWithWildcardPatternMatchesWithoutTimingOut()
+    {
+        var exportedItems = new List<Metric>();
+
+        using var meter = new Meter(new MeterOptions(Utils.GetCurrentMethodName()));
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
+            .AddMeter(meter.Name)
+            .AddView("a*a*a*a*a*a*a*bc", MetricStreamConfiguration.Drop)
+            .AddInMemoryExporter(exportedItems));
+
+        // Views match a prefix. A timeout while exploring the suffix would
+        // incorrectly publish the instrument instead of dropping it.
+        meter.CreateCounter<long>("aaaaaaabc" + new string('a', 200)).Add(1);
+        Assert.True(meterProvider.ForceFlush(MaxTimeToAllowForFlush));
+
+        Assert.Empty(exportedItems);
+    }
+
+    [Theory]
+    [InlineData("a*b*c", "a.b.b.c.d", true)]
+    [InlineData("a*b*c", "A.B.C", true)]
+    [InlineData("a*b*c", "a.c.b", false)]
+    [InlineData("a*b*c", "x.a.b.c", false)]
+    [InlineData("a?*", "a.b", false)]
+    [InlineData("a**b***c", "a.x.y.b.z.c.tail", true)]
+    public void AddViewWithWildcardPatternPreservesSelection(string pattern, string name, bool isSelected)
+    {
+        var exportedItems = new List<Metric>();
+
+        using var meter = new Meter(new MeterOptions(Utils.GetCurrentMethodName()));
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
+            .AddMeter(meter.Name)
+            .AddView(pattern, MetricStreamConfiguration.Drop)
+            .AddInMemoryExporter(exportedItems));
+
+        meter.CreateCounter<long>(name).Add(1);
+        Assert.True(meterProvider.ForceFlush(MaxTimeToAllowForFlush));
+
+        Assert.Equal(isSelected ? 0 : 1, exportedItems.Count);
     }
 
     [Fact]
@@ -317,10 +360,9 @@ public class MetricViewTests : MetricTestsBase
         using var container = BuildMeterProvider(out var meterProvider, builder => builder
             .AddMeter(meter1.Name)
             .AddMeter(meter2.Name)
-            .AddView((instrument) => instrument.Meter.Name.Equals(meter2.Name, StringComparison.OrdinalIgnoreCase)
-                                     && instrument.Name.Equals("name1", StringComparison.OrdinalIgnoreCase)
-                                     ? new MetricStreamConfiguration() { Name = "name1_Renamed", Description = "new description" }
-                                     : null)
+            .AddView((instrument) => instrument.Meter.Name.Equals(meter2.Name, StringComparison.OrdinalIgnoreCase) && instrument.Name.Equals("name1", StringComparison.OrdinalIgnoreCase)
+                ? new MetricStreamConfiguration() { Name = "name1_Renamed", Description = "new description" }
+                : null)
             .AddInMemoryExporter(exportedItems));
 
         // Without views only 1 stream would be

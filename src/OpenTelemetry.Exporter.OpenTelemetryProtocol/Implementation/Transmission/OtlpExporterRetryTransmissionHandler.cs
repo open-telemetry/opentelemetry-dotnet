@@ -14,6 +14,13 @@ internal sealed class OtlpExporterRetryTransmissionHandler : OtlpExporterTransmi
 
     protected override bool OnSubmitRequestFailure(byte[] request, int contentLength, ExportClientResponse response)
     {
+        if (response.DeadlineUtc == DateTime.MaxValue)
+        {
+            // Without a deadline (for example an HttpClient with an infinite Timeout and no timeout
+            // from the caller) nothing would bound the retries, so the request is not retried.
+            return false;
+        }
+
         var nextRetryDelayMilliseconds = OtlpRetry.InitialBackoffMilliseconds;
         while (RetryHelper.ShouldRetryRequest(response, nextRetryDelayMilliseconds, out var retryResult))
         {
@@ -22,6 +29,16 @@ internal sealed class OtlpExporterRetryTransmissionHandler : OtlpExporterTransmi
             // we would fail fast and drop the data.
             Thread.Sleep(retryResult.RetryDelay);
 
+            var remainingTime = response.DeadlineUtc - DateTime.UtcNow;
+            if (remainingTime <= TimeSpan.Zero)
+            {
+                OpenTelemetryProtocolExporterEventSource.Log.RetryDeadlineExceeded();
+                return false;
+            }
+
+            // The export client bounds each attempt by the deadline, as HttpClient.Timeout
+            // applies separately to each request, so a stalled retry times out at the
+            // original export deadline rather than a full timeout period later.
             if (this.TryRetryRequest(request, contentLength, response.DeadlineUtc, out response))
             {
                 return true;

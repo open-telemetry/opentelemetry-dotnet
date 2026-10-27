@@ -40,6 +40,7 @@ internal sealed class PrometheusCollectionManager
     private CollectionContext? collectionContext;
     private CollectionContext? onCollectContext;
     private CollectionExecutionResult collectionExecutionResult;
+    private TimeSpan? lastCollectionCompletedElapsed;
 
     public PrometheusCollectionManager(PrometheusExporter exporter)
     {
@@ -57,6 +58,26 @@ internal sealed class PrometheusCollectionManager
     internal Func<DateTime> UtcNow { get; set; } = static () => DateTime.UtcNow;
 
     internal Func<TimeSpan> GetElapsedTime { get; set; }
+
+    /// <summary>
+    /// Gets the number of scrapes which have entered a collection and not yet
+    /// exited it, across all protocols. Exposed for tests, which use it to tell
+    /// when a scrape has joined an in-flight collection.
+    /// </summary>
+    internal int ActiveReaderCount
+    {
+        get
+        {
+            var count = 0;
+
+            foreach (var state in this.protocolStates.Values)
+            {
+                count += state.ReaderCount;
+            }
+
+            return count;
+        }
+    }
 
 #if NET
     public ValueTask<CollectionResponse> EnterCollect(in PrometheusProtocol protocol, CancellationToken cancellationToken = default)
@@ -136,6 +157,8 @@ internal sealed class PrometheusCollectionManager
 
             try
             {
+                this.GetProtocolState(protocol).OnRequested(this.IsNearCollection());
+
                 // If we are within {ScrapeResponseCacheDurationMilliseconds} of the
                 // last successful collect, return the previous view.
                 if (this.TryGetCachedResponse(protocol, out var response))
@@ -335,6 +358,13 @@ internal sealed class PrometheusCollectionManager
             {
                 this.collectionContext = null;
             }
+
+            this.lastCollectionCompletedElapsed = this.GetElapsedTime();
+
+            foreach (var protocol in collectionContext.FreezeProtocols())
+            {
+                this.GetProtocolState(protocol).OnWritten(collectionContext.IsSpeculative(protocol));
+            }
         }
         finally
         {
@@ -519,6 +549,19 @@ internal sealed class PrometheusCollectionManager
             return ExportResult.Failure;
         }
 
+        // Other formats are only registered once the metrics have been collected, so that their
+        // cached responses can still be served while observable instrument callbacks run.
+        this.EnterGlobalLock();
+
+        try
+        {
+            this.RegisterSpeculativeProtocols(collectionContext);
+        }
+        finally
+        {
+            this.ExitGlobalLock();
+        }
+
         var protocols = collectionContext.FreezeProtocols();
         HashSet<PrometheusProtocol>? successfulProtocols = null;
 
@@ -660,11 +703,14 @@ internal sealed class PrometheusCollectionManager
 
     private bool TryGetCachedResponse(in PrometheusProtocol protocol, out CollectionResponse response)
     {
+        // A protocol registered with the in-flight collection may still have a cached view,
+        // but its buffer is being rewritten, so it must not be read from the cache. Other
+        // formats are only registered once the metrics have been collected (see OnCollect),
+        // so this never waits for observable instrument callbacks, only for serialization.
         if (this.protocolStates.TryGetValue(protocol, out var state) &&
             state.GeneratedAt is { } generatedAt &&
-            state.GeneratedAtElapsed is { } generatedAtElapsed &&
-            this.scrapeResponseCacheDuration > TimeSpan.Zero &&
-            this.GetElapsedTime() - generatedAtElapsed < this.scrapeResponseCacheDuration)
+            this.IsCached(state, this.GetElapsedTime()) &&
+            this.collectionContext?.ContainsProtocol(protocol) is not true)
         {
             response = new CollectionResponse(state.View, generatedAt, fromCache: true);
             return true;
@@ -672,6 +718,63 @@ internal sealed class PrometheusCollectionManager
 
         response = default;
         return false;
+    }
+
+    private bool IsCached(PrometheusProtocolState state, TimeSpan elapsed)
+        => state.GeneratedAtElapsed is { } generatedAtElapsed &&
+           this.scrapeResponseCacheDuration > TimeSpan.Zero &&
+           elapsed - generatedAtElapsed < this.scrapeResponseCacheDuration;
+
+    /// <summary>
+    /// Gets a value indicating whether a scrape arriving now would have been served by the
+    /// most recent collection, had that collection also written the scrape's format: either a
+    /// collection is in flight, or the last one completed within {ScrapeResponseCacheDurationMilliseconds}.
+    /// </summary>
+    /// <returns>
+    /// <see langword="true"/> if a scrape arriving now is near a collection; otherwise <see langword="false"/>.
+    /// </returns>
+    private bool IsNearCollection()
+        => this.collectionContext is not null ||
+           (this.lastCollectionCompletedElapsed is { } lastCollectionCompletedElapsed &&
+            this.GetElapsedTime() - lastCollectionCompletedElapsed < this.scrapeResponseCacheDuration);
+
+    /// <summary>
+    /// Registers other formats with a collection, so that scrapes which keep negotiating
+    /// different formats within one {ScrapeResponseCacheDurationMilliseconds} window share a
+    /// single collection rather than each of them collecting again for its own format.
+    /// </summary>
+    /// <remarks>
+    /// A format is registered when its most recent scrape arrived near a collection, so it
+    /// would have been served from the cache had that collection written it too. That holds
+    /// however long ago that scrape was, so scrapers which poll together at an interval longer
+    /// than the cache duration keep sharing collections. A format is not rewritten while its
+    /// response is still cached. A response written speculatively is not rewritten again until
+    /// it has been requested.
+    /// </remarks>
+    /// <param name="collectionContext">The collection context being executed.</param>
+    private void RegisterSpeculativeProtocols(CollectionContext collectionContext)
+    {
+        if (this.scrapeResponseCacheDuration <= TimeSpan.Zero)
+        {
+            return;
+        }
+
+        var elapsed = this.GetElapsedTime();
+
+        foreach (var entry in this.protocolStates)
+        {
+            var state = entry.Value;
+
+            if (!state.LastRequestNearCollection ||
+                this.IsCached(state, elapsed) ||
+                (!state.RequestedSinceWritten && state.WrittenSpeculatively))
+            {
+                continue;
+            }
+
+            // A protocol with active readers cannot have its buffer rewritten, so it is not registered.
+            collectionContext.TryRegisterSpeculativeProtocol(entry.Key, state.HasActiveReaders());
+        }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -831,12 +934,20 @@ internal sealed class PrometheusCollectionManager
             var writeMetadata = emittedMetricNames.Add(metricState.MetadataName);
             var metadataState = metadataStates[metricState.MetadataName];
 
+            // The unit is not appended to a name which already ends with it (e.g. "auth.failedlogins"
+            // with unit "logins"), is taken for the '_total' suffix of a counter, or may be changed by
+            // escaping. The UNIT metadata is optional, but a unit which is not an underscore-separated
+            // suffix of the name makes the whole OpenMetrics exposition invalid, so it is omitted then.
+            var writeUnit = writeMetadata &&
+                metadataState.Unit != null &&
+                PrometheusMetric.HasUnitSuffix(metricState.MetadataName, metadataState.Unit);
+
             metricStates.Add(
                 new MetricState(
                     metricState.Metric,
                     metricState.PrometheusMetric,
                     writeMetadata,
-                    writeMetadata && metadataState.Unit != null,
+                    writeUnit,
                     writeMetadata && metadataState.Help != null,
                     metadataState.Unit,
                     metadataState.Help));
@@ -1020,7 +1131,8 @@ internal sealed class PrometheusCollectionManager
         private readonly Lock gate = new();
         private readonly HashSet<PrometheusProtocol> protocols = [];
         private readonly TaskCompletionSource<CollectionResult> tcs = new(TaskCreationOptions.RunContinuationsAsynchronously);
-        private bool frozen;
+        private HashSet<PrometheusProtocol>? speculativeProtocols;
+        private PrometheusProtocol[]? frozenProtocols;
 
         public CollectionContext(in PrometheusProtocol protocol)
         {
@@ -1029,12 +1141,27 @@ internal sealed class PrometheusCollectionManager
 
         public Task<CollectionResult> Task => this.tcs.Task;
 
+        public bool ContainsProtocol(in PrometheusProtocol protocol)
+        {
+            lock (this.gate)
+            {
+                return this.protocols.Contains(protocol);
+            }
+        }
+
         public PrometheusProtocol[] FreezeProtocols()
         {
             lock (this.gate)
             {
-                this.frozen = true;
-                return [.. this.protocols];
+                return this.frozenProtocols ??= [.. this.protocols];
+            }
+        }
+
+        public bool IsSpeculative(in PrometheusProtocol protocol)
+        {
+            lock (this.gate)
+            {
+                return this.speculativeProtocols?.Contains(protocol) is true;
             }
         }
 
@@ -1047,10 +1174,12 @@ internal sealed class PrometheusCollectionManager
             {
                 if (this.protocols.Contains(protocol))
                 {
+                    // A scrape is now waiting for this protocol, so it is no longer written speculatively.
+                    this.speculativeProtocols?.Remove(protocol);
                     return true;
                 }
 
-                if (this.frozen)
+                if (this.frozenProtocols is not null)
                 {
                     return false;
                 }
@@ -1062,6 +1191,20 @@ internal sealed class PrometheusCollectionManager
 
                 this.protocols.Add(protocol);
                 return true;
+            }
+        }
+
+        public void TryRegisterSpeculativeProtocol(in PrometheusProtocol protocol, bool hasActiveReaders)
+        {
+            lock (this.gate)
+            {
+                if (this.frozenProtocols is not null || hasActiveReaders || !this.protocols.Add(protocol))
+                {
+                    return;
+                }
+
+                this.speculativeProtocols ??= [];
+                this.speculativeProtocols.Add(protocol);
             }
         }
     }
@@ -1095,6 +1238,25 @@ internal sealed class PrometheusCollectionManager
 
         public TimeSpan? GeneratedAtElapsed { get; private set; }
 
+        /// <summary>
+        /// Gets a value indicating whether the most recent scrape for this protocol arrived near a collection.
+        /// </summary>
+        public bool LastRequestNearCollection { get; private set; }
+
+        /// <summary>
+        /// Gets a value indicating whether this protocol has been requested since a collection last wrote it.
+        /// </summary>
+        public bool RequestedSinceWritten { get; private set; }
+
+        /// <summary>
+        /// Gets a value indicating whether the collection which last wrote this protocol did so
+        /// speculatively, rather than for a scrape which requested it.
+        /// </summary>
+        public bool WrittenSpeculatively { get; private set; }
+
+        public int ReaderCount
+            => Interlocked.CompareExchange(ref this.readerCount, 0, 0);
+
         public int DecrementReaderCount()
         {
             var readerCount = Interlocked.Decrement(ref this.readerCount);
@@ -1117,10 +1279,22 @@ internal sealed class PrometheusCollectionManager
         }
 
         public bool HasActiveReaders()
-            => Interlocked.CompareExchange(ref this.readerCount, 0, 0) != 0;
+            => this.ReaderCount != 0;
 
         public void IncrementReaderCount()
             => Interlocked.Increment(ref this.readerCount);
+
+        public void OnRequested(bool nearCollection)
+        {
+            this.LastRequestNearCollection = nearCollection;
+            this.RequestedSinceWritten = true;
+        }
+
+        public void OnWritten(bool speculative)
+        {
+            this.RequestedSinceWritten = false;
+            this.WrittenSpeculatively = speculative;
+        }
 
         /// <summary>
         /// Gets a task which completes once this protocol has no active readers, or
@@ -1167,7 +1341,14 @@ internal sealed class PrometheusCollectionManager
             return true;
         }
 
-        public void ResetView() => this.View = EmptyView;
+        public void ResetView()
+        {
+            // A protocol registered with a collection while its previous view was still
+            // cached must not serve the empty view from the cache when the write fails.
+            this.View = EmptyView;
+            this.GeneratedAt = null;
+            this.GeneratedAtElapsed = null;
+        }
 
         public void UpdateView(int cursor)
             => this.View = new ArraySegment<byte>(this.Buffer, 0, cursor);

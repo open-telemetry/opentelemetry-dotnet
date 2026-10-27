@@ -3,10 +3,15 @@
   <!--
     Imported into the solution build (see
     https://learn.microsoft.com/visualstudio/msbuild/customize-solution-build)
-    so that the tests in a solution can be run for a single target framework
-    the same way as for the aggregator .proj files in the build directory:
+    so that the tests in a solution can be run per target framework the same
+    way as for the aggregator .proj files in the build directory, either for a
+    single target framework:
 
     dotnet build OpenTelemetry.slnx -t:Test -p:Configuration=Release -p:TargetFramework=net10.0
+
+    or for every target framework found across the test projects:
+
+    dotnet build OpenTelemetry.slnx -t:Test -p:Configuration=Release
 
     This is needed because `dotnet test` (with the Microsoft.Testing.Platform
     runner configured in global.json) fails when the solution contains a test

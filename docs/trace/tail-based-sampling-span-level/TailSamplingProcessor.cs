@@ -16,20 +16,20 @@ internal sealed class TailSamplingProcessor : BaseProcessor<Activity>
     {
     }
 
-    public override void OnEnd(Activity activity)
+    public override void OnEnd(Activity data)
     {
-        if (activity.Recorded)
+        if (data.Recorded)
         {
             // This means that this activity was included based on head-based sampling,
             // we continue with that decision and no further change is needed.
-            Console.WriteLine($"Including head-sampled activity with id {activity.Id} and status {activity.Status}");
+            Console.WriteLine($"Including head-sampled activity with id {data.Id} and status {data.Status}");
         }
         else
         {
-            IncludeForExportIfFailedActivity(activity);
+            IncludeForExportIfFailedActivity(data);
         }
 
-        base.OnEnd(activity);
+        base.OnEnd(data);
     }
 
     // Note: This is used to filter spans at the end of a span.

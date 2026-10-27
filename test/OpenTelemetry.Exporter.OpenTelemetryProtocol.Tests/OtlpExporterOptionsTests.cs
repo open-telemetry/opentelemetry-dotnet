@@ -9,7 +9,7 @@ using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests;
 
-[Collection("EnvVars")]
+[Collection(EnvVarsCollectionDefinition.Name)]
 public sealed class OtlpExporterOptionsTests : IDisposable
 {
     public OtlpExporterOptionsTests()

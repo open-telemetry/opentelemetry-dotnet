@@ -11,6 +11,10 @@
     <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Shims.OpenTracing\OpenTelemetry.Shims.OpenTracing.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Shared\PropagatorsCollectionDefinition.cs" Link="Includes\PropagatorsCollectionDefinition.cs" />
+  </ItemGroup>
+
   <ItemGroup Condition="'$(RunningDotNetPack)' != 'true'">
     <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Exporter.InMemory\OpenTelemetry.Exporter.InMemory.csproj" />
   </ItemGroup>

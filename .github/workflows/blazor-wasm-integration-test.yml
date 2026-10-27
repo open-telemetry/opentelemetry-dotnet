@@ -22,7 +22,6 @@ jobs:
           - ubuntu-26.04
           # renovate: datasource=github-runners depType=github-runner
           - windows-2025
-        version: [ net10.0 ]
 
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
@@ -59,22 +58,46 @@ jobs:
       shell: pwsh
       run: dotnet workload install wasm-tools
 
+    - name: Build Blazor WASM end-to-end tests
+      shell: pwsh
+      run: >
+        dotnet build test/OpenTelemetry.BlazorWasm.Tests/OpenTelemetry.BlazorWasm.Tests.csproj
+        --configuration Release
+
+    - name: Install Playwright browser and dependencies
+      if: runner.os == 'Linux'
+      shell: pwsh
+      timeout-minutes: 15
+      run: |
+        $playwright = "artifacts/bin/OpenTelemetry.BlazorWasm.Tests/release_net10.0/playwright.ps1"
+        $attempts = 3
+        for ($attempt = 1; $attempt -le $attempts; $attempt++) {
+          & $playwright install chromium --with-deps
+          if ($LASTEXITCODE -eq 0) {
+            break
+          }
+          if ($attempt -eq $attempts) {
+            throw "Failed to install Playwright after $attempts attempts."
+          }
+          Write-Output "::warning::Playwright install attempt $attempt failed with exit code $LASTEXITCODE, retrying."
+          Start-Sleep -Seconds 10
+        }
+
     - name: Run Blazor WASM end-to-end tests
       shell: pwsh
       run: >
         dotnet test test/OpenTelemetry.BlazorWasm.Tests/OpenTelemetry.BlazorWasm.Tests.csproj
         --configuration Release
-        --framework ${env:TARGET_FRAMEWORK}
+        --no-build
+        --no-restore
         --report-github
         --report-github-summary-include-passed false
-      env:
-        TARGET_FRAMEWORK: ${{ matrix.version }}
 
     - name: Upload Playwright artifacts
       if: ${{ failure() }}
       uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
       with:
-        name: blazor-playwright-artifacts-${{ matrix.os }}-${{ matrix.version }}
+        name: blazor-playwright-artifacts-${{ matrix.os }}
         path: '**/playwright/**'
         if-no-files-found: ignore
         retention-days: 7
