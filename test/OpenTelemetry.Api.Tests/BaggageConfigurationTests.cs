@@ -23,16 +23,8 @@ public class BaggageConfigurationTests
 
     private static async Task RunChildProcess(bool? appContextValue)
     {
-        var directory = Path.Combine(Path.GetTempPath(), $"OpenTelemetry.BaggageTests-{Guid.NewGuid():N}");
-        Directory.CreateDirectory(directory);
-        try
-        {
-            await RunChildProcess(CreateStartInfo(directory, appContextValue), appContextValue);
-        }
-        finally
-        {
-            Directory.Delete(directory, recursive: true);
-        }
+        using var directory = new TemporaryDirectory();
+        await RunChildProcess(CreateStartInfo(directory.Path, appContextValue), appContextValue);
     }
 
     private static async Task RunChildProcess(ProcessStartInfo startInfo, bool? appContextValue)
