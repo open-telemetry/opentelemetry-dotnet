@@ -808,6 +808,18 @@ public class TracerProviderBuilderExtensionsTests
     }
 
     [Fact]
+    public void ConfigureBuilderThrowingBeforeSamplerIsResolvedFailsBuild()
+    {
+        // The provider has no sampler to shut down or dispose when cleaning up after the failure
+        var builder = Sdk.CreateTracerProviderBuilder()
+            .ConfigureBuilder((sp, builder) => throw new InvalidOperationException("test exception"));
+
+        var exception = Assert.Throws<InvalidOperationException>(builder.Build);
+
+        Assert.Equal("test exception", exception.Message);
+    }
+
+    [Fact]
     public void ConfigureSamplerThrowingFailsBuild()
     {
         var builder = Sdk.CreateTracerProviderBuilder()
@@ -898,8 +910,10 @@ public class TracerProviderBuilderExtensionsTests
         Assert.Equal(0, resolvedSampler.ShutdownCalls);
     }
 
-    [Fact]
-    public void TracerProviderShutdownShutsDownSamplerOnceAndDoesNotCallItAfterwards()
+    [Theory]
+    [InlineData(Timeout.Infinite)]
+    [InlineData(60_000)]
+    public void TracerProviderShutdownShutsDownSamplerOnceAndDoesNotCallItAfterwards(int timeoutMilliseconds)
     {
         var activitySourceName = Utils.GetCurrentMethodName();
         using var activitySource = new ActivitySource(activitySourceName);
@@ -921,10 +935,20 @@ public class TracerProviderBuilderExtensionsTests
         Assert.Equal(1, sampler.ShouldSampleCalls);
         Assert.Equal(0, sampler.ShutdownCalls);
 
-        Assert.True(tracerProvider.Shutdown());
+        Assert.True(tracerProvider.Shutdown(timeoutMilliseconds));
 
         Assert.Equal(1, sampler.ShutdownCalls);
         Assert.False(sampler.Disposed);
+
+        if (timeoutMilliseconds == Timeout.Infinite)
+        {
+            Assert.Equal(Timeout.Infinite, sampler.ShutdownTimeout);
+        }
+        else
+        {
+            // The time spent shutting down the processors and listener is not available to the sampler
+            Assert.InRange(sampler.ShutdownTimeout, 0, timeoutMilliseconds);
+        }
 
         using (var activity = activitySource.StartActivity("after"))
         {
@@ -1069,6 +1093,70 @@ public class TracerProviderBuilderExtensionsTests
             tracerProvider.Dispose();
         }
 
+        Assert.Equal(1, sampler.ShutdownCalls);
+        Assert.Equal(0, sampler.ShouldSampleCalls);
+        Assert.False(sampler.ShouldSampleAfterShutdown);
+    }
+
+    [Fact]
+    public void TracerProviderShutdownDoesNotCallSamplerForLegacyActivityCapturedBeforeShutdown()
+    {
+        var operationName = Utils.GetCurrentMethodName();
+
+#pragma warning disable CA2000 // Dispose objects before losing scope - disposal is what the test asserts
+        var sampler = new MyDisposableSampler();
+#pragma warning restore CA2000 // Dispose objects before losing scope
+
+        using var entered = new ManualResetEventSlim();
+        using var release = new ManualResetEventSlim();
+
+        // A listener which is registered first and blocks while the activity is being started.
+        // Activities which have no source are all listened to through the same, default, source.
+        using var blockingListener = new ActivityListener
+        {
+            ShouldListenTo = source => string.IsNullOrEmpty(source.Name),
+            ActivityStarted = activity =>
+            {
+                if (activity.OperationName == operationName)
+                {
+                    entered.Set();
+                    release.Wait(TimeSpan.FromSeconds(30));
+                }
+            },
+        };
+
+        ActivitySource.AddActivityListener(blockingListener);
+
+        var tracerProvider = Sdk.CreateTracerProviderBuilder()
+            .AddLegacySource(operationName)
+            .SetSampler(sampler)
+            .Build();
+
+        var isAllDataRequested = true;
+
+        var thread = new Thread(() =>
+        {
+            using var activity = new Activity(operationName);
+            activity.Start();
+            isAllDataRequested = activity.IsAllDataRequested;
+        });
+
+        thread.Start();
+
+        try
+        {
+            Assert.True(entered.Wait(TimeSpan.FromSeconds(30), TestContext.Current.CancellationToken));
+
+            Assert.True(tracerProvider.Shutdown());
+        }
+        finally
+        {
+            release.Set();
+            thread.Join();
+            tracerProvider.Dispose();
+        }
+
+        Assert.False(isAllDataRequested);
         Assert.Equal(1, sampler.ShutdownCalls);
         Assert.Equal(0, sampler.ShouldSampleCalls);
         Assert.False(sampler.ShouldSampleAfterShutdown);
@@ -1246,6 +1334,8 @@ public class TracerProviderBuilderExtensionsTests
 
         public int ShutdownCalls { get; private set; }
 
+        public int ShutdownTimeout { get; private set; }
+
         public bool ShutdownBeforeDispose { get; private set; }
 
         public int ShouldSampleCalls { get; private set; }
@@ -1269,6 +1359,7 @@ public class TracerProviderBuilderExtensionsTests
         protected override bool OnShutdown(int timeoutMilliseconds)
         {
             this.ShutdownCalls++;
+            this.ShutdownTimeout = timeoutMilliseconds;
             return true;
         }
     }
