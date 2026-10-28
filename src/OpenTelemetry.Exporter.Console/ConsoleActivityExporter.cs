@@ -9,6 +9,10 @@ namespace OpenTelemetry.Exporter;
 
 public class ConsoleActivityExporter : ConsoleExporter<Activity>
 {
+    // Note: The default limits are applied for now. Configured limits are read once the SDK binds
+    // the limit options to configuration.
+    private readonly SpanLimiter spanLimiter = new(new SpanLimitOptions(), new AttributeLimitOptions(), nameof(ConsoleActivityExporter));
+
     public ConsoleActivityExporter(ConsoleExporterOptions options)
         : base(options)
     {
@@ -16,6 +20,8 @@ public class ConsoleActivityExporter : ConsoleExporter<Activity>
 
     public override ExportResult Export(in Batch<Activity> batch)
     {
+        using var limits = this.spanLimiter.BeginBatch();
+
         foreach (var activity in batch)
         {
             this.WriteLine($"Activity.TraceId:            {activity.TraceId}");
@@ -35,80 +41,86 @@ public class ConsoleActivityExporter : ConsoleExporter<Activity>
             this.WriteLine($"Activity.Kind:               {activity.Kind}");
             this.WriteLine($"Activity.StartTime:          {activity.StartTimeUtc:yyyy-MM-ddTHH:mm:ss.fffffffZ}");
             this.WriteLine($"Activity.Duration:           {activity.Duration}");
-            var statusCode = string.Empty;
-            var statusDesc = string.Empty;
-
+            var attributes = limits.CreateAttributeReader(activity);
             if (activity.TagObjects.Any())
             {
                 this.WriteLine("Activity.Tags:");
-                foreach (ref readonly var tag in activity.EnumerateTagObjects())
+                while (attributes.TryRead(out var tag))
                 {
-                    if (tag.Key == SpanAttributeConstants.StatusCodeKey)
-                    {
-                        statusCode = tag.Value as string;
-                        continue;
-                    }
-
-                    if (tag.Key == SpanAttributeConstants.StatusDescriptionKey)
-                    {
-                        statusDesc = tag.Value as string;
-                        continue;
-                    }
-
-                    if (this.TagWriter.TryTransformTag(tag, out var result))
+                    if (this.TagWriter.TryTransformTag(tag, attributes.ValueLengthLimit, out var result))
                     {
                         this.WriteLine($"    {result.Key}: {result.Value}");
                     }
+                    else
+                    {
+                        attributes.MarkDropped();
+                    }
                 }
+
+                this.WriteDroppedCount("    ", attributes.DroppedCount);
             }
 
-            if (activity.Status != ActivityStatusCode.Unset)
+            var status = attributes.Status;
+            if (status != ActivityStatusCode.Unset)
             {
-                this.WriteLine($"StatusCode: {activity.Status}");
-                if (!string.IsNullOrEmpty(activity.StatusDescription))
+                this.WriteLine($"StatusCode: {status}");
+                var statusDescription = attributes.StatusDescription;
+                if (!string.IsNullOrEmpty(statusDescription))
                 {
-                    this.WriteLine($"Activity.StatusDescription:  {activity.StatusDescription}");
-                }
-            }
-            else if (!string.IsNullOrEmpty(statusCode))
-            {
-                this.WriteLine($"    StatusCode: {statusCode}");
-                if (!string.IsNullOrEmpty(statusDesc))
-                {
-                    this.WriteLine($"    Activity.StatusDescription: {statusDesc}");
+                    this.WriteLine($"Activity.StatusDescription:  {statusDescription}");
                 }
             }
 
             if (activity.Events.Any())
             {
                 this.WriteLine("Activity.Events:");
-                foreach (ref readonly var activityEvent in activity.EnumerateEvents())
+                var events = limits.CreateEventReader(activity);
+                while (events.TryRead(out var activityEvent))
                 {
                     this.WriteLine($"    {activityEvent.Name} [{activityEvent.Timestamp}]");
-                    foreach (ref readonly var attribute in activityEvent.EnumerateTagObjects())
+                    var eventAttributes = events.CreateAttributeReader();
+                    while (eventAttributes.TryRead(out var attribute))
                     {
-                        if (this.TagWriter.TryTransformTag(attribute, out var result))
+                        if (this.TagWriter.TryTransformTag(attribute, eventAttributes.ValueLengthLimit, out var result))
                         {
                             this.WriteLine($"        {result.Key}: {result.Value}");
                         }
+                        else
+                        {
+                            eventAttributes.MarkDropped();
+                        }
                     }
+
+                    this.WriteDroppedCount("        ", eventAttributes.DroppedCount);
                 }
+
+                this.WriteDroppedCount("    ", events.DroppedCount);
             }
 
             if (activity.Links.Any())
             {
                 this.WriteLine("Activity.Links:");
-                foreach (ref readonly var activityLink in activity.EnumerateLinks())
+                var links = limits.CreateLinkReader(activity);
+                while (links.TryRead(out var activityLink))
                 {
                     this.WriteLine($"    {activityLink.Context.TraceId} {activityLink.Context.SpanId}");
-                    foreach (ref readonly var attribute in activityLink.EnumerateTagObjects())
+                    var linkAttributes = links.CreateAttributeReader();
+                    while (linkAttributes.TryRead(out var attribute))
                     {
-                        if (this.TagWriter.TryTransformTag(attribute, out var result))
+                        if (this.TagWriter.TryTransformTag(attribute, linkAttributes.ValueLengthLimit, out var result))
                         {
                             this.WriteLine($"        {result.Key}: {result.Value}");
                         }
+                        else
+                        {
+                            linkAttributes.MarkDropped();
+                        }
                     }
+
+                    this.WriteDroppedCount("        ", linkAttributes.DroppedCount);
                 }
+
+                this.WriteDroppedCount("    ", links.DroppedCount);
             }
 
             this.WriteLine("Instrumentation scope (ActivitySource):");
@@ -157,5 +169,13 @@ public class ConsoleActivityExporter : ConsoleExporter<Activity>
         }
 
         return ExportResult.Success;
+    }
+
+    private void WriteDroppedCount(string indent, int droppedCount)
+    {
+        if (droppedCount > 0)
+        {
+            this.WriteLine($"{indent}({droppedCount} dropped)");
+        }
     }
 }

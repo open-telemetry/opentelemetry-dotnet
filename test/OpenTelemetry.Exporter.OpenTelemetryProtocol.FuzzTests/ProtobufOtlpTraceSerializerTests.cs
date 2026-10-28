@@ -32,7 +32,7 @@ public class ProtobufOtlpTraceSerializerTests
                 var writePos = ProtobufOtlpTraceSerializer.WriteTraceData(
                     ref buffer,
                     0,
-                    sdkLimits,
+                    sdkLimits.CreateSpanLimiter("test"),
                     null,
                     batch);
 
@@ -66,7 +66,7 @@ public class ProtobufOtlpTraceSerializerTests
                 var writePos = ProtobufOtlpTraceSerializer.WriteTraceData(
                     ref buffer,
                     0,
-                    sdkLimits,
+                    sdkLimits.CreateSpanLimiter("test"),
                     resource,
                     batch);
 
@@ -98,7 +98,7 @@ public class ProtobufOtlpTraceSerializerTests
                 var writePos = ProtobufOtlpTraceSerializer.WriteTraceData(
                     ref buffer,
                     0,
-                    sdkLimits,
+                    sdkLimits.CreateSpanLimiter("test"),
                     null,
                     batch);
 
@@ -125,7 +125,7 @@ public class ProtobufOtlpTraceSerializerTests
                 var writePos = ProtobufOtlpTraceSerializer.WriteTraceData(
                     ref buffer,
                     0,
-                    sdkLimits,
+                    sdkLimits.CreateSpanLimiter("test"),
                     null,
                     batch);
 
@@ -165,7 +165,7 @@ public class ProtobufOtlpTraceSerializerTests
                 var writePos = ProtobufOtlpTraceSerializer.WriteTraceData(
                     ref buffer,
                     0,
-                    sdkLimits,
+                    sdkLimits.CreateSpanLimiter("test"),
                     resource,
                     batch);
 
@@ -209,7 +209,7 @@ public class ProtobufOtlpTraceSerializerTests
                 var writePos1 = ProtobufOtlpTraceSerializer.WriteTraceData(
                     ref buffer1,
                     0,
-                    sdkLimits,
+                    sdkLimits.CreateSpanLimiter("test"),
                     resource,
                     batch);
 
@@ -217,7 +217,7 @@ public class ProtobufOtlpTraceSerializerTests
                 var writePos2 = ProtobufOtlpTraceSerializer.WriteTraceData(
                     ref buffer2,
                     0,
-                    sdkLimits,
+                    sdkLimits.CreateSpanLimiter("test"),
                     resource,
                     batch);
 
@@ -267,7 +267,7 @@ public class ProtobufOtlpTraceSerializerTests
                 var writePos = ProtobufOtlpTraceSerializer.WriteTraceData(
                     ref buffer,
                     0,
-                    sdkLimits,
+                    sdkLimits.CreateSpanLimiter("test"),
                     null,
                     batch);
 
@@ -300,7 +300,7 @@ public class ProtobufOtlpTraceSerializerTests
                 var writePos = ProtobufOtlpTraceSerializer.WriteTraceData(
                     ref buffer,
                     0,
-                    sdkLimits,
+                    sdkLimits.CreateSpanLimiter("test"),
                     null,
                     batch);
 
@@ -339,7 +339,7 @@ public class ProtobufOtlpTraceSerializerTests
                 var writePos = ProtobufOtlpTraceSerializer.WriteTraceData(
                     ref buffer,
                     0,
-                    sdkLimits,
+                    sdkLimits.CreateSpanLimiter("test"),
                     resource,
                     batch);
 
@@ -378,8 +378,8 @@ public class ProtobufOtlpTraceSerializerTests
                 var buffer2 = new byte[10 * 1024 * 1024];
                 var batch = new Batch<Activity>(activities, activities.Length);
 
-                var pos1 = ProtobufOtlpTraceSerializer.WriteTraceData(ref buffer1, 0, sdkLimits, null, batch);
-                var pos2 = ProtobufOtlpTraceSerializer.WriteTraceData(ref buffer2, 0, sdkLimits, null, batch);
+                var pos1 = ProtobufOtlpTraceSerializer.WriteTraceData(ref buffer1, 0, sdkLimits.CreateSpanLimiter("test"), null, batch);
+                var pos2 = ProtobufOtlpTraceSerializer.WriteTraceData(ref buffer2, 0, sdkLimits.CreateSpanLimiter("test"), null, batch);
 
                 if (pos1 != pos2)
                 {
@@ -433,7 +433,7 @@ public class ProtobufOtlpTraceSerializerTests
                 var writePos = ProtobufOtlpTraceSerializer.WriteTraceData(
                     ref buffer,
                     0,
-                    sdkLimits,
+                    sdkLimits.CreateSpanLimiter("test"),
                     null,
                     batch);
 
@@ -476,7 +476,7 @@ public class ProtobufOtlpTraceSerializerTests
                 var writePos = ProtobufOtlpTraceSerializer.WriteTraceData(
                     ref buffer,
                     0,
-                    sdkLimits,
+                    sdkLimits.CreateSpanLimiter("test"),
                     null,
                     batch);
 
@@ -515,7 +515,7 @@ public class ProtobufOtlpTraceSerializerTests
                 var writePos = ProtobufOtlpTraceSerializer.WriteTraceData(
                     ref buffer,
                     0,
-                    sdkLimits,
+                    sdkLimits.CreateSpanLimiter("test"),
                     resource,
                     batch);
 

@@ -46,7 +46,7 @@ public class ProtobufOtlpSerializerExceptionSafetyTests(MaxSizeSerializationBuff
             Assert.Throws<IndexOutOfRangeException>(() => ProtobufOtlpTraceSerializer.WriteTraceData(
                 ref failingBuffer,
                 failingBuffer.Length,
-                new SdkLimitOptions(),
+                new SdkLimitOptions().CreateSpanLimiter("test"),
                 Resource.Empty,
                 batchA,
                 MaxSizeSerializationBufferFixture.MaxBufferSize));
@@ -57,7 +57,7 @@ public class ProtobufOtlpSerializerExceptionSafetyTests(MaxSizeSerializationBuff
             var writePosition = ProtobufOtlpTraceSerializer.WriteTraceData(
                 ref buffer,
                 0,
-                new SdkLimitOptions(),
+                new SdkLimitOptions().CreateSpanLimiter("test"),
                 Resource.Empty,
                 batchB);
 
