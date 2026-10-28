@@ -52,12 +52,12 @@ Notes](../../RELEASENOTES.md).
   metric. The batches are exported serially with the export timeout
   applying to each export. It can also be configured with the
   `OTEL_METRIC_EXPORT_MAX_BATCH_SIZE` environment variable.
-  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+  ([#8053](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8053))
 
 * Fixed `PeriodicExportingMetricReader` exporting a collection which was still
   in progress when `Shutdown()` timed out to its exporter after the exporter
   had been shut down.
-  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+  ([#8053](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8053))
 
 ## 1.20.1
 

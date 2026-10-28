@@ -42,7 +42,7 @@ Notes](../../RELEASENOTES.md).
   `PeriodicExportingMetricReaderOptions.MaxExportBatchSize` to limit the
   number of metric points in each exported batch. It can also be configured
   with the `OTEL_METRIC_EXPORT_MAX_BATCH_SIZE` environment variable.
-  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+  ([#8053](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8053))
 
 ## 1.20.1
 
