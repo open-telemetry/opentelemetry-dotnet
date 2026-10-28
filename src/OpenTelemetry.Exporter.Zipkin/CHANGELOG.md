@@ -6,6 +6,10 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+## 1.21.0-rc.1
+
+Released 2026-Oct-28
+
 * Fixed array-valued tags containing `NaN` or infinite floating-point values
   being exported as `TRUNCATED`; such values are now written as JSON strings
   (e.g. `["NaN"]`). Arrays and maps nested inside array-valued tags are now

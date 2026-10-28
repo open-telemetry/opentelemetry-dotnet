@@ -6,6 +6,10 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+## 1.21.0-rc.1
+
+Released 2026-Oct-28
+
 * The OpenTelemetry providers are now initialized in
   `IHostedLifecycleService.StartingAsync` instead of `IHostedService.StartAsync`
   so that telemetry emitted by other hosted services during `StartingAsync` is
