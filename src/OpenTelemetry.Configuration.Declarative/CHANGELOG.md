@@ -62,3 +62,9 @@ Notes](../../RELEASENOTES.md).
   column. Loading still succeeds. A document based on a starter template now
   produces several error-level events until more sections are supported.
   ([#8009](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8009))
+
+* Dropped support for .NET 8.0 and 9.0.
+  ([#6899](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6899))
+
+* Add support for .NET 11.0.
+  ([#6899](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6899))

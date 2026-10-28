@@ -17,7 +17,7 @@ internal sealed class ZipkinEndpointLruCache
         Guard.ThrowIfOutOfRange(capacity, min: 1);
 
         this.capacity = capacity;
-        this.cache = new Dictionary<string, LinkedListNode<CacheEntry>>(StringComparer.Ordinal);
+        this.cache = [with(StringComparer.Ordinal)];
     }
 
     public int Count

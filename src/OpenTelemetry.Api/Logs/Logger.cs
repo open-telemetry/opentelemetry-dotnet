@@ -31,7 +31,7 @@ abstract class Logger
     {
         this.Name = string.IsNullOrWhiteSpace(name)
             ? string.Empty
-#if NET10_0_OR_GREATER
+#if NET
             : name;
 #else
             : name!;

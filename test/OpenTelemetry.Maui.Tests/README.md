@@ -10,7 +10,7 @@ wired up through a .NET MAUI application host running under the Android runtime.
 
 ## What is covered
 
-`OpenTelemetry.Maui.TestApp` is a `net10.0-android` MAUI app that registers the
+`OpenTelemetry.Maui.TestApp` is a `net11.0-android` MAUI app that registers the
 SDK (logs, metrics and traces) in its `MauiProgram` with the real OTLP/HTTP
 exporter and emits each signal while running on an Android emulator.
 
