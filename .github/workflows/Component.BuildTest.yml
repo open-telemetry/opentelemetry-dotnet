@@ -43,6 +43,9 @@ jobs:
     timeout-minutes: 45
 
     env:
+      DOTNET_DbgEnableMiniDump: 1
+      DOTNET_DbgMiniDumpType: 2
+      DOTNET_DbgMiniDumpName: ${{ github.workspace }}/TestResults/crash-%p.dmp
       DOTNET_NOLOGO: true
       DOTNET_SYSTEM_CONSOLE_ALLOW_ANSI_COLOR_REDIRECTION: 1
       FORCE_COLOR: 3
@@ -64,15 +67,12 @@ jobs:
         persist-credentials: false
         show-progress: false
 
-    - name: Setup previous .NET runtimes
-      uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
-      with:
-        dotnet-version: |
-          8.0.x
-          9.0.x
-
     - name: Setup .NET
       uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+      with:
+        global-json-file: global.json
+        dotnet-version: |
+          10.0.x
 
     - name: dotnet restore ${{ inputs.project-name }}
       shell: pwsh

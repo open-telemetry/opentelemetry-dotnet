@@ -7,7 +7,7 @@ namespace OpenTelemetry.Metrics;
 /// Equality comparer for <see cref="Tags"/>.
 /// </summary>
 internal sealed class TagsComparer :
-#if NET9_0_OR_GREATER
+#if NET
     IAlternateEqualityComparer<ReadOnlySpan<KeyValuePair<string, object?>>, Tags>,
 #endif
     IEqualityComparer<Tags>
@@ -18,7 +18,7 @@ internal sealed class TagsComparer :
 
     public int GetHashCode(Tags obj) => obj.GetHashCode();
 
-#if NET9_0_OR_GREATER
+#if NET
     public bool Equals(ReadOnlySpan<KeyValuePair<string, object?>> alternate, Tags other)
         => other.Equals(alternate);
 

@@ -41,7 +41,7 @@ internal sealed class AggregatorStore
 
     private readonly ConcurrentDictionary<Tags, int> tagsToMetricPointIndexDictionary;
 
-#if NET9_0_OR_GREATER
+#if NET
     // Alternate lookup that resolves a MetricPoint directly from the incoming
     // tags span, avoiding the copy of the tags into thread-static storage.
     // Only used for cumulative aggregation (the non-reclaim lookup path).
@@ -169,7 +169,7 @@ internal sealed class AggregatorStore
             ? cardinalityLimit * 2
             : int.MaxValue;
 
-#if NET9_0_OR_GREATER
+#if NET
         this.tagsToMetricPointIndexDictionary = new(concurrencyLevel, capacity, comparer: TagsComparer.Instance);
 
         this.tagsToMetricPointIndexLookup =
@@ -183,7 +183,7 @@ internal sealed class AggregatorStore
         {
             this.availableMetricPoints = new Queue<int>(cardinalityLimit);
 
-#if NET9_0_OR_GREATER
+#if NET
             this.TagsToMetricPointIndexDictionaryDelta = new(concurrencyLevel, capacity, comparer: TagsComparer.Instance);
 
             this.tagsToMetricPointIndexLookupDelta =
@@ -1429,7 +1429,7 @@ internal sealed class AggregatorStore
             return 0;
         }
 
-#if NET9_0_OR_GREATER
+#if NET
         // Fast path: look up an existing MetricPoint directly from the incoming
         // tags span. The dictionary stores keys in the given (unsorted) order too,
         // so a previously-seen tag set in its original order resolves here without

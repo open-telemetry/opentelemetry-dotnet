@@ -8,7 +8,7 @@ guard against changes that would only break later when other GitHub events occur
 ## Running the tests
 
 The tests require [PowerShell Core](https://github.com/PowerShell/PowerShell)
-(`pwsh`) 7 or later.
+(`pwsh`) 7.4 or later.
 
 To run the tests locally run the following command:
 
