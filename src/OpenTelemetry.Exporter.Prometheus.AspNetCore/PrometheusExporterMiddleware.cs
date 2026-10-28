@@ -69,7 +69,7 @@ internal sealed class PrometheusExporterMiddleware
             using var requestCancelled = new CancellationTokenSource();
 
             // Always bound the request. A client that never drains the response body must not be
-            // able to hold the shared collection reader slot indefinitely. A client-supplied
+            // able to hold the response buffer it is read from indefinitely. A client-supplied
             // X-Prometheus-Scrape-Timeout-Seconds may only shorten this limit, never extend it.
             var scrapeTimeout = TimeSpan.FromMilliseconds(this.exporter.ScrapeResponseTimeoutMilliseconds);
             if (TryGetScrapeTimeout(httpContext.Request.Headers, out var clientTimeout) &&
@@ -89,7 +89,12 @@ internal sealed class PrometheusExporterMiddleware
                 Negotiate(requestHeaders),
                 this.exporter.TranslationStrategy);
 
-            var collectionResponse = await this.exporter.CollectionManager.EnterCollect(protocol, linkedCts.Token);
+            var collectionResponse = await this.exporter.CollectionManager.EnterCollect(
+                protocol,
+                scrapeTimeout,
+                linkedCts.Token);
+
+            var writerCancellation = CancellationToken.None;
 
             try
             {
@@ -128,7 +133,23 @@ internal sealed class PrometheusExporterMiddleware
                         response.Headers.Append("Last-Modified", collectionResponse.GeneratedAtUtc.ToString("R"));
                         response.ContentType = PrometheusProtocol.GetContentType(protocol);
 
-                        await WriteResponseAsync(response, dataView.Array.AsMemory(0, dataView.Count), AcceptsGZip(requestHeaders), linkedCts.Token);
+                        using var writer = this.exporter.CollectionManager.BeginResponseWrite(collectionResponse);
+                        writerCancellation = writer.CancellationToken;
+
+                        using var writeCancelled = CancellationTokenSource.CreateLinkedTokenSource(
+                            linkedCts.Token,
+                            writerCancellation);
+
+                        using var abortResponse = writeCancelled.Token.Register(
+                            static state => ((HttpContext?)state)?.Abort(),
+                            httpContext);
+
+                        await WriteResponseAsync(
+                            response,
+                            dataView.Array.AsMemory(0, dataView.Count),
+                            AcceptsGZip(requestHeaders),
+                            writer,
+                            writeCancelled.Token);
                     }
                     else
                     {
@@ -137,13 +158,17 @@ internal sealed class PrometheusExporterMiddleware
                     }
                 }
             }
-            catch (OperationCanceledException) when (linkedCts.IsCancellationRequested)
+            catch (Exception) when (linkedCts.IsCancellationRequested || writerCancellation.IsCancellationRequested)
             {
-                // The request exceeded its deadline (a client-supplied timeout or the server
-                // maximum). The response may already have been aborted to unblock a stalled write.
+                // The request exceeded its deadline, or a waiting scrape cancelled its idle write.
+                // Aborting a stalled response can also surface an IO exception.
                 if (requestCancelled.IsCancellationRequested)
                 {
                     PrometheusExporterEventSource.Log.ScrapeTimedOut(scrapeTimeout.TotalSeconds);
+                }
+                else if (writerCancellation.IsCancellationRequested)
+                {
+                    PrometheusExporterEventSource.Log.ScrapeAbandoned();
                 }
 
                 if (!response.HasStarted)
@@ -153,7 +178,7 @@ internal sealed class PrometheusExporterMiddleware
             }
             finally
             {
-                this.exporter.CollectionManager.ExitCollect(protocol);
+                this.exporter.CollectionManager.ExitCollect(collectionResponse);
             }
         }
         catch (Exception ex)
@@ -346,6 +371,7 @@ internal sealed class PrometheusExporterMiddleware
         HttpResponse response,
         ReadOnlyMemory<byte> content,
         bool compress,
+        PrometheusCollectionManager.ResponseWriter writer,
         CancellationToken cancellationToken)
     {
         response.Headers.AppendCommaSeparatedValues(HeaderNames.Vary, HeaderNames.AcceptEncoding);
@@ -359,8 +385,17 @@ internal sealed class PrometheusExporterMiddleware
                 CompressionLevel.Fastest,
                 leaveOpen: true);
 
-            await gzip.WriteAsync(content, cancellationToken);
-            await gzip.FlushAsync(cancellationToken);
+            while (!content.IsEmpty)
+            {
+                var count = Math.Min(content.Length, PrometheusExporter.MaximumResponseWriteSize);
+
+                await gzip.WriteAsync(content[..count], cancellationToken);
+                await gzip.FlushAsync(cancellationToken);
+
+                writer.RecordProgress();
+
+                content = content[count..];
+            }
         }
         else
         {
@@ -381,6 +416,9 @@ internal sealed class PrometheusExporterMiddleware
                     // The client has gone away, so there is no point writing any more
                     break;
                 }
+
+                cancellationToken.ThrowIfCancellationRequested();
+                writer.RecordProgress();
 
                 content = content[slice.Length..];
             }

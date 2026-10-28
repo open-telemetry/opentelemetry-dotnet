@@ -37,6 +37,12 @@ Notes](../../RELEASENOTES.md).
   exported as arrays of strings instead of maps.
   ([#7694](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7694))
 
+* **Breaking Change** Dropped support for `net8.0` and `net9.0`.
+  ([#6899](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6899))
+
+* Add support for .NET 11.0.
+  ([#6899](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6899))
+
 * Hardened the experimental disk retry feature.
   * **Breaking:** When running on .NET on non-Windows platforms, creating the
     exporter now throws an `UnauthorizedAccessException` if the retry

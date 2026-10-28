@@ -681,7 +681,12 @@ public sealed class SchemaPropertyNameValidatorTests
 
     private static string ExpectedMessage(string firstEntry, int others)
     {
+#if NET11_0_OR_GREATER
+        var separator = firstEntry.LastIndexOf('@', StringComparison.Ordinal);
+#else
         var separator = firstEntry.LastIndexOf('@');
+#endif
+
         var position = firstEntry.Substring(separator + 1).Split(':');
         var message =
             $"Property '{firstEntry.Substring(0, separator)}' (line {position[0]}, column {position[1]}) is not defined by " +

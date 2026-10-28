@@ -67,7 +67,12 @@ internal static class PersistentStorageHelper
                 var directory = Path.GetDirectoryName(filePath);
                 var fileName = Path.GetFileName(filePath);
 
+#if NET11_0_OR_GREATER
+                var atSignIndex = fileName.LastIndexOf('@', StringComparison.Ordinal);
+#else
                 var atSignIndex = fileName.LastIndexOf('@');
+#endif
+
                 if (atSignIndex == -1)
                 {
                     return false;
@@ -313,7 +318,12 @@ internal static class PersistentStorageHelper
         }
 
         var name = fileName.Substring(0, fileName.Length - BlobExtension.Length);
+
+#if NET11_0_OR_GREATER
+        var dashIndex = name.LastIndexOf('-', StringComparison.Ordinal);
+#else
         var dashIndex = name.LastIndexOf('-');
+#endif
 
         // Guid.TryParseExact() ignores leading and trailing whitespace and accepts uppercase hexadecimal digits,
         // so the GUID is matched exactly against the lowercase format that GetUniqueFileName() uses instead.
@@ -373,7 +383,13 @@ internal static class PersistentStorageHelper
     internal static DateTime GetDateTimeFromBlobName(string filePath)
     {
         var fileName = GetFileNameWithoutExtension(filePath);
+
+#if NET11_0_OR_GREATER
+        var dashIndex = fileName.LastIndexOf('-', StringComparison.Ordinal);
+#else
         var dashIndex = fileName.LastIndexOf('-');
+#endif
+
         if (dashIndex == -1)
         {
             return DateTime.SpecifyKind(DateTime.MinValue, DateTimeKind.Utc);
@@ -444,7 +460,15 @@ internal static class PersistentStorageHelper
     internal static DateTime GetDateTimeFromLeaseName(string filePath)
     {
         var fileName = GetFileNameWithoutExtension(filePath);
-        var startIndex = fileName.LastIndexOf('@') + 1;
+
+        var startIndex =
+#if NET11_0_OR_GREATER
+            fileName.LastIndexOf('@', StringComparison.Ordinal)
+#else
+            fileName.LastIndexOf('@')
+#endif
+             + 1;
+
         var timestamp = fileName.Substring(startIndex);
 
         return Parse(timestamp);
@@ -537,7 +561,12 @@ internal static class PersistentStorageHelper
         }
 
         var name = fileName.Substring(0, fileName.Length - LeaseExtension.Length);
+
+#if NET11_0_OR_GREATER
+        var atSignIndex = name.LastIndexOf('@', StringComparison.Ordinal);
+#else
         var atSignIndex = name.LastIndexOf('@');
+#endif
 
         if (atSignIndex <= 0 || !IsTimestamp(name.Substring(atSignIndex + 1)))
         {
@@ -570,7 +599,11 @@ internal static class PersistentStorageHelper
         {
             // Non-Windows platforms will treat the entire path as the file name if it contains Windows
             // path separators, so we need to extract the file name manually from after the last \ character.
+#if NET11_0_OR_GREATER
+            var startIndex = fileName.LastIndexOf('\\', StringComparison.Ordinal);
+#else
             var startIndex = fileName.LastIndexOf('\\');
+#endif
             if (startIndex > -1)
             {
                 fileName = fileName.Substring(startIndex + 1);

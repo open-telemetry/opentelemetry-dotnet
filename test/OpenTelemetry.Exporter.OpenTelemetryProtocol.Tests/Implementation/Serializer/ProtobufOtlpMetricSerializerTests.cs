@@ -17,7 +17,7 @@ public static class ProtobufOtlpMetricSerializerTests
 {
     private const string HistogramName = "histogram";
 
-#if NET8_0_OR_GREATER
+#if NET
     [Fact]
     public static void WriteMetricsData_WithWarmedCacheDoesNotAllocate()
     {

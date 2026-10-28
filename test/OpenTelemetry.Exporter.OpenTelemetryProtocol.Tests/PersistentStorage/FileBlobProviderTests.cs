@@ -166,7 +166,14 @@ public class FileBlobProviderTests
 
         Assert.True(provider.TryCreateBlob([1, 2, 3], 60_000, out var blob));
         var leasePath = ((FileBlob)blob).FullPath;
-        var blobPath = leasePath.Substring(0, leasePath.LastIndexOf('@'));
+
+#if NET11_0_OR_GREATER
+        var index = leasePath.LastIndexOf('@', StringComparison.Ordinal);
+#else
+        var index = leasePath.LastIndexOf('@');
+#endif
+
+        var blobPath = leasePath.Substring(0, index);
 
         Assert.True(blob.TryWrite([4, 5, 6], 60_000));
         var newLeasePath = ((FileBlob)blob).FullPath;
@@ -195,7 +202,14 @@ public class FileBlobProviderTests
 
         Assert.True(provider.TryCreateBlob([1, 2, 3], 60_000, out var blob));
         var leasePath = ((FileBlob)blob).FullPath;
-        var blobPath = leasePath.Substring(0, leasePath.LastIndexOf('@'));
+
+#if NET11_0_OR_GREATER
+        var index = leasePath.LastIndexOf('@', StringComparison.Ordinal);
+#else
+        var index = leasePath.LastIndexOf('@');
+#endif
+
+        var blobPath = leasePath.Substring(0, index);
 
         Assert.True(blob.TryWrite([4, 5, 6]));
 
@@ -247,7 +261,14 @@ public class FileBlobProviderTests
 
         Assert.True(provider.TryCreateBlob([1, 2, 3, 4], 60_000, out var blob));
         var leasePath = ((FileBlob)blob).FullPath;
-        var blobPath = leasePath.Substring(0, leasePath.LastIndexOf('@'));
+
+#if NET11_0_OR_GREATER
+        var index = leasePath.LastIndexOf('@', StringComparison.Ordinal);
+#else
+        var index = leasePath.LastIndexOf('@');
+#endif
+
+        var blobPath = leasePath.Substring(0, index);
 
         // The lease expires and is released by the storage maintenance before the blob is written to again.
         Assert.True(PersistentStorageHelper.RemoveExpiredLease(DateTime.UtcNow.AddMinutes(5), leasePath));
@@ -421,7 +442,14 @@ public class FileBlobProviderTests
 
         Assert.True(provider.TryCreateBlob([1, 2, 3], 60_000, out var blob));
         var leasePath = ((FileBlob)blob).FullPath;
-        var blobPath = leasePath.Substring(0, leasePath.LastIndexOf('@'));
+
+#if NET11_0_OR_GREATER
+        var index = leasePath.LastIndexOf('@', StringComparison.Ordinal);
+#else
+        var index = leasePath.LastIndexOf('@');
+#endif
+
+        var blobPath = leasePath.Substring(0, index);
 
         // Make moving the new content into place fail after the existing file has been claimed
         Directory.CreateDirectory(blobPath);
@@ -459,7 +487,14 @@ public class FileBlobProviderTests
 
         Assert.True(provider.TryCreateBlob([1, 2, 3], 60_000, out var blob));
         var leasePath = ((FileBlob)blob).FullPath;
-        var blobPath = leasePath.Substring(0, leasePath.LastIndexOf('@'));
+
+#if NET11_0_OR_GREATER
+        var index = leasePath.LastIndexOf('@', StringComparison.Ordinal);
+#else
+        var index = leasePath.LastIndexOf('@');
+#endif
+
+        var blobPath = leasePath.Substring(0, index);
 
         // Once released, the blob may be leased by another reader, so it is no longer removed.
         Assert.True(PersistentStorageHelper.RemoveExpiredLease(DateTime.UtcNow.AddMinutes(5), leasePath));
