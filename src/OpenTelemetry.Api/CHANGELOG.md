@@ -18,6 +18,19 @@ Released 2026-Oct-20
   array-valued scope tags.
   ([#7960](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7960))
 
+* **Breaking Change** Dropped support for `net8.0` and `net9.0`.
+  ([#6899](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6899))
+
+* Update `System.Diagnostics.DiagnosticSource` dependency to `11.0.0-rc.3.26522.148`
+  for all target frameworks.
+  ([#6899](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6899))
+
+* Add full support for W3C Trace Context Level 2 grammar.
+  ([#6899](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6899))
+
+* Add support for .NET 11.0.
+  ([#6899](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6899))
+
 ## 1.20.0
 
 Released 2026-Oct-15

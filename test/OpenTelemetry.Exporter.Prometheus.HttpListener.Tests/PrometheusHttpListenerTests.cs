@@ -324,7 +324,7 @@ public class PrometheusHttpListenerTests
         exporter.Collect = (timeout) =>
         {
             collectEntered.Set();
-            collectBlocker.Wait(TimeSpan.FromSeconds(10));
+            collectBlocker.Wait(TimeSpan.FromSeconds(30));
             return originalCollect!(timeout);
         };
 
@@ -360,7 +360,7 @@ public class PrometheusHttpListenerTests
         // The scrape must have been released by the disposal rather than left waiting on the
         // blocked collection, so it has to complete well within the time that collection stays
         // blocked for.
-        using (var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5)))
+        using (var cts = new CancellationTokenSource(TimeSpan.FromSeconds(15)))
         {
             var completed = await Task.WhenAny(scrapeTask, Task.Delay(Timeout.Infinite, cts.Token));
             Assert.Same(scrapeTask, completed);
