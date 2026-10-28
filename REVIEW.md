@@ -29,7 +29,7 @@ repository. It also helps guide AI coding and review agents to make them more ef
   etc.).
 - If a single PR modifies multiple components, each affected component's
   `CHANGELOG.md` needs its own entry with the same PR link.
-- "Breaking change" entries should be prefixed with `**Breaking Change**:`.
+- "Breaking change" entries should be prefixed with `**Breaking Change**`.
 
 ## NuGet Package References
 
@@ -238,7 +238,7 @@ similar - and throw an exception or break if the limit is exceeded.
 - When adding new `[GeneratedRegex(...)]` attributes, always specify
   `matchTimeoutMilliseconds` with an appropriate value to guard against
   catastrophic backtracking.
-- Use `#if NET` (not `#if NET8_0_OR_GREATER` or similar) when guarding code for
+- Use `#if NET` (not `#if NET11_0_OR_GREATER` or similar) when guarding code for
   modern .NET vs. older TFMs where all supported TFMs of that version are included.
 - When checking OS platform on older TFMs, use
   `System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(OSPlatform.X)`

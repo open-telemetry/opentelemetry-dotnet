@@ -3,11 +3,8 @@
 
 #if NET
 using System.Buffers.Text;
-#if NET9_0_OR_GREATER
 using System.Collections.Frozen;
-#else
 using System.Collections.Immutable;
-#endif
 #endif
 using System.Buffers;
 using System.Collections;
@@ -68,12 +65,7 @@ internal abstract class TextFormatSerializer
 #if NET
     private static readonly SearchValues<char> UnicodeVerbatimChars = SearchValues.Create(BuildAsciiVerbatimChars(escapeQuotationMarks: false));
     private static readonly SearchValues<char> LabelValueVerbatimChars = SearchValues.Create(BuildAsciiVerbatimChars(escapeQuotationMarks: true));
-#endif
-
-#if NET9_0_OR_GREATER
     private static readonly FrozenSet<string> ReservedScopeLabelNames = FrozenSet.Create(["otel_scope_name", "otel_scope_schema_url", "otel_scope_version"]);
-#elif NET
-    private static readonly ImmutableHashSet<string> ReservedScopeLabelNames = ["otel_scope_name", "otel_scope_schema_url", "otel_scope_version"];
 #else
     private static readonly HashSet<string> ReservedScopeLabelNames = ["otel_scope_name", "otel_scope_schema_url", "otel_scope_version"];
     private static readonly long UnixEpochTicks = new DateTimeOffset(1970, 1, 1, 0, 0, 0, TimeSpan.Zero).Ticks;
@@ -394,6 +386,23 @@ internal abstract class TextFormatSerializer
     {
         if (double.IsFinite(value))
         {
+            // Whole numbers below 1e15 format to the same digits as the equivalent integer
+            // (the shortest round-trip form only switches to exponent notation at 1e15),
+            // and formatting an integer is several times cheaper than the shortest
+            // round-trip search. Sums of integer-valued histograms and double counters
+            // incremented by whole amounts take this path. Negative zero must keep its
+            // sign, so it is left to the general path.
+            const double MaxIntegralDoubleFastPath = 1e15;
+
+            if (value > -MaxIntegralDoubleFastPath && value < MaxIntegralDoubleFastPath)
+            {
+                var integral = (long)value;
+                if (integral == value && (integral != 0 || BitConverter.DoubleToInt64Bits(value) >= 0))
+                {
+                    return WriteLong(buffer, cursor, integral);
+                }
+            }
+
             // The shortest round-trippable representation is used, which is what the reference
             // Prometheus client libraries emit (Go's strconv.FormatFloat with a precision of -1).
             // Formatting with 17 significant digits also round-trips, but pads shorter values out

@@ -10,7 +10,7 @@ namespace OpenTelemetry.Configuration.Declarative;
 /// </summary>
 internal sealed class ConfigPropertiesBuilder
 {
-    private readonly Dictionary<string, ConfigValue> values = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, ConfigValue> values = [with(StringComparer.Ordinal)];
 
     private Dictionary<string, ConfigValuePosition>? keyPositions;
 

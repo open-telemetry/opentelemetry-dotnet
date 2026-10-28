@@ -2,19 +2,21 @@
 # This should be run from the root of the repo:
 # docker build --file test/OpenTelemetry.Instrumentation.W3cTraceContext.Tests/Dockerfile .
 
-ARG BUILD_SDK_VERSION=10.0
-ARG TEST_SDK_VERSION=10.0
+ARG BUILD_SDK_VERSION=11.0
+ARG TEST_SDK_VERSION=11.0
 
-FROM mcr.microsoft.com/dotnet/sdk:8.0.427-azurelinux3.0@sha256:3763c3691c726fb90d60feaec899af309e4035705bec6b84f34a9cad6d8f8d59 AS dotnet-sdk-8.0
-FROM mcr.microsoft.com/dotnet/sdk:9.0.320-azurelinux3.0@sha256:41fe79a756a3ca3aa1cb79ce4f84e399b21ea871e38795fc7afcac02bf71f431 AS dotnet-sdk-9.0
 FROM mcr.microsoft.com/dotnet/sdk:10.0.403-azurelinux3.0@sha256:f0414bcafb2751af8dcc7f72f6055eb456ca9931074b2eb837c6c9d166360fb5 AS dotnet-sdk-10.0
+FROM mcr.microsoft.com/dotnet/sdk:11.0.100-rc.3-azurelinux4.0@sha256:29ddac850677f60acc889ad9558c9a8990c63de50800c5e72265e75c04659025 AS dotnet-sdk-11.0
 
 FROM dotnet-sdk-${BUILD_SDK_VERSION} AS build
 ARG PUBLISH_CONFIGURATION=Release
-ARG PUBLISH_FRAMEWORK=net10.0
+ARG PUBLISH_FRAMEWORK=net11.0
 
 # renovate: datasource=github-digest depName=w3c/trace-context packageName=w3c/trace-context currentValue=main
 ENV W3C_TRACE_CONTEXT_SHA="acab820be9db7b3433668baa5cdd43f57f4c4be0"
+
+# Azure Linux 4 includes a version of OpenSSL that requires enabling SHA1 for .snk files explicitly
+ENV OPENSSL_ENABLE_SHA1_SIGNATURES=1
 
 WORKDIR /repo
 COPY . ./

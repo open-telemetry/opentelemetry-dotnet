@@ -115,4 +115,11 @@ internal sealed class PrometheusExporterEventSource : EventSource, IConfiguratio
     [Event(13, Message = "Unsupported attribute type '{0}' for '{1}'. Attribute will not be exported.", Level = EventLevel.Warning)]
     public void UnsupportedAttributeType(string type, string key)
         => this.WriteEvent(13, type, key);
+
+    [Event(
+        14,
+        Message = "Metrics scrape response abandoned because it made no write progress while another scrape was waiting.",
+        Level = EventLevel.Warning)]
+    public void ScrapeAbandoned()
+        => this.WriteEvent(14);
 }
