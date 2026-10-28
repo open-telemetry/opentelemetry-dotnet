@@ -232,9 +232,12 @@ public class OtlpGrpcExportClientTests
     [Fact]
     public void SendExportRequest_GrpcExport_ZstdCompression_PayloadDecompressesToOriginalProtobuf()
     {
+        const int CompressedGrpcPayloadEventId = 37;
+
         var protobufPayload = "grpc test payload for compression"u8.ToArray();
         var buffer = BuildGrpcFrame(protobufPayload);
 
+        using var listener = new TestEventListener(OpenTelemetryProtocolExporterEventSource.Log, EventLevel.Verbose);
         using var testHandler = new TestGrpcMessageHandler();
         using var httpClient = new HttpClient(testHandler, disposeHandler: false);
 
@@ -268,6 +271,13 @@ public class OtlpGrpcExportClientTests
         Assert.Contains(
             testHandler.CapturedRequestHeaders,
             h => h.Key == "grpc-encoding" && h.Value.Contains("zstd"));
+
+        var compressedEvent = Assert.Single(listener.Messages, e => e.EventId == CompressedGrpcPayloadEventId);
+
+        Assert.NotNull(compressedEvent.Payload);
+        Assert.Equal("zstd", compressedEvent.Payload[0]);
+        Assert.Equal((long)buffer.Length, compressedEvent.Payload[1]);
+        Assert.Equal((long)content.Length, compressedEvent.Payload[2]);
     }
 
     [Fact]

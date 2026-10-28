@@ -325,6 +325,104 @@ public class OtlpHttpExportClientTests
         Assert.False(response.Success);
         Assert.Equal(["zstd"], testHandler.ContentEncodings);
     }
+
+    [Fact]
+    public void Shutdown_WithZstdCompression_LaterRequestsAreStillCompressed()
+    {
+        var payload = "00000000000000000000000000000000"u8.ToArray();
+
+        using var testHandler = new TestHttpMessageHandler();
+        using var httpClient = new HttpClient(testHandler, disposeHandler: false);
+
+        var exportClient = CreateZstdExportClient(httpClient);
+
+        Assert.True(exportClient.SendExportRequest(payload, payload.Length, DateTime.UtcNow.AddSeconds(10), TestContext.Current.CancellationToken).Success);
+
+        // The first shutdown releases the cached encoder, the second finds none to release.
+        Assert.True(exportClient.Shutdown(0));
+        Assert.True(exportClient.Shutdown(0));
+
+        Assert.True(exportClient.SendExportRequest(payload, payload.Length, DateTime.UtcNow.AddSeconds(10), TestContext.Current.CancellationToken).Success);
+
+        Assert.NotNull(testHandler.HttpRequestContent);
+        Assert.Equal(payload, DecompressZstd(testHandler.HttpRequestContent));
+    }
+
+    [Fact]
+    public async Task ZstdHttpContent_CopyToAsync_IsCompressed()
+    {
+        var payload = "00000000000000000000000000000000"u8.ToArray();
+        var compressor = new ZstdCompressor();
+
+        // The second copy reuses the encoder cached by the first.
+        for (var i = 0; i < 2; i++)
+        {
+            using var content = new ZstdHttpContent(payload, payload.Length, OtlpHttpExportClient.MediaHeaderValue, compressor);
+            using var destination = new MemoryStream();
+
+            await content.CopyToAsync(destination, TestContext.Current.CancellationToken);
+
+            Assert.Equal(payload, DecompressZstd(destination.ToArray()));
+            Assert.Equal(["zstd"], content.Headers.ContentEncoding);
+            Assert.Equal(OtlpHttpExportClient.MediaHeaderValue, content.Headers.ContentType);
+        }
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task ZstdCompressor_DestinationThrows_EncoderIsNotReused(bool async)
+    {
+        var payload = "00000000000000000000000000000000"u8.ToArray();
+        var compressor = new ZstdCompressor();
+
+        using (var failing = new ThrowingStream())
+        {
+            var exception = async
+                ? await Assert.ThrowsAsync<IOException>(() => compressor.CompressAsync(payload, failing, TestContext.Current.CancellationToken))
+                : Assert.Throws<IOException>(() => compressor.Compress(payload, failing));
+
+            Assert.Equal(ThrowingStream.Message, exception.Message);
+        }
+
+        // Had the encoder that failed been disposed and then cached, this would throw ObjectDisposedException.
+        using var destination = new MemoryStream();
+
+        if (async)
+        {
+            await compressor.CompressAsync(payload, destination, TestContext.Current.CancellationToken);
+        }
+        else
+        {
+            compressor.Compress(payload, destination);
+        }
+
+        Assert.Equal(payload, DecompressZstd(destination.ToArray()));
+    }
+
+    [Fact]
+    public void ZstdCompressor_OverlappingCompressions_EachUseTheirOwnEncoder()
+    {
+        var outerPayload = "outer outer outer outer outer outer"u8.ToArray();
+        var innerPayload = "inner inner inner inner inner inner"u8.ToArray();
+        var compressor = new ZstdCompressor();
+
+        using var inner = new MemoryStream();
+
+        // Starts a second compression while the first holds the cached encoder, so the second
+        // creates its own and caches it, and the first then finds the cache occupied when it finishes.
+        using var outer = new CallbackOnFirstWriteStream(() => compressor.Compress(innerPayload, inner));
+
+        compressor.Compress(outerPayload, outer);
+
+        Assert.Equal(outerPayload, DecompressZstd(outer.ToArray()));
+        Assert.Equal(innerPayload, DecompressZstd(inner.ToArray()));
+
+        using var next = new MemoryStream();
+        compressor.Compress(outerPayload, next);
+
+        Assert.Equal(outerPayload, DecompressZstd(next.ToArray()));
+    }
 #else
     [Fact]
     public void SendExportRequest_WithZstdCompression_UsesGzipWhenZstdIsNotSupported()
@@ -743,6 +841,40 @@ public class OtlpHttpExportClientTests
                 RequestMessage = request,
                 Content = new ByteArrayContent([]),
             };
+        }
+    }
+
+    private sealed class ThrowingStream : MemoryStream
+    {
+        public const string Message = "The destination stream failed.";
+
+        public override void Write(byte[] buffer, int offset, int count)
+            => throw new IOException(Message);
+
+        public override void Write(ReadOnlySpan<byte> buffer)
+            => throw new IOException(Message);
+
+        public override Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
+            => throw new IOException(Message);
+
+        public override ValueTask WriteAsync(ReadOnlyMemory<byte> buffer, CancellationToken cancellationToken = default)
+            => throw new IOException(Message);
+    }
+
+    private sealed class CallbackOnFirstWriteStream(Action onFirstWrite) : MemoryStream
+    {
+        private Action? onFirstWrite = onFirstWrite;
+
+        public override void Write(byte[] buffer, int offset, int count)
+        {
+            Interlocked.Exchange(ref this.onFirstWrite, null)?.Invoke();
+            base.Write(buffer, offset, count);
+        }
+
+        public override void Write(ReadOnlySpan<byte> buffer)
+        {
+            Interlocked.Exchange(ref this.onFirstWrite, null)?.Invoke();
+            base.Write(buffer);
         }
     }
 #endif
