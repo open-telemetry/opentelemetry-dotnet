@@ -500,15 +500,34 @@ public class OtlpAttributeTests
         Assert.False(TryTransformTag(kvp, out _, tagValueMaxLength: 1));
     }
 
+    [Fact]
+    public void ExceptionInUtf8TryFormatIsCaught()
+    {
+        var kvp = new KeyValuePair<string, object?>("key", new Utf8ValueThatThrows(typeof(InvalidOperationException)));
+        Assert.False(TryTransformTag(kvp, out _));
+    }
+
     [Theory]
-    [InlineData(typeof(InvalidOperationException))]
     [InlineData(typeof(ArgumentException))]
     [InlineData(typeof(IndexOutOfRangeException))]
     [InlineData(typeof(ArgumentOutOfRangeException))]
-    public void ExceptionInUtf8TryFormatIsCaught(Type exceptionType)
+    public void BufferFullExceptionInUtf8TryFormatThrowsSoTheBufferIsGrown(Type exceptionType)
     {
-        var kvp = new KeyValuePair<string, object?>("key", new Utf8ValueThatThrows(exceptionType));
-        Assert.False(TryTransformTag(kvp, out _));
+        var state = new ProtobufOtlpTagWriter.OtlpTagWriterState { Buffer = new byte[1024] };
+        var tag = new KeyValuePair<string, object?>("key", new Utf8ValueThatThrows(exceptionType));
+
+        Assert.Throws(exceptionType, () => ProtobufOtlpTagWriter.Instance.TryWriteTag(ref state, tag));
+    }
+
+    [Theory]
+    [InlineData(typeof(ArgumentException))]
+    [InlineData(typeof(IndexOutOfRangeException))]
+    public void BufferFullExceptionInUtf8TryFormatFallsBackToToStringWhenCapped(Type exceptionType)
+    {
+        var kvp = new KeyValuePair<string, object?>("key", new Utf8ValueThatThrows(exceptionType, "fallback"));
+
+        Assert.True(TryTransformTag(kvp, out var attribute, tagValueMaxLength: 10));
+        Assert.Equal("fallback", attribute.Value.StringValue);
     }
 
     [Fact]
@@ -662,10 +681,12 @@ public class OtlpAttributeTests
         public override string ToString() => value;
     }
 
-    private sealed class Utf8ValueThatThrows(Type exceptionType) : IUtf8SpanFormattable
+    private sealed class Utf8ValueThatThrows(Type exceptionType, string toStringValue = "") : IUtf8SpanFormattable
     {
         public bool TryFormat(Span<byte> utf8Destination, out int bytesWritten, ReadOnlySpan<char> format, IFormatProvider? provider)
             => throw (Exception)Activator.CreateInstance(exceptionType, "Nope.")!;
+
+        public override string ToString() => toStringValue;
     }
 
     private sealed class Utf8ValueThatDoesNotFitAndThrowsInToString : IUtf8SpanFormattable

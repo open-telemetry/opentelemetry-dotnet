@@ -177,6 +177,14 @@ internal sealed class ProtobufOtlpTagWriter : TagWriter<ProtobufOtlpTagWriter.Ot
                 return true;
             }
         }
+        catch (Exception ex) when (ex is IndexOutOfRangeException or ArgumentException)
+        {
+            // Some formatters report a destination that is too short by throwing, as Span<T>.CopyTo does.
+            if (!isBufferCapped)
+            {
+                throw;
+            }
+        }
         catch (Exception ex)
         {
             // How much the formatter wrote is unknown, and the buffer may be returned to a shared pool.
