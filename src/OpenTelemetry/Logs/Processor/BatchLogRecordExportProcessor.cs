@@ -54,7 +54,8 @@ public class BatchLogRecordExportProcessor : BatchExportProcessor<LogRecord>
     /// <inheritdoc/>
     public override void OnEnd(LogRecord data)
     {
-        if (!this.TryEnterOnEnd())
+        var token = this.TryEnterOnEnd();
+        if (token < 0)
         {
             SdkSelfObservability.LogProcessedCounter.Add(1, this.alreadyShutdownTags);
             return;
@@ -93,7 +94,7 @@ public class BatchLogRecordExportProcessor : BatchExportProcessor<LogRecord>
         }
         finally
         {
-            this.ExitOnEnd();
+            this.ExitOnEnd(token);
         }
     }
 
