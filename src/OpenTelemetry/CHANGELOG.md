@@ -12,11 +12,11 @@ Notes](../../RELEASENOTES.md).
   `TracerProvider` now calls `Shutdown` on its sampler when it is shut down or
   disposed, and `ParentBasedSampler` and `AlwaysRecordSampler` call `Shutdown`
   on the samplers they delegate to.
-  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+  ([#8060](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8060))
 
 * The `TracerProvider` now disposes of its sampler after its listener has
   stopped calling the sampler, rather than before the processors are shut down.
-  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+  ([#8060](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8060))
 
 ## 1.21.0-rc.1
 
