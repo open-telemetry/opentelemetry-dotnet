@@ -111,10 +111,88 @@ public class ConsoleExporterMetricsExtensionsTests
     }
 
     [Fact]
+    public void AddConsoleExporter_WithExporterAndReaderConfigureAction_InvokesCallback()
+    {
+        // Arrange
+        var meterName = Utils.GetCurrentMethodName();
+        using var meter = new Meter(meterName);
+        var counter = meter.CreateCounter<long>("test-counter");
+        ConsoleExporterOptions? capturedExporterOptions = null;
+        MetricReaderOptions? capturedReaderOptions = null;
+
+        using var meterProvider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meterName)
+            .AddConsoleExporter((exporterOptions, readerOptions) =>
+            {
+                exporterOptions.Targets = ConsoleExporterOutputTargets.Debug;
+                capturedExporterOptions = exporterOptions;
+                capturedReaderOptions = readerOptions;
+            })
+            .Build();
+
+        // Act
+        counter.Add(100);
+        meterProvider.ForceFlush();
+
+        // Assert
+        Assert.NotNull(capturedExporterOptions);
+        Assert.NotNull(capturedReaderOptions);
+        Assert.Equal(ConsoleExporterOutputTargets.Debug, capturedExporterOptions.Targets);
+    }
+
+    [Fact]
+    public void AddConsoleExporter_WithNameAndExporterAndReaderConfigureAction_InvokesCallback()
+    {
+        // Arrange
+        var meterName = Utils.GetCurrentMethodName();
+        using var meter = new Meter(meterName);
+        var counter = meter.CreateCounter<long>("test-counter");
+        var invoked = false;
+
+        using var meterProvider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meterName)
+            .AddConsoleExporter("custom-name", (exporterOptions, readerOptions) =>
+            {
+                invoked = true;
+                exporterOptions.Targets = ConsoleExporterOutputTargets.Debug;
+            })
+            .Build();
+
+        // Act
+        counter.Add(100);
+        meterProvider.ForceFlush();
+
+        // Assert
+        Assert.True(invoked);
+    }
+
+    [Fact]
+    public void AddConsoleExporter_WithNameAndNullExporterAndReaderConfigureAction_Success()
+    {
+        // Arrange
+        var meterName = Utils.GetCurrentMethodName();
+        using var meter = new Meter(meterName);
+        var counter = meter.CreateCounter<long>("test-counter");
+
+        using var meterProvider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meterName)
+            .AddConsoleExporter("custom-name", (Action<ConsoleExporterOptions, MetricReaderOptions>?)null)
+            .Build();
+
+        // Act
+        counter.Add(100);
+
+        // Assert
+        Assert.NotNull(meterProvider);
+    }
+
+    [Fact]
     public void AddConsoleExporter_ThrowsOnNullBuilder()
     {
         // Act and Assert
         MeterProviderBuilder? builder = null;
         Assert.Throws<ArgumentNullException>(() => builder!.AddConsoleExporter());
+        Assert.Throws<ArgumentNullException>(() => builder!.AddConsoleExporter((Action<ConsoleExporterOptions, MetricReaderOptions>?)null));
+        Assert.Throws<ArgumentNullException>(() => builder!.AddConsoleExporter("name", (Action<ConsoleExporterOptions, MetricReaderOptions>?)null));
     }
 }
