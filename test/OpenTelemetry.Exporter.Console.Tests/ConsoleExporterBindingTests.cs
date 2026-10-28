@@ -342,11 +342,14 @@ public class ConsoleExporterBindingTests
         {
             var config = new ConfigurationBuilder()
                 .AddInMemoryCollection(new Dictionary<string, string?> { ["OpenTelemetry:Exporters:Console:Targets"] = "Debug" })
-                .AddOpenTelemetryDeclarativeConfiguration(yamlPath)
                 .Build();
 
             using var tracerProvider = Sdk.CreateTracerProviderBuilder()
-                .ConfigureServices(s => s.AddSingleton<IConfiguration>(config))
+                .ConfigureServices(s =>
+                {
+                    s.AddSingleton<IConfiguration>(config);
+                    new TestOpenTelemetryBuilder(s).UseDeclarativeConfiguration(yamlPath);
+                })
                 .AddSource(name)
                 .AddConsoleExporter()
                 .Build();
@@ -506,5 +509,10 @@ public class ConsoleExporterBindingTests
     private sealed class EmptyResourceDetector : IResourceDetector
     {
         public Resource Detect() => Resource.Empty;
+    }
+
+    private sealed class TestOpenTelemetryBuilder(IServiceCollection services) : IOpenTelemetryBuilder
+    {
+        public IServiceCollection Services { get; } = services;
     }
 }
