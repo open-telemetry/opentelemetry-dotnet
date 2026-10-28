@@ -4,6 +4,7 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Serializer;
+using OpenTelemetry.Internal;
 using OtlpCommon = OpenTelemetry.Proto.Common.V1;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests;
@@ -442,6 +443,36 @@ public class OtlpAttributeTests
         Assert.Equal(15, state.WritePosition);
     }
 
+    [Theory]
+    [InlineData("scalar")]
+    [InlineData("array")]
+    [InlineData("kvlist")]
+    [InlineData("kvlistBeyondMaxDepth")]
+    public void OutOfMemoryExceptionInToStringIsNotSwallowed(string shape)
+    {
+        object value = shape switch
+        {
+            "scalar" => new MyToStringMethodThrowsOutOfMemory(),
+            "array" => new object[] { 1, new MyToStringMethodThrowsOutOfMemory() },
+            "kvlist" => new Dictionary<string, object?> { ["inner"] = new MyToStringMethodThrowsOutOfMemory() },
+            _ => NestBeyondMaxDepth(new KvListWhoseToStringThrowsOutOfMemory { new("x", "y") }),
+        };
+
+        var state = new ProtobufOtlpTagWriter.OtlpTagWriterState { Buffer = new byte[1024] };
+
+        Assert.Throws<OutOfMemoryException>(() => ProtobufOtlpTagWriter.WriteKeyValue(ref state, ProtobufOtlpTraceFieldNumberConstants.Span_Attributes, "key", value));
+
+        static object NestBeyondMaxDepth(object innermost)
+        {
+            for (var i = 0; i < TagWriter<object, object>.MaxRecursionDepth; i++)
+            {
+                innermost = new Dictionary<string, object?> { ["nested"] = innermost };
+            }
+
+            return innermost;
+        }
+    }
+
 #if NET
     [Fact]
     public void Utf8SpanFormattableIsWrittenAsString()
@@ -773,4 +804,18 @@ public class OtlpAttributeTests
         public override string ToString()
             => throw new InvalidOperationException("Nope.");
     }
+
+#pragma warning disable CA2201 // Do not raise reserved exception types
+    private sealed class MyToStringMethodThrowsOutOfMemory
+    {
+        public override string ToString()
+            => throw new OutOfMemoryException();
+    }
+
+    private sealed class KvListWhoseToStringThrowsOutOfMemory : List<KeyValuePair<string, object?>>
+    {
+        public override string ToString()
+            => throw new OutOfMemoryException();
+    }
+#pragma warning restore CA2201 // Do not raise reserved exception types
 }

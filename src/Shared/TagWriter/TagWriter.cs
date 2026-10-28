@@ -123,7 +123,7 @@ internal abstract class TagWriter<TTagState, TArrayState>
                 {
                     this.WriteArrayTagInternal(ref state, key, array, tagValueMaxLength);
                 }
-                catch (Exception ex) when (ex is IndexOutOfRangeException or ArgumentException)
+                catch (Exception ex) when (ex is IndexOutOfRangeException or ArgumentException or OutOfMemoryException)
                 {
                     throw;
                 }
@@ -282,7 +282,7 @@ internal abstract class TagWriter<TTagState, TArrayState>
         {
             stringValue = Convert.ToString(value, CultureInfo.InvariantCulture);
         }
-        catch
+        catch (Exception ex) when (ex is not OutOfMemoryException)
         {
             // If ToString throws an exception then the tag is ignored.
             return this.LogUnsupportedTagTypeAndReturnFalse(key, value);
@@ -347,7 +347,7 @@ internal abstract class TagWriter<TTagState, TArrayState>
                     key,
                     TruncateString(stringValue.AsSpan(), tagValueMaxLength));
             }
-            catch (Exception ex) when (ex is IndexOutOfRangeException or ArgumentException)
+            catch (Exception ex) when (ex is IndexOutOfRangeException or ArgumentException or OutOfMemoryException)
             {
                 recursionDepth = 0;
                 throw;
@@ -367,7 +367,7 @@ internal abstract class TagWriter<TTagState, TArrayState>
         {
             this.WriteKvListTag(ref state, key, kvList, tagValueMaxLength);
         }
-        catch (Exception ex) when (ex is IndexOutOfRangeException or ArgumentException)
+        catch (Exception ex) when (ex is IndexOutOfRangeException or ArgumentException or OutOfMemoryException)
         {
             recursionDepth = 0;
             throw;
