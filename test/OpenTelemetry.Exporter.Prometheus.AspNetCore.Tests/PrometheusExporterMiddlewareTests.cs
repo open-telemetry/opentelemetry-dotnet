@@ -950,31 +950,57 @@ public sealed class PrometheusExporterMiddlewareTests
         }
     }
 
-    [Fact]
-    public async Task ScrapeClientsThatStopReadingTheResponseBodyDoNotBlockOtherScrapes()
+    [Theory]
+    [InlineData(0, false, false)]
+    [InlineData(0, false, true)]
+    [InlineData(0, true, false)]
+    [InlineData(0, true, true)]
+    [InlineData(300, false, false)]
+    [InlineData(300, false, true)]
+    [InlineData(300, true, false)]
+    [InlineData(300, true, true)]
+    public async Task ScrapeClientsThatStopReadingTheResponseBodyDoNotBlockOtherScrapes(
+        int cacheDurationMilliseconds,
+        bool openMetricsRequested,
+        bool compress)
     {
         using var meter = new Meter(MeterName, MeterVersion);
 
         // Use the default server-side scrape timeout, which outlasts the scrape timeout
         // of a Prometheus server, so it cannot be what lets the other scrapes through.
-        var (app, baseAddress) = await StartKestrelHostWithLargeScrapeResponseAsync(meter);
+        var (app, baseAddress) = await StartKestrelHostWithLargeScrapeResponseAsync(
+            meter,
+            cacheDurationMilliseconds: cacheDurationMilliseconds,
+            incompressible: compress);
+        var freshness = 0;
+        meter.CreateObservableGauge("fresh_value", () => Volatile.Read(ref freshness));
 
         var stalledClients = new List<TcpClient>();
 
         try
         {
-            using var client = new HttpClient { BaseAddress = baseAddress };
+            using var handler = new HttpClientHandler
+            {
+                AutomaticDecompression = compress ? DecompressionMethods.GZip : DecompressionMethods.None,
+                CheckCertificateRevocationList = true,
+            };
+            using var client = new HttpClient(handler) { BaseAddress = baseAddress };
             client.DefaultRequestHeaders.Add("X-Prometheus-Scrape-Timeout-Seconds", "10");
+            if (openMetricsRequested)
+            {
+                client.DefaultRequestHeaders.Add("Accept", "application/openmetrics-text;version=1.0.0");
+            }
 
             // Keep starting scrapes which never read their response, each one reading from
             // whatever response the previous scrapes left behind, while other scrapes keep
             // needing a new collection.
             for (var i = 0; i < 3; i++)
             {
-                var stalledClient = await StartScrapeThatNeverReadsAsync(baseAddress);
+                var stalledClient = await StartScrapeThatNeverReadsAsync(baseAddress, openMetricsRequested, compress);
 
                 Assert.NotNull(stalledClient);
                 stalledClients.Add(stalledClient);
+                Volatile.Write(ref freshness, i + 1);
 
                 // Let the cached response expire so the next scrape cannot be served from it
                 await Task.Delay(TimeSpan.FromSeconds(1), TestContext.Current.CancellationToken);
@@ -985,9 +1011,12 @@ public sealed class PrometheusExporterMiddlewareTests
                 using var response = await client.GetAsync(new Uri("metrics", UriKind.Relative), cts.Token);
 
                 Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+                var content = await response.Content.ReadAsStringAsync(cts.Token);
+                var sample = Assert.Single(
+                    content.Split('\n'),
+                    line => line.StartsWith("fresh_value{", StringComparison.Ordinal));
+                Assert.EndsWith(" " + (i + 1).ToString(CultureInfo.InvariantCulture), sample, StringComparison.Ordinal);
             }
-
-            Assert.All(stalledClients, (p) => Assert.True(p.Connected));
         }
         finally
         {
@@ -1064,7 +1093,9 @@ public sealed class PrometheusExporterMiddlewareTests
 
     private static async Task<(WebApplication App, Uri BaseAddress)> StartKestrelHostWithLargeScrapeResponseAsync(
         Meter meter,
-        int? scrapeResponseTimeoutMilliseconds = null)
+        int? scrapeResponseTimeoutMilliseconds = null,
+        int cacheDurationMilliseconds = 300,
+        bool incompressible = false)
     {
         var builder = WebApplication.CreateBuilder();
 
@@ -1077,6 +1108,7 @@ public sealed class PrometheusExporterMiddlewareTests
             .AddOpenTelemetry()
             .WithMetrics(metrics => metrics.AddMeter(meter.Name).AddPrometheusExporter(options =>
             {
+                options.ScrapeResponseCacheDurationMilliseconds = cacheDurationMilliseconds;
                 if (scrapeResponseTimeoutMilliseconds.HasValue)
                 {
                     options.ScrapeResponseTimeoutMilliseconds = scrapeResponseTimeoutMilliseconds.Value;
@@ -1099,6 +1131,13 @@ public sealed class PrometheusExporterMiddlewareTests
         var padding = new string('x', 24_576);
         for (var x = 0; x < 500; x++)
         {
+            if (incompressible)
+            {
+                var bytes = new byte[18_432];
+                System.Security.Cryptography.RandomNumberGenerator.Fill(bytes);
+                padding = Convert.ToBase64String(bytes);
+            }
+
             var counter = meter.CreateCounter<long>("counter_long_" + x.ToString(CultureInfo.InvariantCulture));
             counter.Add(1, new KeyValuePair<string, object?>("key", padding));
         }
@@ -1106,7 +1145,10 @@ public sealed class PrometheusExporterMiddlewareTests
         return (app, baseAddress);
     }
 
-    private static async Task<TcpClient?> StartScrapeThatNeverReadsAsync(Uri baseAddress)
+    private static async Task<TcpClient?> StartScrapeThatNeverReadsAsync(
+        Uri baseAddress,
+        bool openMetricsRequested = false,
+        bool compress = false)
     {
         // Shrink the receive buffer to (as close to) the platform's minimum as possible
         // so the server cannot hand much of the response off to this connection.
@@ -1117,7 +1159,10 @@ public sealed class PrometheusExporterMiddlewareTests
             await client.ConnectAsync(baseAddress.Host, baseAddress.Port, TestContext.Current.CancellationToken);
 
             var stream = client.GetStream();
-            var request = Encoding.ASCII.GetBytes($"GET /metrics HTTP/1.1\r\nHost: {baseAddress.Authority}\r\n\r\n");
+            var accept = openMetricsRequested ? "Accept: application/openmetrics-text;version=1.0.0\r\n" : string.Empty;
+            var encoding = compress ? "Accept-Encoding: gzip\r\n" : string.Empty;
+            var request = Encoding.ASCII.GetBytes(
+                $"GET /metrics HTTP/1.1\r\nHost: {baseAddress.Authority}\r\n{accept}{encoding}\r\n");
 
             await stream.WriteAsync(request, TestContext.Current.CancellationToken);
             await stream.FlushAsync(TestContext.Current.CancellationToken);

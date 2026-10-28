@@ -85,6 +85,16 @@ internal sealed class PrometheusCollectionManager
 #else
     public Task<CollectionResponse> EnterCollect(in PrometheusProtocol protocol, CancellationToken cancellationToken = default)
 #endif
+        => this.EnterCollect(protocol, scrapeTimeout: null, cancellationToken);
+
+#if NET
+    public ValueTask<CollectionResponse> EnterCollect(
+#else
+    public Task<CollectionResponse> EnterCollect(
+#endif
+        in PrometheusProtocol protocol,
+        TimeSpan? scrapeTimeout,
+        CancellationToken cancellationToken = default)
     {
         var step = this.TryEnterCollect(protocol);
 
@@ -97,7 +107,13 @@ internal sealed class PrometheusCollectionManager
 #endif
         }
 
-        return this.WaitForCollectionResponseAsync(protocol, step, cancellationToken);
+        // Reserve part of the waiting scrape's budget for collecting and sending its response.
+        // Very short client deadlines must not impose a subsecond idle limit on other clients.
+        var writerIdleTimeout = scrapeTimeout is { } timeout
+            ? TimeSpan.FromTicks(Math.Max(timeout.Ticks / 2, TimeSpan.TicksPerSecond))
+            : (TimeSpan?)null;
+
+        return this.WaitForCollectionResponseAsync(protocol, step, writerIdleTimeout, cancellationToken);
     }
 
     /// <summary>
@@ -110,6 +126,12 @@ internal sealed class PrometheusCollectionManager
     public void ExitCollect(in CollectionResponse response)
 #pragma warning restore CA1822 // Mark members as static
         => response.Buffer?.DecrementReaderCount();
+
+    internal ResponseWriter BeginResponseWrite(in CollectionResponse response)
+    {
+        Debug.Assert(response.Buffer is not null, "Only a leased response can be written.");
+        return new ResponseWriter(this, response.Buffer!);
+    }
 
 #if !NET
     /// <summary>
@@ -135,15 +157,28 @@ internal sealed class PrometheusCollectionManager
 
         return await task.ConfigureAwait(false);
     }
+
+    private static async Task WaitForTask(Task<bool> task, TimeSpan timeout, CancellationToken cancellationToken)
+    {
+        using var timeoutCancellation = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        timeoutCancellation.CancelAfter(timeout);
+
+        try
+        {
+            await WaitForTask(task, timeoutCancellation.Token).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+        {
+            throw new TimeoutException();
+        }
+    }
 #endif
 
     /// <summary>
     /// Performs a single synchronous attempt to enter a collection. Returns a
-    /// completed response when one is immediately available (served from the
-    /// cache, or the most recent response when every response buffer is still
-    /// being read and response caching is enabled), otherwise returns the
-    /// in-flight collection task, or the task for a response buffer being freed,
-    /// which the caller must await.
+    /// completed response when one is immediately available from the cache,
+    /// otherwise returns the in-flight collection task, or the task for a response
+    /// buffer being freed, which the caller must await.
     /// </summary>
     /// <param name="protocol">The protocol for which the collection is being attempted.</param>
     /// <returns>
@@ -260,23 +295,10 @@ internal sealed class PrometheusCollectionManager
                 // No collection is in flight, so this scrape has to start one
                 if (!state.TryReserveBuffer())
                 {
-                    // Every response buffer for this protocol is still being read by an earlier
-                    // scrape, so there is nowhere to write a new response. Serve the most recent
-                    // one instead of waiting for those scrapes to finish: a client which does not
-                    // read its response would otherwise decide how long every other scrape waits.
-                    // This only holds while a reader outlives a whole collection, and the older
-                    // buffer gets no new readers, so it is free again within one scrape timeout.
-                    // With response caching disabled every scrape has opted out of being served
-                    // an earlier response, so it waits for a buffer to be freed instead, as does
-                    // a scrape for which there is no earlier response to serve.
-                    if (this.scrapeResponseCacheDuration > TimeSpan.Zero &&
-                        state.TryAcquireView(fromCache: true, out response))
-                    {
-                        immediateResponse = response;
-                        resolved = true;
-                        break;
-                    }
-
+                    // Both buffers are leased and any cached response has expired. Wait for
+                    // capacity rather than returning stale metrics or overwriting leased bytes.
+                    // The asynchronous wait can cancel idle response writers, but a buffer only
+                    // becomes reusable after their ExitCollect calls have actually released it.
                     if (state.GetBufferFreedTask() is { } bufferFreedTask)
                     {
                         return CollectStep.WaitingForBuffer(bufferFreedTask);
@@ -408,10 +430,14 @@ internal sealed class PrometheusCollectionManager
     }
 
 #if NET
-    private async ValueTask<CollectionResponse> WaitForCollectionResponseAsync(PrometheusProtocol protocol, CollectStep step, CancellationToken cancellationToken)
+    private async ValueTask<CollectionResponse> WaitForCollectionResponseAsync(
 #else
-    private async Task<CollectionResponse> WaitForCollectionResponseAsync(PrometheusProtocol protocol, CollectStep step, CancellationToken cancellationToken)
+    private async Task<CollectionResponse> WaitForCollectionResponseAsync(
 #endif
+        PrometheusProtocol protocol,
+        CollectStep step,
+        TimeSpan? writerIdleTimeout,
+        CancellationToken cancellationToken)
     {
         for (var attempt = 0; attempt < MaxCollectAttempts; attempt++)
         {
@@ -434,18 +460,35 @@ internal sealed class PrometheusCollectionManager
                 }
                 else
                 {
-                    // Awaiting a buffer being freed releases this thread while the scrapes
-                    // reading it finish. Spinning until they do would instead hold it, and
-                    // holding it can starve the very scrapes being waited on: each of them
-                    // needs a thread to resume on before it can release its reader. Bounded
-                    // by cancellationToken for the same reason as the pending-collection wait
-                    // above, so a client which does not read its response cannot hold this
-                    // scrape past its own deadline.
+                    if (writerIdleTimeout is { } idleTimeout)
+                    {
+                        cancellationToken.ThrowIfCancellationRequested();
+                        var delay = this.GetProtocolState(protocol).CancelIdleWriters(this.GetElapsedTime(), idleTimeout);
+
+                        try
+                        {
 #if NET
-                    await step.BufferFreedTask!.WaitAsync(cancellationToken).ConfigureAwait(false);
+                            await step.BufferFreedTask!.WaitAsync(delay, cancellationToken).ConfigureAwait(false);
 #else
-                    await WaitForTask(step.BufferFreedTask!, cancellationToken).ConfigureAwait(false);
+                            await WaitForTask(step.BufferFreedTask!, delay, cancellationToken).ConfigureAwait(false);
 #endif
+                        }
+                        catch (TimeoutException)
+                        {
+                            // Recheck each writer's last completed write, including writers that
+                            // started after this wait. Cancellation never releases their leases.
+                            continue;
+                        }
+                    }
+                    else
+                    {
+                        // Non-HTTP callers without a scrape budget only wait for readers to exit.
+#if NET
+                        await step.BufferFreedTask!.WaitAsync(cancellationToken).ConfigureAwait(false);
+#else
+                        await WaitForTask(step.BufferFreedTask!, cancellationToken).ConfigureAwait(false);
+#endif
+                    }
                 }
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
@@ -1157,6 +1200,98 @@ internal sealed class PrometheusCollectionManager
         public HashSet<PrometheusProtocol>? SuccessfulProtocols { get; }
     }
 
+    internal sealed class ResponseWriter : IDisposable
+    {
+        private readonly PrometheusCollectionManager manager;
+        private readonly ResponseBuffer buffer;
+        private readonly Lock gate = new();
+        private readonly CancellationTokenSource cancellation = new();
+        private TimeSpan lastProgress;
+        private bool cancelling;
+        private bool disposed;
+
+        public ResponseWriter(PrometheusCollectionManager manager, ResponseBuffer buffer)
+        {
+            this.manager = manager;
+            this.buffer = buffer;
+            this.lastProgress = manager.GetElapsedTime();
+            this.CancellationToken = this.cancellation.Token;
+            buffer.AddWriter(this);
+        }
+
+        public CancellationToken CancellationToken { get; }
+
+        public void RecordProgress()
+        {
+            lock (this.gate)
+            {
+                this.lastProgress = this.manager.GetElapsedTime();
+            }
+        }
+
+        public void Dispose()
+        {
+            lock (this.gate)
+            {
+                if (this.disposed)
+                {
+                    return;
+                }
+
+                this.disposed = true;
+                if (!this.cancelling)
+                {
+                    this.cancellation.Dispose();
+                }
+            }
+
+            this.buffer.RemoveWriter(this);
+        }
+
+        public TimeSpan CancelIfIdle(TimeSpan elapsed, TimeSpan idleTimeout)
+        {
+            lock (this.gate)
+            {
+                if (this.disposed || this.cancelling || this.cancellation.IsCancellationRequested)
+                {
+                    return idleTimeout;
+                }
+
+                var remaining = idleTimeout - (elapsed - this.lastProgress);
+                if (remaining > TimeSpan.Zero)
+                {
+                    return remaining < TimeSpan.FromMilliseconds(1) ? TimeSpan.FromMilliseconds(1) : remaining;
+                }
+
+                this.cancelling = true;
+            }
+
+            // Abort callbacks and their continuations must run without either the writer or
+            // buffer lock held. Defer CTS disposal until cancellation finishes on older TFMs too.
+            try
+            {
+                this.cancellation.Cancel();
+            }
+            catch (Exception ex)
+            {
+                PrometheusExporterEventSource.Log.FailedExport(ex);
+            }
+            finally
+            {
+                lock (this.gate)
+                {
+                    this.cancelling = false;
+                    if (this.disposed)
+                    {
+                        this.cancellation.Dispose();
+                    }
+                }
+            }
+
+            return idleTimeout;
+        }
+    }
+
     /// <summary>
     /// A buffer which a collection writes the response for a protocol to, and the
     /// number of scrapes still reading the response written to it.
@@ -1165,6 +1300,8 @@ internal sealed class PrometheusCollectionManager
     /// <param name="onReadersDrained">Invoked once the last scrape reading the buffer has finished.</param>
     internal sealed class ResponseBuffer(int size, Action onReadersDrained)
     {
+        private readonly Lock writersGate = new();
+        private readonly HashSet<ResponseWriter> writers = [];
         private int readerCount;
 
         public byte[] Buffer { get; private set; } = new byte[size];
@@ -1182,6 +1319,43 @@ internal sealed class PrometheusCollectionManager
 
         public void IncrementReaderCount()
             => Interlocked.Increment(ref this.readerCount);
+
+        public void AddWriter(ResponseWriter writer)
+        {
+            lock (this.writersGate)
+            {
+                this.writers.Add(writer);
+            }
+        }
+
+        public void RemoveWriter(ResponseWriter writer)
+        {
+            lock (this.writersGate)
+            {
+                this.writers.Remove(writer);
+            }
+        }
+
+        public TimeSpan CancelIdleWriters(TimeSpan elapsed, TimeSpan idleTimeout)
+        {
+            ResponseWriter[] activeWriters;
+            lock (this.writersGate)
+            {
+                activeWriters = [.. this.writers];
+            }
+
+            var nextCheck = idleTimeout;
+            foreach (var writer in activeWriters)
+            {
+                var delay = writer.CancelIfIdle(elapsed, idleTimeout);
+                if (delay < nextCheck)
+                {
+                    nextCheck = delay;
+                }
+            }
+
+            return nextCheck;
+        }
 
         public bool TryExpand(int maxBufferSize)
         {
@@ -1446,6 +1620,15 @@ internal sealed class PrometheusCollectionManager
 
                 return this.bufferFreed.Task;
             }
+        }
+
+        public TimeSpan CancelIdleWriters(TimeSpan elapsed, TimeSpan idleTimeout)
+        {
+            var published = this.published;
+            var spare = this.spare;
+            var delay = published.CancelIdleWriters(elapsed, idleTimeout);
+            var spareDelay = spare?.CancelIdleWriters(elapsed, idleTimeout) ?? idleTimeout;
+            return delay < spareDelay ? delay : spareDelay;
         }
 
         public void OnRequested(bool nearCollection)

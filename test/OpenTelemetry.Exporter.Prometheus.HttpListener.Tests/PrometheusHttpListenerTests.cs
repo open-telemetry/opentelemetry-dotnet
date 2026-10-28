@@ -846,8 +846,14 @@ public class PrometheusHttpListenerTests
         }
     }
 
-    [Fact]
-    public async Task ScrapeClientsThatStopReadingTheResponseBodyDoNotBlockOtherScrapes()
+    [Theory]
+    [InlineData(0, false)]
+    [InlineData(0, true)]
+    [InlineData(300, false)]
+    [InlineData(300, true)]
+    public async Task ScrapeClientsThatStopReadingTheResponseBodyDoNotBlockOtherScrapes(
+        int cacheDurationMilliseconds,
+        bool openMetricsRequested)
     {
         EnsureThreadPoolWorkerThreadsAvailable();
 
@@ -855,7 +861,13 @@ public class PrometheusHttpListenerTests
 
         // Use the default server-side scrape timeout, which outlasts the scrape timeout
         // of a Prometheus server, so it cannot be what lets the other scrapes through.
-        using var context = CreateMeterProvider(meter);
+        using var context = CreateMeterProvider(meter, options =>
+        {
+            options.ScrapeResponseCacheDurationMilliseconds = cacheDurationMilliseconds;
+            return options.Port;
+        });
+        var freshness = 0;
+        meter.CreateObservableGauge("fresh_value", () => Volatile.Read(ref freshness));
 
         // Emit a payload far larger than any socket / HTTP.sys send buffer so a response
         // write cannot complete until the client actually drains the body.
@@ -868,6 +880,10 @@ public class PrometheusHttpListenerTests
 
         using var client = new HttpClient { BaseAddress = context.BaseAddress };
         client.DefaultRequestHeaders.Add("X-Prometheus-Scrape-Timeout-Seconds", "10");
+        if (openMetricsRequested)
+        {
+            client.DefaultRequestHeaders.Add("Accept", "application/openmetrics-text;version=1.0.0");
+        }
 
         var stalledClients = new List<System.Net.Sockets.TcpClient>();
 
@@ -878,7 +894,8 @@ public class PrometheusHttpListenerTests
             // needing a new collection.
             for (var i = 0; i < 3; i++)
             {
-                stalledClients.Add(await StartScrapeThatNeverReadsAsync(context));
+                stalledClients.Add(await StartScrapeThatNeverReadsAsync(context, openMetricsRequested));
+                Volatile.Write(ref freshness, i + 1);
 
                 // Let the cached response expire so the next scrape cannot be served from it
                 await Task.Delay(TimeSpan.FromSeconds(1), TestContext.Current.CancellationToken);
@@ -889,9 +906,16 @@ public class PrometheusHttpListenerTests
                 using var response = await client.GetAsync(new Uri("metrics", UriKind.Relative), cts.Token);
 
                 Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+#if NET
+                var content = await response.Content.ReadAsStringAsync(cts.Token);
+#else
+                var content = await response.Content.ReadAsStringAsync();
+#endif
+                var sample = Assert.Single(
+                    content.Split('\n'),
+                    line => line.StartsWith("fresh_value{", StringComparison.Ordinal));
+                Assert.EndsWith(" " + (i + 1).ToString(CultureInfo.InvariantCulture), sample, StringComparison.Ordinal);
             }
-
-            Assert.All(stalledClients, (p) => Assert.True(p.Connected));
         }
         finally
         {
@@ -1089,7 +1113,9 @@ public class PrometheusHttpListenerTests
         }
     }
 
-    private static async Task<System.Net.Sockets.TcpClient> StartScrapeThatNeverReadsAsync(MeterProviderTestContext context)
+    private static async Task<System.Net.Sockets.TcpClient> StartScrapeThatNeverReadsAsync(
+        MeterProviderTestContext context,
+        bool openMetricsRequested = false)
     {
         // Shrink the receive buffer to (as close to) the platform's minimum as possible so
         // back-pressure on the server's write is deterministic rather than depending on whatever
@@ -1107,8 +1133,9 @@ public class PrometheusHttpListenerTests
             await client.ConnectAsync(context.BaseAddress.Host, context.Port);
 #endif
 
+            var accept = openMetricsRequested ? "Accept: application/openmetrics-text;version=1.0.0\r\n" : string.Empty;
             var request = System.Text.Encoding.ASCII.GetBytes(
-                $"GET /metrics HTTP/1.1\r\nHost: localhost:{context.Port}\r\nConnection: keep-alive\r\n\r\n");
+                $"GET /metrics HTTP/1.1\r\nHost: localhost:{context.Port}\r\nConnection: keep-alive\r\n{accept}\r\n");
             var stream = client.GetStream();
 
 #if NET

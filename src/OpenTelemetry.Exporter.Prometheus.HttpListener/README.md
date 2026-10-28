@@ -117,6 +117,13 @@ Configures scrape endpoint response caching. Multiple scrape requests within the
 cache duration time period will receive the same previously generated response.
 The default value is `300`. Set to `0` to disable response caching.
 
+When both response buffers are in use, a scrape requiring fresh metrics waits
+for a buffer to become available. While waiting, it can cancel response writers
+that have made no progress for half its scrape timeout, with a minimum idle
+period of one second. Each completed response write renews that writer's idle
+period. A scrape can still time out while waiting for progressing writers or
+metrics collection.
+
 ### TargetInfoEnabled
 
 Specifies whether to produce a
