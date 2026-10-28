@@ -5,6 +5,7 @@ using System.Buffers;
 #if NET
 using System.Globalization;
 using System.Text;
+using System.Text.Unicode;
 #endif
 using OpenTelemetry.Internal;
 
@@ -167,15 +168,11 @@ internal sealed class ProtobufOtlpTagWriter : TagWriter<ProtobufOtlpTagWriter.Ot
             }
         }
 
+        var formatted = false;
+        var bytesWritten = 0;
         try
         {
-            if (value.TryFormat(buffer, out var bytesWritten, format: default, CultureInfo.InvariantCulture))
-            {
-                var truncatedLength = TruncateUtf8String(buffer[..bytesWritten], tagValueMaxLength).Length;
-                buffer[truncatedLength..bytesWritten].Clear();
-                EndUtf8StringTag(ref state, anyValueLengthPosition, stringLengthPosition, truncatedLength);
-                return true;
-            }
+            formatted = value.TryFormat(buffer, out bytesWritten, format: default, CultureInfo.InvariantCulture);
         }
         catch (Exception ex) when (ex is IndexOutOfRangeException or ArgumentException)
         {
@@ -197,14 +194,23 @@ internal sealed class ProtobufOtlpTagWriter : TagWriter<ProtobufOtlpTagWriter.Ot
             return this.LogUnsupportedTagTypeAndReturnFalse(key, value);
         }
 
-        if (!isBufferCapped)
+        // Invalid UTF-8 would make strict OTLP receivers reject the whole request.
+        if (formatted && Utf8.IsValid(buffer[..bytesWritten]))
+        {
+            var truncatedLength = TruncateUtf8String(buffer[..bytesWritten], tagValueMaxLength).Length;
+            buffer[truncatedLength..bytesWritten].Clear();
+            EndUtf8StringTag(ref state, anyValueLengthPosition, stringLengthPosition, truncatedLength);
+            return true;
+        }
+
+        if (!formatted && !isBufferCapped)
         {
             throw new ArgumentOutOfRangeException(nameof(state), "The buffer is too small to hold the data being written.");
         }
 
-        // The failed TryFormat may have filled the buffer beyond what the shorter fallback overwrites.
+        // The formatter's bytes may extend beyond what the shorter fallback overwrites.
         // Not needed before the throw above: callers that grow the buffer clear the whole of the old one.
-        buffer.Clear();
+        (formatted ? buffer[..bytesWritten] : buffer).Clear();
         RollBackTo(ref state, startPosition);
 
         return this.TryWriteToStringTag(ref state, key, value, tagValueMaxLength);

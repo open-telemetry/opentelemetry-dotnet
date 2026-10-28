@@ -633,6 +633,30 @@ public class OtlpAttributeTests
         Assert.Equal(expected.Buffer.AsSpan(0, expected.WritePosition).ToArray(), actual.Buffer.AsSpan(0, actual.WritePosition).ToArray());
     }
 
+    [Theory]
+    [InlineData(null)]
+    [InlineData(10)]
+    public void InvalidUtf8FromTryFormatFallsBackToToString(int? tagValueMaxLength)
+    {
+        foreach (var invalid in new byte[][] { [(byte)'c', (byte)'a', (byte)'f', 0xE9], [(byte)'a', 0xE2, 0x82] })
+        {
+            var kvp = new KeyValuePair<string, object?>("key", new Utf8Bytes(invalid, "fallback"));
+
+            Assert.True(TryTransformTag(kvp, out var attribute, tagValueMaxLength));
+            Assert.Equal("fallback", attribute.Value.StringValue);
+        }
+    }
+
+    [Fact]
+    public void InvalidUtf8FromTryFormatLeavesNoFormatterBytesInBuffer()
+    {
+        var state = new ProtobufOtlpTagWriter.OtlpTagWriterState { Buffer = new byte[1024] };
+
+        Assert.True(ProtobufOtlpTagWriter.WriteKeyValue(ref state, ProtobufOtlpTraceFieldNumberConstants.Span_Attributes, "key", new Utf8Bytes([.. Enumerable.Repeat((byte)0xFF, 100)], "a")));
+
+        Assert.All(state.Buffer.Skip(state.WritePosition), b => Assert.Equal(0, b));
+    }
+
     [Fact]
     public void TruncatedUtf8SpanFormattableLeavesNoDroppedBytesInBuffer()
     {
@@ -679,6 +703,17 @@ public class OtlpAttributeTests
             => System.Text.Encoding.UTF8.TryGetBytes(value, utf8Destination, out bytesWritten);
 
         public override string ToString() => value;
+    }
+
+    private sealed class Utf8Bytes(byte[] bytes, string toStringValue) : IUtf8SpanFormattable
+    {
+        public bool TryFormat(Span<byte> utf8Destination, out int bytesWritten, ReadOnlySpan<char> format, IFormatProvider? provider)
+        {
+            bytesWritten = bytes.Length;
+            return bytes.AsSpan().TryCopyTo(utf8Destination);
+        }
+
+        public override string ToString() => toStringValue;
     }
 
     private sealed class Utf8ValueThatThrows(Type exceptionType, string toStringValue = "") : IUtf8SpanFormattable
