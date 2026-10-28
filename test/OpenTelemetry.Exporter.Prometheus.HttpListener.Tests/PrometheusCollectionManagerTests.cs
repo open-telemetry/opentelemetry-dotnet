@@ -253,6 +253,7 @@ public sealed class PrometheusCollectionManagerTests
 #pragma warning disable CA2025 // The test awaits the scheduled work before disposing the provider/exporter.
             var secondScrape = EnterCollectAsync(exporter, protocol);
 #pragma warning restore CA2025 // The test awaits the scheduled work before disposing the provider/exporter.
+
             var completed = await Task.WhenAny(secondScrape, Task.Delay(timeout, TestContext.Current.CancellationToken));
 
             Assert.Same(secondScrape, completed);
@@ -286,6 +287,7 @@ public sealed class PrometheusCollectionManagerTests
 
         using var meter = CreateMeter();
         using var provider = CreateMeterProviderWithCache(meter, ScrapeResponseCacheDurationMilliseconds);
+
 #pragma warning disable CA2000 // MeterProvider owns exporter lifecycle
         var exporter = GetExporter(provider);
 #pragma warning restore CA2000 // MeterProvider owns exporter lifecycle
@@ -307,6 +309,7 @@ public sealed class PrometheusCollectionManagerTests
 #pragma warning disable CA2025 // The test awaits the scheduled work before disposing the provider/exporter.
             var scrape = EnterCollectAsync(exporter, protocol);
 #pragma warning restore CA2025 // The test awaits the scheduled work before disposing the provider/exporter.
+
             var completed = await Task.WhenAny(scrape, Task.Delay(timeout, TestContext.Current.CancellationToken));
 
             Assert.Same(scrape, completed);
@@ -352,6 +355,7 @@ public sealed class PrometheusCollectionManagerTests
             Assert.Equal(secondPayload, third.View.ToArray());
 
             elapsed += cacheExpiry;
+
             var fourthScrape = EnterWithinTimeoutAsync();
             Assert.False(fourthScrape.IsCompleted, "An expired response was served while both buffers were leased.");
 
@@ -393,6 +397,7 @@ public sealed class PrometheusCollectionManagerTests
 
         using var meter = CreateMeter();
         using var provider = CreateMeterProviderWithCache(meter, cacheDurationMilliseconds);
+
 #pragma warning disable CA2000 // MeterProvider owns exporter lifecycle
         var exporter = GetExporter(provider);
 #pragma warning restore CA2000 // MeterProvider owns exporter lifecycle
@@ -500,6 +505,7 @@ public sealed class PrometheusCollectionManagerTests
 
         using var meter = CreateMeter();
         using var provider = CreateMeterProviderWithCache(meter, ScrapeResponseCacheDurationMilliseconds);
+
 #pragma warning disable CA2000 // MeterProvider owns exporter lifecycle
         var exporter = GetExporter(provider);
 #pragma warning restore CA2000 // MeterProvider owns exporter lifecycle
@@ -574,6 +580,7 @@ public sealed class PrometheusCollectionManagerTests
 #pragma warning restore CA2025 // The test awaits the scheduled work before disposing the provider/exporter.
 
             Volatile.Write(ref blockCollect, false);
+
             allowCollectToContinue.TrySetResult(true);
             await collectingScrape;
 
@@ -625,17 +632,23 @@ public sealed class PrometheusCollectionManagerTests
     {
         using var meter = CreateMeter();
         using var provider = CreateMeterProviderWithCache(meter, cacheDurationMilliseconds);
+
 #pragma warning disable CA2000 // MeterProvider owns exporter lifecycle
         var exporter = GetExporter(provider);
 #pragma warning restore CA2000 // MeterProvider owns exporter lifecycle
+
         var manager = exporter.CollectionManager;
         var elapsed = TimeSpan.Zero;
         UseManualClock(exporter, () => elapsed);
+
         var collectCount = CountCollections(exporter);
+
         var counter = meter.CreateCounter<int>("counter_int");
         counter.Add(100);
+
         var protocol = GetProtocol(openMetricsRequested);
         var readers = new List<PrometheusCollectionManager.CollectionResponse>();
+
         using var cts = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
         cts.CancelAfter(TimeSpan.FromSeconds(30));
 
@@ -648,18 +661,23 @@ public sealed class PrometheusCollectionManagerTests
 
             elapsed += TimeSpan.FromMilliseconds(cacheDurationMilliseconds + 1);
             counter.Add(100);
+
             var second = await EnterCollectAsync(exporter, protocol);
             readers.Add(second);
+
             using var secondWriter = manager.BeginResponseWrite(second);
             var secondPayload = second.View.ToArray();
 
             var other = await EnterCollectAsync(exporter, GetProtocol(!openMetricsRequested));
             readers.Add(other);
+
             using var otherWriter = manager.BeginResponseWrite(other);
+
             Assert.Equal(3, collectCount());
 
             elapsed += TimeSpan.FromSeconds(4);
             counter.Add(100);
+
             var waiting = EnterCollectAsync(exporter, protocol, TimeSpan.FromSeconds(6), cts.Token);
 
             Assert.True(firstWriter.CancellationToken.IsCancellationRequested);
@@ -677,12 +695,15 @@ public sealed class PrometheusCollectionManagerTests
 
             var fresh = await waiting;
             readers.Add(fresh);
+
             Assert.True(fresh.Succeeded);
             Assert.False(fresh.FromCache);
             Assert.Equal(4, collectCount());
             Assert.NotEqual(secondPayload, fresh.View.ToArray());
             Assert.Equal(secondPayload, second.View.ToArray());
+
             using var freshWriter = manager.BeginResponseWrite(fresh);
+
             Assert.False(freshWriter.CancellationToken.IsCancellationRequested);
         }
         finally
@@ -706,13 +727,18 @@ public sealed class PrometheusCollectionManagerTests
     {
         using var meter = CreateMeter();
         using var provider = CreateMeterProviderWithCache(meter, 300);
+
 #pragma warning disable CA2000 // MeterProvider owns exporter lifecycle
         var exporter = GetExporter(provider);
 #pragma warning restore CA2000 // MeterProvider owns exporter lifecycle
+
         var manager = exporter.CollectionManager;
+
         var elapsed = TimeSpan.Zero;
         UseManualClock(exporter, () => elapsed);
+
         meter.CreateCounter<int>("counter_int").Add(100);
+
         var response = await EnterCollectAsync(exporter, GetProtocol(openMetricsRequested: false));
         var cachedResponse = await EnterCollectAsync(exporter, GetProtocol(openMetricsRequested: false));
 
@@ -720,17 +746,21 @@ public sealed class PrometheusCollectionManagerTests
         {
             using var progressing = manager.BeginResponseWrite(response);
             using var stalled = manager.BeginResponseWrite(cachedResponse);
+
             elapsed = TimeSpan.FromSeconds(20);
             progressing.RecordProgress();
 
             var idleTimeout = TimeSpan.FromSeconds(3);
             progressing.CancelIfIdle(elapsed + TimeSpan.FromSeconds(2), idleTimeout);
             stalled.CancelIfIdle(elapsed + TimeSpan.FromSeconds(2), idleTimeout);
+
             Assert.False(progressing.CancellationToken.IsCancellationRequested);
             Assert.True(stalled.CancellationToken.IsCancellationRequested);
 
             progressing.CancelIfIdle(elapsed + idleTimeout, idleTimeout);
+
             Assert.True(progressing.CancellationToken.IsCancellationRequested);
+
             progressing.Dispose();
             progressing.CancelIfIdle(elapsed + TimeSpan.FromSeconds(10), idleTimeout);
         }
@@ -748,13 +778,18 @@ public sealed class PrometheusCollectionManagerTests
     {
         using var meter = CreateMeter();
         using var provider = CreateMeterProviderWithCache(meter, 0);
+
 #pragma warning disable CA2000 // MeterProvider owns exporter lifecycle
         var exporter = GetExporter(provider);
 #pragma warning restore CA2000 // MeterProvider owns exporter lifecycle
+
         var manager = exporter.CollectionManager;
+
         var elapsed = TimeSpan.Zero;
         UseManualClock(exporter, () => elapsed);
+
         meter.CreateCounter<int>("counter_int").Add(100);
+
         var protocol = GetProtocol(openMetricsRequested: false);
         var first = await EnterCollectAsync(exporter, protocol);
         var second = await EnterCollectAsync(exporter, protocol);
@@ -763,21 +798,27 @@ public sealed class PrometheusCollectionManagerTests
         {
             using var firstWriter = manager.BeginResponseWrite(first);
             using var secondWriter = manager.BeginResponseWrite(second);
+
             elapsed = TimeSpan.FromMilliseconds(500);
+
             using var cts = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
 #pragma warning disable CA2025 // The waiting task is awaited before the provider and token source are disposed.
             var waiting = EnterCollectAsync(exporter, protocol, TimeSpan.FromMilliseconds(1), cts.Token);
 #pragma warning restore CA2025 // The waiting task is awaited before the provider and token source are disposed.
+
             Assert.False(waiting.IsCompleted);
             Assert.False(firstWriter.CancellationToken.IsCancellationRequested);
             Assert.False(secondWriter.CancellationToken.IsCancellationRequested);
+
 #if NET
             await cts.CancelAsync();
 #else
             cts.Cancel();
 #endif
+
             var response = await waiting;
             manager.ExitCollect(response);
+
             Assert.False(response.Succeeded);
             Assert.Equal(2, manager.ActiveReaderCount);
             Assert.False(firstWriter.CancellationToken.IsCancellationRequested);
@@ -797,17 +838,21 @@ public sealed class PrometheusCollectionManagerTests
     {
         using var meter = CreateMeter();
         using var provider = CreateMeterProviderWithCache(meter, 0);
+
 #pragma warning disable CA2000 // MeterProvider owns exporter lifecycle
         var exporter = GetExporter(provider);
 #pragma warning restore CA2000 // MeterProvider owns exporter lifecycle
+
         var manager = exporter.CollectionManager;
         meter.CreateCounter<int>("counter_int").Add(100);
+
         var response = await EnterCollectAsync(exporter, GetProtocol(openMetricsRequested: false));
 
         try
         {
             using var writer = manager.BeginResponseWrite(response);
             var disposedDuringCallback = false;
+
             using var callback = writer.CancellationToken.Register(() =>
             {
                 // The response's continuation can dispose the writer on another thread while
@@ -815,7 +860,9 @@ public sealed class PrometheusCollectionManagerTests
                 var disposing = Task.Run(writer.Dispose, TestContext.Current.CancellationToken);
                 disposedDuringCallback = disposing.Wait(TimeSpan.FromSeconds(5));
             });
+
             writer.CancelIfIdle(TimeSpan.MaxValue, TimeSpan.FromSeconds(1));
+
             Assert.True(disposedDuringCallback, "Disposing a writer deadlocked with cancellation.");
             Assert.True(writer.CancellationToken.IsCancellationRequested);
         }
@@ -836,6 +883,7 @@ public sealed class PrometheusCollectionManagerTests
 
         using var meter = CreateMeter();
         using var provider = CreateMeterProviderWithCache(meter, scrapeResponseCacheDurationMilliseconds: 0);
+
 #pragma warning disable CA2000 // MeterProvider owns exporter lifecycle
         var exporter = GetExporter(provider);
 #pragma warning restore CA2000 // MeterProvider owns exporter lifecycle
@@ -845,6 +893,7 @@ public sealed class PrometheusCollectionManagerTests
         var serializationStarted = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
         var allowSerializationToContinue = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
         var blockSerialization = true;
+
         var labelValue = new CallbackLabelValue(() =>
         {
             if (Volatile.Read(ref blockSerialization))

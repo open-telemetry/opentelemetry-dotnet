@@ -866,6 +866,7 @@ public class PrometheusHttpListenerTests
             options.ScrapeResponseCacheDurationMilliseconds = cacheDurationMilliseconds;
             return options.Port;
         });
+
         var freshness = 0;
         meter.CreateObservableGauge("fresh_value", () => Volatile.Read(ref freshness));
 
@@ -880,6 +881,7 @@ public class PrometheusHttpListenerTests
 
         using var client = new HttpClient { BaseAddress = context.BaseAddress };
         client.DefaultRequestHeaders.Add("X-Prometheus-Scrape-Timeout-Seconds", "10");
+
         if (openMetricsRequested)
         {
             client.DefaultRequestHeaders.Add("Accept", "application/openmetrics-text;version=1.0.0");
@@ -911,9 +913,11 @@ public class PrometheusHttpListenerTests
 #else
                 var content = await response.Content.ReadAsStringAsync();
 #endif
+
                 var sample = Assert.Single(
                     content.Split('\n'),
                     line => line.StartsWith("fresh_value{", StringComparison.Ordinal));
+
                 Assert.EndsWith(" " + (i + 1).ToString(CultureInfo.InvariantCulture), sample, StringComparison.Ordinal);
             }
         }

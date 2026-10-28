@@ -89,8 +89,11 @@ internal sealed class PrometheusExporterMiddleware
                 Negotiate(requestHeaders),
                 this.exporter.TranslationStrategy);
 
-            var collectionResponse = await this.exporter.CollectionManager
-                .EnterCollect(protocol, scrapeTimeout, linkedCts.Token);
+            var collectionResponse = await this.exporter.CollectionManager.EnterCollect(
+                protocol,
+                scrapeTimeout,
+                linkedCts.Token);
+
             var writerCancellation = CancellationToken.None;
 
             try
@@ -132,11 +135,13 @@ internal sealed class PrometheusExporterMiddleware
 
                         using var writer = this.exporter.CollectionManager.BeginResponseWrite(collectionResponse);
                         writerCancellation = writer.CancellationToken;
+
                         using var writeCancelled = CancellationTokenSource.CreateLinkedTokenSource(
                             linkedCts.Token,
                             writerCancellation);
+
                         using var abortResponse = writeCancelled.Token.Register(
-                            static state => ((HttpContext)state!).Abort(),
+                            static state => ((HttpContext?)state)?.Abort(),
                             httpContext);
 
                         await WriteResponseAsync(
@@ -383,9 +388,12 @@ internal sealed class PrometheusExporterMiddleware
             while (!content.IsEmpty)
             {
                 var count = Math.Min(content.Length, PrometheusExporter.MaximumResponseWriteSize);
+
                 await gzip.WriteAsync(content[..count], cancellationToken);
                 await gzip.FlushAsync(cancellationToken);
+
                 writer.RecordProgress();
+
                 content = content[count..];
             }
         }
@@ -411,6 +419,7 @@ internal sealed class PrometheusExporterMiddleware
 
                 cancellationToken.ThrowIfCancellationRequested();
                 writer.RecordProgress();
+
                 content = content[slice.Length..];
             }
         }

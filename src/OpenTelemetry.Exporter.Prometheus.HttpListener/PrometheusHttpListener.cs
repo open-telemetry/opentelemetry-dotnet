@@ -293,8 +293,11 @@ internal sealed class PrometheusHttpListener : IDisposable
                 Negotiate(context.Request),
                 this.exporter.TranslationStrategy);
 
-            var collectionResponse = await this.exporter.CollectionManager
-                .EnterCollect(protocol, scrapeTimeout, linkedCts.Token).ConfigureAwait(false);
+            var collectionResponse = await this.exporter.CollectionManager.EnterCollect(
+                protocol,
+                scrapeTimeout,
+                linkedCts.Token).ConfigureAwait(false);
+
             var writerCancellation = CancellationToken.None;
 
             try
@@ -351,6 +354,7 @@ internal sealed class PrometheusHttpListener : IDisposable
 
                         using var writer = this.exporter.CollectionManager.BeginResponseWrite(collectionResponse);
                         writerCancellation = writer.CancellationToken;
+
                         using var writeCancelled = CancellationTokenSource.CreateLinkedTokenSource(
                             linkedCts.Token,
                             writerCancellation);
@@ -381,6 +385,7 @@ internal sealed class PrometheusHttpListener : IDisposable
                             while (offset < dataView.Count)
                             {
                                 var count = Math.Min(dataView.Count - offset, PrometheusExporter.MaximumResponseWriteSize);
+
 #if NET
                                 await context.Response.OutputStream.WriteAsync(
                                     dataView.Array.AsMemory(offset, count),
@@ -392,8 +397,10 @@ internal sealed class PrometheusHttpListener : IDisposable
                                     count,
                                     writeCancelled.Token).ConfigureAwait(false);
 #endif
+
                                 writeCancelled.Token.ThrowIfCancellationRequested();
                                 writer.RecordProgress();
+
                                 offset += count;
                             }
                         }

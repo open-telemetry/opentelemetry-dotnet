@@ -972,6 +972,7 @@ public sealed class PrometheusExporterMiddlewareTests
             meter,
             cacheDurationMilliseconds: cacheDurationMilliseconds,
             incompressible: compress);
+
         var freshness = 0;
         meter.CreateObservableGauge("fresh_value", () => Volatile.Read(ref freshness));
 
@@ -984,8 +985,10 @@ public sealed class PrometheusExporterMiddlewareTests
                 AutomaticDecompression = compress ? DecompressionMethods.GZip : DecompressionMethods.None,
                 CheckCertificateRevocationList = true,
             };
+
             using var client = new HttpClient(handler) { BaseAddress = baseAddress };
             client.DefaultRequestHeaders.Add("X-Prometheus-Scrape-Timeout-Seconds", "10");
+
             if (openMetricsRequested)
             {
                 client.DefaultRequestHeaders.Add("Accept", "application/openmetrics-text;version=1.0.0");
@@ -1012,9 +1015,11 @@ public sealed class PrometheusExporterMiddlewareTests
 
                 Assert.Equal(HttpStatusCode.OK, response.StatusCode);
                 var content = await response.Content.ReadAsStringAsync(cts.Token);
+
                 var sample = Assert.Single(
                     content.Split('\n'),
                     line => line.StartsWith("fresh_value{", StringComparison.Ordinal));
+
                 Assert.EndsWith(" " + (i + 1).ToString(CultureInfo.InvariantCulture), sample, StringComparison.Ordinal);
             }
         }
@@ -1176,6 +1181,7 @@ public sealed class PrometheusExporterMiddlewareTests
                 {
                     var started = client;
                     client = null;
+
                     return started;
                 }
             }
