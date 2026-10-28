@@ -10,7 +10,7 @@ namespace OpenTelemetry;
 public class BatchExportProcessorOptions<T>
     where T : class
 {
-    private readonly BatchExportProcessorOptions<T>? defaults;
+    private BatchExportProcessorOptions<T>? defaults;
     private int? maxQueueSize;
     private int? scheduledDelayMilliseconds;
     private int? exporterTimeoutMilliseconds;
@@ -116,5 +116,12 @@ public class BatchExportProcessorOptions<T>
         options.maxExportBatchSize = candidateMaxExportBatchSize;
         options.exporterTimeoutMilliseconds = candidateExporterTimeoutMilliseconds;
         options.scheduledDelayMilliseconds = candidateScheduledDelayMilliseconds;
+    }
+
+    internal BatchExportProcessorOptions<T> Copy()
+    {
+        var copy = (BatchExportProcessorOptions<T>)this.MemberwiseClone();
+        copy.defaults = this.defaults?.Copy();
+        return copy;
     }
 }

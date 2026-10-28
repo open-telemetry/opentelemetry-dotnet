@@ -37,6 +37,14 @@ Notes](../../RELEASENOTES.md).
   exported as arrays of strings instead of maps.
   ([#7694](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7694))
 
+* Reload OTLP export clients when named exporter options or `UseOtlpExporter`
+  configuration changes, without recreating providers. Protocol, maximum request
+  size, experimental/retry settings, processor/batch options, and metric reader
+  options remain fixed for the lifetime of each exporter or pipeline. Shutdown
+  cancels only that exporter's requests on caller-provided HTTP clients. See
+  [reloading named exporter configuration](README.md#reloading-named-exporter-configuration).
+  ([#7842](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7842))
+
 ## 1.20.1
 
 Released 2026-Oct-20

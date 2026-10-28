@@ -185,4 +185,18 @@ public class OtlpMetricExporter : BaseExporter<Metric>
             this.serializationBuffer.Release();
         }
     }
+
+    /// <inheritdoc />
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            using (this.transmissionHandler)
+            {
+                this.serializationBuffer.Release();
+            }
+        }
+
+        base.Dispose(disposing);
+    }
 }
