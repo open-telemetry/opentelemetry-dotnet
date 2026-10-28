@@ -275,6 +275,36 @@ internal abstract class TagWriter<TTagState, TArrayState>
         return false;
     }
 
+    protected bool TryWriteToStringTag(ref TTagState state, string key, object value, int? tagValueMaxLength)
+    {
+        string? stringValue;
+        try
+        {
+            stringValue = Convert.ToString(value, CultureInfo.InvariantCulture);
+        }
+        catch
+        {
+            // If ToString throws an exception then the tag is ignored.
+            return this.LogUnsupportedTagTypeAndReturnFalse(key, value);
+        }
+
+        if (stringValue == null)
+        {
+            return this.LogUnsupportedTagTypeAndReturnFalse(key, value);
+        }
+
+        // Written outside of the try block so that an exception thrown
+        // because the buffer is full reaches the serializer, which
+        // resizes the buffer and retries, instead of the tag being dropped.
+        this.WriteStringTag(
+            ref state,
+            key,
+            stringValue,
+            tagValueMaxLength);
+
+        return true;
+    }
+
     private static IEnumerable<KeyValuePair<string, object?>> AdaptStringKvList(IEnumerable<KeyValuePair<string, string?>> source)
     {
         foreach (var item in source)
@@ -349,36 +379,6 @@ internal abstract class TagWriter<TTagState, TArrayState>
         }
 
         recursionDepth--;
-
-        return true;
-    }
-
-    private bool TryWriteToStringTag(ref TTagState state, string key, object value, int? tagValueMaxLength)
-    {
-        string? stringValue;
-        try
-        {
-            stringValue = Convert.ToString(value, CultureInfo.InvariantCulture);
-        }
-        catch
-        {
-            // If ToString throws an exception then the tag is ignored.
-            return this.LogUnsupportedTagTypeAndReturnFalse(key, value);
-        }
-
-        if (stringValue == null)
-        {
-            return this.LogUnsupportedTagTypeAndReturnFalse(key, value);
-        }
-
-        // Written outside of the try block so that an exception thrown
-        // because the buffer is full reaches the serializer, which
-        // resizes the buffer and retries, instead of the tag being dropped.
-        this.WriteStringTag(
-            ref state,
-            key,
-            stringValue,
-            tagValueMaxLength);
 
         return true;
     }
