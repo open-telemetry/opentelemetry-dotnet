@@ -31,6 +31,7 @@ public sealed class PeriodicExportingMetricReaderHelperTests : IDisposable
 
         Assert.Equal(60000, reader.ExportIntervalMilliseconds);
         Assert.Equal(30000, reader.ExportTimeoutMilliseconds);
+        Assert.Null(reader.MaxExportBatchSize);
         Assert.Equal(MetricReaderTemporalityPreference.Cumulative, reader.TemporalityPreference);
     }
 
@@ -45,6 +46,7 @@ public sealed class PeriodicExportingMetricReaderHelperTests : IDisposable
 
         Assert.Equal(60000, reader.ExportIntervalMilliseconds);
         Assert.Equal(30000, reader.ExportTimeoutMilliseconds);
+        Assert.Null(reader.MaxExportBatchSize);
         Assert.Equal(MetricReaderTemporalityPreference.Cumulative, reader.TemporalityPreference);
     }
 
@@ -93,6 +95,22 @@ public sealed class PeriodicExportingMetricReaderHelperTests : IDisposable
     }
 
     [Fact]
+    public void CreatePeriodicExportingMetricReader_MaxExportBatchSize_FromOptions()
+    {
+        Environment.SetEnvironmentVariable(PeriodicExportingMetricReaderOptions.OTelMetricExportMaxBatchSizeEnvVarKey, "77777"); // should be ignored, as value set via options has higher priority
+        var value = 512;
+        using var reader = CreatePeriodicExportingMetricReader(new()
+        {
+            PeriodicExportingMetricReaderOptions = new()
+            {
+                MaxExportBatchSize = value,
+            },
+        });
+
+        Assert.Equal(value, reader.MaxExportBatchSize);
+    }
+
+    [Fact]
     public void CreatePeriodicExportingMetricReader_ExportIntervalMilliseconds_FromEnvVar()
     {
         var value = 789;
@@ -113,12 +131,36 @@ public sealed class PeriodicExportingMetricReaderHelperTests : IDisposable
     }
 
     [Fact]
+    public void CreatePeriodicExportingMetricReader_MaxExportBatchSize_FromEnvVar()
+    {
+        var value = 1000;
+        Environment.SetEnvironmentVariable(PeriodicExportingMetricReaderOptions.OTelMetricExportMaxBatchSizeEnvVarKey, value.ToString(CultureInfo.InvariantCulture));
+        using var reader = CreatePeriodicExportingMetricReader();
+
+        Assert.Equal(value, reader.MaxExportBatchSize);
+    }
+
+    [Theory]
+    [InlineData("0")]
+    [InlineData("-1")]
+    [InlineData("abc")]
+    [InlineData("1.5")]
+    public void CreatePeriodicExportingMetricReader_MaxExportBatchSize_InvalidEnvVarIsIgnored(string value)
+    {
+        Environment.SetEnvironmentVariable(PeriodicExportingMetricReaderOptions.OTelMetricExportMaxBatchSizeEnvVarKey, value);
+        using var reader = CreatePeriodicExportingMetricReader();
+
+        Assert.Null(reader.MaxExportBatchSize);
+    }
+
+    [Fact]
     public void CreatePeriodicExportingMetricReader_FromIConfiguration()
     {
         var values = new Dictionary<string, string?>()
         {
             [PeriodicExportingMetricReaderOptions.OTelMetricExportIntervalEnvVarKey] = "18",
             [PeriodicExportingMetricReaderOptions.OTelMetricExportTimeoutEnvVarKey] = "19",
+            [PeriodicExportingMetricReaderOptions.OTelMetricExportMaxBatchSizeEnvVarKey] = "20",
         };
 
         var configuration = new ConfigurationBuilder()
@@ -129,6 +171,7 @@ public sealed class PeriodicExportingMetricReaderHelperTests : IDisposable
 
         Assert.Equal(18, options.ExportIntervalMilliseconds);
         Assert.Equal(19, options.ExportTimeoutMilliseconds);
+        Assert.Equal(20, options.MaxExportBatchSize);
     }
 
     [Fact]
@@ -136,12 +179,14 @@ public sealed class PeriodicExportingMetricReaderHelperTests : IDisposable
     {
         Assert.Equal("OTEL_METRIC_EXPORT_INTERVAL", PeriodicExportingMetricReaderOptions.OTelMetricExportIntervalEnvVarKey);
         Assert.Equal("OTEL_METRIC_EXPORT_TIMEOUT", PeriodicExportingMetricReaderOptions.OTelMetricExportTimeoutEnvVarKey);
+        Assert.Equal("OTEL_METRIC_EXPORT_MAX_BATCH_SIZE", PeriodicExportingMetricReaderOptions.OTelMetricExportMaxBatchSizeEnvVarKey);
     }
 
     private static void ClearEnvVars()
     {
         Environment.SetEnvironmentVariable(PeriodicExportingMetricReaderOptions.OTelMetricExportIntervalEnvVarKey, null);
         Environment.SetEnvironmentVariable(PeriodicExportingMetricReaderOptions.OTelMetricExportTimeoutEnvVarKey, null);
+        Environment.SetEnvironmentVariable(PeriodicExportingMetricReaderOptions.OTelMetricExportMaxBatchSizeEnvVarKey, null);
     }
 
     private static PeriodicExportingMetricReader CreatePeriodicExportingMetricReader(

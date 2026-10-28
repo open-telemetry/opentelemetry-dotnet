@@ -6,6 +6,13 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Added support for batching the metric points exported by the periodic
+  exporting metric reader. Set
+  `PeriodicExportingMetricReaderOptions.MaxExportBatchSize` to limit the
+  number of metric points in each exported batch. It can also be configured
+  with the `OTEL_METRIC_EXPORT_MAX_BATCH_SIZE` environment variable.
+  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+
 ## 1.20.1
 
 Released 2026-Oct-20

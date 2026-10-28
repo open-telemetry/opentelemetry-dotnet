@@ -44,7 +44,8 @@ The `Options` type setters take precedence over the environment variables.
 
 For metrics, `AddConsoleExporter()` pairs the exporter with a
 `PeriodicExportingMetricReader`. Use `MetricReaderOptions` to configure
-temporality and export interval/timeout:
+temporality, export interval/timeout, and the maximum number of metric points in
+each exported batch:
 
 ```csharp
 var meterProvider = Sdk.CreateMeterProviderBuilder()
@@ -55,6 +56,7 @@ var meterProvider = Sdk.CreateMeterProviderBuilder()
 
         metricReaderOptions.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds = 10_000;
         metricReaderOptions.PeriodicExportingMetricReaderOptions.ExportTimeoutMilliseconds = 5_000;
+        metricReaderOptions.PeriodicExportingMetricReaderOptions.MaxExportBatchSize = 1_000;
     })
     .Build();
 ```
@@ -68,10 +70,11 @@ The following environment variables can be used to override the default
 values of the `PeriodicExportingMetricReaderOptions`
 (following the [OpenTelemetry specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/configuration/sdk-environment-variables.md#periodic-exporting-metricreader)).
 
-| Environment variable          | `PeriodicExportingMetricReaderOptions` property |
-| ------------------------------| ------------------------------------------------|
-| `OTEL_METRIC_EXPORT_INTERVAL` | `ExportIntervalMilliseconds`                    |
-| `OTEL_METRIC_EXPORT_TIMEOUT`  | `ExportTimeoutMilliseconds`                     |
+| Environment variable                | `PeriodicExportingMetricReaderOptions` property |
+| ------------------------------------| ------------------------------------------------|
+| `OTEL_METRIC_EXPORT_INTERVAL`       | `ExportIntervalMilliseconds`                    |
+| `OTEL_METRIC_EXPORT_TIMEOUT`        | `ExportTimeoutMilliseconds`                     |
+| `OTEL_METRIC_EXPORT_MAX_BATCH_SIZE` | `MaxExportBatchSize`                            |
 
 ## References
 

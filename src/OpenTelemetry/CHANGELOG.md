@@ -43,6 +43,22 @@ Notes](../../RELEASENOTES.md).
   fully initialized, could case a `NullReferenceException` when enumerating `Tags`.
   ([#8018](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8018))
 
+* Added support for batching the metric points exported by
+  `PeriodicExportingMetricReader`. When a maximum export batch size is set,
+  using the new constructor overload or
+  `PeriodicExportingMetricReaderOptions.MaxExportBatchSize`, the metric
+  points of each collection are split into batches of at most that many
+  metric points, even if that splits up the metric points of a single
+  metric. The batches are exported serially with the export timeout
+  applying to each export. It can also be configured with the
+  `OTEL_METRIC_EXPORT_MAX_BATCH_SIZE` environment variable.
+  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+
+* Fixed `PeriodicExportingMetricReader` exporting a collection which was still
+  in progress when `Shutdown()` timed out to its exporter after the exporter
+  had been shut down.
+  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+
 ## 1.20.1
 
 Released 2026-Oct-20

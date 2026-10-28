@@ -49,4 +49,46 @@ public class InMemoryExporterTests
         // MetricPoint.LongValue for the first exported metric should still be 10
         Assert.Equal(10, metric1.MetricPoints[0].GetSumLong());
     }
+
+    [Fact]
+    public void InMemoryExporterShouldNotDuplicateMetricPointsSplitBetweenBatches()
+    {
+        var exportedItems = new List<Metric>();
+
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+        using var meterProvider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddInMemoryExporter(exportedItems, metricReaderOptions =>
+            {
+                metricReaderOptions.PeriodicExportingMetricReaderOptions.MaxExportBatchSize = 1;
+            })
+            .Build();
+
+        var counter = meter.CreateCounter<long>("meter");
+
+        for (var i = 0; i < 3; i++)
+        {
+            counter.Add(1, new KeyValuePair<string, object?>("key", i));
+        }
+
+        meterProvider.ForceFlush();
+
+        var metric = Assert.Single(exportedItems);
+
+        var count = 0;
+
+        foreach (ref readonly var metricPoint in metric.GetMetricPoints())
+        {
+            count++;
+        }
+
+        Assert.Equal(3, count);
+
+        // The metric is added again for the next collection
+        counter.Add(1, new KeyValuePair<string, object?>("key", 0));
+
+        meterProvider.ForceFlush();
+
+        Assert.Equal(2, exportedItems.Count);
+    }
 }

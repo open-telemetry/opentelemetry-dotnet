@@ -24,6 +24,13 @@ internal abstract class PeriodicExportingMetricReaderWorker : IDisposable
         this.MetricReader = metricReader;
         this.ExportIntervalMilliseconds = exportIntervalMilliseconds;
         this.ExportTimeoutMilliseconds = exportTimeoutMilliseconds;
+
+        // When the metric reader limits the size of the batches it exports, the
+        // export timeout applies to each of the exports of a collection, which the
+        // metric reader enforces, instead of to the whole collection.
+        this.CollectTimeoutMilliseconds = metricReader is PeriodicExportingMetricReader { MaxExportBatchSize: not null }
+            ? Timeout.Infinite
+            : exportTimeoutMilliseconds;
     }
 
     ~PeriodicExportingMetricReaderWorker()
@@ -46,6 +53,11 @@ internal abstract class PeriodicExportingMetricReaderWorker : IDisposable
     /// Gets how long the export can run before it is cancelled.
     /// </summary>
     protected int ExportTimeoutMilliseconds { get; }
+
+    /// <summary>
+    /// Gets the timeout in milliseconds of the collections started by the worker.
+    /// </summary>
+    protected int CollectTimeoutMilliseconds { get; }
 
     /// <summary>
     /// Starts the worker.
