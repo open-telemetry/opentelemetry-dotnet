@@ -6,6 +6,13 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Added support for batching the metric points exported by the periodic
+  exporting metric reader. Set
+  `PeriodicExportingMetricReaderOptions.MaxExportBatchSize` to limit the
+  number of metric points in each exported batch. It can also be configured
+  with the `OTEL_METRIC_EXPORT_MAX_BATCH_SIZE` environment variable.
+  ([#8053](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8053))
+
 ## 1.21.0-rc.1
 
 Released 2026-Oct-28
@@ -24,13 +31,6 @@ Released 2026-Oct-28
 * Fixed arrays of string-valued key/value pairs being
   serialized as JSON arrays of strings instead of JSON objects.
   ([#7694](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7694))
-
-* Added support for batching the metric points exported by the periodic
-  exporting metric reader. Set
-  `PeriodicExportingMetricReaderOptions.MaxExportBatchSize` to limit the
-  number of metric points in each exported batch. It can also be configured
-  with the `OTEL_METRIC_EXPORT_MAX_BATCH_SIZE` environment variable.
-  ([#8053](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8053))
 
 ## 1.20.1
 
