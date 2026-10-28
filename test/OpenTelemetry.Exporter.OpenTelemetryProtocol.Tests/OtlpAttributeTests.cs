@@ -603,6 +603,18 @@ public class OtlpAttributeTests
     }
 
     [Fact]
+    public void Utf8SpanFormattableToStringFallbackIsWrittenLikeAString()
+    {
+        var expected = new ProtobufOtlpTagWriter.OtlpTagWriterState { Buffer = new byte[1024] };
+        Assert.True(ProtobufOtlpTagWriter.WriteKeyValue(ref expected, ProtobufOtlpTraceFieldNumberConstants.Span_Attributes, "key", "abcdefghij"));
+
+        var actual = new ProtobufOtlpTagWriter.OtlpTagWriterState { Buffer = new byte[1024] };
+        Assert.True(ProtobufOtlpTagWriter.WriteKeyValue(ref actual, ProtobufOtlpTraceFieldNumberConstants.Span_Attributes, "key", new Utf8ValueThatFillsBufferAndDoesNotFit("abcdefghijklmnop"), tagValueMaxLength: 10));
+
+        Assert.Equal(expected.Buffer.AsSpan(0, expected.WritePosition).ToArray(), actual.Buffer.AsSpan(0, actual.WritePosition).ToArray());
+    }
+
+    [Fact]
     public void TruncatedUtf8SpanFormattableLeavesNoDroppedBytesInBuffer()
     {
         var state = new ProtobufOtlpTagWriter.OtlpTagWriterState

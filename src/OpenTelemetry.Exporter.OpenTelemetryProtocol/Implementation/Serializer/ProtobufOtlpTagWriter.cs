@@ -134,6 +134,8 @@ internal sealed class ProtobufOtlpTagWriter : TagWriter<ProtobufOtlpTagWriter.Ot
     {
         const int MaxUtf8BytesPerChar = 3;
 
+        var startPosition = state.WritePosition;
+
         state.WritePosition = ProtobufSerializer.WriteStringWithTag(state.Buffer, state.WritePosition, ProtobufOtlpCommonFieldNumberConstants.KeyValue_Key, key);
 
         state.WritePosition = ProtobufSerializer.WriteTag(state.Buffer, state.WritePosition, ProtobufOtlpCommonFieldNumberConstants.KeyValue_Value, ProtobufWireType.LEN);
@@ -195,24 +197,9 @@ internal sealed class ProtobufOtlpTagWriter : TagWriter<ProtobufOtlpTagWriter.Ot
         // The failed TryFormat may have filled the buffer beyond what the shorter fallback overwrites.
         // Not needed before the throw above: callers that grow the buffer clear the whole of the old one.
         buffer.Clear();
+        RollBackTo(ref state, startPosition);
 
-        try
-        {
-            // We don't want to grow the buffer indefinitely- just convert to string and truncate this
-            var stringValue = Convert.ToString(value, CultureInfo.InvariantCulture);
-            if (stringValue == null)
-            {
-                return this.LogUnsupportedTagTypeAndReturnFalse(key, value);
-            }
-
-            var bytesWritten = Encoding.UTF8.GetBytes(TruncateString(stringValue.AsSpan(), tagValueMaxLength), buffer);
-            EndUtf8StringTag(ref state, anyValueLengthPosition, stringLengthPosition, bytesWritten);
-            return true;
-        }
-        catch (Exception)
-        {
-            return this.LogUnsupportedTagTypeAndReturnFalse(key, value);
-        }
+        return this.TryWriteToStringTag(ref state, key, value, tagValueMaxLength);
     }
 #endif
 
