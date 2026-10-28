@@ -175,9 +175,17 @@ resource detectors, including the SDK's default resource, using the standard
 If the configured value differs from a schema URL contributed by another
 detector, the final resource has no schema URL.
 
-All other top-level sections (e.g. `tracer_provider`, `propagator`) are logged
-and are not applied. Structurally invalid content can fail configuration
-loading.
+Other schema-defined SDK settings (e.g. `tracer_provider`, `propagator`) are
+retained but not applied. Unsupported stable settings are logged as errors and
+experimental settings as warnings when the document is loaded. Only the
+outermost unsupported property is reported, without its nested properties.
+Non-empty sequences are reported per item. Loading still succeeds, although
+structurally invalid content can fail configuration loading.
+
+`instrumentation/development` and `distribution` are retained for consumers
+through `DeclarativeConfigurationDocument.Properties`. The SDK does not
+interpret these sections, and they do not generate unsupported-setting
+diagnostics.
 
 ## Parsing and validation
 
@@ -322,9 +330,9 @@ masked. Other keys under `OpenTelemetry` stay visible.
   `IConfiguration` detaches it. Register declarative configuration after your
   configuration sources are settled.
 - For duplicate structured resource attribute names, the first occurrence wins.
-- Top-level sections that are not applied are logged, but their `${...}`
-  references are resolved during the load, so an unset variable in one is
-  reported.
+- `${...}` references are resolved throughout the document, including settings
+  the SDK does not interpret. An unset variable without a default is reported
+  at Verbose level.
 - `resource.detection/development` (the SDK's resource detector discovery
   mechanism) is accepted but not yet implemented.
 - Property names are validated against the schema, but value types, ranges and

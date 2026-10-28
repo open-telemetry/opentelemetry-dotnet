@@ -47,6 +47,7 @@
     <Compile Include="$(RepoRoot)\test\Shared\DockerPlatform.cs" Link="Includes\DockerPlatform.cs" />
     <Compile Include="$(RepoRoot)\test\Shared\EnabledOnDockerPlatformFactAttribute.cs" Link="Includes\EnabledOnDockerPlatformFactAttribute.cs" />
     <Compile Include="$(RepoRoot)\test\Shared\EnabledOnDockerPlatformTheoryAttribute.cs" Link="Includes\EnabledOnDockerPlatformTheoryAttribute.cs" />
+    <Compile Include="$(RepoRoot)\test\Shared\TemporaryDirectory.cs" Link="Includes\TemporaryDirectory.cs" />
     <Compile Include="$(RepoRoot)\test\Shared\XunitContainerFixture{T}.cs" Link="Includes\XunitContainerFixture{T}.cs" />
   </ItemGroup>
 

@@ -186,9 +186,9 @@ public sealed class W3CTraceContextTests : IDisposable
         bool isRedirected,
         CancellationToken cancellationToken)
     {
-        return isRedirected ?
-            Task.Run(() => ProcessStream(reader, cancellationToken), cancellationToken) :
-            Task.FromResult(new StringBuilder(0));
+        return isRedirected
+            ? Task.Run(() => ProcessStream(reader, cancellationToken), cancellationToken)
+            : Task.FromResult(new StringBuilder(0));
 
         static async Task<StringBuilder> ProcessStream(
             StreamReader reader,

@@ -14,6 +14,26 @@ Notes](../../RELEASENOTES.md).
   for such metrics; exported metric names are unchanged.
   ([#7993](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7993))
 
+* Fixed scrapes that negotiate different response formats within the
+  `ScrapeResponseCacheDurationMilliseconds` window each triggering their own
+  metrics collection. A collection now also writes the response for other
+  formats whose scrapes arrived alongside a previous collection, so scrapes
+  that keep arriving together are served from the cache. Fresh cached responses
+  remain available while another format is serialized, even if that
+  serialization fails.
+  ([#7994](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7994))
+
+* Fixed array- and map-valued attributes being serialized as the .NET type
+  name (e.g. `System.Byte[]`, `System.Int32[]`) instead of being JSON-encoded
+  as per the specification. `byte[]`-valued attributes are now
+  Base64-encoded, and other array- and map-valued attributes are now
+  JSON-encoded.
+  ([#7694](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7694))
+
+* Fixed arrays of string-valued key/value pairs being
+  serialized as JSON arrays of strings instead of JSON objects.
+  ([#7694](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7694))
+
 ## 1.20.1-beta.1
 
 Released 2026-Oct-20

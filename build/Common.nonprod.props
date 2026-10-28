@@ -40,6 +40,15 @@
     <Compile Include="$(RepoRoot)\test\Shared\StrongNameTests.cs" Link="StrongNameTests.cs" />
   </ItemGroup>
 
+  <!--
+    Gives the test host longer than the xunit.net default of 10 seconds to exit once the tests
+    have finished, as with code coverage enabled every assembly loaded while exiting waits on
+    the coverage collector, which can take that long by itself on a loaded CI agent.
+  -->
+  <ItemGroup Condition="'$(IsTestProject)' == 'true'">
+    <Content Include="$(RepoRoot)\build\xunit.runner.json" CopyToOutputDirectory="PreserveNewest" Visible="false" />
+  </ItemGroup>
+
   <PropertyGroup>
     <!-- Running unit tests from VSCode does not work with .NET SDK 6.0.200 without ProduceReferenceAssemblyInOutDir -->
     <!-- Related breaking change: https://docs.microsoft.com/dotnet/core/compatibility/sdk/6.0/write-reference-assemblies-to-obj -->

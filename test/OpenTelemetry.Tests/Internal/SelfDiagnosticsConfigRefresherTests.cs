@@ -10,23 +10,26 @@ using OpenTelemetry.Tests;
 
 namespace OpenTelemetry.Internal.Tests;
 
-public class SelfDiagnosticsConfigRefresherTests
+public sealed class SelfDiagnosticsConfigRefresherTests : IDisposable
 {
     private const int CaptureAttempts = 5;
 
     private static readonly string MessageOnNewFileString = Encoding.UTF8.GetString(SelfDiagnosticsConfigRefresher.MessageOnNewFile);
 
     private readonly ITestOutputHelper output;
+    private readonly TemporaryDirectory tempDirectory = new();
 
     public SelfDiagnosticsConfigRefresherTests(ITestOutputHelper output)
     {
         this.output = output;
     }
 
+    public void Dispose() => this.tempDirectory.Dispose();
+
     [Fact]
     public void SelfDiagnosticsConfigRefresher_OmitAsConfigured()
     {
-        var logDirectory = Utils.GetCurrentMethodName();
+        var logDirectory = this.tempDirectory.Path;
         using var configRefresher = CreateRefresher(logDirectory);
 
         // Emitting event of EventLevel.Warning
@@ -46,7 +49,7 @@ public class SelfDiagnosticsConfigRefresherTests
     [Fact]
     public void SelfDiagnosticsConfigRefresher_CaptureAsConfigured()
     {
-        var logDirectory = Utils.GetCurrentMethodName();
+        var logDirectory = this.tempDirectory.Path;
         using var configRefresher = CreateRefresher(logDirectory);
 
         var expectedMessage = "Unknown error in TracerProvider '{0}': '{1}'.{Event string sample}{Exception string sample}";
@@ -75,10 +78,9 @@ public class SelfDiagnosticsConfigRefresherTests
     [Fact]
     public void SelfDiagnosticsConfigRefresher_ReplacesExistingLogFile()
     {
-        var logDirectory = Utils.GetCurrentMethodName();
+        var logDirectory = this.tempDirectory.Path;
         var logFilePath = GetLogFilePath(logDirectory);
 
-        Directory.CreateDirectory(logDirectory);
         File.WriteAllText(logFilePath, "stale content");
 
         using var configRefresher = CreateRefresher(logDirectory);
@@ -92,12 +94,10 @@ public class SelfDiagnosticsConfigRefresherTests
     {
         Assert.SkipWhen(OperatingSystem.IsWindows(), "Creating symbolic links requires elevated privileges on Windows.");
 
-        var logDirectory = Utils.GetCurrentMethodName();
+        var logDirectory = this.tempDirectory.Path;
         var logFilePath = GetLogFilePath(logDirectory);
-        var linkTarget = Path.GetFullPath(Path.Combine(logDirectory, "target.txt"));
+        var linkTarget = Path.Combine(logDirectory, "target.txt");
 
-        Directory.CreateDirectory(logDirectory);
-        File.Delete(logFilePath);
         File.WriteAllText(linkTarget, "target content");
         File.CreateSymbolicLink(logFilePath, linkTarget);
 
@@ -113,7 +113,7 @@ public class SelfDiagnosticsConfigRefresherTests
     [Fact]
     public void SelfDiagnosticsConfigRefresher_CaptureAfterLogFileTruncated()
     {
-        var logDirectory = Utils.GetCurrentMethodName();
+        var logDirectory = this.tempDirectory.Path;
         FileStream? file = null;
         using var configRefresher = CreateRefresher(
             logDirectory,
@@ -136,7 +136,7 @@ public class SelfDiagnosticsConfigRefresherTests
     [Fact]
     public void SelfDiagnosticsConfigRefresher_DropFailedWriteAndResume()
     {
-        var logDirectory = Utils.GetCurrentMethodName();
+        var logDirectory = this.tempDirectory.Path;
         FailingFileStream? failingFile = null;
         using var configRefresher = CreateRefresher(logDirectory, EventLevel.Critical, path => failingFile = new FailingFileStream(path));
         Assert.NotNull(failingFile);
@@ -161,7 +161,7 @@ public class SelfDiagnosticsConfigRefresherTests
     [Fact]
     public void SelfDiagnosticsConfigRefresher_WrapAtConfiguredSize()
     {
-        var logDirectory = Utils.GetCurrentMethodName();
+        var logDirectory = this.tempDirectory.Path;
         using var configRefresher = CreateRefresher(logDirectory, EventLevel.Critical);
         var filePath = GetLogFilePath(logDirectory);
         var fileSize = (int)new FileInfo(filePath).Length;
@@ -181,7 +181,7 @@ public class SelfDiagnosticsConfigRefresherTests
     [Fact]
     public void SelfDiagnosticsConfigRefresher_ConcurrentWrites()
     {
-        var logDirectory = Utils.GetCurrentMethodName();
+        var logDirectory = this.tempDirectory.Path;
         using var configRefresher = CreateRefresher(logDirectory, EventLevel.Critical);
         var expected = Enumerable.Range(0, 256)
             .Select(value => value.ToString("D4", CultureInfo.InvariantCulture))
@@ -202,7 +202,7 @@ public class SelfDiagnosticsConfigRefresherTests
     [Fact]
     public void SelfDiagnosticsConfigRefresher_DisposeReleasesLogFile()
     {
-        var logDirectory = Utils.GetCurrentMethodName();
+        var logDirectory = this.tempDirectory.Path;
         using var configRefresher = CreateRefresher(logDirectory, EventLevel.Critical);
         var filePath = GetLogFilePath(logDirectory);
 
@@ -218,7 +218,7 @@ public class SelfDiagnosticsConfigRefresherTests
     {
         Assert.SkipUnless(RuntimeInformation.IsOSPlatform(OSPlatform.Windows), "This test can only be run on Windows.");
 
-        var logDirectory = Utils.GetCurrentMethodName();
+        var logDirectory = this.tempDirectory.Path;
         using var configRefresher = CreateRefresher(logDirectory, EventLevel.Critical);
         var filePath = GetLogFilePath(logDirectory);
 
@@ -238,10 +238,11 @@ public class SelfDiagnosticsConfigRefresherTests
         EventLevel logLevel = EventLevel.Error,
         Func<string, FileStream>? logFileFactory = null)
     {
-        // Each test uses its own configuration file rather than the process-wide
-        // OTEL_DIAGNOSTICS.json: the SDK's own SelfDiagnostics singleton polls that
-        // file from the working directory too, and if a poll lands while a test's
-        // configuration exists it opens the same log file as the test's refresher.
+        // Each test uses its own configuration file in its own temporary directory
+        // rather than the process-wide OTEL_DIAGNOSTICS.json: the SDK's own
+        // SelfDiagnostics singleton polls that file from the working directory too,
+        // and if a poll lands while a test's configuration exists it opens the same
+        // log file as the test's refresher.
         var configFilePath = GetConfigFilePath(logDirectory);
 
         CreateConfigFile(configFilePath, logDirectory, logLevel);
@@ -259,7 +260,7 @@ public class SelfDiagnosticsConfigRefresherTests
     }
 
     private static string GetConfigFilePath(string logDirectory)
-        => logDirectory + "." + SelfDiagnosticsConfigParser.ConfigFileName;
+        => Path.Combine(logDirectory, SelfDiagnosticsConfigParser.ConfigFileName);
 
     private static string? FindLogLine(string logText, string expectedMessage)
     {
@@ -349,7 +350,9 @@ public class SelfDiagnosticsConfigRefresherTests
 
         public int WriteAttempts { get; private set; }
 
+#pragma warning disable SA1315 // Parameters should match inherited names - the name is 'array' on .NET Framework and 'buffer' on .NET
         public override void Write(byte[] buffer, int offset, int count)
+#pragma warning restore SA1315 // Parameters should match inherited names - the name is 'array' on .NET Framework and 'buffer' on .NET
         {
             this.WriteAttempts++;
             if (this.FailWrites)

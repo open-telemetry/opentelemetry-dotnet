@@ -69,26 +69,19 @@ INVALID CERTIFICATE DATA
     [Fact]
     public void LoadClientCertificate_ThrowsInvalidOperationException_WhenCertificateFileIsEmpty()
     {
-        var tempCertFile = Path.GetTempFileName();
-        var tempKeyFile = Path.GetTempFileName();
+        using var directory = new TemporaryDirectory();
+        var tempCertFile = Path.Combine(directory.Path, "client.pem");
+        var tempKeyFile = Path.Combine(directory.Path, "client.key");
         File.WriteAllText(tempCertFile, string.Empty);
         File.WriteAllText(tempKeyFile, string.Empty);
 
-        try
-        {
-            var exception = Assert.Throws<InvalidOperationException>(() =>
-                OpenTelemetryProtocol.Implementation.OtlpCertificateManager.LoadClientCertificate(tempCertFile, tempKeyFile));
+        var exception = Assert.Throws<InvalidOperationException>(() =>
+            OpenTelemetryProtocol.Implementation.OtlpCertificateManager.LoadClientCertificate(tempCertFile, tempKeyFile));
 
-            Assert.Contains(
-                "Failed to load client certificate",
-                exception.Message,
-                StringComparison.OrdinalIgnoreCase);
-        }
-        finally
-        {
-            File.Delete(tempCertFile);
-            File.Delete(tempKeyFile);
-        }
+        Assert.Contains(
+            "Failed to load client certificate",
+            exception.Message,
+            StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
@@ -97,42 +90,30 @@ INVALID CERTIFICATE DATA
         using var selfSignedCertificate = CreateSelfSignedCertificate();
         var certificateOnlyPem = selfSignedCertificate.ExportCertificatePem();
 
-        var tempCertFile = Path.GetTempFileName();
+        using var directory = new TemporaryDirectory();
+        var tempCertFile = Path.Combine(directory.Path, "ca.pem");
         File.WriteAllText(tempCertFile, certificateOnlyPem);
 
-        try
-        {
-            using var caCertificate = OpenTelemetryProtocol.Implementation.OtlpCertificateManager.LoadCaCertificate(tempCertFile);
+        using var caCertificate = OpenTelemetryProtocol.Implementation.OtlpCertificateManager.LoadCaCertificate(tempCertFile);
 
-            Assert.Equal(selfSignedCertificate.Thumbprint, caCertificate.Thumbprint);
-            Assert.False(caCertificate.HasPrivateKey);
-        }
-        finally
-        {
-            File.Delete(tempCertFile);
-        }
+        Assert.Equal(selfSignedCertificate.Thumbprint, caCertificate.Thumbprint);
+        Assert.False(caCertificate.HasPrivateKey);
     }
 
     [Fact]
     public void LoadCaCertificate_ThrowsInvalidOperationException_WhenTrustStoreFileIsEmpty()
     {
-        var tempTrustStoreFile = Path.GetTempFileName();
+        using var directory = new TemporaryDirectory();
+        var tempTrustStoreFile = Path.Combine(directory.Path, "ca.pem");
         File.WriteAllText(tempTrustStoreFile, string.Empty);
 
-        try
-        {
-            var exception = Assert.Throws<InvalidOperationException>(() =>
-                OpenTelemetryProtocol.Implementation.OtlpCertificateManager.LoadCaCertificate(tempTrustStoreFile));
+        var exception = Assert.Throws<InvalidOperationException>(() =>
+            OpenTelemetryProtocol.Implementation.OtlpCertificateManager.LoadCaCertificate(tempTrustStoreFile));
 
-            Assert.Contains(
-                "Failed to load CA certificate",
-                exception.Message,
-                StringComparison.OrdinalIgnoreCase);
-        }
-        finally
-        {
-            File.Delete(tempTrustStoreFile);
-        }
+        Assert.Contains(
+            "Failed to load CA certificate",
+            exception.Message,
+            StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
@@ -164,29 +145,22 @@ INVALID CERTIFICATE DATA
     [Fact]
     public void LoadClientCertificate_LoadsFromSeparateFiles()
     {
-        var tempCertFile = Path.GetTempFileName();
-        var tempKeyFile = Path.GetTempFileName();
+        using var directory = new TemporaryDirectory();
+        var tempCertFile = Path.Combine(directory.Path, "client.pem");
+        var tempKeyFile = Path.Combine(directory.Path, "client.key");
         File.WriteAllText(tempCertFile, InvalidCertPem);
         File.WriteAllText(tempKeyFile, "test-key-content");
 
-        try
-        {
-            // This test verifies that the method loads from separate files
-            // Note: We expect this to fail because we're using dummy cert/key content
-            // but it should not fail due to the method signature
-            var exception = Assert.Throws<InvalidOperationException>(() =>
-                OpenTelemetryProtocol.Implementation.OtlpCertificateManager.LoadClientCertificate(
-                    tempCertFile,
-                    tempKeyFile));
+        // This test verifies that the method loads from separate files
+        // Note: We expect this to fail because we're using dummy cert/key content
+        // but it should not fail due to the method signature
+        var exception = Assert.Throws<InvalidOperationException>(() =>
+            OpenTelemetryProtocol.Implementation.OtlpCertificateManager.LoadClientCertificate(
+                tempCertFile,
+                tempKeyFile));
 
-            // The exception should be about certificate loading, not method signature
-            Assert.Contains("Failed to load client certificate", exception.Message, StringComparison.OrdinalIgnoreCase);
-        }
-        finally
-        {
-            File.Delete(tempCertFile);
-            File.Delete(tempKeyFile);
-        }
+        // The exception should be about certificate loading, not method signature
+        Assert.Contains("Failed to load client certificate", exception.Message, StringComparison.OrdinalIgnoreCase);
     }
 
     private static void AssertCertificateFileNotFoundDiagnostics(string filePath, string displayPath)

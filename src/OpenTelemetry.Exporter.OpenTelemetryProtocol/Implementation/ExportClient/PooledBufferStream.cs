@@ -97,7 +97,7 @@ internal sealed class PooledBufferStream : Stream
     }
 
     /// <inheritdoc/>
-    public override int Read(Span<byte> destination)
+    public override int Read(Span<byte> buffer)
     {
         this.ThrowIfDisposed();
 
@@ -107,8 +107,8 @@ internal sealed class PooledBufferStream : Stream
             return 0;
         }
 
-        var toCopy = Math.Min(available, destination.Length);
-        this.buffer.AsSpan(this.position, toCopy).CopyTo(destination);
+        var toCopy = Math.Min(available, buffer.Length);
+        this.buffer.AsSpan(this.position, toCopy).CopyTo(buffer);
         this.position += toCopy;
 
         return toCopy;
@@ -198,14 +198,14 @@ internal sealed class PooledBufferStream : Stream
     }
 
     /// <inheritdoc/>
-    public override void Write(ReadOnlySpan<byte> source)
+    public override void Write(ReadOnlySpan<byte> buffer)
     {
         this.ThrowIfDisposed();
 
-        this.EnsureWriteCapacity(source.Length);
+        this.EnsureWriteCapacity(buffer.Length);
 
-        source.CopyTo(this.buffer.AsSpan(this.position));
-        this.position += source.Length;
+        buffer.CopyTo(this.buffer.AsSpan(this.position));
+        this.position += buffer.Length;
 
         if (this.position > this.length)
         {

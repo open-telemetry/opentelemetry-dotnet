@@ -101,6 +101,9 @@ internal abstract class TagWriter<TTagState, TArrayState>
             case IEnumerable<KeyValuePair<string, object?>> kvList:
                 return this.TryWriteKvListTagWithinDepthLimit(ref state, key, value, kvList, tagValueMaxLength);
 
+            case IEnumerable<KeyValuePair<string, string?>> stringKvList:
+                return this.TryWriteKvListTagWithinDepthLimit(ref state, key, value, AdaptStringKvList(stringKvList), tagValueMaxLength);
+
             case Array array:
                 if (value.GetType() == typeof(byte[]))
                 {
@@ -153,9 +156,6 @@ internal abstract class TagWriter<TTagState, TArrayState>
                 break;
 #endif
 
-            case IEnumerable<KeyValuePair<string, string?>> stringKvList:
-                return this.TryWriteKvListTagWithinDepthLimit(ref state, key, value, AdaptStringKvList(stringKvList), tagValueMaxLength);
-
             case IDictionary dictionary:
                 return this.TryWriteKvListTagWithinDepthLimit(ref state, key, value, AdaptDictionary(dictionary), tagValueMaxLength);
 
@@ -195,6 +195,40 @@ internal abstract class TagWriter<TTagState, TArrayState>
         }
 
         return true;
+    }
+
+    protected static IEnumerable<KeyValuePair<string, object?>> DeduplicateKeys(IEnumerable<KeyValuePair<string, object?>> kvList)
+    {
+        // See https://github.com/open-telemetry/opentelemetry-specification/blob/v1.62.0/specification/common/README.md#mapstring-anyvalue;
+        // exported maps must only contain unique keys. Keys are compared case-sensitively and, as when setting an attribute that already
+        // exists, the last value for a key wins. The key keeps the position at which it first appeared.
+        if (kvList is Dictionary<string, object?> { Comparer: var comparer } dictionary &&
+            (comparer == EqualityComparer<string>.Default ||
+             comparer == StringComparer.Ordinal ||
+             comparer == StringComparer.OrdinalIgnoreCase))
+        {
+            // The keys of the dictionary are already unique when compared ordinally. Other comparers
+            // (e.g. ReferenceEqualityComparer) can allow keys containing the same text, so are not trusted.
+            return dictionary;
+        }
+
+        var items = new List<KeyValuePair<string, object?>>();
+        var indexes = new Dictionary<string, int>(StringComparer.Ordinal);
+
+        foreach (var kvp in kvList)
+        {
+            if (indexes.TryGetValue(kvp.Key, out var index))
+            {
+                items[index] = kvp;
+            }
+            else
+            {
+                indexes[kvp.Key] = items.Count;
+                items.Add(kvp);
+            }
+        }
+
+        return items;
     }
 
     protected abstract bool TryWriteEmptyTag(ref TTagState state, string key, object? value);
@@ -453,80 +487,153 @@ internal abstract class TagWriter<TTagState, TArrayState>
     {
         for (var i = 0; i < array.Length; ++i)
         {
-            var item = array.GetValue(i);
-            if (item == null)
-            {
-                this.arrayWriter.WriteNullValue(ref arrayState);
-                continue;
-            }
+            this.WriteArrayItem(ref arrayState, array.GetValue(i), tagValueMaxLength);
+        }
+    }
 
-            // Ordered by how often each type is likely to appear for performance
-            switch (item)
-            {
-                case string s:
+    private void WriteArrayItem(ref TArrayState arrayState, object? item, int? tagValueMaxLength)
+    {
+        if (item == null)
+        {
+            this.arrayWriter.WriteNullValue(ref arrayState);
+            return;
+        }
+
+        // Ordered by how often each type is likely to appear for performance
+        switch (item)
+        {
+            case string s:
+                this.WriteStringValue(
+                    ref arrayState,
+                    s,
+                    tagValueMaxLength);
+                break;
+            case int intValue:
+                this.arrayWriter.WriteIntegralValue(ref arrayState, intValue);
+                break;
+            case long l:
+                this.arrayWriter.WriteIntegralValue(ref arrayState, l);
+                break;
+            case bool b:
+                this.arrayWriter.WriteBooleanValue(ref arrayState, b);
+                break;
+            case double d:
+                this.arrayWriter.WriteFloatingPointValue(ref arrayState, d);
+                break;
+            case char c:
+                this.WriteCharValue(ref arrayState, c);
+                break;
+            case byte b:
+                this.arrayWriter.WriteIntegralValue(ref arrayState, b);
+                break;
+            case sbyte sb:
+                this.arrayWriter.WriteIntegralValue(ref arrayState, sb);
+                break;
+            case short s:
+                this.arrayWriter.WriteIntegralValue(ref arrayState, s);
+                break;
+            case ushort us:
+                this.arrayWriter.WriteIntegralValue(ref arrayState, us);
+                break;
+            case uint ui:
+                this.arrayWriter.WriteIntegralValue(ref arrayState, ui);
+                break;
+            case float f:
+                this.arrayWriter.WriteFloatingPointValue(ref arrayState, f);
+                break;
+
+            // A nested byte array, array or map is only written as a native nested value when
+            // the array writer supports embedding one (currently the JSON-based writers); when
+            // it is not supported, or the nesting limit below has been reached, the "when"
+            // clause is false and the switch falls through to the string-converted default.
+            // The exact type check is needed because the runtime also allows a sbyte[] to match byte[].
+            // Maps are matched before arrays so that an array of key/value pairs is written as a map.
+            case byte[] byteArray when byteArray.GetType() == typeof(byte[]) && this.arrayWriter.TryWriteByteArrayValue(ref arrayState, byteArray):
+                break;
+
+            case IEnumerable<KeyValuePair<string, object?>> nestedKvList when this.TryWriteNestedObjectValue(ref arrayState, nestedKvList, tagValueMaxLength):
+                break;
+
+            case IEnumerable<KeyValuePair<string, string?>> nestedStringKvList when this.TryWriteNestedObjectValue(ref arrayState, AdaptStringKvList(nestedStringKvList), tagValueMaxLength):
+                break;
+
+            case IDictionary nestedDictionary when this.TryWriteNestedObjectValue(ref arrayState, AdaptDictionary(nestedDictionary), tagValueMaxLength):
+                break;
+
+            case Array nestedArray when this.TryWriteNestedArrayValue(ref arrayState, nestedArray, tagValueMaxLength):
+                break;
+
+            // All other types are converted to strings including the following
+            // built-in value types:
+            // case nint:    Pointer type.
+            // case nuint:   Pointer type.
+            // case ulong:   May throw an exception on overflow.
+            // case decimal: Converting to double produces rounding errors.
+            default:
+                var stringValue = Convert.ToString(item, CultureInfo.InvariantCulture);
+                if (stringValue == null)
+                {
+                    this.arrayWriter.WriteNullValue(ref arrayState);
+                }
+                else
+                {
                     this.WriteStringValue(
                         ref arrayState,
-                        s,
+                        stringValue,
                         tagValueMaxLength);
-                    break;
-                case int intValue:
-                    this.arrayWriter.WriteIntegralValue(ref arrayState, intValue);
-                    break;
-                case long l:
-                    this.arrayWriter.WriteIntegralValue(ref arrayState, l);
-                    break;
-                case bool b:
-                    this.arrayWriter.WriteBooleanValue(ref arrayState, b);
-                    break;
-                case double d:
-                    this.arrayWriter.WriteFloatingPointValue(ref arrayState, d);
-                    break;
-                case char c:
-                    this.WriteCharValue(ref arrayState, c);
-                    break;
-                case byte b:
-                    this.arrayWriter.WriteIntegralValue(ref arrayState, b);
-                    break;
-                case sbyte sb:
-                    this.arrayWriter.WriteIntegralValue(ref arrayState, sb);
-                    break;
-                case short s:
-                    this.arrayWriter.WriteIntegralValue(ref arrayState, s);
-                    break;
-                case ushort us:
-                    this.arrayWriter.WriteIntegralValue(ref arrayState, us);
-                    break;
-                case uint ui:
-                    this.arrayWriter.WriteIntegralValue(ref arrayState, ui);
-                    break;
-                case float f:
-                    this.arrayWriter.WriteFloatingPointValue(ref arrayState, f);
-                    break;
+                }
 
-                // All other types are converted to strings including the following
-                // built-in value types:
-                // case Array:   Nested array.
-                // case nint:    Pointer type.
-                // case nuint:   Pointer type.
-                // case ulong:   May throw an exception on overflow.
-                // case decimal: Converting to double produces rounding errors.
-                default:
-                    var stringValue = Convert.ToString(item, CultureInfo.InvariantCulture);
-                    if (stringValue == null)
-                    {
-                        this.arrayWriter.WriteNullValue(ref arrayState);
-                    }
-                    else
-                    {
-                        this.WriteStringValue(
-                            ref arrayState,
-                            stringValue,
-                            tagValueMaxLength);
-                    }
+                break;
+        }
+    }
 
-                    break;
+    private bool TryWriteNestedArrayValue(ref TArrayState arrayState, Array nestedArray, int? tagValueMaxLength)
+    {
+        if (recursionDepth >= MaxRecursionDepth || !this.arrayWriter.TryBeginNestedArrayValue(ref arrayState))
+        {
+            return false;
+        }
+
+        recursionDepth++;
+        try
+        {
+            foreach (var element in nestedArray)
+            {
+                this.WriteArrayItem(ref arrayState, element, tagValueMaxLength);
             }
         }
+        finally
+        {
+            recursionDepth--;
+        }
+
+        this.arrayWriter.EndNestedArrayValue(ref arrayState);
+        return true;
+    }
+
+    private bool TryWriteNestedObjectValue(ref TArrayState arrayState, IEnumerable<KeyValuePair<string, object?>> kvList, int? tagValueMaxLength)
+    {
+        if (recursionDepth >= MaxRecursionDepth || !this.arrayWriter.TryBeginNestedObjectValue(ref arrayState))
+        {
+            return false;
+        }
+
+        recursionDepth++;
+        try
+        {
+            foreach (var kvp in DeduplicateKeys(kvList))
+            {
+                this.arrayWriter.WriteNestedObjectPropertyName(ref arrayState, kvp.Key);
+                this.WriteArrayItem(ref arrayState, kvp.Value, tagValueMaxLength);
+            }
+        }
+        finally
+        {
+            recursionDepth--;
+        }
+
+        this.arrayWriter.EndNestedObjectValue(ref arrayState);
+        return true;
     }
 
     private void WriteToArrayCovariant<TItem>(ref TArrayState arrayState, TItem[] array)

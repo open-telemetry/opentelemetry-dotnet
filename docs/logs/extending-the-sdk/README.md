@@ -79,9 +79,9 @@ Custom processors can be implemented to cover more scenarios:
 ```csharp
 class MyProcessor : BaseProcessor<LogRecord>
 {
-    public override void OnEnd(LogRecord record)
+    public override void OnEnd(LogRecord data)
     {
-        Console.WriteLine($"OnEnd: {record}");
+        Console.WriteLine($"OnEnd: {data}");
     }
 }
 ```

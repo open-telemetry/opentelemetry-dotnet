@@ -1486,10 +1486,10 @@ public sealed class TracerProviderSdkTests : IDisposable
     [InlineData(false)]
     public void TracerProviderSdkBuildsWithSDKResource(bool useConfigure)
     {
-        using var tracerProvider = useConfigure ?
-            Sdk.CreateTracerProviderBuilder().SetResourceBuilder(
-                ResourceBuilder.CreateDefault().AddTelemetrySdk()).Build() :
-            Sdk.CreateTracerProviderBuilder().ConfigureResource(r => r.AddTelemetrySdk()).Build();
+        using var tracerProvider = useConfigure
+            ? Sdk.CreateTracerProviderBuilder().SetResourceBuilder(
+                ResourceBuilder.CreateDefault().AddTelemetrySdk()).Build()
+            : Sdk.CreateTracerProviderBuilder().ConfigureResource(r => r.AddTelemetrySdk()).Build();
         var resource = tracerProvider.GetResource();
         var attributes = resource.Attributes;
 
@@ -1600,6 +1600,26 @@ public sealed class TracerProviderSdkTests : IDisposable
 
         Assert.Contains(nonLegacyActivity.OperationName, onStartProcessedActivities); // Processor.OnStart is called since we added a legacy OperationName
         Assert.Contains(nonLegacyActivity.OperationName, onStopProcessedActivities);  // Processor.OnEnd is called since we added a legacy OperationName
+    }
+
+    [Fact]
+    public void LegacySourceMatchesLaterPatternWithoutTimingOut()
+    {
+        var prefix = Utils.GetCurrentMethodName();
+        var exportedItems = new List<Activity>();
+
+        using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+            .AddLegacySource(prefix + "*a*a*a*a*a*a*a*b")
+            .AddLegacySource(prefix + "*x")
+            .SetSampler(new AlwaysOnSampler())
+            .AddInMemoryExporter(exportedItems)
+            .Build();
+
+        using var activity = new Activity(prefix + new string('a', 1000) + "x");
+        activity.Start();
+        activity.Stop();
+
+        Assert.Same(activity, Assert.Single(exportedItems));
     }
 
     [Fact]
