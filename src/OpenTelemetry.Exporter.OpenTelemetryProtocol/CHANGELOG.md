@@ -7,6 +7,19 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Hardened the experimental disk retry feature.
+  * **Breaking:** When running on .NET on non-Windows platforms, creating the
+    exporter now throws an `UnauthorizedAccessException` if the retry
+    directory could be changed by another user. The retry directory must be
+    owned by the current user and must not be writable by its group or by
+    other users. Each directory and symbolic link in its path must be owned by
+    the current user or by root, and those directories must not be writable
+    by their group or by other users unless they have the sticky bit set (such
+    as `/tmp`). These checks can be disabled by setting the new
+    `OTEL_DOTNET_EXPERIMENTAL_OTLP_DISK_RETRY_CHECK_PERMISSIONS` setting to
+    `false`.
+  ([#7964](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7964))
+
 ## 1.21.0-rc.1
 
 Released 2026-Oct-28
@@ -46,19 +59,6 @@ Released 2026-Oct-28
 
 * Add support for .NET 11.0.
   ([#6899](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6899))
-
-* Hardened the experimental disk retry feature.
-  * **Breaking:** When running on .NET on non-Windows platforms, creating the
-    exporter now throws an `UnauthorizedAccessException` if the retry
-    directory could be changed by another user. The retry directory must be
-    owned by the current user and must not be writable by its group or by
-    other users. Each directory and symbolic link in its path must be owned by
-    the current user or by root, and those directories must not be writable
-    by their group or by other users unless they have the sticky bit set (such
-    as `/tmp`). These checks can be disabled by setting the new
-    `OTEL_DOTNET_EXPERIMENTAL_OTLP_DISK_RETRY_CHECK_PERMISSIONS` setting to
-    `false`.
-  ([#7964](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7964))
 
 ## 1.20.1
 
