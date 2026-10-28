@@ -43,6 +43,20 @@ Notes](../../RELEASENOTES.md).
   fully initialized, could case a `NullReferenceException` when enumerating `Tags`.
   ([#8018](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8018))
 
+* **Breaking Change** Dropped support for `net8.0` and `net9.0`.
+  ([#6899](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6899))
+
+* Add support for .NET 11.0.
+  ([#6899](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6899))
+
+* Added support for enabling `ActivitySource`s from configuration using the
+  `Microsoft.Extensions.Diagnostics` tracing APIs introduced in .NET 11 (for
+  example, `services.AddTracing(b => b.AddConfiguration(section))`).
+  Activities from sources enabled this way are processed by the OpenTelemetry
+  `TracerProvider` registered through `AddOpenTelemetry().WithTracing()`.
+  Not supported when targeting `net10.0`.
+  ([#6899](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6899))
+
 * Added support for batching the metric points exported by
   `PeriodicExportingMetricReader`. When a maximum export batch size is set,
   using the new constructor overload or

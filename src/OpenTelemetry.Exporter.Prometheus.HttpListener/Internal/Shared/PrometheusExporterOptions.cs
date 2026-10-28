@@ -112,7 +112,7 @@ internal sealed class PrometheusExporterOptions
     /// <summary>
     /// Gets or sets the maximum time in milliseconds a single scrape response is allowed to take,
     /// after which the request is cancelled. This bounds how long a client that stops reading the
-    /// response body can hold the shared collection reader slot. Default value:
+    /// response body can hold the response buffer it is read from. Default value:
     /// <see cref="DefaultScrapeResponseTimeoutMilliseconds"/> (60 seconds).
     /// </summary>
     public int ScrapeResponseTimeoutMilliseconds
