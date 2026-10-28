@@ -9,6 +9,7 @@ using OpenTelemetry.Metrics;
 
 namespace OpenTelemetry.Tests.Logs;
 
+[Collection(SelfObservabilityCollectionDefinition.Name)]
 public class BatchLogRecordExportProcessorSelfObservabilityTests
 {
     [Fact]

@@ -7,6 +7,37 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Fixed OpenMetrics scrape responses containing a `# UNIT` line whose unit is
+  not an underscore-separated suffix of the metric family name (for example
+  `auth.failedlogins` with the unit `logins`), which caused scrapers such as
+  Prometheus to reject the whole response. The `# UNIT` line is now omitted
+  for such metrics; exported metric names are unchanged.
+  ([#7993](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7993))
+
+* Fixed scrapes that negotiate different response formats within the
+  `ScrapeResponseCacheDurationMilliseconds` window each triggering their own
+  metrics collection. A collection now also writes the response for other
+  formats whose scrapes arrived alongside a previous collection, so scrapes
+  that keep arriving together are served from the cache. Fresh cached responses
+  remain available while another format is serialized, even if that
+  serialization fails.
+  ([#7994](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7994))
+
+* Fixed array- and map-valued attributes being serialized as the .NET type
+  name (e.g. `System.Byte[]`, `System.Int32[]`) instead of being JSON-encoded
+  as per the specification. `byte[]`-valued attributes are now
+  Base64-encoded, and other array- and map-valued attributes are now
+  JSON-encoded.
+  ([#7694](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7694))
+
+* Fixed arrays of string-valued key/value pairs being
+  serialized as JSON arrays of strings instead of JSON objects.
+  ([#7694](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7694))
+
+## 1.20.1-beta.1
+
+Released 2026-Oct-20
+
 * Fixed scrape responses being handed to the server in a single write, which
   on Linux and macOS made the listener allocate and hold a full copy of the
   response for each client that did not read it until the request completed or
@@ -18,6 +49,13 @@ Notes](../../RELEASENOTES.md).
   the client kept trickling in the body. The connection is now closed after
   responding to a request with a body instead of being kept alive.
   ([#7962](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7962))
+
+* Fixed startup scrapes permanently omitting `target_info` and configured
+  resource constant labels from subsequent scrape responses.
+  ([#7984](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7984))
+
+* Updated OpenTelemetry core component version(s) to `1.20.1`.
+  ([#7990](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7990))
 
 ## 1.20.0-beta.1
 

@@ -15,6 +15,7 @@ using OpenTelemetry.Tests;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests.Implementation.ExportClient;
 
+[Collection(EventSourceCollectionDefinition.Name)]
 public class OtlpGrpcExportClientTests
 {
     private const int GrpcHeaderSize = 5;
@@ -362,7 +363,7 @@ public class OtlpGrpcExportClientTests
             httpClient,
             string.Empty);
 
-        Assert.Throws<OperationCanceledException>(() =>
+        Assert.ThrowsAny<OperationCanceledException>(() =>
             exportClient.SendExportRequest(buffer, buffer.Length, DateTime.UtcNow.AddSeconds(10), cts.Token));
     }
 

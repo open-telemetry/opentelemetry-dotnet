@@ -28,6 +28,7 @@ using OtlpLogs = OpenTelemetry.Proto.Logs.V1;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests;
 
+[Collection(EventSourceCollectionDefinition.Name)]
 public class OtlpLogExporterTests
 {
     private static readonly SdkLimitOptions DefaultSdkLimitOptions = new();
@@ -1054,6 +1055,34 @@ public class OtlpLogExporterTests
 
         // Assert.
         Assert.True(testExportClient.SendExportRequestCalled);
+    }
+
+    [Fact]
+    public void Export_ProcessorTimeoutShorterThanExporterTimeout_LimitsExportDeadline()
+    {
+        // Arrange
+        var testExportClient = new TestExportClient();
+        var exporterOptions = new OtlpExporterOptions();
+        using var transmissionHandler = new OtlpExporterTransmissionHandler(testExportClient, exporterOptions.TimeoutMilliseconds);
+#pragma warning disable CA2000 // Dispose objects before losing scope
+        using var processor = new BatchLogRecordExportProcessor(
+            new OtlpLogExporter(
+                exporterOptions,
+                new SdkLimitOptions(),
+                new ExperimentalOptions(),
+                transmissionHandler),
+            exporterTimeoutMilliseconds: 500);
+#pragma warning restore CA2000 // Dispose objects before losing scope
+
+        // Act
+        var before = DateTime.UtcNow;
+        processor.OnEnd(new LogRecord());
+        Assert.True(processor.ForceFlush());
+        var after = DateTime.UtcNow;
+
+        // Assert
+        Assert.True(testExportClient.SendExportRequestCalled);
+        Assert.InRange(testExportClient.LastDeadlineUtc, before.AddMilliseconds(500), after.AddMilliseconds(500));
     }
 
     [Fact]

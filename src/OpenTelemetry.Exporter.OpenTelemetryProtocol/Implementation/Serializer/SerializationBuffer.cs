@@ -22,6 +22,8 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Serializer
 /// and trims them under memory pressure, so each export simply rents and returns
 /// without retaining anything.
 /// </remarks>
+/// <param name="initialSize">The initial size, in bytes, of the buffer to rent for the first export.</param>
+/// <param name="pool">The optional array pool to rent buffers from; <see cref="ArrayPool{T}.Shared"/> if not specified.</param>
 internal sealed class SerializationBuffer(int initialSize, ArrayPool<byte>? pool = null)
 {
 #if NETFRAMEWORK || NETSTANDARD2_0_OR_GREATER

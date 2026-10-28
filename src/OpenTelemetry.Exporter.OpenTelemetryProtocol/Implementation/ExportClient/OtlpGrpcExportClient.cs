@@ -68,7 +68,7 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
                 httpRequest.Headers.TryAddWithoutValidation("grpc-encoding", "gzip");
             }
 
-            httpResponse = this.SendHttpRequest(httpRequest, cancellationToken);
+            httpResponse = this.SendHttpRequest(httpRequest, deadlineUtc, cancellationToken);
 
             if (this.IsResponseTooLarge(httpResponse, out var responseTooLarge))
             {

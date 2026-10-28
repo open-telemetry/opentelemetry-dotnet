@@ -43,6 +43,7 @@ public sealed class AppleAppFixture : IAsyncLifetime
     private static readonly TimeSpan PollInterval = TimeSpan.FromMilliseconds(500);
     private static readonly TimeSpan SimulatorBootTimeout = TimeSpan.FromMinutes(5);
     private static readonly TimeSpan SimulatorCommandTimeout = TimeSpan.FromMinutes(5);
+    private static readonly TimeSpan SimulatorInstallTimeout = TimeSpan.FromMinutes(2);
     private static readonly TimeSpan TestRunTimeout = TimeSpan.FromMinutes(5);
 
     private readonly StringBuilder log = new();
@@ -315,7 +316,7 @@ public sealed class AppleAppFixture : IAsyncLifetime
         {
             TryKill(process);
 
-            throw new InvalidOperationException(
+            throw new TimeoutException(
                 $"'{fileName}' timed out after {timeout}.{Environment.NewLine}{standardOutput}{standardError}");
         }
 
@@ -396,7 +397,7 @@ public sealed class AppleAppFixture : IAsyncLifetime
                 Configuration,
                 "--framework",
                 AppleTargetFramework(),
-                "-p:RuntimeIdentifier=" + runtimeIdentifier
+                "-p:RuntimeIdentifier=" + runtimeIdentifier,
             ],
             repoRoot,
             BuildTimeout);
@@ -412,23 +413,35 @@ public sealed class AppleAppFixture : IAsyncLifetime
 
         if (!alreadyBooted)
         {
-            // 'bootstatus -b' boots the simulator if required, then waits for the boot to complete
-            var (bootExitCode, _, _) = this.Run("xcrun", ["simctl", "bootstatus", simulator, "-b"], repoRoot, SimulatorBootTimeout);
-
-            if (bootExitCode != 0)
+            if (!this.TryBootSimulator(simulator, repoRoot))
             {
-                this.Fail($"Failed to boot the iOS simulator '{simulator}' with exit code {bootExitCode}.");
                 return;
             }
 
             this.simulatorBootedByFixture = simulator;
         }
 
-        // Remove any previously installed copy so that the app's data container -
-        // where the on-device run writes its results - starts out empty.
-        this.Run("xcrun", ["simctl", "uninstall", simulator, BundleIdentifier], repoRoot, SimulatorCommandTimeout);
+        int installExitCode;
 
-        var (installExitCode, _, _) = this.Run("xcrun", ["simctl", "install", simulator, appBundle], repoRoot, SimulatorCommandTimeout);
+        try
+        {
+            (installExitCode, _, _) = this.Run("xcrun", ["simctl", "install", simulator, appBundle], repoRoot, SimulatorInstallTimeout);
+        }
+        catch (TimeoutException ex)
+        {
+            // The first app management command after the first boot of a new simulator
+            // occasionally never returns, so reboot the simulator and try once more.
+            this.log.AppendLine(ex.Message).AppendLine("Rebooting the simulator and retrying the install.");
+
+            this.Run("xcrun", ["simctl", "shutdown", simulator], repoRoot, SimulatorCommandTimeout);
+
+            if (!this.TryBootSimulator(simulator, repoRoot))
+            {
+                return;
+            }
+
+            (installExitCode, _, _) = this.Run("xcrun", ["simctl", "install", simulator, appBundle], repoRoot, SimulatorCommandTimeout);
+        }
 
         if (installExitCode != 0)
         {
@@ -437,6 +450,15 @@ public sealed class AppleAppFixture : IAsyncLifetime
         }
 
         var resultsDirectory = this.ResultsDirectory(simulator);
+
+        // Delete the results of any previous run from the app's data container (which
+        // 'simctl install' preserves when replacing an existing copy of the app) so that
+        // they cannot be mistaken for the results of this run. This is done from the host
+        // rather than with 'simctl uninstall', which can hang on a freshly booted simulator.
+        if (resultsDirectory is not null && Directory.Exists(resultsDirectory))
+        {
+            Directory.Delete(resultsDirectory, recursive: true);
+        }
 
         // '--console-pty' streams the app's stdout and stderr, which is captured for
         // diagnostics. The run is treated as finished once the results have been
@@ -469,6 +491,20 @@ public sealed class AppleAppFixture : IAsyncLifetime
         }
 
         this.DeviceRunExitCode = 0;
+    }
+
+    private bool TryBootSimulator(string simulator, string repoRoot)
+    {
+        // 'bootstatus -b' boots the simulator if required, then waits for the boot to complete
+        var (bootExitCode, _, _) = this.Run("xcrun", ["simctl", "bootstatus", simulator, "-b"], repoRoot, SimulatorBootTimeout);
+
+        if (bootExitCode != 0)
+        {
+            this.Fail($"Failed to boot the iOS simulator '{simulator}' with exit code {bootExitCode}.");
+            return false;
+        }
+
+        return true;
     }
 
     private (string Simulator, bool AlreadyBooted) ResolveSimulator()

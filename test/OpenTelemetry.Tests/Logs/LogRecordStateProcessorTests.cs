@@ -183,6 +183,49 @@ public class LogRecordStateProcessorTests
         }
     }
 
+    [Theory]
+    [InlineData(true, true)]
+    [InlineData(true, false)]
+    [InlineData(false, true)]
+    [InlineData(false, false)]
+    [Obsolete("Tests the obsolete LogRecord.State setter.")]
+    public void LogProcessorSetStateToEnumerableReplacesAttributesTest(bool useLazyReplacement, bool removePassword)
+    {
+        List<LogRecord> exportedItems = [];
+
+        using (var loggerFactory = CreateLoggerFactory(true, false, exportedItems, OnEnd))
+        {
+            var logger = loggerFactory.CreateLogger("TestLogger");
+            var state = new Dictionary<string, object?> { ["user"] = "alice", ["password"] = "secret" };
+
+            logger.Log(LogLevel.Information, default, state, exception: null, static (_, _) => "Login attempt");
+        }
+
+        var logRecord = Assert.Single(exportedItems);
+        KeyValuePair<string, object?>[] expected = [new("user", "alice")];
+        if (!removePassword)
+        {
+            expected = [.. expected, new("password", "redacted")];
+        }
+
+        Assert.Equal(expected, logRecord.Attributes);
+
+        void OnEnd(LogRecord record)
+        {
+            Assert.NotNull(record.Attributes);
+
+            var replacement = record.Attributes
+                .Where(attribute => !removePassword || attribute.Key != "password")
+                .Select(attribute => attribute.Key == "password"
+                    ? new KeyValuePair<string, object?>(attribute.Key, "redacted")
+                    : attribute);
+
+            record.State = useLazyReplacement
+                ? replacement
+                : replacement.ToDictionary(attribute => attribute.Key, attribute => attribute.Value);
+        }
+    }
+
     private static ILoggerFactory CreateLoggerFactory(
         bool includeAttributes,
         bool parseStateValues,

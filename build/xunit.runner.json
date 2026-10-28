@@ -1,7 +1,3 @@
 ﻿{
-  "diagnosticMessages": true,
-  "longRunningTestSeconds": 120,
-  "maxParallelThreads": 1,
-  "parallelizeTestCollections": false,
   "shutdownForegroundThreadWaitSeconds": 30
 }

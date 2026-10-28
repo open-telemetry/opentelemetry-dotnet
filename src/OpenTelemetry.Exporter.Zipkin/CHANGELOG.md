@@ -6,6 +6,25 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Fixed array-valued tags containing `NaN` or infinite floating-point values
+  being exported as `TRUNCATED`; such values are now written as JSON strings
+  (e.g. `["NaN"]`). Arrays and maps nested inside array-valued tags are now
+  written as nested JSON (with `byte[]` values Base64-encoded) instead of as
+  their .NET type name (e.g. `System.Int32[]`).
+  ([#7694](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7694))
+
+* Fixed arrays of string-valued key/value pairs being
+  serialized as JSON arrays of strings instead of JSON objects.
+  ([#7694](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7694))
+
+## 1.20.1
+
+Released 2026-Oct-20
+
+## 1.20.1-rc.1
+
+Released 2026-Oct-20
+
 * The value of `OTEL_EXPORTER_ZIPKIN_ENDPOINT` is no longer written to the
   exporter's diagnostic log when it is not a valid URI.
   ([#7971](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7971))

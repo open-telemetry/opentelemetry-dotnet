@@ -632,9 +632,9 @@ internal sealed class TracerProviderSdk : TracerProvider
         // not actually allocate a new string, so it is safe to use here without any overhead.
         var parentContext = string.IsNullOrEmpty(activity.ParentId) || activity.ParentSpanId.ToHexString() == "0000000000000000"
             ? default
-            : activity.Parent != null ?
-                activity.Parent.Context :
-                new ActivityContext(
+            : activity.Parent != null
+                ? activity.Parent.Context
+                : new ActivityContext(
                     activity.TraceId,
                     activity.ParentSpanId,
                     activity.ActivityTraceFlags,

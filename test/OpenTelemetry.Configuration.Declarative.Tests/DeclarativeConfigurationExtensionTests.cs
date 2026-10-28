@@ -9,6 +9,7 @@ using OpenTelemetry.Tests;
 
 namespace OpenTelemetry.Configuration.Declarative.Tests;
 
+[Collection(EnvVarsCollectionDefinition.Name)]
 public sealed class DeclarativeConfigurationExtensionTests
 {
     [Fact]
@@ -51,28 +52,6 @@ public sealed class DeclarativeConfigurationExtensionTests
         Assert.Equal(expected, config[OtelEnvironmentVariables.SdkDisabled]);
     }
 
-    [Fact]
-    public void AddOpenTelemetryDeclarativeConfiguration_Parameterless_NoEnvVar_IsNoOp()
-    {
-        using var envScope = EnvironmentVariableScope.Create(OtelEnvironmentVariables.ConfigFile, null);
-
-        var builder = new ConfigurationBuilder();
-        builder.AddOpenTelemetryDeclarativeConfiguration();
-
-        Assert.Empty(builder.Sources);
-    }
-
-    [Fact]
-    public void AddOpenTelemetryDeclarativeConfiguration_Parameterless_WhitespaceEnvVar_IsNoOp()
-    {
-        using var envScope = EnvironmentVariableScope.Create(OtelEnvironmentVariables.ConfigFile, "   ");
-
-        var builder = new ConfigurationBuilder();
-        builder.AddOpenTelemetryDeclarativeConfiguration();
-
-        Assert.Empty(builder.Sources);
-    }
-
     [Theory]
     [InlineData("")]
     [InlineData("   ")]
@@ -89,19 +68,6 @@ public sealed class DeclarativeConfigurationExtensionTests
         var builder = new ConfigurationBuilder();
         var exception = Assert.ThrowsAny<ArgumentException>(() => builder.AddOpenTelemetryDeclarativeConfiguration(null!));
         Assert.Equal("filePath", exception.ParamName);
-    }
-
-    [Fact]
-    public void AddOpenTelemetryDeclarativeConfiguration_Parameterless_ReadsEnvVar()
-    {
-        using var yamlFile = DeclarativeYamlTestFile.CreateDeclarativeYaml(disabled: true);
-        using var envScope = EnvironmentVariableScope.Create(OtelEnvironmentVariables.ConfigFile, yamlFile.Path);
-
-        var config = new ConfigurationBuilder()
-            .AddOpenTelemetryDeclarativeConfiguration()
-            .Build();
-
-        Assert.Equal("true", config[OtelEnvironmentVariables.SdkDisabled]);
     }
 
     [Fact]

@@ -205,7 +205,7 @@ internal static class PrometheusHeadersParser
     }
 
     private static ReadOnlySpan<char> TrimQuotes(ReadOnlySpan<char> value) =>
-        value.Length >= 2 &&
-        value[0] == '"' &&
-        value[value.Length - 1] == '"' ? value.Slice(1, value.Length - 2) : value;
+        value.Length >= 2 && value[0] == '"' && value[value.Length - 1] == '"'
+            ? value.Slice(1, value.Length - 2)
+            : value;
 }

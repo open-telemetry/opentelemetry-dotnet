@@ -73,13 +73,23 @@ internal sealed class PrometheusExporter : BaseExporter<Metric>, IPullMetricExpo
 
     internal Resource Resource
     {
-        get => field ??= this.ParentProvider.GetResource();
+        get
+        {
+            // Collection can run before the provider is attached. Do not cache its empty fallback.
+            if (field == null && this.ParentProvider is { } parentProvider)
+            {
+                field = parentProvider.GetResource();
+            }
+
+            return field ?? Resource.Empty;
+        }
+
         private set;
     }
 
     /// <inheritdoc/>
-    public override ExportResult Export(in Batch<Metric> metrics)
-        => this.OnExport!(in metrics);
+    public override ExportResult Export(in Batch<Metric> batch)
+        => this.OnExport!(in batch);
 
     /// <inheritdoc/>
     protected override void Dispose(bool disposing)

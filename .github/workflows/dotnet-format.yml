@@ -8,13 +8,9 @@ on:
 permissions: {}
 
 jobs:
-  check-dotnet-format:
-    name: Check for changes
+  run-dotnet-format:
+    name: Run dotnet format
     runs-on: ubuntu-26.04
-
-    outputs:
-      include-args: ${{ steps.check.outputs.include-args }}
-      run-format: ${{ steps.check.outputs.run-format }}
 
     permissions:
       contents: read
@@ -35,7 +31,7 @@ jobs:
         $changedFiles = git diff --name-only "$baseRef...HEAD"
 
         $formatConfigurationFiles = $changedFiles | Where-Object {
-          $_ -match '(^|/)(global\.json|\.editorconfig|.*\.(csproj|globalconfig|props|ruleset|targets))$'
+          $_ -match '(^|/)(global\.json|\.editorconfig)$'
         }
 
         if ($formatConfigurationFiles) {
@@ -55,48 +51,22 @@ jobs:
           }
         }
 
-  run-dotnet-format:
-    name: 'Run dotnet format (${{ matrix.name }})'
-    needs: [check-dotnet-format]
-    runs-on: windows-2025
-    if: ${{ needs.check-dotnet-format.outputs.run-format == 'true' }}
-
-    permissions:
-      contents: read
-
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - name: stable
-            expose-experimental-features: false
-          - name: unstable
-            expose-experimental-features: true
-
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      with:
-        filter: 'tree:0'
-        persist-credentials: false
-        show-progress: false
-
     - name: Setup .NET
+      if: steps.check.outputs.run-format == 'true'
       uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
 
-    - name: dotnet restore
-      run: dotnet restore OpenTelemetry.slnx
-
     - name: dotnet format
+      if: steps.check.outputs.run-format == 'true'
       shell: pwsh
       env:
-        ExposeExperimentalFeatures: ${{ matrix.expose-experimental-features }}
-        INCLUDE_FILES: ${{ needs.check-dotnet-format.outputs.include-args }}
+        INCLUDE_FILES: ${{ steps.check.outputs.include-args }}
       run: |
-        # Note: .proj files are currently not supported by dotnet format
+        # Only whitespace is checked here as code style and analyzer rules are
+        # enforced by the build (EnforceCodeStyleInBuild and TreatWarningsAsErrors).
+        # Using --folder means no restore or project evaluation is needed.
         $formatArgs = @(
-          'OpenTelemetry.slnx',
-          '--no-restore',
+          'whitespace',
+          '--folder',
           '--verify-no-changes'
         )
 

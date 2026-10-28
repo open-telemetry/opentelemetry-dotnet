@@ -9,6 +9,7 @@ using OpenTelemetry.SelfDiagnostics;
 
 namespace OpenTelemetry.Tests.Diagnostics;
 
+[Collection(EventSourceCollectionDefinition.Name)]
 public class SelfDiagnosticsLoggingEventListenerTests
 {
     // One EventSource name per test. Two live EventSource instances sharing a name are rejected by
@@ -318,9 +319,12 @@ public class SelfDiagnosticsLoggingEventListenerTests
     }
 
     private static List<SelfDiagnosticsLogEntry> EntriesFrom(TestSink sink, string sourceName)
-        => [.. sink.Written
-            .Where(item => item.Entry.Message.StartsWith(sourceName, StringComparison.Ordinal))
-            .Select(item => item.Entry)];
+        =>
+        [
+            .. sink.Written
+                .Where(item => item.Entry.Message.StartsWith(sourceName, StringComparison.Ordinal))
+                .Select(item => item.Entry),
+        ];
 
     private static bool WasWritten(TestSink sink, string messageTail)
         => sink.Written.Any(item => item.Entry.Message.EndsWith(messageTail, StringComparison.Ordinal));
