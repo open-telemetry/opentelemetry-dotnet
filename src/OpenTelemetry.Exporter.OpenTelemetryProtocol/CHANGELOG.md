@@ -7,6 +7,10 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+## 1.21.0-rc.1
+
+Released 2026-Oct-28
+
 * Fixed experimental in-memory retries exceeding the export timeout when a
   retried request stalls.
   ([#7977](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7977))

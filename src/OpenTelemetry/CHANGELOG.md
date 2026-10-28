@@ -6,6 +6,10 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+## 1.21.0-rc.1
+
+Released 2026-Oct-28
+
 * Fixed a race in the self-diagnostics sink dispatcher where disposing it
   while its pump thread was exiting could throw `ArgumentNullException` on
   .NET Framework.
