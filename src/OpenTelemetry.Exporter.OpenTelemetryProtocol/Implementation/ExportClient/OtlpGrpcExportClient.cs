@@ -50,22 +50,22 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
 #endif
 
     /// <inheritdoc/>
-    public override ExportClientResponse SendExportRequest(byte[] buffer, int contentLength, DateTime deadlineUtc, CancellationToken cancellationToken = default)
+    protected override ExportClientResponse SendExportRequest(byte[] buffer, int contentLength, OtlpExportCompression compression, DateTime deadlineUtc, CancellationToken cancellationToken)
     {
         HttpResponseMessage? httpResponse = null;
 
         try
         {
-            using var httpRequest = this.CreateHttpRequest(buffer, contentLength);
+            using var httpRequest = this.CreateHttpRequest(buffer, contentLength, compression);
 
             // TE is required by some servers, e.g. C Core.
             // A missing TE header results in servers aborting the gRPC call.
             httpRequest.Headers.TryAddWithoutValidation("TE", "trailers");
 
-            if (this.CompressionEnabled)
+            if (compression != OtlpExportCompression.None)
             {
                 httpRequest.Headers.Remove("grpc-encoding");
-                httpRequest.Headers.TryAddWithoutValidation("grpc-encoding", "gzip");
+                httpRequest.Headers.TryAddWithoutValidation("grpc-encoding", GetEncodingName(compression));
             }
 
             httpResponse = this.SendHttpRequest(httpRequest, deadlineUtc, cancellationToken);
@@ -232,20 +232,31 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
         }
     }
 
-    protected override HttpContent CreateHttpContent(byte[] buffer, int contentLength) =>
-        this.CompressionEnabled
-            ? this.CreateGZipHttpContent(buffer, contentLength)
-            : base.CreateHttpContent(buffer, contentLength);
+    /// <inheritdoc/>
+    /// <remarks>
+    /// Servers that do not support a grpc-encoding return UNIMPLEMENTED.
+    /// See https://github.com/grpc/grpc/blob/master/doc/compression.md.
+    /// </remarks>
+    protected override bool IsCompressionRejected(ExportClientResponse response) =>
+        response is ExportClientGrpcResponse { Status.StatusCode: StatusCode.Unimplemented };
+
+    protected override HttpContent CreateHttpContent(byte[] buffer, int contentLength, OtlpExportCompression compression) =>
+        compression != OtlpExportCompression.None
+            ? this.CreateCompressedHttpContent(buffer, contentLength, compression)
+            : base.CreateHttpContent(buffer, contentLength, compression);
+
+    private static string GetEncodingName(OtlpExportCompression compression) =>
+        compression == OtlpExportCompression.Zstd ? "zstd" : "gzip";
 
     private static bool IsTransientNetworkError(HttpRequestException ex) =>
         ex.InnerException is SocketException { SocketErrorCode: SocketError.TimedOut or SocketError.ConnectionReset or SocketError.HostUnreachable or SocketError.ConnectionRefused };
 
-    private StreamContent CreateGZipHttpContent(byte[] buffer, int contentLength)
+    private StreamContent CreateCompressedHttpContent(byte[] buffer, int contentLength, OtlpExportCompression compression)
     {
-        // Build a gzip-compressed gRPC message frame:
-        //   byte 0     - Compression flag = 1 (gzip).
+        // Build a compressed gRPC message frame:
+        //   byte 0     - Compression flag = 1 (compressed with the grpc-encoding).
         //   bytes 1-4  - Compressed payload length in big-endian format.
-        //   bytes 5+   - Gzip-compressed protobuf payload.
+        //   bytes 5+   - Compressed protobuf payload.
 #if NET
         var compressedStream = new PooledBufferStream();
 #else
@@ -259,8 +270,15 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
         compressedStream.Write(GrpcFrameHeader, 0, GrpcFrameHeader.Length);
 #endif
 
-        using (var gzipStream = new GZipStream(compressedStream, CompressionLevel.Fastest, leaveOpen: true))
+#if NET11_0_OR_GREATER
+        if (compression == OtlpExportCompression.Zstd)
         {
+            this.GetZstdCompressor().Compress(buffer.AsSpan(GrpcMessageHeaderSize, contentLength - GrpcMessageHeaderSize), compressedStream);
+        }
+        else
+#endif
+        {
+            using var gzipStream = new GZipStream(compressedStream, CompressionLevel.Fastest, leaveOpen: true);
             gzipStream.Write(buffer, GrpcMessageHeaderSize, contentLength - GrpcMessageHeaderSize);
         }
 
@@ -286,7 +304,7 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
 
         if (OpenTelemetryProtocolExporterEventSource.Log.IsEnabled(EventLevel.Verbose, EventKeywords.All))
         {
-            OpenTelemetryProtocolExporterEventSource.Log.CompressedGrpcPayload("gzip", contentLength, compressedStream.Length);
+            OpenTelemetryProtocolExporterEventSource.Log.CompressedGrpcPayload(GetEncodingName(compression), contentLength, compressedStream.Length);
         }
 
         var content = new StreamContent(compressedStream);

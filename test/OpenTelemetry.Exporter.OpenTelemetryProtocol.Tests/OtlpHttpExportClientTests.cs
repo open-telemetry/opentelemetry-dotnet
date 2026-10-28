@@ -4,6 +4,9 @@
 #if NETFRAMEWORK
 using System.Net.Http;
 #endif
+#if NET11_0_OR_GREATER
+using System.Buffers.Binary;
+#endif
 using System.Diagnostics;
 using System.Diagnostics.Tracing;
 using System.IO.Compression;
@@ -196,6 +199,170 @@ public class OtlpHttpExportClientTests
         Assert.True(request.Headers.TransferEncodingChunked);
 #endif
     }
+
+#if NET11_0_OR_GREATER
+    [Fact]
+    public void SendExportRequest_WithZstdCompression_IsCompressed()
+    {
+        var payload = "00000000000000000000000000000000"u8.ToArray();
+
+        using var testHandler = new TestHttpMessageHandler();
+        using var httpClient = new HttpClient(testHandler, disposeHandler: false);
+
+        var exportClient = CreateZstdExportClient(httpClient);
+
+        var response = exportClient.SendExportRequest(
+            payload,
+            payload.Length,
+            DateTime.UtcNow.AddSeconds(10),
+            TestContext.Current.CancellationToken);
+
+        Assert.True(response.Success);
+
+        var content = testHandler.HttpRequestContent;
+
+        Assert.NotNull(content);
+        Assert.True(content.Length < payload.Length, "The payload was not compressed.");
+        Assert.Equal(payload, DecompressZstd(content));
+        AssertZstdFrameIsInteroperable(content);
+
+        var request = testHandler.HttpRequestMessage;
+
+        Assert.NotNull(request);
+        Assert.NotNull(request.Content);
+        Assert.Contains(request.Content.Headers, h => h.Key == "Content-Encoding" && h.Value.Contains("zstd"));
+    }
+
+    [Fact]
+    public void SendExportRequest_WithZstdCompression_LargePayloadWindowDoesNotExceed8MiB()
+    {
+        // Larger than the 8 MiB window, so the frame cannot be single-segment.
+        var payload = new byte[(9 * 1024 * 1024) + 1];
+        System.Security.Cryptography.RandomNumberGenerator.Fill(payload);
+
+        using var testHandler = new TestHttpMessageHandler();
+        using var httpClient = new HttpClient(testHandler, disposeHandler: false);
+
+        var exportClient = CreateZstdExportClient(httpClient);
+
+        exportClient.SendExportRequest(
+            payload,
+            payload.Length,
+            DateTime.UtcNow.AddSeconds(30),
+            TestContext.Current.CancellationToken);
+
+        var content = testHandler.HttpRequestContent;
+
+        Assert.NotNull(content);
+        Assert.Equal(payload, DecompressZstd(content));
+
+        var windowSize = AssertZstdFrameIsInteroperable(content);
+        Assert.True(windowSize <= 8 * 1024 * 1024, $"The window size of {windowSize} bytes exceeds 8 MiB.");
+    }
+
+    [Theory]
+    [InlineData(HttpStatusCode.UnsupportedMediaType)]
+    [InlineData(HttpStatusCode.BadRequest)]
+    public void SendExportRequest_WithZstdCompression_RejectedByReceiver_RetriesWithGzipAndThenUsesGzip(HttpStatusCode rejectionStatusCode)
+    {
+        const int ZstdCompressionRejectedEventId = 45;
+
+        var payload = "00000000000000000000000000000000"u8.ToArray();
+
+        using var listener = new TestEventListener(OpenTelemetryProtocolExporterEventSource.Log, EventLevel.Warning);
+        using var testHandler = new ContentEncodingHttpMessageHandler(encoding => encoding == "zstd" ? rejectionStatusCode : HttpStatusCode.OK);
+        using var httpClient = new HttpClient(testHandler, disposeHandler: false);
+
+        var exportClient = CreateZstdExportClient(httpClient);
+
+        var response = exportClient.SendExportRequest(payload, payload.Length, DateTime.UtcNow.AddSeconds(10), TestContext.Current.CancellationToken);
+
+        Assert.True(response.Success);
+        Assert.Equal(["zstd", "gzip"], testHandler.ContentEncodings);
+        Assert.Contains(listener.Messages, e => e.EventId == ZstdCompressionRejectedEventId);
+        Assert.Equal(OtlpExportCompression.GZip, exportClient.Compression);
+
+        response = exportClient.SendExportRequest(payload, payload.Length, DateTime.UtcNow.AddSeconds(10), TestContext.Current.CancellationToken);
+
+        Assert.True(response.Success);
+        Assert.Equal(["zstd", "gzip", "gzip"], testHandler.ContentEncodings);
+    }
+
+    [Fact]
+    public void SendExportRequest_WithZstdCompression_RejectedForOtherReason_KeepsUsingZstd()
+    {
+        var payload = "00000000000000000000000000000000"u8.ToArray();
+
+        using var testHandler = new ContentEncodingHttpMessageHandler(_ => HttpStatusCode.BadRequest);
+        using var httpClient = new HttpClient(testHandler, disposeHandler: false);
+
+        var exportClient = CreateZstdExportClient(httpClient);
+
+        var response = exportClient.SendExportRequest(payload, payload.Length, DateTime.UtcNow.AddSeconds(10), TestContext.Current.CancellationToken);
+
+        var httpResponse = Assert.IsType<ExportClientHttpResponse>(response);
+        Assert.False(httpResponse.Success);
+        Assert.Equal(HttpStatusCode.BadRequest, httpResponse.StatusCode);
+        Assert.Equal(["zstd", "gzip"], testHandler.ContentEncodings);
+        Assert.Equal(OtlpExportCompression.Zstd, exportClient.Compression);
+    }
+
+    [Theory]
+    [InlineData(HttpStatusCode.InternalServerError)]
+    [InlineData(HttpStatusCode.ServiceUnavailable)]
+    [InlineData(HttpStatusCode.Unauthorized)]
+    public void SendExportRequest_WithZstdCompression_OtherFailure_DoesNotRetryWithGzip(HttpStatusCode statusCode)
+    {
+        var payload = "00000000000000000000000000000000"u8.ToArray();
+
+        using var testHandler = new ContentEncodingHttpMessageHandler(_ => statusCode);
+        using var httpClient = new HttpClient(testHandler, disposeHandler: false);
+
+        var exportClient = CreateZstdExportClient(httpClient);
+
+        var response = exportClient.SendExportRequest(payload, payload.Length, DateTime.UtcNow.AddSeconds(10), TestContext.Current.CancellationToken);
+
+        Assert.False(response.Success);
+        Assert.Equal(["zstd"], testHandler.ContentEncodings);
+    }
+#else
+    [Fact]
+    public void SendExportRequest_WithZstdCompression_UsesGzipWhenZstdIsNotSupported()
+    {
+        const int ZstdCompressionNotSupportedEventId = 44;
+
+        var payload = "00000000000000000000000000000000"u8.ToArray();
+
+        using var listener = new TestEventListener(OpenTelemetryProtocolExporterEventSource.Log, EventLevel.Warning);
+        using var testHandler = new TestHttpMessageHandler();
+        using var httpClient = new HttpClient(testHandler, disposeHandler: false);
+
+        var exportClient = new OtlpHttpExportClient(
+            new OtlpExporterOptions
+            {
+                Endpoint = new Uri("http://localhost:4318"),
+                Protocol = OtlpExportProtocol.HttpProtobuf,
+                Compression = OtlpExportCompression.Zstd,
+            },
+            httpClient,
+            string.Empty);
+
+        exportClient.SendExportRequest(
+            payload,
+            payload.Length,
+            DateTime.UtcNow.AddSeconds(10),
+            TestContext.Current.CancellationToken);
+
+        Assert.Equal(OtlpExportCompression.GZip, exportClient.Compression);
+        Assert.Contains(listener.Messages, e => e.EventId == ZstdCompressionNotSupportedEventId);
+
+        var request = testHandler.HttpRequestMessage;
+
+        Assert.NotNull(request);
+        Assert.NotNull(request.Content);
+        Assert.Contains(request.Content.Headers, h => h.Key == "Content-Encoding" && h.Value.Contains("gzip"));
+    }
+#endif
 
     [Fact]
     public void SendExportRequest_UnexpectedException_ReturnsRetryableFailureResponse()
@@ -480,6 +647,65 @@ public class OtlpHttpExportClientTests
         return exportClient.SendExportRequest(payload, payload.Length, DateTime.UtcNow.AddSeconds(10));
     }
 
+#if NET11_0_OR_GREATER
+    private static OtlpHttpExportClient CreateZstdExportClient(HttpClient httpClient) =>
+        new(
+            new OtlpExporterOptions
+            {
+                Endpoint = new Uri("http://localhost:4318"),
+                Protocol = OtlpExportProtocol.HttpProtobuf,
+                Compression = OtlpExportCompression.Zstd,
+            },
+            httpClient,
+            string.Empty);
+
+    private static byte[] DecompressZstd(byte[] compressed)
+    {
+        using var input = new MemoryStream(compressed);
+        using var zstd = new ZstandardStream(input, CompressionMode.Decompress);
+        using var output = new MemoryStream();
+
+        zstd.CopyTo(output);
+
+        return output.ToArray();
+    }
+
+    /// <summary>
+    /// Asserts the content is a standard Zstandard frame that does not use a dictionary.
+    /// </summary>
+    /// <param name="frame">The Zstandard frame.</param>
+    /// <returns>The window size the frame requires a decoder to use.</returns>
+    private static long AssertZstdFrameIsInteroperable(byte[] frame)
+    {
+        // See https://www.rfc-editor.org/rfc/rfc8878#section-3.1.1.
+        Assert.Equal(0xFD2FB528u, BinaryPrimitives.ReadUInt32LittleEndian(frame));
+
+        var descriptor = frame[4];
+        var dictionaryIdFlag = descriptor & 0b11;
+        var singleSegment = (descriptor & 0b0010_0000) != 0;
+        var contentSizeFlag = descriptor >> 6;
+
+        Assert.Equal(0, dictionaryIdFlag);
+
+        if (singleSegment)
+        {
+            // The window size is the content size.
+            return contentSizeFlag switch
+            {
+                0 => frame[5],
+                1 => BinaryPrimitives.ReadUInt16LittleEndian(frame.AsSpan(5)) + 256,
+                2 => BinaryPrimitives.ReadUInt32LittleEndian(frame.AsSpan(5)),
+                _ => (long)BinaryPrimitives.ReadUInt64LittleEndian(frame.AsSpan(5)),
+            };
+        }
+
+        var windowDescriptor = frame[5];
+        var windowBase = 1L << (10 + (windowDescriptor >> 3));
+
+        return windowBase + ((windowBase / 8) * (windowDescriptor & 0b111));
+    }
+#endif
+
     private sealed class ThrowingHttpMessageHandler : HttpMessageHandler
     {
         private readonly Exception exception;
@@ -497,6 +723,29 @@ public class OtlpHttpExportClientTests
             => throw this.exception;
 #endif
     }
+
+#if NET11_0_OR_GREATER
+    private sealed class ContentEncodingHttpMessageHandler(Func<string?, HttpStatusCode> getStatusCode) : HttpMessageHandler
+    {
+        public List<string?> ContentEncodings { get; } = [];
+
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+            => Task.FromResult(this.Send(request, cancellationToken));
+
+        protected override HttpResponseMessage Send(HttpRequestMessage request, CancellationToken cancellationToken)
+        {
+            var encoding = request.Content?.Headers.ContentEncoding.SingleOrDefault();
+
+            this.ContentEncodings.Add(encoding);
+
+            return new(getStatusCode(encoding))
+            {
+                RequestMessage = request,
+                Content = new ByteArrayContent([]),
+            };
+        }
+    }
+#endif
 
     private sealed class StatusCodeHttpMessageHandler : HttpMessageHandler
     {

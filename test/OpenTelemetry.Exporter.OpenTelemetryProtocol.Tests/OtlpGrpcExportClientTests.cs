@@ -228,6 +228,94 @@ public class OtlpGrpcExportClientTests
             h => h.Key == "grpc-encoding" && h.Value.Contains("gzip"));
     }
 
+#if NET11_0_OR_GREATER
+    [Fact]
+    public void SendExportRequest_GrpcExport_ZstdCompression_PayloadDecompressesToOriginalProtobuf()
+    {
+        var protobufPayload = "grpc test payload for compression"u8.ToArray();
+        var buffer = BuildGrpcFrame(protobufPayload);
+
+        using var testHandler = new TestGrpcMessageHandler();
+        using var httpClient = new HttpClient(testHandler, disposeHandler: false);
+
+        var exportClient = CreateZstdExportClient(httpClient);
+
+        var response = exportClient.SendExportRequest(
+            buffer,
+            buffer.Length,
+            DateTime.UtcNow.AddSeconds(10),
+            TestContext.Current.CancellationToken);
+
+        Assert.True(response.Success);
+
+        Assert.NotNull(testHandler.CapturedRequestBytes);
+        var content = testHandler.CapturedRequestBytes;
+
+        Assert.Equal(1, content[0]);
+
+        var compressedLength = (int)BinaryPrimitives.ReadUInt32BigEndian(content.AsSpan(1, 4));
+        Assert.Equal(content.Length - GrpcHeaderSize, compressedLength);
+
+        using (var input = new MemoryStream(content, GrpcHeaderSize, compressedLength))
+        using (var zstd = new ZstandardStream(input, CompressionMode.Decompress))
+        using (var output = new MemoryStream())
+        {
+            zstd.CopyTo(output);
+            Assert.Equal(protobufPayload, output.ToArray());
+        }
+
+        Assert.NotNull(testHandler.CapturedRequestHeaders);
+        Assert.Contains(
+            testHandler.CapturedRequestHeaders,
+            h => h.Key == "grpc-encoding" && h.Value.Contains("zstd"));
+    }
+
+    [Fact]
+    public void SendExportRequest_GrpcExport_ZstdCompression_Unimplemented_RetriesWithGzipAndThenUsesGzip()
+    {
+        const int ZstdCompressionRejectedEventId = 45;
+
+        var buffer = BuildGrpcFrame("grpc test payload for compression"u8.ToArray());
+
+        using var listener = new TestEventListener(OpenTelemetryProtocolExporterEventSource.Log, EventLevel.Warning);
+        using var testHandler = new GrpcEncodingMessageHandler(encoding => encoding == "zstd" ? StatusCode.Unimplemented : StatusCode.OK);
+        using var httpClient = new HttpClient(testHandler, disposeHandler: false);
+
+        var exportClient = CreateZstdExportClient(httpClient);
+
+        var response = exportClient.SendExportRequest(buffer, buffer.Length, DateTime.UtcNow.AddSeconds(10), TestContext.Current.CancellationToken);
+
+        Assert.True(response.Success);
+        Assert.Equal(["zstd", "gzip"], testHandler.GrpcEncodings);
+        Assert.Contains(listener.Messages, e => e.EventId == ZstdCompressionRejectedEventId);
+        Assert.Equal(OtlpExportCompression.GZip, exportClient.Compression);
+
+        response = exportClient.SendExportRequest(buffer, buffer.Length, DateTime.UtcNow.AddSeconds(10), TestContext.Current.CancellationToken);
+
+        Assert.True(response.Success);
+        Assert.Equal(["zstd", "gzip", "gzip"], testHandler.GrpcEncodings);
+    }
+
+    [Theory]
+    [InlineData((int)StatusCode.InvalidArgument)]
+    [InlineData((int)StatusCode.Unavailable)]
+    public void SendExportRequest_GrpcExport_ZstdCompression_OtherFailure_DoesNotRetryWithGzip(int statusCode)
+    {
+        var buffer = BuildGrpcFrame("grpc test payload for compression"u8.ToArray());
+
+        using var testHandler = new GrpcEncodingMessageHandler(_ => (StatusCode)statusCode);
+        using var httpClient = new HttpClient(testHandler, disposeHandler: false);
+
+        var exportClient = CreateZstdExportClient(httpClient);
+
+        var response = exportClient.SendExportRequest(buffer, buffer.Length, DateTime.UtcNow.AddSeconds(10), TestContext.Current.CancellationToken);
+
+        Assert.False(response.Success);
+        Assert.Equal(["zstd"], testHandler.GrpcEncodings);
+        Assert.Equal(OtlpExportCompression.Zstd, exportClient.Compression);
+    }
+#endif
+
     [Fact]
     public void SendExportRequest_Timeout_ReturnsRetryableDeadlineExceededResponse()
     {
@@ -400,6 +488,18 @@ public class OtlpGrpcExportClientTests
         return frame;
     }
 
+#if NET11_0_OR_GREATER
+    private static OtlpGrpcExportClient CreateZstdExportClient(HttpClient httpClient) =>
+        new(
+            new OtlpExporterOptions
+            {
+                Endpoint = new Uri("http://localhost:4317"),
+                Compression = OtlpExportCompression.Zstd,
+            },
+            httpClient,
+            string.Empty);
+#endif
+
     private static byte[] Decompress(byte[] compressed)
     {
         using var input = new MemoryStream(compressed);
@@ -529,6 +629,30 @@ public class OtlpGrpcExportClientTests
             public override void Write(byte[] buffer, int offset, int count) => throw new NotSupportedException();
         }
     }
+
+#if NET11_0_OR_GREATER
+    private sealed class GrpcEncodingMessageHandler(Func<string?, StatusCode> getStatusCode) : HttpMessageHandler
+    {
+        public List<string?> GrpcEncodings { get; } = [];
+
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        {
+            var encoding = request.Headers.TryGetValues("grpc-encoding", out var values) ? values.SingleOrDefault() : null;
+
+            this.GrpcEncodings.Add(encoding);
+
+            var response = new HttpResponseMessage(System.Net.HttpStatusCode.OK)
+            {
+                RequestMessage = request,
+                Content = new ByteArrayContent([]),
+            };
+
+            response.Headers.Add("grpc-status", ((int)getStatusCode(encoding)).ToString(System.Globalization.CultureInfo.InvariantCulture));
+
+            return Task.FromResult(response);
+        }
+    }
+#endif
 
     private sealed class TestGrpcMessageHandler : HttpMessageHandler
     {

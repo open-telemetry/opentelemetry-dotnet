@@ -20,4 +20,20 @@ public enum OtlpExportCompression
     /// Compress with GZip.
     /// </summary>
     GZip = 1,
+
+    /// <summary>
+    /// Compress with Zstandard (zstd).
+    /// </summary>
+    /// <remarks>
+    /// Notes:
+    /// <list type="bullet">
+    /// <item>Zstandard compression is only available when running on .NET 11
+    /// or later, and is not available in the browser or on WASI. Where it is
+    /// not available, <see cref="GZip"/> is used instead.</item>
+    /// <item>If the receiver rejects a Zstandard-compressed request, the
+    /// request is sent again once using <see cref="GZip"/>. If that succeeds,
+    /// <see cref="GZip"/> is used for all subsequent requests.</item>
+    /// </list>
+    /// </remarks>
+    Zstd = 2,
 }

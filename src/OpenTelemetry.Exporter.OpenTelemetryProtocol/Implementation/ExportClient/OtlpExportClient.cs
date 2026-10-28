@@ -33,6 +33,14 @@ internal abstract class OtlpExportClient : IExportClient
         !OperatingSystem.IsBrowser();
 #endif
 
+    private readonly OtlpExportCompression compression;
+
+#if NET11_0_OR_GREATER
+    private readonly ZstdCompressor? zstdCompressor;
+#endif
+
+    private int zstdRejected;
+
     protected OtlpExportClient(OtlpExporterOptions options, HttpClient httpClient, string signalPath)
     {
         Guard.ThrowIfNull(options);
@@ -56,7 +64,23 @@ internal abstract class OtlpExportClient : IExportClient
         this.Endpoint = new UriBuilder(exporterEndpoint).Uri;
         this.Headers = options.GetHeaders<Dictionary<string, string>>((d, k, v) => d.Add(k, v));
         this.HttpClient = httpClient;
-        this.CompressionEnabled = options.Compression == OtlpExportCompression.GZip;
+        this.compression = options.Compression;
+
+        if (this.compression == OtlpExportCompression.Zstd)
+        {
+#if NET11_0_OR_GREATER
+            if (ZstdCompressor.IsSupported)
+            {
+                this.zstdCompressor = new ZstdCompressor();
+            }
+            else
+#endif
+            {
+                OpenTelemetryProtocolExporterEventSource.Log.ZstdCompressionNotSupported();
+                this.compression = OtlpExportCompression.GZip;
+            }
+        }
+
         this.MaxResponseSizeBytes = options.MaxResponseSizeBytes;
     }
 
@@ -66,7 +90,17 @@ internal abstract class OtlpExportClient : IExportClient
 
     internal IReadOnlyDictionary<string, string> Headers { get; }
 
-    internal bool CompressionEnabled { get; }
+    /// <summary>
+    /// Gets the compression the next request will be sent with.
+    /// </summary>
+    /// <remarks>
+    /// This is <see cref="OtlpExportCompression.GZip"/> if Zstandard compression was configured,
+    /// but the receiver rejected a request using it and then accepted it using GZip.
+    /// </remarks>
+    internal OtlpExportCompression Compression
+        => this.compression == OtlpExportCompression.Zstd && Volatile.Read(ref this.zstdRejected) != 0
+            ? OtlpExportCompression.GZip
+            : this.compression;
 
     /// <summary>
     /// Gets the maximum size, in bytes, of a response the exporter will accept.
@@ -81,12 +115,41 @@ internal abstract class OtlpExportClient : IExportClient
 
     internal virtual HttpCompletionOption CompletionOption => HttpCompletionOption.ResponseHeadersRead;
 
-    public abstract ExportClientResponse SendExportRequest(byte[] buffer, int contentLength, DateTime deadlineUtc, CancellationToken cancellationToken = default);
+    /// <inheritdoc/>
+    public ExportClientResponse SendExportRequest(byte[] buffer, int contentLength, DateTime deadlineUtc, CancellationToken cancellationToken = default)
+    {
+        var compression = this.Compression;
+        var response = this.SendExportRequest(buffer, contentLength, compression, deadlineUtc, cancellationToken);
+
+        if (compression == OtlpExportCompression.Zstd && this.IsCompressionRejected(response))
+        {
+            // Receivers are not required to support Zstandard, so a request they reject is sent again
+            // once with GZip so that it is not dropped solely because of the compression used.
+            // See https://github.com/open-telemetry/opentelemetry-specification/pull/5321.
+            OpenTelemetryProtocolExporterEventSource.Log.ZstdCompressionRejected(this.Endpoint);
+
+            response = this.SendExportRequest(buffer, contentLength, OtlpExportCompression.GZip, deadlineUtc, cancellationToken);
+
+            if (response.Success)
+            {
+                // Only stop using Zstandard if GZip succeeded, as otherwise the rejection
+                // was most likely caused by something other than the compression used.
+                Volatile.Write(ref this.zstdRejected, 1);
+            }
+        }
+
+        return response;
+    }
 
     /// <inheritdoc/>
     public bool Shutdown(int timeoutMilliseconds)
     {
         this.HttpClient.CancelPendingRequests();
+
+#if NET11_0_OR_GREATER
+        this.zstdCompressor?.Shutdown();
+#endif
+
         return true;
     }
 
@@ -207,7 +270,26 @@ internal abstract class OtlpExportClient : IExportClient
         return false;
     }
 
-    protected HttpRequestMessage CreateHttpRequest(byte[] buffer, int contentLength)
+    /// <summary>
+    /// Sends an export request using the specified compression.
+    /// </summary>
+    /// <param name="buffer">The request body.</param>
+    /// <param name="contentLength">The number of bytes within <paramref name="buffer"/> that make up the message.</param>
+    /// <param name="compression">The compression to apply to the request body.</param>
+    /// <param name="deadlineUtc">The deadline time in UTC for the export request to finish.</param>
+    /// <param name="cancellationToken">An optional token for canceling the call.</param>
+    /// <returns><see cref="ExportClientResponse"/>.</returns>
+    protected abstract ExportClientResponse SendExportRequest(byte[] buffer, int contentLength, OtlpExportCompression compression, DateTime deadlineUtc, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Determines whether a failed response indicates that the receiver does not
+    /// support the compression the request was sent with.
+    /// </summary>
+    /// <param name="response">The response to inspect.</param>
+    /// <returns><see langword="true"/> if the receiver rejected the request's compression.</returns>
+    protected abstract bool IsCompressionRejected(ExportClientResponse response);
+
+    protected HttpRequestMessage CreateHttpRequest(byte[] buffer, int contentLength, OtlpExportCompression compression)
     {
         var request = new HttpRequestMessage(HttpMethod.Post, this.Endpoint);
 
@@ -232,7 +314,7 @@ internal abstract class OtlpExportClient : IExportClient
             }
         }
 
-        request.Content = this.CreateHttpContent(buffer, contentLength);
+        request.Content = this.CreateHttpContent(buffer, contentLength, compression);
 
         return request;
     }
@@ -243,8 +325,9 @@ internal abstract class OtlpExportClient : IExportClient
     /// </summary>
     /// <param name="buffer">The serialized protobuf payload buffer.</param>
     /// <param name="contentLength">The number of bytes within <paramref name="buffer"/> that make up the message.</param>
+    /// <param name="compression">The compression to apply to the payload.</param>
     /// <returns>An <see cref="HttpContent"/> representing the export payload.</returns>
-    protected virtual HttpContent CreateHttpContent(byte[] buffer, int contentLength)
+    protected virtual HttpContent CreateHttpContent(byte[] buffer, int contentLength, OtlpExportCompression compression)
     {
 #if NET
         var content = new ReadOnlyMemoryContent(buffer.AsMemory(0, contentLength));
@@ -254,6 +337,15 @@ internal abstract class OtlpExportClient : IExportClient
         content.Headers.ContentType = this.MediaTypeHeader;
         return content;
     }
+
+#if NET11_0_OR_GREATER
+    /// <summary>
+    /// Gets the <see cref="ZstdCompressor"/> to use for requests compressed with Zstandard.
+    /// </summary>
+    /// <returns>The <see cref="ZstdCompressor"/> to use.</returns>
+    protected ZstdCompressor GetZstdCompressor()
+        => this.zstdCompressor ?? throw new InvalidOperationException("Zstandard compression is not enabled.");
+#endif
 
     protected HttpResponseMessage SendHttpRequest(HttpRequestMessage request, DateTime deadlineUtc, CancellationToken cancellationToken)
     {
