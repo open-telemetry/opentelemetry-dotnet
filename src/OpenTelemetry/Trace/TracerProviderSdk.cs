@@ -32,6 +32,7 @@ internal sealed class TracerProviderSdk : TracerProvider
     private readonly Func<ActivitySource, bool>? shouldListenTo;
 
     private IDisposable? selfDiagnosticsRegistration;
+    private volatile bool samplerShutdown;
 #if !NET10_0
     private OpenTelemetryTracingListener.TracerProviderBridge? tracingBridge;
 #endif
@@ -236,7 +237,7 @@ internal sealed class TracerProviderSdk : TracerProvider
             {
                 // This delegate informs ActivitySource about sampling decision when the parent context is an ActivityContext.
                 activityListener.Sample = (ref options) =>
-                    !Sdk.SuppressInstrumentation ? ComputeActivitySamplingResult(ref options, this.Sampler) : ActivitySamplingResult.None;
+                    !Sdk.SuppressInstrumentation ? ComputeActivitySamplingResult(ref options, this) : ActivitySamplingResult.None;
                 this.getRequestedDataAction = this.RunGetRequestedDataOtherSampler;
             }
 
@@ -290,7 +291,7 @@ internal sealed class TracerProviderSdk : TracerProvider
         {
             AlwaysOnSampler => ActivitySamplingResult.AllDataAndRecorded,
             AlwaysOffSampler => PropagateOrIgnoreData(ref options),
-            _ => ComputeActivitySamplingResult(ref options, this.Sampler),
+            _ => ComputeActivitySamplingResult(ref options, this),
         };
     }
 
@@ -385,9 +386,18 @@ internal sealed class TracerProviderSdk : TracerProvider
         this.DetachTracingBridge();
 #endif
 
-        var result = this.Processor?.Shutdown(timeoutMilliseconds);
+        long? timestamp = timeoutMilliseconds == Timeout.Infinite ? null : Stopwatch.GetTimestamp();
+
+        var result = this.Processor?.Shutdown(timeoutMilliseconds) ?? true;
         this.listener?.Dispose();
-        return result ?? true;
+
+        // The sampler is shut down last, once the listener has been disposed, as the
+        // provider must not call the sampler after it has started to shut down.
+        var samplerTimeoutMilliseconds = timestamp is { } startedAt
+            ? Stopwatch.Remaining(timeoutMilliseconds, startedAt)
+            : timeoutMilliseconds;
+
+        return this.ShutdownSampler(samplerTimeoutMilliseconds) && result;
     }
 
     protected override void Dispose(bool disposing)
@@ -409,8 +419,6 @@ internal sealed class TracerProviderSdk : TracerProvider
                 this.DetachTracingBridge();
 #endif
 
-                (this.Sampler as IDisposable)?.Dispose();
-
                 if (this.Processor != null)
                 {
                     // Wait for up to 5 seconds grace period
@@ -419,10 +427,14 @@ internal sealed class TracerProviderSdk : TracerProvider
                     this.Processor = null;
                 }
 
-                // Shutdown the listener last so that anything created while instrumentation cleans up will still be processed.
+                // Shutdown the listener so that anything created while instrumentation cleans up will still be processed.
                 // Redis instrumentation, for example, flushes during dispose which creates Activity objects for any profiling
                 // sessions that were open.
                 this.listener?.Dispose();
+
+                // Shutdown the sampler last, as the listener calls it for anything that is created until the listener is disposed
+                this.ShutdownSampler(5_000);
+                (this.Sampler as IDisposable)?.Dispose();
 
                 this.OwnedServiceProvider?.Dispose();
                 this.OwnedServiceProvider = null;
@@ -628,8 +640,13 @@ internal sealed class TracerProviderSdk : TracerProvider
 
     private static ActivitySamplingResult ComputeActivitySamplingResult(
         ref ActivityCreationOptions<ActivityContext> options,
-        Sampler sampler)
+        TracerProviderSdk provider)
     {
+        var sampler = provider.Sampler;
+
+        // Creating the parameters can run user code (such as a custom trace ID generator),
+        // so this is checked afterwards, as late as possible, to narrow the window in which
+        // a call to the sampler can start once it has been shut down.
         var samplingParameters = new SamplingParameters(
             options.Parent,
             options.TraceId,
@@ -637,6 +654,11 @@ internal sealed class TracerProviderSdk : TracerProvider
             options.Kind,
             options.Tags,
             options.Links);
+
+        if (provider.samplerShutdown)
+        {
+            return ActivitySamplingResult.None;
+        }
 
         var samplingResult = sampler.ShouldSample(samplingParameters);
 
@@ -719,6 +741,7 @@ internal sealed class TracerProviderSdk : TracerProvider
             }
         }
 
+        CleanUp(() => this.ShutdownSampler(0));
         CleanUp(() => (this.Sampler as IDisposable)?.Dispose());
 
         if (this.OwnedServiceProvider != null)
@@ -738,6 +761,20 @@ internal sealed class TracerProviderSdk : TracerProvider
                 OpenTelemetrySdkEventSource.Log.TracerProviderException(nameof(this.DisposeBuiltState), ex);
             }
         }
+    }
+
+    private bool ShutdownSampler(int timeoutMilliseconds)
+    {
+        // The listener being disposed does not stop the callbacks of an ActivitySource which
+        // had already captured it from being called, so also stop them from reaching the sampler.
+        // A call which has already passed the check is treated as being in progress and is left
+        // to finish, as it would be if it were inside the sampler, see Sampler.OnShutdown().
+        // Preventing that would need every sampling call to synchronize with shutdown.
+        this.samplerShutdown = true;
+
+        return this.Sampler is { } sampler
+            ? Sampler.ShutdownShared(sampler, timeoutMilliseconds)
+            : true;
     }
 
     private void RunGetRequestedDataAlwaysOnSampler(Activity activity)
@@ -778,6 +815,14 @@ internal sealed class TracerProviderSdk : TracerProvider
             activity.Kind,
             activity.TagObjects,
             activity.Links);
+
+        // Checked after the parameters are created, as late as possible, see ComputeActivitySamplingResult().
+        if (this.samplerShutdown)
+        {
+            activity.IsAllDataRequested = false;
+            activity.ActivityTraceFlags &= ~ActivityTraceFlags.Recorded;
+            return;
+        }
 
         var samplingResult = this.Sampler.ShouldSample(samplingParameters);
 
