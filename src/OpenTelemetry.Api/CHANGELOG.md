@@ -10,6 +10,10 @@ Notes](../../RELEASENOTES.md).
   (`EnvironmentVariableCarrier`) are now stable.
   ([#8044](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8044))
 
+## 1.21.0-rc.1
+
+Released 2026-Oct-28
+
 ## 1.20.1
 
 Released 2026-Oct-20
