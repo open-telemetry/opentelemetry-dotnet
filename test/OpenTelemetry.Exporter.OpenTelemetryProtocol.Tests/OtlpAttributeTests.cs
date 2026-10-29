@@ -560,6 +560,20 @@ public class OtlpAttributeTests
     }
 
     [Theory]
+    [InlineData(-1, null)]
+    [InlineData(-1, 10)]
+    [InlineData(1, null)]
+    [InlineData(1, 10)]
+    public void ByteCountOutsideTheTryFormatDestinationFallsBackToToString(int bytesPastDestination, int? tagValueMaxLength)
+    {
+        var writer = CreateWriter(enableUtf8Spans: true);
+        var kvp = new KeyValuePair<string, object?>("key", new Utf8ValueWithByteCountOutsideDestination(bytesPastDestination, "fallback"));
+
+        Assert.True(TryTransformTag(writer, kvp, out var attribute, tagValueMaxLength));
+        Assert.Equal("fallback", attribute.Value.StringValue);
+    }
+
+    [Theory]
     [InlineData(0, "")]
     [InlineData(1, "a")]
     [InlineData(2, "a\u00E9")]
@@ -794,6 +808,21 @@ public class OtlpAttributeTests
             => System.Text.Encoding.UTF8.TryGetBytes(value, utf8Destination, out bytesWritten);
 
         public override string ToString() => value;
+    }
+
+    /// <summary>
+    /// Reports success with a byte count past the end of the destination, or a negative one when
+    /// <paramref name="bytesPastDestination"/> is negative.
+    /// </summary>
+    private sealed class Utf8ValueWithByteCountOutsideDestination(int bytesPastDestination, string toStringValue) : IUtf8SpanFormattable
+    {
+        public bool TryFormat(Span<byte> utf8Destination, out int bytesWritten, ReadOnlySpan<char> format, IFormatProvider? provider)
+        {
+            bytesWritten = bytesPastDestination < 0 ? bytesPastDestination : utf8Destination.Length + bytesPastDestination;
+            return true;
+        }
+
+        public override string ToString() => toStringValue;
     }
 
     private sealed class Utf8Bytes(byte[] bytes, string toStringValue) : IUtf8SpanFormattable

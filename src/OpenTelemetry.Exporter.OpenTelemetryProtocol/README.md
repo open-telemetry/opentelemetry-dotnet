@@ -738,7 +738,11 @@ want to solicit feedback from the community.
     `IUtf8SpanFormattable` that are not already handled as a built-in type are
     formatted directly into the export buffer with `TryFormat` instead of
     through `ToString()`. `TryFormat` must return `false` only when the
-    destination is too small. Values are exported as string attributes.
+    destination is too small, and must not throw for any other reason: an
+    `ArgumentException` or `IndexOutOfRangeException` is treated as the
+    destination being too small. Without an attribute value length limit, a
+    value that never fits grows the export buffer to its maximum size and the
+    batch is dropped. Values are exported as string attributes.
 
     The setting is read once from the environment variable (not from
     `IConfiguration`) and applies to every OTLP exporter in the process.

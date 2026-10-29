@@ -220,8 +220,9 @@ internal sealed class ProtobufOtlpTagWriter : TagWriter<ProtobufOtlpTagWriter.Ot
             throw new ArgumentOutOfRangeException(nameof(state), "The buffer is too small to hold the data being written.");
         }
 
-        // Invalid UTF-8 would make strict OTLP receivers reject the whole request.
-        if (formatted && Utf8.IsValid(buffer[..bytesWritten]))
+        // Invalid UTF-8 would make strict OTLP receivers reject the whole request. A byte count outside
+        // the destination is checked first, because slicing with it would throw and be taken as a full buffer.
+        if (formatted && (uint)bytesWritten <= (uint)buffer.Length && Utf8.IsValid(buffer[..bytesWritten]))
         {
             var truncatedLength = TruncateUtf8String(buffer[..bytesWritten], tagValueMaxLength).Length;
             EndUtf8StringTag(ref state, anyValueLengthPosition, stringLengthPosition, truncatedLength);
