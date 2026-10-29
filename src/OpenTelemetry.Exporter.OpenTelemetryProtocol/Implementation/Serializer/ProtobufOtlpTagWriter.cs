@@ -27,7 +27,7 @@ internal sealed class ProtobufOtlpTagWriter : TagWriter<ProtobufOtlpTagWriter.Ot
 
     public static ProtobufOtlpTagWriter Instance { get; } = new(
         new OtlpArrayTagWriter(),
-        new ExperimentalOptions().EnableUtf8Spans);
+        ExperimentalOptions.IsUtf8SpansEnabled());
 
     /// <summary>
     /// Writes a tag as a length-delimited <c>KeyValue</c> message under the given field

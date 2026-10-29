@@ -29,11 +29,6 @@ internal sealed class ExperimentalOptions
             this.EmitLogEventAttributes = emitLogEventAttributes;
         }
 
-        if (configuration.TryGetBoolValue(OpenTelemetryProtocolExporterEventSource.Log, Utf8SpansEnvVar, out var enableUtf8Spans))
-        {
-            this.EnableUtf8Spans = enableUtf8Spans;
-        }
-
         if (configuration.TryGetStringValue(OtlpRetryEnvVar, out var retryPolicy))
         {
             if (string.Equals(retryPolicy, "in_memory", StringComparison.OrdinalIgnoreCase))
@@ -62,12 +57,6 @@ internal sealed class ExperimentalOptions
     public bool EmitLogEventAttributes { get; }
 
     /// <summary>
-    /// Gets a value indicating whether attribute values implementing <c>IUtf8SpanFormattable</c>
-    /// are formatted directly into the export buffer rather than through <c>ToString()</c>.
-    /// </summary>
-    public bool EnableUtf8Spans { get; }
-
-    /// <summary>
     /// Gets a value indicating whether or not in-memory retry should be enabled for transient errors.
     /// </summary>
     /// <remarks>
@@ -85,4 +74,22 @@ internal sealed class ExperimentalOptions
     /// Gets the path on disk where the telemetry will be stored for retries at a later point.
     /// </summary>
     public string? DiskRetryDirectoryPath { get; }
+
+    /// <summary>
+    /// Reads whether <see cref="Utf8SpansEnvVar"/> is set to <see langword="true"/>, meaning attribute
+    /// values implementing <c>IUtf8SpanFormattable</c> are formatted directly into the export buffer
+    /// rather than through <c>ToString()</c>.
+    /// </summary>
+    /// <remarks>
+    /// Read on its own rather than by the constructor, so that an invalid value for another option
+    /// cannot stop the shared tag writer that reads it from being created.
+    /// </remarks>
+    /// <returns><see langword="true"/> if the setting is enabled; otherwise <see langword="false"/>.</returns>
+    public static bool IsUtf8SpansEnabled()
+        => IsUtf8SpansEnabled(new ConfigurationBuilder().AddEnvironmentVariables().Build());
+
+    /// <inheritdoc cref="IsUtf8SpansEnabled()"/>
+    /// <param name="configuration">The configuration to read the setting from.</param>
+    public static bool IsUtf8SpansEnabled(IConfiguration configuration)
+        => configuration.TryGetBoolValue(OpenTelemetryProtocolExporterEventSource.Log, Utf8SpansEnvVar, out var enabled) && enabled;
 }

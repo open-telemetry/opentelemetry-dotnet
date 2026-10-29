@@ -492,13 +492,29 @@ public class OtlpAttributeTests
     [InlineData(null, false)]
     [InlineData("false", false)]
     [InlineData("true", true)]
+    [InlineData("yes", false)]
     public void Utf8SpansAreEnabledByExperimentalEnvVar(string? value, bool expected)
     {
         var configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?> { [ExperimentalOptions.Utf8SpansEnvVar] = value })
             .Build();
 
-        Assert.Equal(expected, new ExperimentalOptions(configuration).EnableUtf8Spans);
+        Assert.Equal(expected, ExperimentalOptions.IsUtf8SpansEnabled(configuration));
+    }
+
+    [Fact]
+    public void Utf8SpansSettingIsReadDespiteAnInvalidUnrelatedExperimentalOption()
+    {
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                [ExperimentalOptions.OtlpRetryEnvVar] = "unsupported",
+                [ExperimentalOptions.Utf8SpansEnvVar] = "true",
+            })
+            .Build();
+
+        Assert.Throws<NotSupportedException>(() => new ExperimentalOptions(configuration));
+        Assert.True(ExperimentalOptions.IsUtf8SpansEnabled(configuration));
     }
 
     [Fact]
