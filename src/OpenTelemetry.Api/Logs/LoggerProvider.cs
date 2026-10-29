@@ -28,7 +28,7 @@ public class LoggerProvider : BaseProvider
     /// </summary>
     /// <remarks><inheritdoc cref="Logger" path="/remarks"/></remarks>
     /// <returns><see cref="Logger"/> instance.</returns>
-    [Experimental(DiagnosticDefinitions.LogsBridgeExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
+    [Experimental(DiagnosticDefinitions.LogsExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
     public
 #else
     internal
@@ -43,7 +43,7 @@ public class LoggerProvider : BaseProvider
     /// <remarks><inheritdoc cref="Logger" path="/remarks"/></remarks>
     /// <param name="name">Optional name identifying the instrumentation library.</param>
     /// <returns><see cref="Logger"/> instance.</returns>
-    [Experimental(DiagnosticDefinitions.LogsBridgeExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
+    [Experimental(DiagnosticDefinitions.LogsExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
     public
 #else
     internal
@@ -59,7 +59,7 @@ public class LoggerProvider : BaseProvider
     /// <param name="name">Optional name identifying the instrumentation library.</param>
     /// <param name="version">Optional version of the instrumentation library.</param>
     /// <returns><see cref="Logger"/> instance.</returns>
-    [Experimental(DiagnosticDefinitions.LogsBridgeExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
+    [Experimental(DiagnosticDefinitions.LogsExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
     public
 #else
     internal
@@ -74,7 +74,7 @@ public class LoggerProvider : BaseProvider
     /// <remarks><inheritdoc cref="Logger" path="/remarks"/></remarks>
     /// <param name="options">The options to use to create the logger, including the name, version, and schema URL.</param>
     /// <returns><see cref="Logger"/> instance.</returns>
-    [Experimental(DiagnosticDefinitions.LogsBridgeExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
+    [Experimental(DiagnosticDefinitions.LogsExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
     public
 #else
     internal
@@ -105,7 +105,7 @@ public class LoggerProvider : BaseProvider
     /// <param name="options">The options to use to create the logger, including the name, version, and schema URL.</param>
     /// <param name="logger">If successful, contains the created <see cref="Logger"/>.</param>
     /// <returns><see langword="true"/> if the logger was created.</returns>
-    [Experimental(DiagnosticDefinitions.LogsBridgeExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
+    [Experimental(DiagnosticDefinitions.LogsExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
     protected
 #else
     internal
