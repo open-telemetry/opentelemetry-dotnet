@@ -53,6 +53,19 @@ internal sealed class ProtobufOtlpTagWriter : TagWriter<ProtobufOtlpTagWriter.Ot
         int? tagValueMaxLength = null)
         => Instance.WriteKeyValueInternal(ref state, fieldNumber, key, value, tagValueMaxLength);
 
+    /// <summary>
+    /// Writes a tag as a length-delimited <c>KeyValue</c> message under the given field
+    /// number with this writer, rather than with <see cref="Instance"/>.
+    /// </summary>
+    /// <remarks>
+    /// Clears any bytes the tag left past the final write position before returning.
+    /// </remarks>
+    /// <param name="state">The writer state, whose write position is advanced.</param>
+    /// <param name="fieldNumber">The field number to write the <c>KeyValue</c> under.</param>
+    /// <param name="key">The attribute key.</param>
+    /// <param name="value">The attribute value.</param>
+    /// <param name="tagValueMaxLength">The maximum length to write a string value as, if any.</param>
+    /// <returns><see langword="true"/> if the key-value pair was successfully written; otherwise <see langword="false"/>.</returns>
     internal bool WriteKeyValueInternal(
         ref OtlpTagWriterState state,
         int fieldNumber,
@@ -330,7 +343,13 @@ internal sealed class ProtobufOtlpTagWriter : TagWriter<ProtobufOtlpTagWriter.Ot
         ProtobufSerializer.WriteReservedLength(state.Buffer, anyValueLengthPosition, state.WritePosition - (anyValueLengthPosition + ReserveSizeForLength));
     }
 
-    // Truncates on whole code points, so a UTF-8 sequence or surrogate pair is never split.
+    /// <summary>
+    /// Truncates UTF-8 text to at most <paramref name="maxLength"/> UTF-16 chars, on whole code
+    /// points, so a UTF-8 sequence or surrogate pair is never split.
+    /// </summary>
+    /// <param name="value">The UTF-8 text to truncate.</param>
+    /// <param name="maxLength">The maximum length in UTF-16 chars, if any.</param>
+    /// <returns>The leading part of <paramref name="value"/> that fits within the limit.</returns>
     private static ReadOnlySpan<byte> TruncateUtf8String(ReadOnlySpan<byte> value, int? maxLength)
     {
         if (!maxLength.HasValue || value.Length <= maxLength)
@@ -362,13 +381,26 @@ internal sealed class ProtobufOtlpTagWriter : TagWriter<ProtobufOtlpTagWriter.Ot
         state.WritePosition = startPosition;
     }
 
-    // Reserving a length can advance WritePosition past the end of the buffer.
+    /// <summary>
+    /// Records that bytes up to <paramref name="position"/> may have been written.
+    /// </summary>
+    /// <remarks>
+    /// Clamped to the buffer, because reserving a length can advance the write position past its end.
+    /// </remarks>
+    /// <param name="state">The writer state whose high-water mark is raised.</param>
+    /// <param name="position">The position up to which bytes may have been written.</param>
     private static void RaiseHighWaterMark(ref OtlpTagWriterState state, int position)
         => state.HighWaterMark = Math.Max(state.HighWaterMark, Math.Min(position, state.Buffer.Length));
 
-    // Only the serialized prefix is cleared when the export buffer goes back to the shared pool,
-    // so bytes left past the write position by a dropped or rewritten tag are cleared here.
-    // Not needed when a buffer-full exception escapes: growing or discarding the buffer clears all of it.
+    /// <summary>
+    /// Clears the bytes between the write position and the high-water mark, then resets the mark.
+    /// </summary>
+    /// <remarks>
+    /// Only the serialized prefix is cleared when the export buffer goes back to the shared pool,
+    /// so bytes left past the write position by a dropped or rewritten tag are cleared here.
+    /// Not needed when a buffer-full exception escapes: growing or discarding the buffer clears all of it.
+    /// </remarks>
+    /// <param name="state">The writer state to clear past the write position of.</param>
     private static void ClearPastWritePosition(ref OtlpTagWriterState state)
     {
         if (state.HighWaterMark > state.WritePosition)
@@ -384,7 +416,9 @@ internal sealed class ProtobufOtlpTagWriter : TagWriter<ProtobufOtlpTagWriter.Ot
         public byte[] Buffer;
         public int DroppedTagCount;
 
-        // The furthest position written that may lie past WritePosition, cleared when the tag finishes.
+        /// <summary>
+        /// The furthest position written that may lie past <see cref="WritePosition"/>, cleared when the tag finishes.
+        /// </summary>
         public int HighWaterMark;
         public int TagCount;
         public int WritePosition;

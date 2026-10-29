@@ -52,7 +52,9 @@ public class OtlpUtf8SpanFormattableTagBenchmarks
 
     internal sealed record TestDTO(string Id, string SeatId, double FloorPrice, string Currency, string[] Formats, bool Enabled);
 
-    // Serializes at export time through a reused writer, so the only per-tag allocation is this wrapper.
+    /// <summary>
+    /// Serializes at export time through a reused writer, so the only per-tag allocation is this wrapper.
+    /// </summary>
     private sealed class JsonTagValue<T>(T value) : IUtf8SpanFormattable
     {
         [ThreadStatic]
