@@ -17,6 +17,12 @@ internal abstract class OtlpExportClient : IExportClient
     /// </summary>
     internal const int MaxLoggedResponseSizeBytes = 4 * 1024;
 
+    /// <summary>
+    /// The number of consecutive requests that are rejected when sent with Zstandard,
+    /// and then fail again when sent with GZip, after which Zstandard is no longer used.
+    /// </summary>
+    private const int MaxConsecutiveZstdFallbackFailures = 3;
+
     private static readonly Version Http2RequestVersion = new(2, 0);
     private static readonly TimeSpan MaxDeadlineDelay = TimeSpan.FromMilliseconds(int.MaxValue);
 
@@ -40,6 +46,7 @@ internal abstract class OtlpExportClient : IExportClient
 #endif
 
     private int zstdRejected;
+    private int zstdFallbackFailures;
 
     protected OtlpExportClient(OtlpExporterOptions options, HttpClient httpClient, string signalPath)
     {
@@ -95,7 +102,9 @@ internal abstract class OtlpExportClient : IExportClient
     /// </summary>
     /// <remarks>
     /// This is <see cref="OtlpExportCompression.GZip"/> if Zstandard compression was configured,
-    /// but the receiver rejected a request using it and then accepted it using GZip.
+    /// but the receiver rejected a request using it and then accepted it using GZip, or if
+    /// <see cref="MaxConsecutiveZstdFallbackFailures"/> requests in a row were rejected using it
+    /// and then failed again using GZip.
     /// </remarks>
     internal OtlpExportCompression Compression
         => this.compression == OtlpExportCompression.Zstd && Volatile.Read(ref this.zstdRejected) != 0
@@ -132,10 +141,22 @@ internal abstract class OtlpExportClient : IExportClient
 
             if (response.Success)
             {
-                // Only stop using Zstandard if GZip succeeded, as otherwise the rejection
-                // was most likely caused by something other than the compression used.
+                // Only stop using Zstandard immediately if GZip succeeded, as otherwise the
+                // rejection was most likely caused by something other than the compression used.
                 Volatile.Write(ref this.zstdRejected, 1);
             }
+            else if (Interlocked.Increment(ref this.zstdFallbackFailures) >= MaxConsecutiveZstdFallbackFailures)
+            {
+                // The receiver keeps rejecting requests whatever their compression, such as when
+                // it responds with 400 to a payload it does not accept. Stop sending each
+                // request twice, which doubles the bandwidth and CPU used, for no benefit.
+                Volatile.Write(ref this.zstdRejected, 1);
+            }
+        }
+        else if (compression == OtlpExportCompression.Zstd)
+        {
+            // The receiver did not reject the compression, so the failures were not consecutive.
+            Volatile.Write(ref this.zstdFallbackFailures, 0);
         }
 
         return response;

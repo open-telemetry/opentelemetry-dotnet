@@ -307,6 +307,59 @@ public class OtlpHttpExportClientTests
         Assert.Equal(OtlpExportCompression.Zstd, exportClient.Compression);
     }
 
+    [Fact]
+    public void SendExportRequest_WithZstdCompression_RepeatedlyRejectedForOtherReason_StopsSendingRequestsTwice()
+    {
+        var payload = "00000000000000000000000000000000"u8.ToArray();
+
+        using var testHandler = new ContentEncodingHttpMessageHandler(_ => HttpStatusCode.BadRequest);
+        using var httpClient = new HttpClient(testHandler, disposeHandler: false);
+
+        var exportClient = CreateZstdExportClient(httpClient);
+
+        for (var i = 0; i < 3; i++)
+        {
+            var response = exportClient.SendExportRequest(payload, payload.Length, DateTime.UtcNow.AddSeconds(10), TestContext.Current.CancellationToken);
+
+            Assert.False(response.Success);
+        }
+
+        Assert.Equal(["zstd", "gzip", "zstd", "gzip", "zstd", "gzip"], testHandler.ContentEncodings);
+        Assert.Equal(OtlpExportCompression.GZip, exportClient.Compression);
+
+        var finalResponse = exportClient.SendExportRequest(payload, payload.Length, DateTime.UtcNow.AddSeconds(10), TestContext.Current.CancellationToken);
+
+        Assert.False(finalResponse.Success);
+        Assert.Equal(["zstd", "gzip", "zstd", "gzip", "zstd", "gzip", "gzip"], testHandler.ContentEncodings);
+    }
+
+    [Fact]
+    public void SendExportRequest_WithZstdCompression_RejectedForOtherReasonNonConsecutively_KeepsUsingZstd()
+    {
+        var payload = "00000000000000000000000000000000"u8.ToArray();
+        var zstdStatusCode = HttpStatusCode.BadRequest;
+
+        using var testHandler = new ContentEncodingHttpMessageHandler(
+            encoding => encoding == "zstd" ? zstdStatusCode : HttpStatusCode.BadRequest);
+        using var httpClient = new HttpClient(testHandler, disposeHandler: false);
+
+        var exportClient = CreateZstdExportClient(httpClient);
+
+        for (var round = 0; round < 3; round++)
+        {
+            exportClient.SendExportRequest(payload, payload.Length, DateTime.UtcNow.AddSeconds(10), TestContext.Current.CancellationToken);
+            exportClient.SendExportRequest(payload, payload.Length, DateTime.UtcNow.AddSeconds(10), TestContext.Current.CancellationToken);
+
+            // A request that is not rejected because of its compression resets the count
+            zstdStatusCode = HttpStatusCode.InternalServerError;
+            exportClient.SendExportRequest(payload, payload.Length, DateTime.UtcNow.AddSeconds(10), TestContext.Current.CancellationToken);
+            zstdStatusCode = HttpStatusCode.BadRequest;
+        }
+
+        Assert.Equal(OtlpExportCompression.Zstd, exportClient.Compression);
+        Assert.Equal(15, testHandler.ContentEncodings.Count);
+    }
+
     [Theory]
     [InlineData(HttpStatusCode.InternalServerError)]
     [InlineData(HttpStatusCode.ServiceUnavailable)]

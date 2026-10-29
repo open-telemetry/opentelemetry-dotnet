@@ -32,6 +32,7 @@ public enum OtlpExportCompression
     /// not available, <see cref="GZip"/> is used instead.</item>
     /// <item>If the receiver rejects a Zstandard-compressed request, the
     /// request is sent again once using <see cref="GZip"/>. If that succeeds,
+    /// or if three requests in a row are rejected and then fail again,
     /// <see cref="GZip"/> is used for all subsequent requests.</item>
     /// </list>
     /// </remarks>

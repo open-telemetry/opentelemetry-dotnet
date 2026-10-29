@@ -353,6 +353,9 @@ appBuilder.Services.AddOptions<OtlpExporterOptions>()
   > rejects a Zstandard-compressed request (with `415`/`400` for
   > `http/protobuf`, or `UNIMPLEMENTED` for `grpc`), the request is sent again
   > using GZip, and GZip is then used for all further requests if that succeeds.
+  > If three requests in a row are rejected and then fail again using GZip,
+  > GZip is also used for all further requests, so that each request is not
+  > sent twice indefinitely.
 
 * `Headers`: Optional headers for the connection.
 
