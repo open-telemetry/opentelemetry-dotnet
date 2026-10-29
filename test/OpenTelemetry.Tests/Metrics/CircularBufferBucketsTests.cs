@@ -183,6 +183,44 @@ public class CircularBufferBucketsTests
         Assert.Equal(1, buckets[buckets.Offset + 1]);
     }
 
+    [Theory]
+    [InlineData(2, false, 1)]
+    [InlineData(2, false, 3)]
+    [InlineData(2, true, 1)]
+    [InlineData(2, true, 3)]
+    [InlineData(3, false, 1)]
+    [InlineData(3, false, 3)]
+    [InlineData(3, true, 1)]
+    [InlineData(3, true, 3)]
+    public void ScaleDownEmptyBuckets(int capacity, bool reset, int level)
+    {
+        var buckets = new CircularBufferBuckets(capacity);
+
+        if (reset)
+        {
+            Assert.Equal(0, buckets.TryIncrement(1, 2));
+            Assert.Equal(0, buckets.TryIncrement(0, 3));
+            buckets.Reset();
+        }
+
+        buckets.ScaleDown(level);
+
+        Assert.Equal(0, buckets.Offset);
+        Assert.Equal(0, buckets.Size);
+
+        var copy = new long[capacity];
+        buckets.Copy(copy);
+        Assert.Equal(new long[capacity], copy);
+
+        Assert.Equal(0, buckets.TryIncrement(-4, 7));
+        Assert.Equal(0, buckets.TryIncrement(-3, 5));
+        buckets.ScaleDown();
+
+        Assert.Equal(-2, buckets.Offset);
+        Assert.Equal(1, buckets.Size);
+        Assert.Equal(12, buckets[-2]);
+    }
+
     [Fact]
     public void ScaleDownCapacity3()
     {
