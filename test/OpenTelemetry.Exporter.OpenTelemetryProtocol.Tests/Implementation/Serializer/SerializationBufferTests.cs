@@ -18,7 +18,7 @@ public class SerializationBufferTests
         var serializationBuffer = new SerializationBuffer(InitialSize, pool);
         var oversizedBuffer = pool.Rent(8 * 1024 * 1024);
 
-        serializationBuffer.Return(oversizedBuffer, SerializedLength);
+        serializationBuffer.Return(oversizedBuffer, SerializedLength, SerializedLength);
 
         var nextBuffer = serializationBuffer.Rent();
 
@@ -51,7 +51,7 @@ public class SerializationBufferTests
         var buffer = pool.Rent(4096);
         buffer.AsSpan().Fill(0xAB);
 
-        serializationBuffer.Return(buffer, SerializedLength);
+        serializationBuffer.Return(buffer, SerializedLength, SerializedLength);
 
         // The buffer belongs to the pool once it has been handed back, so it is
         // inspected as the pool saw it rather than through the rental.
@@ -65,6 +65,41 @@ public class SerializationBufferTests
         // The bytes past the payload were never written, so clearing them would be wasted work.
         Assert.Equal(0xAB, returned[SerializedLength]);
         Assert.Equal(0xAB, returned[returned.Length - 1]);
+    }
+
+    [Fact]
+    public void ReturnScrubsUpToDirtyLengthWhenItIsPastSerializedLength()
+    {
+        const int SerializedLength = 128;
+        const int DirtyLength = 1024;
+
+        var pool = new TrackingArrayPool();
+        var serializationBuffer = new SerializationBuffer(1024, pool);
+        var buffer = pool.Rent(4096);
+        buffer.AsSpan().Fill(0xAB);
+
+        serializationBuffer.Return(buffer, SerializedLength, DirtyLength);
+
+        var returned = Assert.Single(pool.Returned);
+
+        Assert.All(
+            returned.AsSpan(0, DirtyLength).ToArray(),
+            static value => Assert.Equal(0, value));
+        Assert.Equal(0xAB, returned[DirtyLength]);
+    }
+
+    [Fact]
+    public void DirtyLengthDoesNotSizeNextRental()
+    {
+        const int InitialSize = 1024;
+
+        var pool = new TrackingArrayPool();
+        var serializationBuffer = new SerializationBuffer(InitialSize, pool);
+        var buffer = pool.Rent(8 * 1024 * 1024);
+
+        serializationBuffer.Return(buffer, serializedLength: 128, dirtyLength: buffer.Length);
+
+        Assert.Equal(InitialSize, serializationBuffer.Rent().Length);
     }
 
     [Fact]
@@ -94,7 +129,7 @@ public class SerializationBufferTests
         var serializationBuffer = new SerializationBuffer(1024, pool);
         var oversizedBuffer = pool.Rent(BufferSize);
 
-        serializationBuffer.Return(oversizedBuffer, SerializedLength);
+        serializationBuffer.Return(oversizedBuffer, SerializedLength, SerializedLength);
 
         // The buffer is retained rather than handed back to a pool that may not reuse it.
         Assert.Empty(pool.Returned);
@@ -117,12 +152,12 @@ public class SerializationBufferTests
         oversizedBuffer.AsSpan(0, LargeSerializedLength).Fill(0xAB);
 
         // A large export retains the buffer, leaving its payload in place.
-        serializationBuffer.Return(oversizedBuffer, LargeSerializedLength);
+        serializationBuffer.Return(oversizedBuffer, LargeSerializedLength, LargeSerializedLength);
         Assert.Same(oversizedBuffer, serializationBuffer.Rent());
 
         // A much smaller export then hands the same buffer back to the pool. The
         // earlier, larger payload must be scrubbed too, not just the new one.
-        serializationBuffer.Return(oversizedBuffer, SmallSerializedLength);
+        serializationBuffer.Return(oversizedBuffer, SmallSerializedLength, SmallSerializedLength);
 
         var returned = Assert.Single(pool.Returned);
 
@@ -142,7 +177,7 @@ public class SerializationBufferTests
         var oversizedBuffer = pool.Rent(BufferSize);
         oversizedBuffer.AsSpan(0, SerializedLength).Fill(0xAB);
 
-        serializationBuffer.Return(oversizedBuffer, SerializedLength);
+        serializationBuffer.Return(oversizedBuffer, SerializedLength, SerializedLength);
         serializationBuffer.Release();
 
         var returned = Assert.Single(pool.Returned);

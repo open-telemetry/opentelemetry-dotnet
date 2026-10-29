@@ -47,7 +47,7 @@ public class ProtobufOtlpTraceSerializationBenchmarks
         // never hits the growth path (mirrors a warmed-up exporter instance).
         this.steadyStateBuffer = ProtobufSerializer.RentBuffer(InitialBufferSize);
         var batch = new Batch<Activity>(this.activities, this.batchCount);
-        ProtobufOtlpTraceSerializer.WriteTraceData(ref this.steadyStateBuffer, 0, this.sdkLimitOptions, this.resource, batch);
+        ProtobufOtlpTraceSerializer.WriteTraceData(ref this.steadyStateBuffer, 0, this.sdkLimitOptions, this.resource, batch, out _);
     }
 
     [GlobalCleanup]
@@ -66,7 +66,7 @@ public class ProtobufOtlpTraceSerializationBenchmarks
     {
         var buffer = this.steadyStateBuffer;
         var batch = new Batch<Activity>(this.activities, this.batchCount);
-        return ProtobufOtlpTraceSerializer.WriteTraceData(ref buffer, 0, this.sdkLimitOptions, this.resource, batch);
+        return ProtobufOtlpTraceSerializer.WriteTraceData(ref buffer, 0, this.sdkLimitOptions, this.resource, batch, out _);
     }
 
     // Every iteration begins from an initial-size rental and exercises resize plus
@@ -80,7 +80,7 @@ public class ProtobufOtlpTraceSerializationBenchmarks
         try
         {
             var batch = new Batch<Activity>(this.activities, this.batchCount);
-            return ProtobufOtlpTraceSerializer.WriteTraceData(ref buffer, 0, this.sdkLimitOptions, this.resource, batch);
+            return ProtobufOtlpTraceSerializer.WriteTraceData(ref buffer, 0, this.sdkLimitOptions, this.resource, batch, out _);
         }
         finally
         {
@@ -98,7 +98,7 @@ public class ProtobufOtlpTraceSerializationBenchmarks
         try
         {
             var batch = new Batch<Activity>(this.activities, this.batchCount);
-            var writePosition = ProtobufOtlpTraceSerializer.WriteTraceData(ref buffer, 0, this.sdkLimitOptions, this.resource, batch);
+            var writePosition = ProtobufOtlpTraceSerializer.WriteTraceData(ref buffer, 0, this.sdkLimitOptions, this.resource, batch, out _);
             this.bufferSize = Math.Max(InitialBufferSize, writePosition);
             return writePosition;
         }

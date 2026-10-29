@@ -57,9 +57,6 @@ internal sealed class ProtobufOtlpTagWriter : TagWriter<ProtobufOtlpTagWriter.Ot
     /// Writes a tag as a length-delimited <c>KeyValue</c> message under the given field
     /// number with this writer, rather than with <see cref="Instance"/>.
     /// </summary>
-    /// <remarks>
-    /// Clears any bytes the tag left past the final write position before returning.
-    /// </remarks>
     /// <param name="state">The writer state, whose write position is advanced.</param>
     /// <param name="fieldNumber">The field number to write the <c>KeyValue</c> under.</param>
     /// <param name="key">The attribute key.</param>
@@ -83,12 +80,10 @@ internal sealed class ProtobufOtlpTagWriter : TagWriter<ProtobufOtlpTagWriter.Ot
         if (!this.TryWriteTag(ref state, key, value, tagValueMaxLength))
         {
             RollBackTo(ref state, startPosition);
-            ClearPastWritePosition(ref state);
             return false;
         }
 
         state.WritePosition = ProtobufSerializer.WriteCompactLength(state.Buffer, lengthPosition, state.WritePosition);
-        ClearPastWritePosition(ref state);
 
         return true;
     }
@@ -322,7 +317,7 @@ internal sealed class ProtobufOtlpTagWriter : TagWriter<ProtobufOtlpTagWriter.Ot
                 ProtobufSerializer.WriteReservedLength(state.Buffer, entryLengthPos, state.WritePosition - (entryLengthPos + ReserveSizeForLength));
             }
         }
-        catch (Exception ex) when (ex is not (IndexOutOfRangeException or ArgumentException))
+        catch (Exception)
         {
             RollBackTo(ref state, startPosition);
 
@@ -393,32 +388,15 @@ internal sealed class ProtobufOtlpTagWriter : TagWriter<ProtobufOtlpTagWriter.Ot
     private static void SetHighWaterMark(ref OtlpTagWriterState state, int position)
         => state.HighWaterMark = Math.Max(state.HighWaterMark, Math.Min(position, state.Buffer.Length));
 
-    /// <summary>
-    /// Clears the bytes between the write position and the high-water mark, then moves the mark back to the write position.
-    /// </summary>
-    /// <remarks>
-    /// Only the serialized prefix is cleared when the export buffer goes back to the shared pool,
-    /// so bytes left past the write position by a dropped or rewritten tag are cleared here.
-    /// Not needed when a buffer-full exception escapes: growing or discarding the buffer clears all of it.
-    /// </remarks>
-    /// <param name="state">The writer state to clear past the write position of.</param>
-    private static void ClearPastWritePosition(ref OtlpTagWriterState state)
-    {
-        if (state.HighWaterMark > state.WritePosition)
-        {
-            state.Buffer.AsSpan(state.WritePosition, state.HighWaterMark - state.WritePosition).Clear();
-        }
-
-        state.HighWaterMark = state.WritePosition;
-    }
-
     internal struct OtlpTagWriterState
     {
         public byte[] Buffer;
         public int DroppedTagCount;
 
         /// <summary>
-        /// The furthest position written that may lie past <see cref="WritePosition"/>, cleared when the tag finishes.
+        /// The furthest position that may have been written, which can lie past <see cref="WritePosition"/>
+        /// after a rollback or a formatter's scratch writes. Everything before it must be cleared before
+        /// the buffer is reused.
         /// </summary>
         public int HighWaterMark;
         public int TagCount;

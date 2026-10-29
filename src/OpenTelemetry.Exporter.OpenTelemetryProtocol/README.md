@@ -746,12 +746,10 @@ want to solicit feedback from the community.
     Built-in types such as `Int128`, `DateOnly`, `TimeOnly`, `Version` and
     `IPAddress` also take this path once it is enabled.
 
-    > [!WARNING]
-    > Set an attribute value length limit (for example
-    > `OTEL_ATTRIBUTE_VALUE_LENGTH_LIMIT`) when enabling this. The space a
-    > value is formatted into is cleared after each such attribute, and
-    > without a limit that space is the rest of the export buffer, which can
-    > make each attribute take microseconds rather than nanoseconds to write.
+    A formatter may write anywhere in the space it is given, and all of that
+    space is cleared before the export buffer goes back to the shared array
+    pool. That space is 3 bytes per char of the attribute value length limit,
+    or the rest of the export buffer when there is no limit.
 
     Added in **TBD** (Unreleased).
 

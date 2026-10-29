@@ -655,7 +655,7 @@ public sealed class OtlpMetricsExporterTests : IDisposable
         var buffer = ProtobufSerializer.RentBuffer(4096);
         try
         {
-            var writePosition = ProtobufOtlpMetricSerializer.WriteMetricsData(ref buffer, 0, ResourceBuilder.CreateEmpty().Build(), in batch);
+            var writePosition = ProtobufOtlpMetricSerializer.WriteMetricsData(ref buffer, 0, ResourceBuilder.CreateEmpty().Build(), in batch, out _);
 
             // A parser accepts both the packed and unpacked encodings of a repeated scalar
             // field, so decoding the payload alone would not regress to the unpacked encoding.
@@ -1048,7 +1048,7 @@ public sealed class OtlpMetricsExporterTests : IDisposable
         var buffer = ProtobufSerializer.RentBuffer(50);
         try
         {
-            var writePosition = ProtobufOtlpMetricSerializer.WriteMetricsData(ref buffer, 0, ResourceBuilder.CreateEmpty().Build(), in batch);
+            var writePosition = ProtobufOtlpMetricSerializer.WriteMetricsData(ref buffer, 0, ResourceBuilder.CreateEmpty().Build(), in batch, out _);
             using var stream = new MemoryStream(buffer, 0, writePosition);
 
             var metricsData = OtlpMetrics.MetricsData.Parser.ParseFrom(stream);
@@ -1613,7 +1613,7 @@ public sealed class OtlpMetricsExporterTests : IDisposable
         var buffer = ProtobufSerializer.RentBuffer(4096);
         try
         {
-            var writePosition = ProtobufOtlpMetricSerializer.WriteMetricsData(ref buffer, 0, resource, in batch);
+            var writePosition = ProtobufOtlpMetricSerializer.WriteMetricsData(ref buffer, 0, resource, in batch, out _);
             using var stream = new MemoryStream(buffer, 0, writePosition);
 
             var metricsData = OtlpMetrics.MetricsData.Parser.ParseFrom(stream);

@@ -34,7 +34,8 @@ public class ProtobufOtlpLogSerializerTests
                     sdkLimits,
                     experimentalOptions,
                     null,
-                    batch);
+                    batch,
+                    out _);
 
                 return writePos >= 0 && writePos <= buffer.Length;
             }
@@ -65,7 +66,8 @@ public class ProtobufOtlpLogSerializerTests
                     sdkLimits,
                     experimentalOptions,
                     resource,
-                    batch);
+                    batch,
+                    out _);
 
                 return writePos >= 0;
             }
@@ -92,7 +94,8 @@ public class ProtobufOtlpLogSerializerTests
                     sdkLimits,
                     experimentalOptions,
                     null,
-                    batch);
+                    batch,
+                    out _);
 
                 return writePos >= 0;
             }
@@ -124,7 +127,8 @@ public class ProtobufOtlpLogSerializerTests
                     sdkLimits,
                     experimentalOptions,
                     resource,
-                    batch);
+                    batch,
+                    out _);
 
                 return buffer.Length >= initialLength && writePos >= 0;
             }
@@ -155,7 +159,8 @@ public class ProtobufOtlpLogSerializerTests
                     sdkLimits,
                     experimentalOptions,
                     resource,
-                    batch);
+                    batch,
+                    out _);
 
                 if (writePos <= 0)
                 {
@@ -194,7 +199,8 @@ public class ProtobufOtlpLogSerializerTests
                     sdkLimits,
                     experimentalOptions,
                     null,
-                    batch);
+                    batch,
+                    out _);
 
                 return writePos >= 0;
             }
@@ -224,7 +230,8 @@ public class ProtobufOtlpLogSerializerTests
                     sdkLimits,
                     experimentalOptions,
                     null,
-                    batch);
+                    batch,
+                    out _);
 
                 return writePos >= 0;
             }
@@ -252,7 +259,8 @@ public class ProtobufOtlpLogSerializerTests
                     sdkLimits,
                     experimentalOptions,
                     null,
-                    batch);
+                    batch,
+                    out _);
 
                 return writePos >= 0 && writePos <= buffer.Length;
             }
@@ -286,7 +294,8 @@ public class ProtobufOtlpLogSerializerTests
                     sdkLimits,
                     experimentalOptions,
                     resource,
-                    batch);
+                    batch,
+                    out _);
 
                 if (writePos <= 0)
                 {
@@ -325,7 +334,8 @@ public class ProtobufOtlpLogSerializerTests
                     sdkLimits,
                     experimentalOptions,
                     resource,
-                    batch);
+                    batch,
+                    out _);
 
                 if (writePos <= 0)
                 {

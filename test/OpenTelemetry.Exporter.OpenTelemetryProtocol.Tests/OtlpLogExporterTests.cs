@@ -2242,7 +2242,7 @@ public class OtlpLogExporterTests
         var buffer = ProtobufSerializer.RentBuffer(50);
         try
         {
-            var writePosition = ProtobufOtlpLogSerializer.WriteLogsData(ref buffer, 0, DefaultSdkLimitOptions, new(), ResourceBuilder.CreateEmpty().Build(), batch);
+            var writePosition = ProtobufOtlpLogSerializer.WriteLogsData(ref buffer, 0, DefaultSdkLimitOptions, new(), ResourceBuilder.CreateEmpty().Build(), batch, out _);
             using var stream = new MemoryStream(buffer, 0, writePosition);
             var logsData = OtlpLogs.LogsData.Parser.ParseFrom(stream);
             var request = new OtlpCollector.ExportLogsServiceRequest();
@@ -2407,7 +2407,7 @@ public class OtlpLogExporterTests
         var buffer = ProtobufSerializer.RentBuffer(4096);
         try
         {
-            var writePosition = ProtobufOtlpLogSerializer.WriteLogsData(ref buffer, 0, sdkOptions, experimentalOptions, resource, batch);
+            var writePosition = ProtobufOtlpLogSerializer.WriteLogsData(ref buffer, 0, sdkOptions, experimentalOptions, resource, batch, out _);
             using var stream = new MemoryStream(buffer, 0, writePosition);
             var logsData = OtlpLogs.LogsData.Parser.ParseFrom(stream);
             var request = new OtlpCollector.ExportLogsServiceRequest();
@@ -2423,7 +2423,8 @@ public class OtlpLogExporterTests
     private static OtlpLogs.LogRecord? ToOtlpLogs(SdkLimitOptions sdkOptions, ExperimentalOptions experimentalOptions, LogRecord logRecord)
     {
         var buffer = new byte[4096];
-        var writePosition = ProtobufOtlpLogSerializer.WriteLogRecord(buffer, 0, sdkOptions, experimentalOptions, logRecord);
+        var dirtyLength = 0;
+        var writePosition = ProtobufOtlpLogSerializer.WriteLogRecord(buffer, 0, sdkOptions, experimentalOptions, logRecord, ref dirtyLength);
         using var stream = new MemoryStream(buffer, 0, writePosition);
         var scopeLogs = OtlpLogs.ScopeLogs.Parser.ParseFrom(stream);
         return scopeLogs.LogRecords.FirstOrDefault();

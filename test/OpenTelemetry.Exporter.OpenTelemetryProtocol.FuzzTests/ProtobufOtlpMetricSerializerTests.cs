@@ -26,7 +26,8 @@ public class ProtobufOtlpMetricSerializerTests
                     ref buffer,
                     0,
                     null,
-                    metrics);
+                    metrics,
+                    out _);
 
                 return writePos >= 0 && writePos <= buffer.Length;
             }
@@ -50,7 +51,8 @@ public class ProtobufOtlpMetricSerializerTests
                     ref buffer,
                     0,
                     resource,
-                    metrics);
+                    metrics,
+                    out _);
 
                 return writePos >= 0;
             }
@@ -74,7 +76,8 @@ public class ProtobufOtlpMetricSerializerTests
                     ref buffer,
                     0,
                     resource,
-                    metrics);
+                    metrics,
+                    out _);
 
                 return writePos >= 0;
             }
@@ -99,7 +102,8 @@ public class ProtobufOtlpMetricSerializerTests
                     ref buffer,
                     0,
                     resource,
-                    metrics);
+                    metrics,
+                    out _);
 
                 return buffer.Length >= initialLength && writePos >= 0;
             }
@@ -123,7 +127,8 @@ public class ProtobufOtlpMetricSerializerTests
                     ref buffer,
                     0,
                     resource,
-                    metrics);
+                    metrics,
+                    out _);
 
                 if (writePos <= 0)
                 {
@@ -156,7 +161,8 @@ public class ProtobufOtlpMetricSerializerTests
                     ref buffer,
                     0,
                     resource,
-                    metrics);
+                    metrics,
+                    out _);
 
                 if (writePos <= 0)
                 {

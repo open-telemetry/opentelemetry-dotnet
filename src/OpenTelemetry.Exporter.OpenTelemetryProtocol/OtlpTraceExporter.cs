@@ -85,6 +85,7 @@ public class OtlpTraceExporter : BaseExporter<Activity>
         byte[]? buffer = null;
         var serializationSucceeded = false;
         var writePosition = 0;
+        var dirtyLength = 0;
 
         try
         {
@@ -98,6 +99,7 @@ public class OtlpTraceExporter : BaseExporter<Activity>
                     this.sdkLimitOptions,
                     this.Resource,
                     activityBatch,
+                    out dirtyLength,
                     this.maxRequestSizeBytes + this.startWritePosition);
                 serializationSucceeded = true;
             }
@@ -156,7 +158,7 @@ public class OtlpTraceExporter : BaseExporter<Activity>
             {
                 if (serializationSucceeded)
                 {
-                    this.serializationBuffer.Return(buffer, writePosition);
+                    this.serializationBuffer.Return(buffer, writePosition, dirtyLength);
                 }
                 else
                 {

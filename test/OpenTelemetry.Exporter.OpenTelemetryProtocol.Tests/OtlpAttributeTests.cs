@@ -597,7 +597,7 @@ public class OtlpAttributeTests
     }
 
     [Fact]
-    public void KvListThatThrowsAfterAFormattedEntryLeavesNoBytesInBuffer()
+    public void KvListThatThrowsAfterAFormattedEntryIsRolledBack()
     {
         var writer = CreateWriter(enableUtf8Spans: true);
         var state = new ProtobufOtlpTagWriter.OtlpTagWriterState
@@ -609,7 +609,6 @@ public class OtlpAttributeTests
         Assert.False(writer.WriteKeyValueInternal(ref state, ProtobufOtlpTraceFieldNumberConstants.Span_Attributes, "key", ThrowAfterFirstEntry()));
 
         Assert.Equal(0, state.WritePosition);
-        Assert.All(state.Buffer, b => Assert.Equal(0, b));
 
         static IEnumerable<KeyValuePair<string, object?>> ThrowAfterFirstEntry()
         {
@@ -618,34 +617,10 @@ public class OtlpAttributeTests
         }
     }
 
-    [Fact]
-    public void NestedKvListThatDoesNotFitIsNotClearedBeforeTheBufferIsGrown()
-    {
-        var writer = CreateWriter(enableUtf8Spans: true);
-        var state = new ProtobufOtlpTagWriter.OtlpTagWriterState
-        {
-            Buffer = new byte[64],
-            WritePosition = 0,
-        };
-
-        var kvList = new List<KeyValuePair<string, object?>>
-        {
-            new("outer", new List<KeyValuePair<string, object?>>
-            {
-                new("inner", new string('v', 1024)),
-            }),
-        };
-
-        var exception = Record.Exception(() => writer.WriteKeyValueInternal(ref state, ProtobufOtlpTraceFieldNumberConstants.Span_Attributes, "key", kvList));
-
-        Assert.True(exception is IndexOutOfRangeException or ArgumentException);
-        Assert.True(state.Buffer.AsSpan().IndexOf("outer"u8) >= 0);
-    }
-
     [Theory]
     [InlineData(null)]
     [InlineData(10)]
-    public void DroppedUtf8SpanFormattableLeavesNoBytesInBuffer(int? tagValueMaxLength)
+    public void DroppedUtf8SpanFormattableIsRolledBack(int? tagValueMaxLength)
     {
         var writer = CreateWriter(enableUtf8Spans: true);
         var state = new ProtobufOtlpTagWriter.OtlpTagWriterState
@@ -657,52 +632,6 @@ public class OtlpAttributeTests
         Assert.False(writer.WriteKeyValueInternal(ref state, ProtobufOtlpTraceFieldNumberConstants.Span_Attributes, "key", new Utf8ValueThatFillsBufferAndThrows(), tagValueMaxLength));
 
         Assert.Equal(0, state.WritePosition);
-        Assert.All(state.Buffer, b => Assert.Equal(0, b));
-    }
-
-    [Fact]
-    public void DroppedKvListEntryLeavesNoBytesInBuffer()
-    {
-        var writer = CreateWriter(enableUtf8Spans: true);
-        var state = new ProtobufOtlpTagWriter.OtlpTagWriterState
-        {
-            Buffer = new byte[1024],
-            WritePosition = 0,
-        };
-
-        var kvList = new Dictionary<string, object?> { ["inner"] = new Utf8ValueThatFillsBufferAndThrows() };
-
-        Assert.True(writer.WriteKeyValueInternal(ref state, ProtobufOtlpTraceFieldNumberConstants.Span_Attributes, "key", kvList));
-
-        Assert.All(state.Buffer.Skip(state.WritePosition), b => Assert.Equal(0, b));
-    }
-
-    [Fact]
-    public void Utf8SpanFormattableToStringFallbackLeavesNoFormatterBytesInBuffer()
-    {
-        var writer = CreateWriter(enableUtf8Spans: true);
-        var state = new ProtobufOtlpTagWriter.OtlpTagWriterState
-        {
-            Buffer = new byte[1024],
-            WritePosition = 0,
-        };
-
-        Assert.True(writer.WriteKeyValueInternal(ref state, ProtobufOtlpTraceFieldNumberConstants.Span_Attributes, "key", new Utf8ValueThatFillsBufferAndDoesNotFit("a"), tagValueMaxLength: 10));
-
-        Assert.All(state.Buffer.Skip(state.WritePosition), b => Assert.Equal(0, b));
-    }
-
-    [Theory]
-    [InlineData(typeof(ArgumentException))]
-    [InlineData(typeof(IndexOutOfRangeException))]
-    public void BufferFullExceptionToStringFallbackLeavesNoFormatterBytesInBuffer(Type exceptionType)
-    {
-        var writer = CreateWriter(enableUtf8Spans: true);
-        var state = new ProtobufOtlpTagWriter.OtlpTagWriterState { Buffer = new byte[1024] };
-
-        Assert.True(writer.WriteKeyValueInternal(ref state, ProtobufOtlpTraceFieldNumberConstants.Span_Attributes, "key", new Utf8ValueThatFillsBufferAndThrows(exceptionType), tagValueMaxLength: 10));
-
-        Assert.All(state.Buffer.Skip(state.WritePosition), b => Assert.Equal(0, b));
     }
 
     [Fact]
@@ -733,15 +662,37 @@ public class OtlpAttributeTests
         }
     }
 
-    [Fact]
-    public void InvalidUtf8FromTryFormatLeavesNoFormatterBytesInBuffer()
+    [Theory]
+    [InlineData(null, 1024)]
+    [InlineData(10, 30)]
+    public void HighWaterMarkCoversTheWholeTryFormatDestination(int? tagValueMaxLength, int expectedDestinationLength)
     {
         var writer = CreateWriter(enableUtf8Spans: true);
         var state = new ProtobufOtlpTagWriter.OtlpTagWriterState { Buffer = new byte[1024] };
 
-        Assert.True(writer.WriteKeyValueInternal(ref state, ProtobufOtlpTraceFieldNumberConstants.Span_Attributes, "key", new Utf8Bytes([.. Enumerable.Repeat((byte)0xFF, 100)], "a")));
+        Assert.True(writer.WriteKeyValueInternal(ref state, ProtobufOtlpTraceFieldNumberConstants.Span_Attributes, "key", new Utf8ValueThatUsesDestinationAsScratch("ok"), tagValueMaxLength));
 
-        Assert.All(state.Buffer.Skip(state.WritePosition), b => Assert.Equal(0, b));
+        var destinationStart = state.WritePosition - "ok".Length;
+        Assert.Equal(Math.Min(destinationStart + expectedDestinationLength, state.Buffer.Length), state.HighWaterMark);
+        Assert.Equal((byte)'x', state.Buffer[state.HighWaterMark - 1]);
+    }
+
+    [Fact]
+    public void HighWaterMarkCoversADroppedTag()
+    {
+        var writer = CreateWriter(enableUtf8Spans: true);
+        var state = new ProtobufOtlpTagWriter.OtlpTagWriterState { Buffer = new byte[1024] };
+
+        Assert.False(writer.WriteKeyValueInternal(ref state, ProtobufOtlpTraceFieldNumberConstants.Span_Attributes, "key", ThrowAfterLongEntry()));
+
+        Assert.Equal(0, state.WritePosition);
+        Assert.True(state.HighWaterMark >= 100);
+
+        static IEnumerable<KeyValuePair<string, object?>> ThrowAfterLongEntry()
+        {
+            yield return new("inner", new string('v', 100));
+            throw new InvalidOperationException("Nope.");
+        }
     }
 
     [Fact]
@@ -755,34 +706,6 @@ public class OtlpAttributeTests
 
         using var stream = new MemoryStream(state.Buffer, 0, state.WritePosition);
         Assert.Equal(new string('v', 10), OtlpCommon.KeyValue.Parser.ParseFrom(stream).Value.StringValue);
-    }
-
-    [Theory]
-    [InlineData(null)]
-    [InlineData(10)]
-    public void Utf8SpanFormattableScratchBytesAreClearedFromBuffer(int? tagValueMaxLength)
-    {
-        var writer = CreateWriter(enableUtf8Spans: true);
-        var state = new ProtobufOtlpTagWriter.OtlpTagWriterState { Buffer = new byte[1024] };
-
-        Assert.True(writer.WriteKeyValueInternal(ref state, ProtobufOtlpTraceFieldNumberConstants.Span_Attributes, "key", new Utf8ValueThatUsesDestinationAsScratch("ok"), tagValueMaxLength));
-
-        Assert.All(state.Buffer.Skip(state.WritePosition), b => Assert.Equal(0, b));
-    }
-
-    [Fact]
-    public void TruncatedUtf8SpanFormattableLeavesNoDroppedBytesInBuffer()
-    {
-        var writer = CreateWriter(enableUtf8Spans: true);
-        var state = new ProtobufOtlpTagWriter.OtlpTagWriterState
-        {
-            Buffer = new byte[1024],
-            WritePosition = 0,
-        };
-
-        Assert.True(writer.WriteKeyValueInternal(ref state, ProtobufOtlpTraceFieldNumberConstants.Span_Attributes, "key", new Utf8Value(new string('a', 20)), tagValueMaxLength: 10));
-
-        Assert.All(state.Buffer.Skip(state.WritePosition), b => Assert.Equal(0, b));
     }
 #endif
 

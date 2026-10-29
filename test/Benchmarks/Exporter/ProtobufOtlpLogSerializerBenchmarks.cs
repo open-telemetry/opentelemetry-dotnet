@@ -92,7 +92,10 @@ public class ProtobufOtlpLogSerializerBenchmarks
 
     [Benchmark]
     public int WriteLogRecord()
-        => ProtobufOtlpLogSerializer.WriteLogRecord(this.buffer, 0, this.sdkLimitOptions, this.experimentalOptions, this.logRecord);
+    {
+        var dirtyLength = 0;
+        return ProtobufOtlpLogSerializer.WriteLogRecord(this.buffer, 0, this.sdkLimitOptions, this.experimentalOptions, this.logRecord, ref dirtyLength);
+    }
 
     private static List<KeyValuePair<string, object?>> BuildKvList(int entryCount)
     {
