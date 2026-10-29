@@ -190,7 +190,7 @@ internal sealed class ProtobufOtlpTagWriter : TagWriter<ProtobufOtlpTagWriter.Ot
         }
 
         // A formatter may use the whole destination as scratch space, whatever it reports writing.
-        SetHighWaterMark(ref state, state.WritePosition + buffer.Length);
+        ExtendDirtyLength(ref state, state.WritePosition + buffer.Length);
 
         var formatted = false;
         var bytesWritten = 0;
@@ -372,33 +372,33 @@ internal sealed class ProtobufOtlpTagWriter : TagWriter<ProtobufOtlpTagWriter.Ot
 
     private static void RollBackTo(ref OtlpTagWriterState state, int startPosition)
     {
-        SetHighWaterMark(ref state, state.WritePosition);
+        ExtendDirtyLength(ref state, state.WritePosition);
         state.WritePosition = startPosition;
     }
 
     /// <summary>
     /// Records that bytes up to <paramref name="position"/> may have been written, unless the
-    /// high-water mark is already further along.
+    /// dirty length is already further along.
     /// </summary>
     /// <remarks>
     /// Clamped to the buffer, because reserving a length can advance the write position past its end.
     /// </remarks>
-    /// <param name="state">The writer state whose high-water mark is set.</param>
+    /// <param name="state">The writer state whose dirty length is extended.</param>
     /// <param name="position">The position up to which bytes may have been written.</param>
-    private static void SetHighWaterMark(ref OtlpTagWriterState state, int position)
-        => state.HighWaterMark = Math.Max(state.HighWaterMark, Math.Min(position, state.Buffer.Length));
+    private static void ExtendDirtyLength(ref OtlpTagWriterState state, int position)
+        => state.DirtyLength = Math.Max(state.DirtyLength, Math.Min(position, state.Buffer.Length));
 
     internal struct OtlpTagWriterState
     {
         public byte[] Buffer;
-        public int DroppedTagCount;
 
         /// <summary>
-        /// The furthest position that may have been written, which can lie past <see cref="WritePosition"/>
-        /// after a rollback or a formatter's scratch writes. Everything before it must be cleared before
-        /// the buffer is reused.
+        /// The number of leading bytes of <see cref="Buffer"/> that may have been written, which can
+        /// reach past <see cref="WritePosition"/> after a rollback or a formatter's scratch writes.
+        /// Everything before it must be cleared before the buffer is reused.
         /// </summary>
-        public int HighWaterMark;
+        public int DirtyLength;
+        public int DroppedTagCount;
         public int TagCount;
         public int WritePosition;
     }

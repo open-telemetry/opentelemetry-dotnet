@@ -170,7 +170,7 @@ internal static class ProtobufOtlpTraceSerializer
             {
                 Buffer = buffer,
                 WritePosition = writePosition,
-                HighWaterMark = dirtyLength,
+                DirtyLength = dirtyLength,
                 TagCount = 0,
                 DroppedTagCount = 0,
             };
@@ -235,7 +235,7 @@ internal static class ProtobufOtlpTraceSerializer
             }
 
             writePosition = otlpTagWriterState.WritePosition;
-            dirtyLength = otlpTagWriterState.HighWaterMark;
+            dirtyLength = otlpTagWriterState.DirtyLength;
         }
 
         ProtobufSerializer.WriteReservedLength(buffer, instrumentationScopeLengthPosition, writePosition - (instrumentationScopeLengthPosition + ReserveSizeForLength));
@@ -341,7 +341,7 @@ internal static class ProtobufOtlpTraceSerializer
         {
             Buffer = buffer,
             WritePosition = writePosition,
-            HighWaterMark = dirtyLength,
+            DirtyLength = dirtyLength,
             TagCount = 0,
             DroppedTagCount = 0,
         };
@@ -400,7 +400,7 @@ internal static class ProtobufOtlpTraceSerializer
             otlpTagWriterState.WritePosition = ProtobufSerializer.WriteVarInt32(buffer, otlpTagWriterState.WritePosition, (uint)otlpTagWriterState.DroppedTagCount);
         }
 
-        dirtyLength = otlpTagWriterState.HighWaterMark;
+        dirtyLength = otlpTagWriterState.DirtyLength;
         return (otlpTagWriterState.WritePosition, statusCode, statusMessage);
     }
 
@@ -448,7 +448,7 @@ internal static class ProtobufOtlpTraceSerializer
         {
             Buffer = buffer,
             WritePosition = writePosition,
-            HighWaterMark = dirtyLength,
+            DirtyLength = dirtyLength,
             TagCount = 0,
             DroppedTagCount = 0,
         };
@@ -483,7 +483,7 @@ internal static class ProtobufOtlpTraceSerializer
             otlpTagWriterState.WritePosition = ProtobufSerializer.WriteVarInt32(buffer, otlpTagWriterState.WritePosition, (uint)otlpTagWriterState.DroppedTagCount);
         }
 
-        dirtyLength = otlpTagWriterState.HighWaterMark;
+        dirtyLength = otlpTagWriterState.DirtyLength;
         return otlpTagWriterState.WritePosition;
     }
 
@@ -539,7 +539,7 @@ internal static class ProtobufOtlpTraceSerializer
         {
             Buffer = buffer,
             WritePosition = writePosition,
-            HighWaterMark = dirtyLength,
+            DirtyLength = dirtyLength,
             TagCount = 0,
             DroppedTagCount = 0,
         };
@@ -574,7 +574,7 @@ internal static class ProtobufOtlpTraceSerializer
             otlpTagWriterState.WritePosition = ProtobufSerializer.WriteVarInt32(buffer, otlpTagWriterState.WritePosition, (uint)otlpTagWriterState.DroppedTagCount);
         }
 
-        dirtyLength = otlpTagWriterState.HighWaterMark;
+        dirtyLength = otlpTagWriterState.DirtyLength;
         return otlpTagWriterState.WritePosition;
     }
 

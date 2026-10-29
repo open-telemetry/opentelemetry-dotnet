@@ -665,7 +665,7 @@ public class OtlpAttributeTests
     [Theory]
     [InlineData(null, 1024)]
     [InlineData(10, 30)]
-    public void HighWaterMarkCoversTheWholeTryFormatDestination(int? tagValueMaxLength, int expectedDestinationLength)
+    public void DirtyLengthCoversTheWholeTryFormatDestination(int? tagValueMaxLength, int expectedDestinationLength)
     {
         var writer = CreateWriter(enableUtf8Spans: true);
         var state = new ProtobufOtlpTagWriter.OtlpTagWriterState { Buffer = new byte[1024] };
@@ -673,12 +673,12 @@ public class OtlpAttributeTests
         Assert.True(writer.WriteKeyValueInternal(ref state, ProtobufOtlpTraceFieldNumberConstants.Span_Attributes, "key", new Utf8ValueThatUsesDestinationAsScratch("ok"), tagValueMaxLength));
 
         var destinationStart = state.WritePosition - "ok".Length;
-        Assert.Equal(Math.Min(destinationStart + expectedDestinationLength, state.Buffer.Length), state.HighWaterMark);
-        Assert.Equal((byte)'x', state.Buffer[state.HighWaterMark - 1]);
+        Assert.Equal(Math.Min(destinationStart + expectedDestinationLength, state.Buffer.Length), state.DirtyLength);
+        Assert.Equal((byte)'x', state.Buffer[state.DirtyLength - 1]);
     }
 
     [Fact]
-    public void HighWaterMarkCoversADroppedTag()
+    public void DirtyLengthCoversADroppedTag()
     {
         var writer = CreateWriter(enableUtf8Spans: true);
         var state = new ProtobufOtlpTagWriter.OtlpTagWriterState { Buffer = new byte[1024] };
@@ -686,7 +686,7 @@ public class OtlpAttributeTests
         Assert.False(writer.WriteKeyValueInternal(ref state, ProtobufOtlpTraceFieldNumberConstants.Span_Attributes, "key", ThrowAfterLongEntry()));
 
         Assert.Equal(0, state.WritePosition);
-        Assert.True(state.HighWaterMark >= 100);
+        Assert.True(state.DirtyLength >= 100);
 
         static IEnumerable<KeyValuePair<string, object?>> ThrowAfterLongEntry()
         {

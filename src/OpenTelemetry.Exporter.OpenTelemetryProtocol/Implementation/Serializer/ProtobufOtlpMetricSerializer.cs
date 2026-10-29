@@ -581,12 +581,12 @@ internal static class ProtobufOtlpMetricSerializer
         {
             Buffer = buffer,
             WritePosition = writePosition,
-            HighWaterMark = dirtyLength,
+            DirtyLength = dirtyLength,
         };
 
         written = ProtobufOtlpTagWriter.WriteKeyValue(ref otlpTagWriterState, fieldNumber, tag.Key, tag.Value);
 
-        dirtyLength = otlpTagWriterState.HighWaterMark;
+        dirtyLength = otlpTagWriterState.DirtyLength;
         return otlpTagWriterState.WritePosition;
     }
 

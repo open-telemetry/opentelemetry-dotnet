@@ -228,7 +228,7 @@ internal static class ProtobufOtlpLogSerializer
         {
             Buffer = buffer,
             WritePosition = writePosition,
-            HighWaterMark = dirtyLength,
+            DirtyLength = dirtyLength,
             TagCount = 0,
             DroppedTagCount = 0,
         };
@@ -349,7 +349,7 @@ internal static class ProtobufOtlpLogSerializer
 
         ProtobufSerializer.WriteReservedLength(otlpTagWriterState.Buffer, logRecordLengthPosition, otlpTagWriterState.WritePosition - (logRecordLengthPosition + ReserveSizeForLength));
 
-        dirtyLength = otlpTagWriterState.HighWaterMark;
+        dirtyLength = otlpTagWriterState.DirtyLength;
         return otlpTagWriterState.WritePosition;
 
         static void ProcessScope(LogRecordScope scope, SerializationState state)
