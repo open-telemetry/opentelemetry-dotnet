@@ -174,24 +174,23 @@ internal sealed class ProtobufOtlpTagWriter : TagWriter<ProtobufOtlpTagWriter.Ot
         {
             formatted = value.TryFormat(buffer, out bytesWritten, format: default, CultureInfo.InvariantCulture);
         }
-        catch (Exception ex) when (ex is IndexOutOfRangeException or ArgumentException)
-        {
-            // Some formatters report a destination that is too short by throwing, as Span<T>.CopyTo does.
-            if (!isBufferCapped)
-            {
-                throw;
-            }
-        }
         catch (Exception ex)
         {
-            // How much the formatter wrote is unknown, and the buffer may be returned to a shared pool.
-            buffer.Clear();
-            if (ex is OutOfMemoryException)
+            // Some formatters report a destination that is too short by throwing, as Span<T>.CopyTo does.
+            var isDestinationTooShort = ex is IndexOutOfRangeException or ArgumentException;
+
+            // Not cleared before rethrowing: callers that grow or discard the buffer clear the whole of it.
+            if (ex is OutOfMemoryException || (isDestinationTooShort && !isBufferCapped))
             {
                 throw;
             }
 
-            return this.LogUnsupportedTagTypeAndReturnFalse(key, value);
+            if (!isDestinationTooShort)
+            {
+                // How much the formatter wrote is unknown, and the buffer may be returned to a shared pool.
+                buffer.Clear();
+                return this.LogUnsupportedTagTypeAndReturnFalse(key, value);
+            }
         }
 
         // Invalid UTF-8 would make strict OTLP receivers reject the whole request.
