@@ -775,22 +775,16 @@ public class ProtobufSerializerTests
     [Fact]
     public void IncreaseBufferSize_ClearsReplacedBuffer()
     {
-        var buffer = ProtobufSerializer.RentBuffer(1024);
+        var pool = new TrackingArrayPool();
+        var buffer = pool.Rent(1024);
         var original = buffer;
-        original.AsSpan().Fill(0xAB);
 
-        var increased = ProtobufSerializer.IncreaseBufferSize(ref buffer, OtlpSignalType.Traces);
+        var increased = ProtobufSerializer.IncreaseBufferSize(pool, ref buffer, OtlpSignalType.Traces);
 
-        try
-        {
-            Assert.True(increased);
-            Assert.NotSame(original, buffer);
-            Assert.All(original, static value => Assert.Equal(0, value));
-        }
-        finally
-        {
-            ProtobufSerializer.ReturnBuffer(buffer);
-        }
+        Assert.True(increased);
+        Assert.NotSame(original, buffer);
+        Assert.Same(original, pool.ReturnedArray);
+        Assert.True(pool.ClearArray);
     }
 
     [Fact]
@@ -931,8 +925,14 @@ public class ProtobufSerializerTests
     {
         public bool ClearArray { get; private set; }
 
+        public byte[]? ReturnedArray { get; private set; }
+
         public override byte[] Rent(int minimumLength) => new byte[minimumLength];
 
-        public override void Return(byte[] array, bool clearArray = false) => this.ClearArray = clearArray;
+        public override void Return(byte[] array, bool clearArray = false)
+        {
+            this.ReturnedArray = array;
+            this.ClearArray = clearArray;
+        }
     }
 }
