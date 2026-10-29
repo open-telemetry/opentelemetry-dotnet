@@ -306,7 +306,7 @@ internal static class ProtobufOtlpLogSerializer
                 }
             }
 
-            // Supports setting Body directly on LogRecord for the Logs Bridge API.
+            // Supports setting Body directly on LogRecord for the Logs API.
             if (!isLogRecordBodySet && logRecord.Body != null)
             {
                 // If {OriginalFormat} is not present in the attributes,
