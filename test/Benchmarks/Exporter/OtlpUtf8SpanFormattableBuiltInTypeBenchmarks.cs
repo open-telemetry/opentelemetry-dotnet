@@ -6,6 +6,8 @@ extern alias OpenTelemetryProtocol;
 
 using System.Net;
 using System.Numerics;
+using System.Runtime.InteropServices;
+using System.Text;
 using BenchmarkDotNet.Attributes;
 using OpenTelemetryProtocol::OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Serializer;
 
@@ -25,29 +27,39 @@ public class OtlpUtf8SpanFormattableBuiltInTypeBenchmarks
     private object value = null!;
     private int? tagValueMaxLength;
 
-    [Params("Int128", "Half", "DateOnly", "TimeOnly", "Version", "IPAddressV4", "IPAddressV6", "BigInteger")]
+    [Params("IntPtr", "UIntPtr", "Int128", "UInt128", "Half", "NFloat", "DateOnly", "TimeOnly", "Version", "IPAddressV4", "IPAddressV6", "IPNetwork", "BigInteger", "Complex", "Rune")]
     public string Type { get; set; } = null!;
 
-    [Params(false, true)]
-    public bool LengthLimit { get; set; }
+    /// <summary>
+    /// Gets or sets the attribute value length limit in chars, where <c>0</c> means no limit.
+    /// </summary>
+    [Params(0, 16 * 1024, 64 * 1024)]
+    public int MaxLength { get; set; }
 
     [GlobalSetup]
     public void Setup()
     {
         this.value = this.Type switch
         {
+            "IntPtr" => (nint)123456789,
+            "UIntPtr" => (nuint)123456789,
             "Int128" => Int128.MaxValue,
+            "UInt128" => UInt128.MaxValue,
             "Half" => (Half)3.14159,
+            "NFloat" => (NFloat)3.14159,
             "DateOnly" => new DateOnly(2026, 10, 29),
             "TimeOnly" => new TimeOnly(13, 45, 30, 123),
             "Version" => new Version(10, 0, 1326, 50504),
             "IPAddressV4" => IPAddress.Parse("192.168.100.200"),
             "IPAddressV6" => IPAddress.Parse("2001:db8:85a3::8a2e:370:7334"),
+            "IPNetwork" => IPNetwork.Parse("10.20.0.0/16"),
             "BigInteger" => BigInteger.Pow(3, 100),
+            "Complex" => new Complex(1.5, -2.25),
+            "Rune" => new Rune(0x1F600),
             _ => throw new NotSupportedException(this.Type),
         };
 
-        this.tagValueMaxLength = this.LengthLimit ? 256 : null;
+        this.tagValueMaxLength = this.MaxLength > 0 ? this.MaxLength : null;
     }
 
     [Benchmark(Baseline = true)]

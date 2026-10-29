@@ -163,7 +163,6 @@ internal sealed class ProtobufOtlpTagWriter : TagWriter<ProtobufOtlpTagWriter.Ot
         }
 
         var startPosition = state.WritePosition;
-
         state.WritePosition = ProtobufSerializer.WriteStringWithTag(state.Buffer, state.WritePosition, ProtobufOtlpCommonFieldNumberConstants.KeyValue_Key, key);
 
         state.WritePosition = ProtobufSerializer.WriteTag(state.Buffer, state.WritePosition, ProtobufOtlpCommonFieldNumberConstants.KeyValue_Value, ProtobufWireType.LEN);
@@ -220,6 +219,12 @@ internal sealed class ProtobufOtlpTagWriter : TagWriter<ProtobufOtlpTagWriter.Ot
             }
         }
 
+        // TryFormat returned false, indicating insufficient buffer space. Throw to grow buffer.
+        if (!formatted && !isBufferCapped)
+        {
+            throw new ArgumentOutOfRangeException(nameof(state), "The buffer is too small to hold the data being written.");
+        }
+
         // Invalid UTF-8 would make strict OTLP receivers reject the whole request.
         if (formatted && Utf8.IsValid(buffer[..bytesWritten]))
         {
@@ -228,13 +233,8 @@ internal sealed class ProtobufOtlpTagWriter : TagWriter<ProtobufOtlpTagWriter.Ot
             return true;
         }
 
-        if (!formatted && !isBufferCapped)
-        {
-            throw new ArgumentOutOfRangeException(nameof(state), "The buffer is too small to hold the data being written.");
-        }
-
+        // Fallback: we'll just use the regular ToString() path
         RollBackTo(ref state, startPosition);
-
         return this.TryWriteToStringTag(ref state, key, value, tagValueMaxLength);
     }
 #endif
