@@ -13,7 +13,7 @@ namespace OpenTelemetry.Logs;
 /// Logger is the class responsible for creating log records.
 /// </summary>
 /// <remarks><b>WARNING</b>: This is an experimental API which might change or be removed in the future. Use at your own risk.</remarks>
-[Experimental(DiagnosticDefinitions.LogsBridgeExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
+[Experimental(DiagnosticDefinitions.LogsExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
 public
 #else
 /// <summary>
@@ -31,7 +31,7 @@ abstract class Logger
     {
         this.Name = string.IsNullOrWhiteSpace(name)
             ? string.Empty
-#if NET10_0_OR_GREATER
+#if NET
             : name;
 #else
             : name!;

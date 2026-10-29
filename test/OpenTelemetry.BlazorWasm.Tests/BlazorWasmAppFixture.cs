@@ -15,23 +15,26 @@ public sealed class BlazorWasmAppFixture : IAsyncLifetime
     private static readonly TimeSpan PlaywrightInstallTimeout = TimeSpan.FromMinutes(5);
     private static readonly TimeSpan PublishTimeout = TimeSpan.FromMinutes(5);
 
-    private string? publishDirectory;
+    private readonly TemporaryDirectory publishDirectory = new();
 
     internal OtlpHttpCollector Collector { get; private set; } = null!;
+
+    private static bool IsRunningInGitHubActions
+        => !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("GITHUB_ACTIONS"));
 
     public async ValueTask InitializeAsync()
     {
         InstallPlaywright();
 
-        this.publishDirectory = PublishClient();
+        PublishClient(this.publishDirectory.Path);
 
         var port = TcpPortProvider.GetOpenPort();
         var baseUrl = $"http://localhost:{port}";
 
         var options = new WebApplicationOptions()
         {
-            ContentRootPath = this.publishDirectory,
-            WebRootPath = Path.Combine(this.publishDirectory, "wwwroot"),
+            ContentRootPath = this.publishDirectory.Path,
+            WebRootPath = Path.Combine(this.publishDirectory.Path, "wwwroot"),
         };
 
         this.Collector = await OtlpHttpCollector.StartAsync(
@@ -57,22 +60,15 @@ public sealed class BlazorWasmAppFixture : IAsyncLifetime
             await this.Collector.DisposeAsync();
         }
 
-        if (this.publishDirectory is not null && Directory.Exists(this.publishDirectory))
-        {
-            try
-            {
-                Directory.Delete(this.publishDirectory, recursive: true);
-            }
-            catch (Exception)
-            {
-                // Best effort cleanup of the temporary publish output.
-            }
-        }
+        this.publishDirectory.Dispose();
     }
 
     private static void InstallPlaywright()
     {
-        string[] arguments = OperatingSystem.IsLinux()
+        // In GitHub Actions the browser's system dependencies are installed by the
+        // workflow before the tests run, where a slow or stalled 'apt-get' is visible
+        // and can be retried, rather than here where it cannot be killed once it hangs.
+        string[] arguments = OperatingSystem.IsLinux() && !IsRunningInGitHubActions
             ? ["install", "chromium", "--with-deps"]
             : ["install", "chromium"];
 
@@ -133,11 +129,10 @@ public sealed class BlazorWasmAppFixture : IAsyncLifetime
             ?? throw new InvalidOperationException("Could not locate the repository root (OpenTelemetry.slnx).");
     }
 
-    private static string PublishClient()
+    private static void PublishClient(string output)
     {
         var repoRoot = RepoRoot();
         var project = Path.Combine(repoRoot, "test", "OpenTelemetry.BlazorWasm.TestApp", "OpenTelemetry.BlazorWasm.TestApp.csproj");
-        var output = Path.Combine(Path.GetTempPath(), "otel-blazor-wasm-" + Guid.NewGuid().ToString("N"));
 
 #if DEBUG
         const string Configuration = "Debug";
@@ -178,8 +173,6 @@ public sealed class BlazorWasmAppFixture : IAsyncLifetime
             ?? throw new InvalidOperationException("Failed to start 'dotnet publish' for the Blazor client.");
 
         WaitForProcess(process, PublishTimeout);
-
-        return output;
     }
 
     private static void WaitForProcess(Process process, TimeSpan timeout)
@@ -208,7 +201,17 @@ public sealed class BlazorWasmAppFixture : IAsyncLifetime
 
         if (!process.WaitForExit(timeout))
         {
-            process.Kill(entireProcessTree: true);
+            try
+            {
+                process.Kill(entireProcessTree: true);
+            }
+            catch (Exception ex) when (ex is AggregateException or InvalidOperationException or System.ComponentModel.Win32Exception)
+            {
+                // Best effort, as children started with sudo (e.g. apt-get when installing
+                // Playwright's dependencies) cannot be killed and fail with EPERM, which
+                // would otherwise hide the timeout and the output captured from the process.
+            }
+
             throw new InvalidOperationException(
                 $"Process timed out after {timeout}.{Environment.NewLine}{stdout}{Environment.NewLine}{stderr}");
         }

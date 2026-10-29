@@ -41,7 +41,7 @@ internal sealed class AggregatorStore
 
     private readonly ConcurrentDictionary<Tags, int> tagsToMetricPointIndexDictionary;
 
-#if NET9_0_OR_GREATER
+#if NET
     // Alternate lookup that resolves a MetricPoint directly from the incoming
     // tags span, avoiding the copy of the tags into thread-static storage.
     // Only used for cumulative aggregation (the non-reclaim lookup path).
@@ -159,7 +159,7 @@ internal sealed class AggregatorStore
             ? cardinalityLimit * 2
             : int.MaxValue;
 
-#if NET9_0_OR_GREATER
+#if NET
         this.tagsToMetricPointIndexDictionary = new(concurrencyLevel, capacity, comparer: TagsComparer.Instance);
 
         this.tagsToMetricPointIndexLookup =
@@ -173,7 +173,7 @@ internal sealed class AggregatorStore
         {
             this.availableMetricPoints = new Queue<int>(cardinalityLimit);
 
-#if NET9_0_OR_GREATER
+#if NET
             this.TagsToMetricPointIndexDictionaryDelta = new(concurrencyLevel, capacity, comparer: TagsComparer.Instance);
 
             this.tagsToMetricPointIndexLookupDelta =
@@ -624,11 +624,11 @@ internal sealed class AggregatorStore
                     if (this.OutputDelta)
                     {
                         var lookupData = new LookupData(0, Tags.EmptyTags, Tags.EmptyTags, Volatile.Read(ref this.deltaCollectCycle));
-                        this.metricPoints[0] = new MetricPoint(this, this.aggType, null, this.histogramExplicitBounds, this.exponentialHistogramMaxSize, this.exponentialHistogramMaxScale, lookupData);
+                        MetricPoint.Publish(ref this.metricPoints[0], this, this.aggType, null, this.histogramExplicitBounds, this.exponentialHistogramMaxSize, this.exponentialHistogramMaxScale, lookupData);
                     }
                     else
                     {
-                        this.metricPoints[0] = new MetricPoint(this, this.aggType, null, this.histogramExplicitBounds, this.exponentialHistogramMaxSize, this.exponentialHistogramMaxScale);
+                        MetricPoint.Publish(ref this.metricPoints[0], this, this.aggType, null, this.histogramExplicitBounds, this.exponentialHistogramMaxSize, this.exponentialHistogramMaxScale);
                     }
 
                     this.zeroTagMetricPointInitialized = true;
@@ -652,11 +652,11 @@ internal sealed class AggregatorStore
                     if (this.OutputDelta)
                     {
                         var lookupData = new LookupData(1, tags, tags, Volatile.Read(ref this.deltaCollectCycle));
-                        this.metricPoints[1] = new MetricPoint(this, this.aggType, keyValuePairs, this.histogramExplicitBounds, this.exponentialHistogramMaxSize, this.exponentialHistogramMaxScale, lookupData);
+                        MetricPoint.Publish(ref this.metricPoints[1], this, this.aggType, keyValuePairs, this.histogramExplicitBounds, this.exponentialHistogramMaxSize, this.exponentialHistogramMaxScale, lookupData);
                     }
                     else
                     {
-                        this.metricPoints[1] = new MetricPoint(this, this.aggType, keyValuePairs, this.histogramExplicitBounds, this.exponentialHistogramMaxSize, this.exponentialHistogramMaxScale);
+                        MetricPoint.Publish(ref this.metricPoints[1], this, this.aggType, keyValuePairs, this.histogramExplicitBounds, this.exponentialHistogramMaxSize, this.exponentialHistogramMaxScale);
                     }
 
                     this.overflowTagMetricPointInitialized = true;
@@ -741,7 +741,7 @@ internal sealed class AggregatorStore
                             aggregatorIndex = this.ToSlot(aggregatorIndex);
 
                             ref var metricPoint = ref this.metricPoints[aggregatorIndex];
-                            metricPoint = new MetricPoint(this, this.aggType, sortedTags.KeyValuePairs, this.histogramExplicitBounds, this.exponentialHistogramMaxSize, this.exponentialHistogramMaxScale);
+                            MetricPoint.Publish(ref metricPoint, this, this.aggType, sortedTags.KeyValuePairs, this.histogramExplicitBounds, this.exponentialHistogramMaxSize, this.exponentialHistogramMaxScale);
 
                             // Add to dictionary *after* initializing MetricPoint
                             // as other threads can start writing to the
@@ -802,7 +802,7 @@ internal sealed class AggregatorStore
                         aggregatorIndex = this.ToSlot(aggregatorIndex);
 
                         ref var metricPoint = ref this.metricPoints[aggregatorIndex];
-                        metricPoint = new MetricPoint(this, this.aggType, givenTags.KeyValuePairs, this.histogramExplicitBounds, this.exponentialHistogramMaxSize, this.exponentialHistogramMaxScale);
+                        MetricPoint.Publish(ref metricPoint, this, this.aggType, givenTags.KeyValuePairs, this.histogramExplicitBounds, this.exponentialHistogramMaxSize, this.exponentialHistogramMaxScale);
 
                         // Add to dictionary *after* initializing MetricPoint
                         // as other threads can start writing to the
@@ -1411,7 +1411,7 @@ internal sealed class AggregatorStore
             return 0;
         }
 
-#if NET9_0_OR_GREATER
+#if NET
         // Fast path: look up an existing MetricPoint directly from the incoming
         // tags span. The dictionary stores keys in the given (unsorted) order too,
         // so a previously-seen tag set in its original order resolves here without

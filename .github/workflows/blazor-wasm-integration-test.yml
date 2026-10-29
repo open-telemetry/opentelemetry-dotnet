@@ -36,6 +36,10 @@ jobs:
 
     - name: Setup .NET
       uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+      with:
+        global-json-file: global.json
+        dotnet-version: |
+          10.0.x
 
     - name: Stop background apt services
       if: runner.os == 'Linux'
@@ -58,11 +62,38 @@ jobs:
       shell: pwsh
       run: dotnet workload install wasm-tools
 
+    - name: Build Blazor WASM end-to-end tests
+      shell: pwsh
+      run: >
+        dotnet build test/OpenTelemetry.BlazorWasm.Tests/OpenTelemetry.BlazorWasm.Tests.csproj
+        --configuration Release
+
+    - name: Install Playwright browser and dependencies
+      if: runner.os == 'Linux'
+      shell: pwsh
+      timeout-minutes: 15
+      run: |
+        $playwright = "artifacts/bin/OpenTelemetry.BlazorWasm.Tests/release_net10.0/playwright.ps1"
+        $attempts = 3
+        for ($attempt = 1; $attempt -le $attempts; $attempt++) {
+          & $playwright install chromium --with-deps
+          if ($LASTEXITCODE -eq 0) {
+            break
+          }
+          if ($attempt -eq $attempts) {
+            throw "Failed to install Playwright after $attempts attempts."
+          }
+          Write-Output "::warning::Playwright install attempt $attempt failed with exit code $LASTEXITCODE, retrying."
+          Start-Sleep -Seconds 10
+        }
+
     - name: Run Blazor WASM end-to-end tests
       shell: pwsh
       run: >
-        dotnet test test/OpenTelemetry.BlazorWasm.Tests/OpenTelemetry.BlazorWasm.Tests.csproj
+        dotnet test "${env:GITHUB_WORKSPACE}/test/OpenTelemetry.BlazorWasm.Tests"
         --configuration Release
+        --no-build
+        --no-restore
         --report-github
         --report-github-summary-include-passed false
 

@@ -291,7 +291,7 @@ internal static class ProtobufOtlpTraceSerializer
     internal static int WriteTraceId(byte[] buffer, int position, ActivityTraceId activityTraceId)
     {
         var traceBytes = new Span<byte>(buffer, position, TraceIdSize);
-#if NET9_0_OR_GREATER
+#if NET
         DecodeHex(activityTraceId.ToHexString(), traceBytes);
 #else
         activityTraceId.CopyTo(traceBytes);
@@ -302,7 +302,7 @@ internal static class ProtobufOtlpTraceSerializer
     internal static int WriteSpanId(byte[] buffer, int position, ActivitySpanId activitySpanId)
     {
         var spanIdBytes = new Span<byte>(buffer, position, SpanIdSize);
-#if NET9_0_OR_GREATER
+#if NET
         DecodeHex(activitySpanId.ToHexString(), spanIdBytes);
 #else
         activitySpanId.CopyTo(spanIdBytes);
@@ -605,7 +605,7 @@ internal static class ProtobufOtlpTraceSerializer
         return position;
     }
 
-#if NET9_0_OR_GREATER
+#if NET
     private static void DecodeHex(string hex, Span<byte> destination)
     {
         // This optimization can be removed once https://github.com/dotnet/runtime/pull/134135

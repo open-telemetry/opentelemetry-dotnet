@@ -12,6 +12,13 @@
     <_TestFrameworkArgument>--framework $(TargetFramework)</_TestFrameworkArgument>
   </PropertyGroup>
 
+  <!--
+    HACK Workaround for https://github.com/dotnet/runtime/issues/134491
+  -->
+  <PropertyGroup Condition="'$(TargetFramework)' == '' AND '$(OS)' != 'Windows_NT' AND '$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture)' == 'Arm64'">
+    <_TestMaxParallelTestModulesArgument>--max-parallel-test-modules 1</_TestMaxParallelTestModulesArgument>
+  </PropertyGroup>
+
   <PropertyGroup Condition="'$(TestFilter)' != ''">
     <!--
       Ignoring exit code 8 stops dotnet test failing if a filter does not match any tests.
@@ -72,7 +79,7 @@
       reports in their own '<project>/<tfm>_<runtime>' subdirectory, so the
       frameworks of one project do not overwrite each other's files either.
     -->
-    <Exec Command="&quot;$(_DotNetHostPath)&quot; test --project &quot;%(_SupportedTestProjects.Identity)&quot; $(_TestFrameworkArgument) --configuration $(Configuration) --no-build --no-restore --results-directory &quot;$(TestResultsDirectory)&quot; --results-directory-layout per-module --diagnostic --diagnostic-output-directory &quot;$(_TestDiagnosticsDirectory)&quot; --hangdump --hangdump-timeout 10m --hangdump-type full --report-github --report-github-summary-include-passed false --report-xunit-junit --report-xunit-junit-filename &quot;junit-%(_SupportedTestProjects.Filename).xml&quot; --coverage --coverage-output-format cobertura --coverage-output &quot;Cobertura-%(_SupportedTestProjects.Filename).xml&quot; $(_TestFilterArgument)"
+    <Exec Command="&quot;$(_DotNetHostPath)&quot; test --project &quot;%(_SupportedTestProjects.Identity)&quot; $(_TestFrameworkArgument) $(_TestMaxParallelTestModulesArgument) --configuration $(Configuration) --no-build --no-restore --results-directory &quot;$(TestResultsDirectory)&quot; --results-directory-layout per-module --diagnostic --diagnostic-output-directory &quot;$(_TestDiagnosticsDirectory)&quot; --hangdump --hangdump-timeout 10m --hangdump-type full --report-github --report-github-summary-include-passed false --report-xunit-junit --report-xunit-junit-filename &quot;junit-%(_SupportedTestProjects.Filename).xml&quot; --coverage --coverage-output-format cobertura --coverage-output &quot;Cobertura-%(_SupportedTestProjects.Filename).xml&quot; $(_TestFilterArgument)"
       ContinueOnError="ErrorAndStop"
       Condition="'@(_SupportedTestProjects)' != ''" />
   </Target>

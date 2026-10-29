@@ -6,6 +6,18 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Fixed an exception when downscaling empty exponential histogram buckets after
+  a reset.
+  ([#8064](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8064))
+
+* Fixed tracing callbacks continuing after provider shutdown or disposal on older
+  target frameworks.
+  ([#8065](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8065))
+
+## 1.21.0-rc.1
+
+Released 2026-Oct-28
+
 * Fixed a race in the self-diagnostics sink dispatcher where disposing it
   while its pump thread was exiting could throw `ArgumentNullException` on
   .NET Framework.
@@ -37,6 +49,25 @@ Notes](../../RELEASENOTES.md).
   of `PeriodicExportingMetricReader` now also limits exports which are not
   started by the reader itself, such as those of `MeterProvider.ForceFlush()`.
   ([#7996](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7996))
+
+* Fixed a race where collecting a cumulative metric concurrently with the
+  creation of a new `MetricPoint` could export a `MetricPoint` that was not yet
+  fully initialized, could case a `NullReferenceException` when enumerating `Tags`.
+  ([#8018](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8018))
+
+* **Breaking Change** Dropped support for `net8.0` and `net9.0`.
+  ([#6899](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6899))
+
+* Add support for .NET 11.0.
+  ([#6899](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6899))
+
+* Added support for enabling `ActivitySource`s from configuration using the
+  `Microsoft.Extensions.Diagnostics` tracing APIs introduced in .NET 11 (for
+  example, `services.AddTracing(b => b.AddConfiguration(section))`).
+  Activities from sources enabled this way are processed by the OpenTelemetry
+  `TracerProvider` registered through `AddOpenTelemetry().WithTracing()`.
+  Not supported when targeting `net10.0`.
+  ([#6899](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6899))
 
 ## 1.20.1
 

@@ -27,7 +27,7 @@ if ($LastExitCode -ne 0)
 {
     $testPassed = 1
     Write-Warning "There was an error while publishing AotCompatibility Test App. LastExitCode is: $LastExitCode"
-    Write-Warning $publishOutput
+    Write-Warning ($publishOutput | Out-String)
 }
 
 $app = $IsWindows ? "./OpenTelemetry.AotCompatibility.TestApp.exe" : "./OpenTelemetry.AotCompatibility.TestApp"

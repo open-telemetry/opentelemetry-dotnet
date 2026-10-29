@@ -23,6 +23,27 @@ Notes](../../RELEASENOTES.md).
   serialization fails.
   ([#7994](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7994))
 
+* Fixed array- and map-valued attributes being serialized as the .NET type
+  name (e.g. `System.Byte[]`, `System.Int32[]`) instead of being JSON-encoded
+  as per the specification. `byte[]`-valued attributes are now
+  Base64-encoded, and other array- and map-valued attributes are now
+  JSON-encoded.
+  ([#7694](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7694))
+
+* Fixed arrays of string-valued key/value pairs being
+  serialized as JSON arrays of strings instead of JSON objects.
+  ([#7694](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7694))
+
+* Fixed scrape clients which stop reading their response delaying other
+  scrapes until `ScrapeResponseTimeoutMilliseconds` elapses.
+  ([#8041](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8041))
+
+* **Breaking Change** Dropped support for `net8.0` and `net9.0`.
+  ([#6899](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6899))
+
+* Add support for .NET 11.0.
+  ([#6899](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6899))
+
 ## 1.20.1-beta.1
 
 Released 2026-Oct-20

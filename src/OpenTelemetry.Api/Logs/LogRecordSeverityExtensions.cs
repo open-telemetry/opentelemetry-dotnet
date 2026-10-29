@@ -13,7 +13,7 @@ namespace OpenTelemetry.Logs;
 /// Contains extension methods for the <see cref="LogRecordSeverity"/> enum.
 /// </summary>
 /// <remarks><inheritdoc cref="Logger" path="/remarks"/></remarks>
-[Experimental(DiagnosticDefinitions.LogsBridgeExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
+[Experimental(DiagnosticDefinitions.LogsExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
 public
 #else
 /// <summary>

@@ -32,6 +32,9 @@ internal sealed class TracerProviderSdk : TracerProvider
     private readonly Func<ActivitySource, bool>? shouldListenTo;
 
     private IDisposable? selfDiagnosticsRegistration;
+#if !NET10_0
+    private OpenTelemetryTracingListener.TracerProviderBridge? tracingBridge;
+#endif
 
     internal TracerProviderSdk(
         IServiceProvider serviceProvider,
@@ -245,6 +248,11 @@ internal sealed class TracerProviderSdk : TracerProvider
 
             ActivitySource.AddActivityListener(activityListener);
             this.listener = activityListener;
+
+#if !NET10_0
+            this.tracingBridge = OpenTelemetryTracingListener.Attach(serviceProvider!, this);
+#endif
+
             OpenTelemetrySdkEventSource.Log.TracerProviderSdkEvent("TracerProvider built successfully.");
         }
         catch (Exception)
@@ -261,6 +269,30 @@ internal sealed class TracerProviderSdk : TracerProvider
     internal BaseProcessor<Activity>? Processor { get; private set; }
 
     internal Sampler Sampler { get; }
+
+    /// <summary>
+    /// Determines whether this provider is itself subscribed to the given
+    /// <see cref="ActivitySource"/> through <c>AddSource</c>.
+    /// </summary>
+    /// <param name="source">The <see cref="ActivitySource"/>.</param>
+    /// <returns><see langword="true"/> if the provider listens to the source directly.</returns>
+    internal bool IsListeningTo(ActivitySource source)
+        => this.shouldListenTo?.Invoke(source) ?? false;
+
+    internal ActivitySamplingResult OnSample(ref ActivityCreationOptions<ActivityContext> options)
+    {
+        if (Sdk.SuppressInstrumentation)
+        {
+            return ActivitySamplingResult.None;
+        }
+
+        return this.Sampler switch
+        {
+            AlwaysOnSampler => ActivitySamplingResult.AllDataAndRecorded,
+            AlwaysOffSampler => PropagateOrIgnoreData(ref options),
+            _ => ComputeActivitySamplingResult(ref options, this.Sampler),
+        };
+    }
 
     internal void OnActivityStarted(Activity activity)
     {
@@ -349,6 +381,10 @@ internal sealed class TracerProviderSdk : TracerProvider
 
         this.Instrumentations.Clear();
 
+#if !NET10_0
+        this.DetachTracingBridge();
+#endif
+
         var result = this.Processor?.Shutdown(timeoutMilliseconds);
         this.listener?.Dispose();
         return result ?? true;
@@ -366,6 +402,12 @@ internal sealed class TracerProviderSdk : TracerProvider
                 }
 
                 this.Instrumentations.Clear();
+
+#if !NET10_0
+                // Stop forwarding from the listener owned by ActivitySourceFactory before
+                // the sampler and processors are disposed, as it outlives this provider.
+                this.DetachTracingBridge();
+#endif
 
                 (this.Sampler as IDisposable)?.Dispose();
 
@@ -425,7 +467,7 @@ internal sealed class TracerProviderSdk : TracerProvider
             }
             else
             {
-                (names ??= new(StringComparer.OrdinalIgnoreCase)).Add(source);
+                (names ??= [with(StringComparer.OrdinalIgnoreCase)]).Add(source);
             }
         }
 
@@ -652,8 +694,17 @@ internal sealed class TracerProviderSdk : TracerProvider
             : ActivitySamplingResult.None;
     }
 
+#if !NET10_0
+    private void DetachTracingBridge()
+        => this.tracingBridge?.Detach(this);
+#endif
+
     private void DisposeBuiltState(TracerProviderBuilderSdk state)
     {
+#if !NET10_0
+        this.DetachTracingBridge();
+#endif
+
         foreach (var processor in state.Processors)
         {
             CleanUp(() => processor.Shutdown(0));

@@ -3,13 +3,11 @@
 
 #if NET
 using System.Buffers.Text;
-#if NET9_0_OR_GREATER
 using System.Collections.Frozen;
-#else
 using System.Collections.Immutable;
 #endif
-#endif
 using System.Buffers;
+using System.Collections;
 using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.CompilerServices;
@@ -67,12 +65,7 @@ internal abstract class TextFormatSerializer
 #if NET
     private static readonly SearchValues<char> UnicodeVerbatimChars = SearchValues.Create(BuildAsciiVerbatimChars(escapeQuotationMarks: false));
     private static readonly SearchValues<char> LabelValueVerbatimChars = SearchValues.Create(BuildAsciiVerbatimChars(escapeQuotationMarks: true));
-#endif
-
-#if NET9_0_OR_GREATER
     private static readonly FrozenSet<string> ReservedScopeLabelNames = FrozenSet.Create(["otel_scope_name", "otel_scope_schema_url", "otel_scope_version"]);
-#elif NET
-    private static readonly ImmutableHashSet<string> ReservedScopeLabelNames = ["otel_scope_name", "otel_scope_schema_url", "otel_scope_version"];
 #else
     private static readonly HashSet<string> ReservedScopeLabelNames = ["otel_scope_name", "otel_scope_schema_url", "otel_scope_version"];
     private static readonly long UnixEpochTicks = new DateTimeOffset(1970, 1, 1, 0, 0, 0, TimeSpan.Zero).Ticks;
@@ -393,6 +386,23 @@ internal abstract class TextFormatSerializer
     {
         if (double.IsFinite(value))
         {
+            // Whole numbers below 1e15 format to the same digits as the equivalent integer
+            // (the shortest round-trip form only switches to exponent notation at 1e15),
+            // and formatting an integer is several times cheaper than the shortest
+            // round-trip search. Sums of integer-valued histograms and double counters
+            // incremented by whole amounts take this path. Negative zero must keep its
+            // sign, so it is left to the general path.
+            const double MaxIntegralDoubleFastPath = 1e15;
+
+            if (value > -MaxIntegralDoubleFastPath && value < MaxIntegralDoubleFastPath)
+            {
+                var integral = (long)value;
+                if (integral == value && (integral != 0 || BitConverter.DoubleToInt64Bits(value) >= 0))
+                {
+                    return WriteLong(buffer, cursor, integral);
+                }
+            }
+
             // The shortest round-trippable representation is used, which is what the reference
             // Prometheus client libraries emit (Go's strconv.FormatFloat with a precision of -1).
             // Formatting with 17 significant digits also round-trips, but pads shorter values out
@@ -533,7 +543,7 @@ internal abstract class TextFormatSerializer
 #endif
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal static int WriteLabelValue(byte[] buffer, int cursor, object? value)
+    internal static int WriteLabelValue(byte[] buffer, int cursor, object? value, string key = "")
     {
         switch (value)
         {
@@ -597,6 +607,17 @@ internal abstract class TextFormatSerializer
             case Guid guidValue:
                 return WriteSpanFormattableLabelValue(buffer, cursor, guidValue, stackalloc char[36]);
 #endif
+
+            // See https://github.com/open-telemetry/opentelemetry-specification/blob/v1.60.0/specification/common/README.md#byte-arrays;
+            // byte arrays are Base64-encoded rather than falling through to the array handling below.
+            // The exact type check is needed because the runtime also allows a sbyte[] to match byte[].
+            case byte[] byteArrayValue when byteArrayValue.GetType() == typeof(byte[]):
+                return WriteLabelValue(buffer, cursor, Convert.ToBase64String(byteArrayValue));
+
+            // Arrays and maps are JSON-encoded, per
+            // https://github.com/open-telemetry/opentelemetry-specification/blob/v1.60.0/specification/common/README.md#anyvalue-representation-for-non-otlp-protocols.
+            case Array or IEnumerable<KeyValuePair<string, object?>> or IEnumerable<KeyValuePair<string, string?>> or IDictionary:
+                return WriteLabelValue(buffer, cursor, PrometheusAnyValueWriter.Instance.ToLabelValueString(key, value));
 
             case IFormattable formattableValue:
                 return WriteLabelValue(buffer, cursor, formattableValue.ToString(null, CultureInfo.InvariantCulture) ?? string.Empty);
@@ -1027,7 +1048,7 @@ internal abstract class TextFormatSerializer
 
             writtenKeyRanges[writtenKeyRangeCount++] = (keyStart, writtenKey.Length);
 
-            cursor = WriteSanitizedLabel(buffer, cursor, value);
+            cursor = WriteSanitizedLabel(buffer, cursor, value, key);
             wroteLabel = true;
 
             return true;
@@ -1410,7 +1431,7 @@ internal abstract class TextFormatSerializer
         in MetricPoint metricPoint,
         ReadOnlySpan<byte> serializedTags);
 
-    private static string GetLabelValueString(object? labelValue) => labelValue switch
+    private static string GetLabelValueString(string key, object? labelValue) => labelValue switch
     {
         null => string.Empty,
         string stringValue => stringValue,
@@ -1426,6 +1447,8 @@ internal abstract class TextFormatSerializer
         float floatValue => GetCanonicalLabelValueString(floatValue),
         double doubleValue => GetCanonicalLabelValueString(doubleValue),
         decimal decimalValue => decimalValue.ToString(CultureInfo.InvariantCulture),
+        byte[] byteArrayValue when byteArrayValue.GetType() == typeof(byte[]) => Convert.ToBase64String(byteArrayValue),
+        Array or IEnumerable<KeyValuePair<string, object?>> or IEnumerable<KeyValuePair<string, string?>> or IDictionary => PrometheusAnyValueWriter.Instance.ToLabelValueString(key, labelValue),
         IFormattable formattableValue => formattableValue.ToString(null, CultureInfo.InvariantCulture) ?? string.Empty,
         _ => labelValue.ToString() ?? string.Empty,
     };
@@ -1493,19 +1516,23 @@ internal abstract class TextFormatSerializer
 
     private static List<LabelData> CreateScopeLabelData(Metric metric)
     {
+        const string OTelScopeNameKey = "otel_scope_name";
+        const string OTelScopeVersionKey = "otel_scope_version";
+        const string OTelScopeSchemaUrlKey = "otel_scope_schema_url";
+
         var scopeLabels = new List<LabelData>(3)
         {
-            new("otel_scope_name", "otel_scope_name", GetLabelValueString(metric.MeterName)),
+            new(OTelScopeNameKey, OTelScopeNameKey, GetLabelValueString(OTelScopeNameKey, metric.MeterName)),
         };
 
         if (!string.IsNullOrEmpty(metric.MeterVersion))
         {
-            scopeLabels.Add(new("otel_scope_version", "otel_scope_version", GetLabelValueString(metric.MeterVersion)));
+            scopeLabels.Add(new(OTelScopeVersionKey, OTelScopeVersionKey, GetLabelValueString(OTelScopeVersionKey, metric.MeterVersion)));
         }
 
         if (!string.IsNullOrEmpty(metric.MeterSchemaUrl))
         {
-            scopeLabels.Add(new("otel_scope_schema_url", "otel_scope_schema_url", GetLabelValueString(metric.MeterSchemaUrl)));
+            scopeLabels.Add(new(OTelScopeSchemaUrlKey, OTelScopeSchemaUrlKey, GetLabelValueString(OTelScopeSchemaUrlKey, metric.MeterSchemaUrl)));
         }
 
         if (metric.MeterTags == null)
@@ -1522,7 +1549,7 @@ internal abstract class TextFormatSerializer
                 continue;
             }
 
-            scopeLabels.Add(new(tag.Key, labelKey, GetLabelValueString(tag.Value)));
+            scopeLabels.Add(new(tag.Key, labelKey, GetLabelValueString(tag.Key, tag.Value)));
         }
 
         return scopeLabels;
@@ -1733,13 +1760,13 @@ internal abstract class TextFormatSerializer
 #endif
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static int WriteSanitizedLabel(byte[] buffer, int cursor, object? labelValue)
+    private static int WriteSanitizedLabel(byte[] buffer, int cursor, object? labelValue, string key = "")
     {
         buffer[cursor++] = unchecked((byte)'=');
         buffer[cursor++] = unchecked((byte)'"');
 
         // In Prometheus, a label with an empty label value is considered equivalent to a label that does not exist.
-        cursor = WriteLabelValue(buffer, cursor, labelValue);
+        cursor = WriteLabelValue(buffer, cursor, labelValue, key);
         buffer[cursor++] = unchecked((byte)'"');
 
         return cursor;
@@ -1758,7 +1785,7 @@ internal abstract class TextFormatSerializer
         }
 
         labels ??= [];
-        labels.Add(new LabelData(originalKey, outputKey, GetLabelValueString(value)));
+        labels.Add(new LabelData(originalKey, outputKey, GetLabelValueString(originalKey, value)));
     }
 
     private static bool IsValidLabelKey(string value)
@@ -2061,7 +2088,7 @@ internal abstract class TextFormatSerializer
         // The key is already the final output key; it is written verbatim, or
         // quoted when the allow-utf-8 scheme produced a non-legacy label name.
         cursor = WriteLabelName(buffer, cursor, key);
-        cursor = WriteSanitizedLabel(buffer, cursor, value);
+        cursor = WriteSanitizedLabel(buffer, cursor, value, key);
         buffer[cursor++] = unchecked((byte)',');
 
         return true;
