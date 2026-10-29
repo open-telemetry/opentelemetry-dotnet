@@ -196,7 +196,7 @@ internal sealed class ProtobufOtlpTagWriter : TagWriter<ProtobufOtlpTagWriter.Ot
         }
 
         // A formatter may use the whole destination as scratch space, whatever it reports writing.
-        RaiseHighWaterMark(ref state, state.WritePosition + buffer.Length);
+        SetHighWaterMark(ref state, state.WritePosition + buffer.Length);
 
         var formatted = false;
         var bytesWritten = 0;
@@ -377,23 +377,24 @@ internal sealed class ProtobufOtlpTagWriter : TagWriter<ProtobufOtlpTagWriter.Ot
 
     private static void RollBackTo(ref OtlpTagWriterState state, int startPosition)
     {
-        RaiseHighWaterMark(ref state, state.WritePosition);
+        SetHighWaterMark(ref state, state.WritePosition);
         state.WritePosition = startPosition;
     }
 
     /// <summary>
-    /// Records that bytes up to <paramref name="position"/> may have been written.
+    /// Records that bytes up to <paramref name="position"/> may have been written, unless the
+    /// high-water mark is already further along.
     /// </summary>
     /// <remarks>
     /// Clamped to the buffer, because reserving a length can advance the write position past its end.
     /// </remarks>
-    /// <param name="state">The writer state whose high-water mark is raised.</param>
+    /// <param name="state">The writer state whose high-water mark is set.</param>
     /// <param name="position">The position up to which bytes may have been written.</param>
-    private static void RaiseHighWaterMark(ref OtlpTagWriterState state, int position)
+    private static void SetHighWaterMark(ref OtlpTagWriterState state, int position)
         => state.HighWaterMark = Math.Max(state.HighWaterMark, Math.Min(position, state.Buffer.Length));
 
     /// <summary>
-    /// Clears the bytes between the write position and the high-water mark, then resets the mark.
+    /// Clears the bytes between the write position and the high-water mark, then moves the mark back to the write position.
     /// </summary>
     /// <remarks>
     /// Only the serialized prefix is cleared when the export buffer goes back to the shared pool,
@@ -408,7 +409,7 @@ internal sealed class ProtobufOtlpTagWriter : TagWriter<ProtobufOtlpTagWriter.Ot
             state.Buffer.AsSpan(state.WritePosition, state.HighWaterMark - state.WritePosition).Clear();
         }
 
-        state.HighWaterMark = 0;
+        state.HighWaterMark = state.WritePosition;
     }
 
     internal struct OtlpTagWriterState

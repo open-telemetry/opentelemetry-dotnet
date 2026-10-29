@@ -692,6 +692,19 @@ public class OtlpAttributeTests
         Assert.All(state.Buffer.Skip(state.WritePosition), b => Assert.Equal(0, b));
     }
 
+    [Theory]
+    [InlineData(typeof(ArgumentException))]
+    [InlineData(typeof(IndexOutOfRangeException))]
+    public void BufferFullExceptionToStringFallbackLeavesNoFormatterBytesInBuffer(Type exceptionType)
+    {
+        var writer = CreateWriter(enableUtf8Spans: true);
+        var state = new ProtobufOtlpTagWriter.OtlpTagWriterState { Buffer = new byte[1024] };
+
+        Assert.True(writer.WriteKeyValueInternal(ref state, ProtobufOtlpTraceFieldNumberConstants.Span_Attributes, "key", new Utf8ValueThatFillsBufferAndThrows(exceptionType), tagValueMaxLength: 10));
+
+        Assert.All(state.Buffer.Skip(state.WritePosition), b => Assert.Equal(0, b));
+    }
+
     [Fact]
     public void Utf8SpanFormattableToStringFallbackIsWrittenLikeAString()
     {
@@ -855,13 +868,15 @@ public class OtlpAttributeTests
         public override string? ToString() => null;
     }
 
-    private sealed class Utf8ValueThatFillsBufferAndThrows : IUtf8SpanFormattable
+    private sealed class Utf8ValueThatFillsBufferAndThrows(Type? exceptionType = null) : IUtf8SpanFormattable
     {
         public bool TryFormat(Span<byte> utf8Destination, out int bytesWritten, ReadOnlySpan<char> format, IFormatProvider? provider)
         {
             utf8Destination.Fill((byte)'x');
-            throw new InvalidOperationException("Nope.");
+            throw (Exception)Activator.CreateInstance(exceptionType ?? typeof(InvalidOperationException), "Nope.")!;
         }
+
+        public override string ToString() => "a";
     }
 
     private sealed class Utf8ValueThatUsesDestinationAsScratch(string value) : IUtf8SpanFormattable
