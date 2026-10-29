@@ -10,6 +10,10 @@ Notes](../../RELEASENOTES.md).
   a reset.
   ([#8064](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8064))
 
+* Fixed tracing callbacks continuing after provider shutdown or disposal on older
+  target frameworks.
+  ([#8065](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8065))
+
 ## 1.21.0-rc.1
 
 Released 2026-Oct-28

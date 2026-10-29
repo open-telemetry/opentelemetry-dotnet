@@ -4,7 +4,7 @@
 using System.Diagnostics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-#if NET11_0_OR_GREATER
+#if !NET10_0
 using Microsoft.Extensions.Diagnostics.Tracing;
 #endif
 using Microsoft.Extensions.Hosting;
@@ -206,7 +206,7 @@ public class OpenTelemetryServicesExtensionsTests
         Assert.True(innerTestExecuted);
     }
 
-#if NET11_0_OR_GREATER
+#if !NET10_0
     [Theory]
     [InlineData(true, false, 1)]
     [InlineData(false, false, 0)]
@@ -892,7 +892,7 @@ public class OpenTelemetryServicesExtensionsTests
         }
     }
 
-#if NET11_0_OR_GREATER
+#if !NET10_0
     private class CountingProcessor : BaseProcessor<Activity>
     {
         public int Started { get; private set; }
