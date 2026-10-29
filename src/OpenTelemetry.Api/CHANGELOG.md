@@ -8,7 +8,7 @@ Notes](../../RELEASENOTES.md).
 
 * Update `System.Diagnostics.DiagnosticSource` dependency to `11.0.0`
   for all target frameworks.
-  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+  ([#8066](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8066))
 
 ## 1.21.0-rc.1
 
