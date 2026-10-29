@@ -744,6 +744,19 @@ public class OtlpAttributeTests
         Assert.Equal(new string('v', 10), OtlpCommon.KeyValue.Parser.ParseFrom(stream).Value.StringValue);
     }
 
+    [Theory]
+    [InlineData(null)]
+    [InlineData(10)]
+    public void Utf8SpanFormattableScratchBytesAreClearedFromBuffer(int? tagValueMaxLength)
+    {
+        var writer = CreateWriter(enableUtf8Spans: true);
+        var state = new ProtobufOtlpTagWriter.OtlpTagWriterState { Buffer = new byte[1024] };
+
+        Assert.True(writer.WriteKeyValueInternal(ref state, ProtobufOtlpTraceFieldNumberConstants.Span_Attributes, "key", new Utf8ValueThatUsesDestinationAsScratch("ok"), tagValueMaxLength));
+
+        Assert.All(state.Buffer.Skip(state.WritePosition), b => Assert.Equal(0, b));
+    }
+
     [Fact]
     public void TruncatedUtf8SpanFormattableLeavesNoDroppedBytesInBuffer()
     {
@@ -849,6 +862,17 @@ public class OtlpAttributeTests
             utf8Destination.Fill((byte)'x');
             throw new InvalidOperationException("Nope.");
         }
+    }
+
+    private sealed class Utf8ValueThatUsesDestinationAsScratch(string value) : IUtf8SpanFormattable
+    {
+        public bool TryFormat(Span<byte> utf8Destination, out int bytesWritten, ReadOnlySpan<char> format, IFormatProvider? provider)
+        {
+            utf8Destination.Fill((byte)'x');
+            return System.Text.Encoding.UTF8.TryGetBytes(value, utf8Destination, out bytesWritten);
+        }
+
+        public override string ToString() => value;
     }
 
     private sealed class Utf8ValueThatFillsBufferAndDoesNotFit(string value) : IUtf8SpanFormattable

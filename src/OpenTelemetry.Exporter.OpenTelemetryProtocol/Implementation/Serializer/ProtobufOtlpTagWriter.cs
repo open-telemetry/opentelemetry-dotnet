@@ -70,10 +70,12 @@ internal sealed class ProtobufOtlpTagWriter : TagWriter<ProtobufOtlpTagWriter.Ot
         if (!this.TryWriteTag(ref state, key, value, tagValueMaxLength))
         {
             RollBackTo(ref state, startPosition);
+            ClearPastWritePosition(ref state);
             return false;
         }
 
         state.WritePosition = ProtobufSerializer.WriteCompactLength(state.Buffer, lengthPosition, state.WritePosition);
+        ClearPastWritePosition(ref state);
 
         return true;
     }
@@ -180,6 +182,9 @@ internal sealed class ProtobufOtlpTagWriter : TagWriter<ProtobufOtlpTagWriter.Ot
             }
         }
 
+        // A formatter may use the whole destination as scratch space, whatever it reports writing.
+        RaiseHighWaterMark(ref state, state.WritePosition + buffer.Length);
+
         var formatted = false;
         var bytesWritten = 0;
         try
@@ -191,7 +196,6 @@ internal sealed class ProtobufOtlpTagWriter : TagWriter<ProtobufOtlpTagWriter.Ot
             // Some formatters report a destination that is too short by throwing, as Span<T>.CopyTo does.
             var isDestinationTooShort = ex is IndexOutOfRangeException or ArgumentException;
 
-            // Not cleared before rethrowing: callers that grow or discard the buffer clear the whole of it.
             if (ex is OutOfMemoryException || (isDestinationTooShort && !isBufferCapped))
             {
                 throw;
@@ -199,8 +203,6 @@ internal sealed class ProtobufOtlpTagWriter : TagWriter<ProtobufOtlpTagWriter.Ot
 
             if (!isDestinationTooShort)
             {
-                // How much the formatter wrote is unknown, and the buffer may be returned to a shared pool.
-                buffer.Clear();
                 return this.LogUnsupportedTagTypeAndReturnFalse(key, value);
             }
         }
@@ -209,7 +211,6 @@ internal sealed class ProtobufOtlpTagWriter : TagWriter<ProtobufOtlpTagWriter.Ot
         if (formatted && Utf8.IsValid(buffer[..bytesWritten]))
         {
             var truncatedLength = TruncateUtf8String(buffer[..bytesWritten], tagValueMaxLength).Length;
-            buffer[truncatedLength..bytesWritten].Clear();
             EndUtf8StringTag(ref state, anyValueLengthPosition, stringLengthPosition, truncatedLength);
             return true;
         }
@@ -219,9 +220,6 @@ internal sealed class ProtobufOtlpTagWriter : TagWriter<ProtobufOtlpTagWriter.Ot
             throw new ArgumentOutOfRangeException(nameof(state), "The buffer is too small to hold the data being written.");
         }
 
-        // The formatter's bytes may extend beyond what the shorter fallback overwrites.
-        // Not needed before the throw above: callers that grow the buffer clear the whole of the old one.
-        (formatted ? buffer[..bytesWritten] : buffer).Clear();
         RollBackTo(ref state, startPosition);
 
         return this.TryWriteToStringTag(ref state, key, value, tagValueMaxLength);
@@ -360,15 +358,34 @@ internal sealed class ProtobufOtlpTagWriter : TagWriter<ProtobufOtlpTagWriter.Ot
 
     private static void RollBackTo(ref OtlpTagWriterState state, int startPosition)
     {
-        // Reserving a length can advance WritePosition past the end of the buffer.
-        state.Buffer.AsSpan(startPosition, Math.Min(state.WritePosition, state.Buffer.Length) - startPosition).Clear();
+        RaiseHighWaterMark(ref state, state.WritePosition);
         state.WritePosition = startPosition;
+    }
+
+    // Reserving a length can advance WritePosition past the end of the buffer.
+    private static void RaiseHighWaterMark(ref OtlpTagWriterState state, int position)
+        => state.HighWaterMark = Math.Max(state.HighWaterMark, Math.Min(position, state.Buffer.Length));
+
+    // Only the serialized prefix is cleared when the export buffer goes back to the shared pool,
+    // so bytes left past the write position by a dropped or rewritten tag are cleared here.
+    // Not needed when a buffer-full exception escapes: growing or discarding the buffer clears all of it.
+    private static void ClearPastWritePosition(ref OtlpTagWriterState state)
+    {
+        if (state.HighWaterMark > state.WritePosition)
+        {
+            state.Buffer.AsSpan(state.WritePosition, state.HighWaterMark - state.WritePosition).Clear();
+        }
+
+        state.HighWaterMark = 0;
     }
 
     internal struct OtlpTagWriterState
     {
         public byte[] Buffer;
         public int DroppedTagCount;
+
+        // The furthest position written that may lie past WritePosition, cleared when the tag finishes.
+        public int HighWaterMark;
         public int TagCount;
         public int WritePosition;
     }
