@@ -743,6 +743,16 @@ want to solicit feedback from the community.
     The setting is read once from the environment variable (not from
     `IConfiguration`) and applies to every OTLP exporter in the process.
 
+    Built-in types such as `Int128`, `DateOnly`, `TimeOnly`, `Version` and
+    `IPAddress` also take this path once it is enabled.
+
+    > [!WARNING]
+    > Set an attribute value length limit (for example
+    > `OTEL_ATTRIBUTE_VALUE_LENGTH_LIMIT`) when enabling this. The space a
+    > value is formatted into is cleared after each such attribute, and
+    > without a limit that space is the rest of the export buffer, which can
+    > make each attribute take microseconds rather than nanoseconds to write.
+
     Added in **TBD** (Unreleased).
 
 > [!NOTE]
