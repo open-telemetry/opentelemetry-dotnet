@@ -66,6 +66,11 @@ Released 2026-Oct-28
 * Add support for .NET 11.0.
   ([#6899](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6899))
 
+* Fixed string attribute values truncated by an attribute value length limit
+  ending in half of a surrogate pair. The truncated value now ends before the
+  pair instead.
+  ([#7929](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7929))
+
 ## 1.20.1
 
 Released 2026-Oct-20

@@ -47,18 +47,7 @@ internal abstract class TagWriter<TTagState, TArrayState>
         {
             // Ordered by how often each type is likely to appear for performance
             case string s:
-                if (tagValueMaxLength is { } length && s.Length > length)
-                {
-                    this.WriteStringTag(
-                        ref state,
-                        key,
-                        s.AsSpan(0, length));
-                }
-                else
-                {
-                    this.WriteStringTag(ref state, key, s);
-                }
-
+                this.WriteStringTag(ref state, key, s, tagValueMaxLength);
                 break;
             case int i:
                 this.WriteIntegralTag(ref state, key, i);
@@ -236,10 +225,27 @@ internal abstract class TagWriter<TTagState, TArrayState>
         return true;
     }
 
+    /// <summary>
+    /// Truncates a string to at most <paramref name="maxLength"/> UTF-16 chars without splitting a
+    /// surrogate pair, which would leave a lone surrogate that cannot be encoded as UTF-8.
+    /// </summary>
+    /// <param name="value">The string to truncate.</param>
+    /// <param name="maxLength">The maximum length in UTF-16 chars, if any.</param>
+    /// <returns>The leading part of <paramref name="value"/> that fits within the limit.</returns>
     protected static ReadOnlySpan<char> TruncateString(ReadOnlySpan<char> value, int? maxLength)
-        => maxLength is { } maxLengthValue && value.Length > maxLengthValue
-           ? value.Slice(0, maxLengthValue)
-           : value;
+    {
+        if (maxLength is not { } length || value.Length <= length)
+        {
+            return value;
+        }
+
+        if (length > 0 && char.IsSurrogatePair(value[length - 1], value[length]))
+        {
+            length--;
+        }
+
+        return value.Slice(0, length);
+    }
 
     protected abstract bool TryWriteEmptyTag(ref TTagState state, string key, object? value);
 
@@ -856,7 +862,7 @@ internal abstract class TagWriter<TTagState, TArrayState>
     {
         if (maxLength is { } length && value.Length > length)
         {
-            this.WriteStringTag(ref state, key, value.AsSpan(0, length));
+            this.WriteStringTag(ref state, key, TruncateString(value.AsSpan(), length));
         }
         else
         {
@@ -868,7 +874,7 @@ internal abstract class TagWriter<TTagState, TArrayState>
     {
         if (maxLength is { } length && value.Length > length)
         {
-            this.arrayWriter.WriteStringValue(ref state, value.AsSpan(0, length));
+            this.arrayWriter.WriteStringValue(ref state, TruncateString(value.AsSpan(), length));
         }
         else
         {

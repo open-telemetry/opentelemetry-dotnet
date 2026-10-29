@@ -530,6 +530,36 @@ public class OtlpAttributeTests
     }
 
     [Theory]
+    [InlineData(1, "a")]
+    [InlineData(2, "a")]
+    [InlineData(3, "a\U0001F600")]
+    [InlineData(100, "a\U0001F600b")]
+    public void StringTruncationDoesNotSplitASurrogatePair(int tagValueMaxLength, string expected)
+    {
+        const string Value = "a\U0001F600b";
+
+        Assert.True(TryTransformTag(new KeyValuePair<string, object?>("key", Value), out var attribute, tagValueMaxLength));
+        Assert.Equal(expected, attribute.Value.StringValue);
+
+        Assert.True(TryTransformTag(new KeyValuePair<string, object?>("key", new[] { Value }), out attribute, tagValueMaxLength));
+        Assert.Equal(expected, Assert.Single(attribute.Value.ArrayValue.Values).StringValue);
+    }
+
+    [Theory]
+    [InlineData(false, 4)]
+    [InlineData(true, 4)]
+    [InlineData(false, 5)]
+    [InlineData(true, 5)]
+    public void Utf8SpanFormattableIsTruncatedTheSameWithAndWithoutTheSetting(bool enableUtf8Spans, int tagValueMaxLength)
+    {
+        var writer = CreateWriter(enableUtf8Spans);
+        var kvp = new KeyValuePair<string, object?>("key", new Utf8Value("a\u00E9\u20AC\U0001F600b"));
+
+        Assert.True(TryTransformTag(writer, kvp, out var attribute, tagValueMaxLength));
+        Assert.Equal(tagValueMaxLength == 4 ? "a\u00E9\u20AC" : "a\u00E9\u20AC\U0001F600", attribute.Value.StringValue);
+    }
+
+    [Theory]
     [InlineData(0, "")]
     [InlineData(1, "a")]
     [InlineData(2, "a\u00E9")]
