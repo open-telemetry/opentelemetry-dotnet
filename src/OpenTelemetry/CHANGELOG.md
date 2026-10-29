@@ -6,6 +6,10 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Fixed an exception when downscaling empty exponential histogram buckets after
+  a reset.
+  ([#8064](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8064))
+
 ## 1.21.0-rc.1
 
 Released 2026-Oct-28
