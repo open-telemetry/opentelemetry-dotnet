@@ -14,6 +14,8 @@ namespace Benchmarks.Exporter;
 [MemoryDiagnoser]
 public class OtlpUtf8SpanFormattableTagBenchmarks
 {
+    private static readonly ProtobufOtlpTagWriter Writer = new(new ProtobufOtlpTagWriter.OtlpArrayTagWriter(), enableUtf8Spans: true);
+
     private readonly byte[] buffer = new byte[1024 * 64];
     private TestDTO[] toSerialize = [];
 
@@ -36,7 +38,7 @@ public class OtlpUtf8SpanFormattableTagBenchmarks
     public int JsonStringTag()
     {
         var state = new ProtobufOtlpTagWriter.OtlpTagWriterState { Buffer = this.buffer };
-        ProtobufOtlpTagWriter.WriteKeyValue(ref state, 1, "items", JsonSerializer.Serialize(this.toSerialize));
+        Writer.WriteKeyValueInternal(ref state, 1, "items", JsonSerializer.Serialize(this.toSerialize));
         return state.WritePosition;
     }
 
@@ -44,7 +46,7 @@ public class OtlpUtf8SpanFormattableTagBenchmarks
     public int JsonUtf8SpanFormattableTag()
     {
         var state = new ProtobufOtlpTagWriter.OtlpTagWriterState { Buffer = this.buffer };
-        ProtobufOtlpTagWriter.WriteKeyValue(ref state, 1, "items", new JsonTagValue<TestDTO[]>(this.toSerialize));
+        Writer.WriteKeyValueInternal(ref state, 1, "items", new JsonTagValue<TestDTO[]>(this.toSerialize));
         return state.WritePosition;
     }
 

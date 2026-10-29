@@ -15,6 +15,8 @@ internal sealed class ExperimentalOptions
 
     public const string OtlpDiskRetryDirectoryPathEnvVar = "OTEL_DOTNET_EXPERIMENTAL_OTLP_DISK_RETRY_DIRECTORY_PATH";
 
+    public const string Utf8SpansEnvVar = "OTEL_DOTNET_EXPERIMENTAL_OTLP_UTF8_SPANS";
+
     public ExperimentalOptions()
         : this(EnvironmentVariablesConfiguration.Create())
     {
@@ -25,6 +27,11 @@ internal sealed class ExperimentalOptions
         if (configuration.TryGetBoolValue(OpenTelemetryProtocolExporterEventSource.Log, EmitLogEventEnvVar, out var emitLogEventAttributes))
         {
             this.EmitLogEventAttributes = emitLogEventAttributes;
+        }
+
+        if (configuration.TryGetBoolValue(OpenTelemetryProtocolExporterEventSource.Log, Utf8SpansEnvVar, out var enableUtf8Spans))
+        {
+            this.EnableUtf8Spans = enableUtf8Spans;
         }
 
         if (configuration.TryGetStringValue(OtlpRetryEnvVar, out var retryPolicy))
@@ -53,6 +60,12 @@ internal sealed class ExperimentalOptions
     /// Gets a value indicating whether log event attributes should be exported.
     /// </summary>
     public bool EmitLogEventAttributes { get; }
+
+    /// <summary>
+    /// Gets a value indicating whether attribute values implementing <c>IUtf8SpanFormattable</c>
+    /// are formatted directly into the export buffer rather than through <c>ToString()</c>.
+    /// </summary>
+    public bool EnableUtf8Spans { get; }
 
     /// <summary>
     /// Gets a value indicating whether or not in-memory retry should be enabled for transient errors.

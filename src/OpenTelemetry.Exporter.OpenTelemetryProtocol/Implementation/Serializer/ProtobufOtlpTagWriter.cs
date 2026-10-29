@@ -16,19 +16,18 @@ internal sealed class ProtobufOtlpTagWriter : TagWriter<ProtobufOtlpTagWriter.Ot
     private const int ReserveSizeForLength = 4;
 
     private readonly OtlpArrayTagWriter arrayTagWriter;
+    private readonly bool enableUtf8Spans;
 
-    internal ProtobufOtlpTagWriter(OtlpArrayTagWriter arrayTagWriter)
+    internal ProtobufOtlpTagWriter(OtlpArrayTagWriter arrayTagWriter, bool enableUtf8Spans = false)
         : base(arrayTagWriter)
     {
         this.arrayTagWriter = arrayTagWriter;
+        this.enableUtf8Spans = enableUtf8Spans;
     }
 
-    private ProtobufOtlpTagWriter()
-        : this(new OtlpArrayTagWriter())
-    {
-    }
-
-    public static ProtobufOtlpTagWriter Instance { get; } = new();
+    public static ProtobufOtlpTagWriter Instance { get; } = new(
+        new OtlpArrayTagWriter(),
+        new ExperimentalOptions().EnableUtf8Spans);
 
     /// <summary>
     /// Writes a tag as a length-delimited <c>KeyValue</c> message under the given field
@@ -52,6 +51,14 @@ internal sealed class ProtobufOtlpTagWriter : TagWriter<ProtobufOtlpTagWriter.Ot
         string key,
         object? value,
         int? tagValueMaxLength = null)
+        => Instance.WriteKeyValueInternal(ref state, fieldNumber, key, value, tagValueMaxLength);
+
+    internal bool WriteKeyValueInternal(
+        ref OtlpTagWriterState state,
+        int fieldNumber,
+        string key,
+        object? value,
+        int? tagValueMaxLength = null)
     {
         var startPosition = state.WritePosition;
 
@@ -60,7 +67,7 @@ internal sealed class ProtobufOtlpTagWriter : TagWriter<ProtobufOtlpTagWriter.Ot
         var lengthPosition = state.WritePosition;
         state.WritePosition += ProtobufSerializer.ReserveSizeForCompactLength;
 
-        if (!Instance.TryWriteTag(ref state, key, value, tagValueMaxLength))
+        if (!this.TryWriteTag(ref state, key, value, tagValueMaxLength))
         {
             RollBackTo(ref state, startPosition);
             return false;
@@ -134,6 +141,11 @@ internal sealed class ProtobufOtlpTagWriter : TagWriter<ProtobufOtlpTagWriter.Ot
     protected override bool TryWriteUtf8SpanFormattableTag(ref OtlpTagWriterState state, string key, IUtf8SpanFormattable value, int? tagValueMaxLength)
     {
         const int MaxUtf8BytesPerChar = 3;
+
+        if (!this.enableUtf8Spans)
+        {
+            return base.TryWriteUtf8SpanFormattableTag(ref state, key, value, tagValueMaxLength);
+        }
 
         var startPosition = state.WritePosition;
 
