@@ -146,6 +146,11 @@ Released 2026-Oct-20
   values when buffering or updating `LogRecord.State`.
   ([#7987](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7987))
 
+* Added `SamplerOptions`, which allows the trace sampler to be configured using
+  the options pattern (including binding from `appsettings.json`) in addition to
+  the `OTEL_TRACES_SAMPLER` and `OTEL_TRACES_SAMPLER_ARG` environment variables.
+  ([#7192](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7192))
+
 ## 1.20.0
 
 Released 2026-Oct-15
