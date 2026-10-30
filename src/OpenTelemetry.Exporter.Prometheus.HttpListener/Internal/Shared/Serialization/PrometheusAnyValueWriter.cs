@@ -17,10 +17,16 @@ namespace OpenTelemetry.Exporter.Prometheus.Serialization;
 // TextFormatSerializer.GetLabelValueString formats those directly.
 internal sealed class PrometheusAnyValueWriter : JsonStringArrayTagWriter<PrometheusAnyValueWriter.AnyValue>
 {
-    public static readonly PrometheusAnyValueWriter Instance = new();
+    // A label value is ultimately copied into the scrape response, so its JSON representation is
+    // capped at the same size as the serialized tags of a histogram. See TextFormatSerializer.
+    public static readonly PrometheusAnyValueWriter Instance = new(TextFormatSerializer.MaxSerializedTagsBufferSize);
 
-    private PrometheusAnyValueWriter()
+    private readonly long maxJsonLength;
+
+    internal PrometheusAnyValueWriter(long maxJsonLength)
+        : base(maxJsonLength)
     {
+        this.maxJsonLength = maxJsonLength;
     }
 
     public string ToLabelValueString(string key, object? value)
@@ -96,6 +102,15 @@ internal sealed class PrometheusAnyValueWriter : JsonStringArrayTagWriter<Promet
                 AnyValue nestedValue = default;
                 if (this.TryWriteTag(ref nestedValue, kvp.Key, kvp.Value, tagValueMaxLength))
                 {
+                    // Every character is encoded as at least one byte, so a name or value that
+                    // cannot fit is rejected before the (up to six times larger) escaped form of
+                    // it is buffered. Like an array, an oversized map is replaced with "TRUNCATED".
+                    if (this.IsTooLong(writer, kvp.Key.Length + (nestedValue.Value?.Length ?? 0)))
+                    {
+                        this.WriteTruncated(ref state, key, kvList);
+                        return;
+                    }
+
                     writer.WritePropertyName(kvp.Key);
 
                     if (nestedValue.Value == null)
@@ -117,6 +132,12 @@ internal sealed class PrometheusAnyValueWriter : JsonStringArrayTagWriter<Promet
                     {
                         writer.WriteStringValue(nestedValue.Value);
                     }
+
+                    if (this.IsTooLong(writer, 0))
+                    {
+                        this.WriteTruncated(ref state, key, kvList);
+                        return;
+                    }
                 }
             }
 
@@ -137,6 +158,16 @@ internal sealed class PrometheusAnyValueWriter : JsonStringArrayTagWriter<Promet
         state.Value = Encoding.UTF8.GetString(buffer.Array, buffer.Offset, buffer.Count);
 #endif
         state.IsJsonLiteral = true;
+    }
+
+    private bool IsTooLong(Utf8JsonWriter writer, int pendingLength)
+        => writer.BytesCommitted + writer.BytesPending + pendingLength > this.maxJsonLength;
+
+    private void WriteTruncated(ref AnyValue state, string key, IEnumerable<KeyValuePair<string, object?>> kvList)
+    {
+        state.Value = "TRUNCATED";
+        state.IsJsonLiteral = false;
+        this.OnUnsupportedTagDropped(key, kvList.GetType().ToString());
     }
 
     internal struct AnyValue

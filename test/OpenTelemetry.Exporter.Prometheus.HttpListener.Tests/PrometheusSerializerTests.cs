@@ -21,6 +21,7 @@ public sealed partial class PrometheusSerializerTests
 {
     internal static readonly VerifySettings VerifySettings = CreateVerifySettings();
     private static readonly int[] LabelValueArrayCase = [1, 2, 3];
+    private static readonly string[] LabelValueOversizedArrayCase = ["0123456789", "0123456789", "0123456789", "0123456789"];
     private static readonly byte[] LabelValueByteArrayCase = [1, 2, 3];
 
     public static TheoryData<string> EscapingSchemes =>
@@ -1932,6 +1933,39 @@ public sealed partial class PrometheusSerializerTests
         var cursor = TextFormatSerializer.WriteLabelValue(buffer, 0, labelValue);
 
         Assert.Equal(expectedValue, Encoding.UTF8.GetString(buffer, 0, cursor));
+    }
+
+    [Theory]
+    [InlineData("""{"a":1}""")]
+    [InlineData("TRUNCATED", "a", "012345678901234567890123456789012345678")]
+    [InlineData("TRUNCATED", "a", "0123456789", "b", "0123456789", "c", "0123456789")]
+    [InlineData("TRUNCATED", "a", "\u0001\u0001\u0001\u0001\u0001\u0001\u0001")]
+    public void ToLabelValueStringTruncatesMapWhoseJsonExceedsMaximumLength(string expectedValue, params string[] keysAndValues)
+    {
+        var map = new Dictionary<string, object?> { ["a"] = 1 };
+
+        if (keysAndValues.Length > 0)
+        {
+            map.Clear();
+            for (var i = 0; i < keysAndValues.Length; i += 2)
+            {
+                map[keysAndValues[i]] = keysAndValues[i + 1];
+            }
+        }
+
+        var writer = new PrometheusAnyValueWriter(40);
+
+        Assert.Equal(expectedValue, writer.ToLabelValueString("key", map));
+    }
+
+    [Fact]
+    public void ToLabelValueStringTruncatesNestedValuesWhoseJsonExceedsMaximumLength()
+    {
+        var writer = new PrometheusAnyValueWriter(40);
+
+        Assert.Equal(
+            """{"a":"TRUNCATED","b":1}""",
+            writer.ToLabelValueString("key", new Dictionary<string, object?> { ["a"] = LabelValueOversizedArrayCase, ["b"] = 1 }));
     }
 
     [Fact]

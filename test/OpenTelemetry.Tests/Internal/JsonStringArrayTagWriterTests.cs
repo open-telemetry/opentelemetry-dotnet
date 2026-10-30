@@ -7,6 +7,8 @@ namespace OpenTelemetry.Internal.Tests;
 
 public class JsonStringArrayTagWriterTests
 {
+    private static readonly int[] SmallArray = [1, 2, 3];
+
     [Theory]
     [InlineData([new char[] { }, "[]"])]
     [InlineData([new char[] { 'a' }, """["a"]"""])]
@@ -149,6 +151,33 @@ public class JsonStringArrayTagWriterTests
         Assert.True(reusedStream.Capacity <= 64 * 1024);
     }
 
+    [Theory]
+    [InlineData(new[] { "short" }, """["short"]""")]
+    [InlineData(new[] { "012345678901234567890123456789012345678901234567890123456789" }, """["012345678901234567890123456789012345678901234567890123456789"]""")]
+    [InlineData(new[] { "012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789" }, "TRUNCATED")]
+    [InlineData(new[] { "\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001" }, "TRUNCATED")]
+    [InlineData(new[] { "0123456789", "0123456789", "0123456789", "0123456789", "0123456789", "0123456789", "0123456789" }, "TRUNCATED")]
+    public void ArrayWhoseJsonExceedsMaximumLengthIsTruncated(string[] data, string expectedValue)
+    {
+        TestTagWriter.Tag tag = default;
+        var result = TestTagWriter.Limited.TryWriteTag(ref tag, new KeyValuePair<string, object?>("array", data));
+
+        Assert.True(result);
+        Assert.Equal(expectedValue, tag.Value);
+    }
+
+    [Fact]
+    public void ArrayWhoseJsonExceedsMaximumLengthDoesNotAffectNextArray()
+    {
+        TestTagWriter.Tag tag = default;
+        Assert.True(TestTagWriter.Limited.TryWriteTag(ref tag, new KeyValuePair<string, object?>("array", new string('x', 1000).Split('x'))));
+        Assert.Equal("TRUNCATED", tag.Value);
+
+        tag = default;
+        Assert.True(TestTagWriter.Limited.TryWriteTag(ref tag, new KeyValuePair<string, object?>("array", SmallArray)));
+        Assert.Equal("[1,2,3]", tag.Value);
+    }
+
     private static void VerifySerialization(Array data, string expectedValue)
     {
         TestTagWriter.Tag tag = default;
@@ -164,7 +193,14 @@ public class JsonStringArrayTagWriterTests
         {
         }
 
+        private TestTagWriter(long maxJsonLength)
+            : base(maxJsonLength)
+        {
+        }
+
         public static TestTagWriter Instance { get; } = new();
+
+        public static TestTagWriter Limited { get; } = new(80);
 
         protected override void WriteIntegralTag(ref Tag state, string key, long value)
             => throw new NotImplementedException();
@@ -176,7 +212,10 @@ public class JsonStringArrayTagWriterTests
             => throw new NotImplementedException();
 
         protected override void WriteStringTag(ref Tag state, string key, ReadOnlySpan<char> value)
-            => throw new NotImplementedException();
+        {
+            state.Key = key;
+            state.Value = value.ToString();
+        }
 
         protected override void WriteArrayTag(ref Tag state, string key, ArraySegment<byte> arrayUtf8JsonBytes)
         {

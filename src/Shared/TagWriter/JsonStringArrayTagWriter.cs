@@ -11,7 +11,15 @@ internal abstract class JsonStringArrayTagWriter<TTagState> : TagWriter<TTagStat
     where TTagState : notnull
 {
     protected JsonStringArrayTagWriter()
-        : base(new JsonArrayTagWriter())
+        : this(long.MaxValue)
+    {
+    }
+
+    // Arrays whose JSON representation would exceed maxJsonLength bytes are not serialized;
+    // the writing is abandoned part-way through, before the representation is fully allocated,
+    // and the array is replaced with "TRUNCATED" (as done for the other array writers).
+    protected JsonStringArrayTagWriter(long maxJsonLength)
+        : base(new JsonArrayTagWriter(maxJsonLength))
     {
     }
 
@@ -56,6 +64,13 @@ internal abstract class JsonStringArrayTagWriter<TTagState> : TagWriter<TTagStat
         [ThreadStatic]
         private static Utf8JsonWriter? threadWriter;
 
+        private readonly long maxJsonLength;
+
+        public JsonArrayTagWriter(long maxJsonLength)
+        {
+            this.maxJsonLength = maxJsonLength;
+        }
+
         public override JsonArrayTagWriterState BeginWriteArray()
         {
             var state = EnsureWriter();
@@ -70,7 +85,10 @@ internal abstract class JsonStringArrayTagWriter<TTagState> : TagWriter<TTagStat
         }
 
         public override void WriteBooleanValue(ref JsonArrayTagWriterState state, bool value)
-            => state.Writer.WriteBooleanValue(value);
+        {
+            state.Writer.WriteBooleanValue(value);
+            this.ThrowIfTooLong(state, 0);
+        }
 
         public override void WriteFloatingPointValue(ref JsonArrayTagWriterState state, double value)
         {
@@ -83,23 +101,39 @@ internal abstract class JsonStringArrayTagWriter<TTagState> : TagWriter<TTagStat
             {
                 state.Writer.WriteNumberValue(value);
             }
+
+            this.ThrowIfTooLong(state, 0);
         }
 
         public override void WriteIntegralValue(ref JsonArrayTagWriterState state, long value)
-            => state.Writer.WriteNumberValue(value);
+        {
+            state.Writer.WriteNumberValue(value);
+            this.ThrowIfTooLong(state, 0);
+        }
 
         public override void WriteNullValue(ref JsonArrayTagWriterState state)
-            => state.Writer.WriteNullValue();
+        {
+            state.Writer.WriteNullValue();
+            this.ThrowIfTooLong(state, 0);
+        }
 
         public override void WriteStringValue(ref JsonArrayTagWriterState state, ReadOnlySpan<char> value)
-            => state.Writer.WriteStringValue(value);
+        {
+            // Every character is encoded as at least one byte, so this rejects a value that cannot
+            // fit before the (up to six times larger) escaped form of it is buffered.
+            this.ThrowIfTooLong(state, value.Length);
+            state.Writer.WriteStringValue(value);
+            this.ThrowIfTooLong(state, 0);
+        }
 
         public override bool TryWriteByteArrayValue(ref JsonArrayTagWriterState state, ReadOnlySpan<byte> value)
         {
             // See https://github.com/open-telemetry/opentelemetry-specification/blob/v1.60.0/specification/common/README.md#byte-arrays;
             // byte arrays are Base64-encoded when nested inside another array or map, the same
             // as when they are the top-level attribute value.
+            this.ThrowIfTooLong(state, value.Length);
             state.Writer.WriteBase64StringValue(value);
+            this.ThrowIfTooLong(state, 0);
             return true;
         }
 
@@ -142,6 +176,16 @@ internal abstract class JsonStringArrayTagWriter<TTagState> : TagWriter<TTagStat
 
                 threadWriter!.Reset(threadStream);
                 return new(threadStream, threadWriter);
+            }
+        }
+
+        // Signals "the buffer is too small" in the way TagWriter expects of an array writer. As
+        // TryResize is not overridden the buffer cannot be grown, so the array is dropped.
+        private void ThrowIfTooLong(JsonArrayTagWriterState state, int pendingLength)
+        {
+            if (state.Writer.BytesCommitted + state.Writer.BytesPending + pendingLength > this.maxJsonLength)
+            {
+                throw new ArgumentException("The JSON representation of the array exceeds the maximum supported size.");
             }
         }
     }
