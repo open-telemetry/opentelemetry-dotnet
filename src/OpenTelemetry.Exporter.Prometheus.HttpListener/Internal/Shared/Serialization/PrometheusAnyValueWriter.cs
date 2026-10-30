@@ -119,7 +119,15 @@ internal sealed class PrometheusAnyValueWriter : JsonStringArrayTagWriter<Promet
                 AnyValue nestedValue = default;
                 if (this.TryWriteTag(ref nestedValue, kvp.Key, kvp.Value, tagValueMaxLength))
                 {
-                    if (this.IsTooLong(writer, includesValue ? pendingLength : pendingLength + (nestedValue.Value?.Length ?? 0)))
+                    long valueLength = nestedValue.Value?.Length ?? 0;
+#if !NET
+                    if (nestedValue.IsJsonLiteral && nestedValue.Value != null)
+                    {
+                        var remaining = this.maxJsonLength - writer.BytesCommitted - writer.BytesPending - pendingLength;
+                        valueLength = GetEmbeddedJsonLength(nestedValue.Value, remaining);
+                    }
+#endif
+                    if (this.IsTooLong(writer, includesValue ? pendingLength : pendingLength + valueLength))
                     {
                         this.WriteTruncated(ref state, key, kvList);
                         return;
@@ -180,6 +188,35 @@ internal sealed class PrometheusAnyValueWriter : JsonStringArrayTagWriter<Promet
 #endif
         state.IsJsonLiteral = true;
     }
+
+#if !NET
+    private static long GetEmbeddedJsonLength(ReadOnlySpan<char> value, long limit)
+    {
+        long length = value.Length;
+        var inString = false;
+
+        // JsonElement.WriteTo re-encodes strings on the legacy targets. The array
+        // writer emits raw '+' in Base64 strings, so allow for its JSON escaping.
+        // Plus signs in numeric exponents and already escaped strings stay unchanged.
+        for (var i = 0; i < value.Length && length <= limit; i++)
+        {
+            switch (value[i])
+            {
+                case '\\' when inString:
+                    i++;
+                    break;
+                case '"':
+                    inString = !inString;
+                    break;
+                case '+' when inString:
+                    length += 5;
+                    break;
+            }
+        }
+
+        return length;
+    }
+#endif
 
     private static long GetEscapedBase64StringLength(ReadOnlySpan<byte> value, long limit)
     {

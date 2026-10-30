@@ -2073,6 +2073,38 @@ public sealed partial class PrometheusSerializerTests
         Assert.Equal("TRUNCATED", new PrometheusAnyValueWriter(length - 1).ToLabelValueString("key", map));
     }
 
+    [Theory]
+    [InlineData("")]
+    [InlineData("AQID")]
+    [InlineData("+A==")]
+    [InlineData("+/8=")]
+    public void ToLabelValueStringPreservesNestedJsonAtExactLimit(string base64)
+    {
+        // Include a numeric exponent and escaped quotes/backslashes so the preflight
+        // distinguishes plus signs in JSON strings from those in numbers.
+        object[] array = [Convert.FromBase64String(base64), 1e100, "\"\\+"];
+        var map = new Dictionary<string, object?> { ["a"] = array };
+        var arrayJson = new PrometheusAnyValueWriter(1024).ToLabelValueString("key", array);
+        using var stream = new MemoryStream();
+        using (var jsonWriter = new Utf8JsonWriter(stream))
+        {
+            jsonWriter.WriteStartObject();
+            jsonWriter.WritePropertyName("a");
+#if NET
+            jsonWriter.WriteRawValue(arrayJson);
+#else
+            using var document = JsonDocument.Parse(arrayJson);
+            document.RootElement.WriteTo(jsonWriter);
+#endif
+            jsonWriter.WriteEndObject();
+        }
+
+        var expected = Encoding.UTF8.GetString(stream.ToArray());
+
+        Assert.Equal(expected, new PrometheusAnyValueWriter(stream.Length).ToLabelValueString("key", map));
+        Assert.Equal("TRUNCATED", new PrometheusAnyValueWriter(stream.Length - 1).ToLabelValueString("key", map));
+    }
+
     [Fact]
     public void ToLabelValueStringTruncatesMapWithTooManyEntriesBeforeDeduplicatingThem()
     {
