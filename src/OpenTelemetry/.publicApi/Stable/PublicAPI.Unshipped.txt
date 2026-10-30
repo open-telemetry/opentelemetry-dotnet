@@ -1,0 +1,9 @@
+OpenTelemetry.Metrics.AggregationKind
+OpenTelemetry.Metrics.AggregationKind.Drop = 4 -> OpenTelemetry.Metrics.AggregationKind
+OpenTelemetry.Metrics.AggregationKind.ExponentialHistogram = 3 -> OpenTelemetry.Metrics.AggregationKind
+OpenTelemetry.Metrics.AggregationKind.Gauge = 1 -> OpenTelemetry.Metrics.AggregationKind
+OpenTelemetry.Metrics.AggregationKind.Histogram = 2 -> OpenTelemetry.Metrics.AggregationKind
+OpenTelemetry.Metrics.AggregationKind.Sum = 0 -> OpenTelemetry.Metrics.AggregationKind
+OpenTelemetry.Metrics.MetricPoint.TryGetHistogramSum(out double sum) -> bool
+OpenTelemetry.Metrics.MetricStreamConfiguration.AggregationKind.get -> OpenTelemetry.Metrics.AggregationKind?
+OpenTelemetry.Metrics.MetricStreamConfiguration.AggregationKind.set -> void
