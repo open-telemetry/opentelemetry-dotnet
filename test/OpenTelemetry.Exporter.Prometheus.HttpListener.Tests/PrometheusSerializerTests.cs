@@ -580,6 +580,208 @@ public sealed partial class PrometheusSerializerTests
         Assert.DoesNotContain("test_histogram_sum{key=\"value\"} 20", output, StringComparison.Ordinal);
     }
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void WriteMetricDropsPointsWithTheSameLabelsInADifferentOrderOnceEscaped(bool useOpenMetrics)
+    {
+        var buffer = new byte[85000];
+        var metrics = new List<Metric>();
+
+        using var meter = CreateMeter();
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddInMemoryExporter(metrics)
+            .Build();
+
+        // The tags are sorted by their key, so once the keys are escaped the labels of the two points are in a different order.
+        var counter = meter.CreateCounter<int>("test_counter");
+        counter.Add(1, new KeyValuePair<string, object?>("a.b", "1"), new KeyValuePair<string, object?>("aZ", "2"));
+        counter.Add(2, new KeyValuePair<string, object?>("a_b", "1"), new KeyValuePair<string, object?>("aZ", "2"));
+
+        provider.ForceFlush();
+
+        var series = new SeriesRegistry();
+        var cursor = WriteMetric(buffer, 0, metrics.Single(), useOpenMetrics, suppressScopeInfo: true, series: series);
+        var output = Encoding.UTF8.GetString(buffer, 0, cursor);
+
+        Assert.Single(GetSampleLines(output, "test_counter_total"));
+        Assert.Equal(1, series.DroppedCount);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void WriteMetricDropsHistogramsWithoutBucketsWithTheSameSeries(bool useOpenMetrics)
+    {
+        var buffer = new byte[85000];
+        var metrics = new List<Metric>();
+
+        using var meter = CreateMeter();
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddView("test_histogram", new ExplicitBucketHistogramConfiguration { Boundaries = [] })
+            .AddInMemoryExporter(metrics)
+            .Build();
+
+        var histogram = meter.CreateHistogram<double>("test_histogram");
+        histogram.Record(1, new KeyValuePair<string, object?>("a.b", "value"));
+        histogram.Record(2, new KeyValuePair<string, object?>("a_b", "value"));
+        histogram.Record(3, new KeyValuePair<string, object?>("a_b", "other"));
+
+        provider.ForceFlush();
+
+        var series = new SeriesRegistry();
+        var cursor = WriteMetric(buffer, 0, metrics.Single(), useOpenMetrics, suppressScopeInfo: true, series: series);
+        var output = Encoding.UTF8.GetString(buffer, 0, cursor);
+
+        // Without any buckets, the series of the histogram are those of its sum and count.
+        Assert.Empty(GetSampleLines(output, "test_histogram_bucket"));
+        Assert.Equal(2, GetSampleLines(output, "test_histogram_sum").Count);
+        Assert.Equal(2, GetSampleLines(output, "test_histogram_count").Count);
+        Assert.Single(GetSampleLines(output, "test_histogram_sum"), line => line.Contains("a_b=\"value\"", StringComparison.Ordinal));
+        Assert.Equal(1, series.DroppedCount);
+    }
+
+    [Theory]
+    [InlineData(false, "test_histogram_sum")]
+    [InlineData(false, "test_histogram_count")]
+    [InlineData(true, "test_histogram_sum")]
+    [InlineData(true, "test_histogram_count")]
+    public void WriteMetricDropsMetricsWithTheNameOfASampleGeneratedForAHistogram(bool useOpenMetrics, string gaugeName)
+    {
+        var buffer = new byte[85000];
+        var metrics = new List<Metric>();
+
+        using var meter = CreateMeter();
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddInMemoryExporter(metrics)
+            .Build();
+
+        meter.CreateHistogram<double>("test_histogram").Record(7);
+        meter.CreateGauge<double>(gaugeName).Record(100);
+
+        provider.ForceFlush();
+
+        var series = new SeriesRegistry();
+        var cursor = 0;
+
+        // The metrics are written in the order of their names, which is that of their families, so the histogram is first.
+        foreach (var metric in metrics.OrderBy(m => m.Name, StringComparer.Ordinal))
+        {
+            cursor = WriteMetric(buffer, cursor, metric, useOpenMetrics, suppressScopeInfo: true, series: series);
+        }
+
+        var output = Encoding.UTF8.GetString(buffer, 0, cursor);
+
+        Assert.Single(GetSampleLines(output, gaugeName));
+        Assert.DoesNotContain(gaugeName + "{} 100", output, StringComparison.Ordinal);
+        Assert.Equal(1, series.DroppedCount);
+        Assert.NotEmpty(GetSampleLines(output, "test_histogram_bucket"));
+    }
+
+    [Fact]
+    public void WriteMetricDropsMetricsWithTheNameOfTheCreatedSampleGeneratedForACounter()
+    {
+        var buffer = new byte[85000];
+        var metrics = new List<Metric>();
+
+        using var meter = CreateMeter();
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddInMemoryExporter(metrics)
+            .Build();
+
+        meter.CreateCounter<int>("test_counter").Add(1);
+        meter.CreateGauge<double>("test_counter_created").Record(100);
+
+        provider.ForceFlush();
+
+        var series = new SeriesRegistry();
+        var cursor = 0;
+
+        foreach (var metric in metrics.OrderBy(m => m.Name, StringComparer.Ordinal))
+        {
+            cursor = WriteMetric(buffer, cursor, metric, useOpenMetrics: true, suppressScopeInfo: true, series: series);
+        }
+
+        var output = Encoding.UTF8.GetString(buffer, 0, cursor);
+
+        Assert.Single(GetSampleLines(output, "test_counter_created"));
+        Assert.DoesNotContain("test_counter_created{} 100", output, StringComparison.Ordinal);
+        Assert.Equal(1, series.DroppedCount);
+    }
+
+    [Theory]
+    [InlineData("a{x=\"1\",y=\"2\"}", "a{y=\"2\",x=\"1\"}", true)]
+    [InlineData("a{x=\"1\",y=\"2\",z=\"3\"}", "a{z=\"3\",x=\"1\",y=\"2\"}", true)]
+    [InlineData("a{x=\"1\",y=\"2\"} 1", "a{y=\"2\",x=\"1\"} 2", true)]
+    [InlineData("a{x=\"1\",y=\"2\"}", "a{x=\"2\",y=\"1\"}", false)]
+    [InlineData("a{k1=\"a,k2=b\"}", "a{k1=\"a\",k2=\"b\"}", false)]
+    [InlineData("a{k=\"x}\",j=\"y\"}", "a{j=\"y\",k=\"x}\"}", true)]
+    [InlineData("a{k=\"v\\\",x=\\\"1\",z=\"2\"}", "a{z=\"2\",k=\"v\\\",x=\\\"1\"}", true)]
+    [InlineData("a{k=\"v\\\",x=\\\"1\"}", "a{k=\"v\\\"\",x=\"1\"}", false)]
+    [InlineData("a{x=\"1\"}", "b{x=\"1\"}", false)]
+    [InlineData("a{}", "a{}", true)]
+    [InlineData("a{x=\"1\"}", "a{x=\"1\",y=\"2\"}", false)]
+    [InlineData("{\"a.b\",x=\"1\",y=\"2\"}", "{\"a.b\",y=\"2\",x=\"1\"}", true)]
+    [InlineData("{\"a.b\",x=\"1\"}", "{\"a.c\",x=\"1\"}", false)]
+    [InlineData("a_bucket{x=\"1\",y=\"2\",le=\"", "a_bucket{y=\"2\",x=\"1\",le=\"", true)]
+    [InlineData("a_bucket{x=\"1\",", "a_bucket{x=\"1\"}", true)]
+    public void SeriesRegistryIdentifiesSeriesByTheirNameAndLabelsInAnyOrder(string first, string second, bool expectedDuplicate)
+    {
+        var registry = new SeriesRegistry();
+
+        var firstBytes = Encoding.UTF8.GetBytes(first);
+        var secondBytes = Encoding.UTF8.GetBytes(second);
+
+        Assert.True(registry.TryAdd(firstBytes, 0, firstBytes.Length));
+        Assert.Equal(!expectedDuplicate, registry.TryAdd(secondBytes, 0, secondBytes.Length));
+        Assert.Equal(expectedDuplicate ? 1 : 2, registry.Count);
+    }
+
+    [Fact]
+    public void SeriesRegistryDoesNotDependOnTheBufferItsSeriesWereAddedFrom()
+    {
+        var registry = new SeriesRegistry();
+        var buffer = Encoding.UTF8.GetBytes("a_sum{x=\"1\"} 1\n");
+
+        Assert.True(registry.TryAdd(buffer, 0, 12));
+
+        // The buffer is overwritten, as the buffer of a response is when the series that it contained is not written.
+        Array.Clear(buffer, 0, buffer.Length);
+
+        var other = Encoding.UTF8.GetBytes("a_sum{x=\"1\"} 2\n");
+
+        Assert.False(registry.TryAdd(other, 0, 12));
+        Assert.Equal(1, registry.Count);
+    }
+
+    [Fact]
+    public void SeriesRegistryForgetsTheIdentitiesOfSeriesWhichAreRolledBackWhenTheyAreLongerThanTheRest()
+    {
+        var registry = new SeriesRegistry();
+
+        var first = Encoding.UTF8.GetBytes("a{x=\"1\"}");
+        var second = Encoding.UTF8.GetBytes("b{y=\"" + new string('v', 10_000) + "\"}");
+        var third = Encoding.UTF8.GetBytes("c{z=\"3\"}");
+
+        Assert.True(registry.TryAdd(first, 0, first.Length));
+
+        var mark = registry.Count;
+
+        Assert.True(registry.TryAdd(second, 0, second.Length));
+        Assert.True(registry.TryAdd(third, 0, third.Length));
+
+        registry.Rollback(mark);
+
+        Assert.False(registry.TryAdd(first, 0, first.Length));
+        Assert.True(registry.TryAdd(third, 0, third.Length));
+        Assert.True(registry.TryAdd(second, 0, second.Length));
+        Assert.False(registry.TryAdd(second, 0, second.Length));
+    }
+
     [Fact]
     public void SeriesRegistryDropsSeriesThatHaveAlreadyBeenAdded()
     {

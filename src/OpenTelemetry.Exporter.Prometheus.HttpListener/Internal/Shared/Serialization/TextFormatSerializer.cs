@@ -182,6 +182,11 @@ internal abstract class TextFormatSerializer
             cursor = this.WriteHelpMetadata(buffer, cursor, prometheusMetric, helpOverride ?? metric.Description);
         }
 
+        // A series which has already been written is not written again, as the response would not be valid. The
+        // series that are checked are those of the samples which are written, so a metric is also dropped when
+        // the name of the sample that is generated for another one (such as "_sum") is the same as its own.
+        var series = options.Series;
+
         if (!metric.MetricType.IsHistogram())
         {
             var isLongValue = ((int)metric.MetricType & 0b_0000_1111) == 0x0a; // I8
@@ -189,6 +194,7 @@ internal abstract class TextFormatSerializer
             foreach (ref readonly var metricPoint in metric.GetMetricPoints())
             {
                 var seriesStart = cursor;
+                var seriesMark = series?.Count ?? 0;
 
                 cursor = this.WriteSeriesAndTags(
                     buffer,
@@ -202,10 +208,9 @@ internal abstract class TextFormatSerializer
 
                 var seriesEnd = cursor;
 
-                // A series that has already been written is not written again, as the response would not be valid.
-                if (options.Series is { } registry && !registry.TryAdd(buffer, seriesStart, seriesEnd - seriesStart))
+                if (series is not null && !series.TryAdd(buffer, seriesStart, seriesEnd - seriesStart))
                 {
-                    registry.RecordDropped(metric.Name);
+                    series.RecordDropped(metric.Name);
                     cursor = seriesStart;
                     continue;
                 }
@@ -229,6 +234,8 @@ internal abstract class TextFormatSerializer
 
                 buffer[cursor++] = AsciiLineFeed;
 
+                var createdStart = cursor;
+
                 cursor = this.WriteCounterCreated(
                     buffer,
                     cursor,
@@ -237,12 +244,22 @@ internal abstract class TextFormatSerializer
                     in metricPoint,
                     in options,
                     new ReadOnlySpan<byte>(buffer, seriesStart, seriesEnd - seriesStart));
+
+                if (series is not null && cursor > createdStart && !series.TryAdd(buffer, createdStart, cursor - createdStart))
+                {
+                    series.Rollback(seriesMark);
+                    series.RecordDropped(metric.Name);
+                    cursor = seriesStart;
+                }
             }
         }
         else
         {
             foreach (ref readonly var metricPoint in metric.GetMetricPoints())
             {
+                var pointStart = cursor;
+                var pointMark = series?.Count ?? 0;
+
                 var tags = metricPoint.Tags;
 
                 var serializedTagsBuffer = this.SerializeTagsToPooledBuffer(
@@ -255,29 +272,9 @@ internal abstract class TextFormatSerializer
                 try
                 {
                     var serializedTags = new ReadOnlySpan<byte>(serializedTagsBuffer, 0, serializedTagsLength);
-
-                    if (options.Series is { } registry)
-                    {
-                        // The series of the histogram is identified by the name and labels of its first bucket (up to the
-                        // value of the le label, which the buckets of every histogram have). It is then written again below.
-                        var seriesStart = cursor;
-
-                        cursor = this.WriteHistogramBucketName(buffer, cursor, prometheusMetric);
-                        cursor = WriteSerializedTagValues(buffer, cursor, serializedTags, appendTrailingComma: true);
-                        cursor = WriteAsciiStringNoEscape(buffer, cursor, "le=\"");
-
-                        var added = registry.TryAdd(buffer, seriesStart, cursor - seriesStart);
-
-                        cursor = seriesStart;
-
-                        if (!added)
-                        {
-                            registry.RecordDropped(metric.Name);
-                            continue;
-                        }
-                    }
-
                     var hasNegativeBucketBounds = false;
+                    var isFirstBucket = true;
+                    var isDuplicate = false;
                     var previousBound = double.NegativeInfinity;
 
                     long totalCount = 0;
@@ -292,6 +289,18 @@ internal abstract class TextFormatSerializer
                         cursor = WriteSerializedTagValues(buffer, cursor, serializedTags, appendTrailingComma: true);
 
                         cursor = WriteAsciiStringNoEscape(buffer, cursor, "le=\"");
+
+                        if (isFirstBucket)
+                        {
+                            isFirstBucket = false;
+
+                            // The name and labels of the first bucket (up to the value of the le label) identify the buckets.
+                            if (series is not null && !series.TryAdd(buffer, pointStart, cursor - pointStart))
+                            {
+                                isDuplicate = true;
+                                break;
+                            }
+                        }
 
                         if (histogramMeasurement.ExplicitBound != double.PositiveInfinity)
                         {
@@ -312,12 +321,30 @@ internal abstract class TextFormatSerializer
                         previousBound = histogramMeasurement.ExplicitBound;
                     }
 
+                    if (isDuplicate)
+                    {
+                        series!.Rollback(pointMark);
+                        series.RecordDropped(metric.Name);
+                        cursor = pointStart;
+                        continue;
+                    }
+
                     if (this.ShouldWriteSumAndCount(hasNegativeBucketBounds))
                     {
                         // OpenMetrics histograms with negative bucket thresholds MUST NOT expose
                         // _sum and therefore MUST NOT expose _count.
                         // See https://prometheus.io/docs/specs/om/open_metrics_spec/#histogram-1
+                        var sumStart = cursor;
+
                         cursor = this.WriteSeriesNameAndSerializedTags(buffer, cursor, prometheusMetric, "_sum", serializedTags);
+
+                        if (series is not null && !series.TryAdd(buffer, sumStart, cursor - sumStart))
+                        {
+                            series.Rollback(pointMark);
+                            series.RecordDropped(metric.Name);
+                            cursor = pointStart;
+                            continue;
+                        }
 
                         buffer[cursor++] = unchecked((byte)' ');
 
@@ -326,7 +353,17 @@ internal abstract class TextFormatSerializer
                         buffer[cursor++] = AsciiLineFeed;
 
                         // Histogram count
+                        var countStart = cursor;
+
                         cursor = this.WriteSeriesNameAndSerializedTags(buffer, cursor, prometheusMetric, "_count", serializedTags);
+
+                        if (series is not null && !series.TryAdd(buffer, countStart, cursor - countStart))
+                        {
+                            series.Rollback(pointMark);
+                            series.RecordDropped(metric.Name);
+                            cursor = pointStart;
+                            continue;
+                        }
 
                         buffer[cursor++] = unchecked((byte)' ');
 
@@ -334,7 +371,16 @@ internal abstract class TextFormatSerializer
                         buffer[cursor++] = AsciiLineFeed;
                     }
 
+                    var createdStart = cursor;
+
                     cursor = this.WriteHistogramCreated(buffer, cursor, prometheusMetric, in metricPoint, serializedTags);
+
+                    if (series is not null && cursor > createdStart && !series.TryAdd(buffer, createdStart, cursor - createdStart))
+                    {
+                        series.Rollback(pointMark);
+                        series.RecordDropped(metric.Name);
+                        cursor = pointStart;
+                    }
                 }
                 finally
                 {

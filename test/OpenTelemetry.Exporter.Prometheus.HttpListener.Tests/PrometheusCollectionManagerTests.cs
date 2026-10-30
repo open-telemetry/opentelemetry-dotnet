@@ -2351,6 +2351,90 @@ public sealed class PrometheusCollectionManagerTests
         Assert.Single(series, s => s.StartsWith("shared_histogram_sum", StringComparison.Ordinal));
     }
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task EnterCollectDoesNotWriteTheSameSeriesForMetricsWithTheNamesOfGeneratedSamplesOrLabelsInADifferentOrder(bool openMetricsRequested)
+    {
+        using var meter = CreateMeter();
+
+#pragma warning disable CA2000 // Dispose objects before losing scope
+        var exporter = new PrometheusExporter(new PrometheusExporterOptions
+        {
+            TargetInfoEnabled = false,
+            ScrapeResponseCacheDurationMilliseconds = 0,
+        });
+
+        var reader = new BaseExportingMetricReader(exporter)
+        {
+            TemporalityPreference = MetricReaderTemporalityPreference.Cumulative,
+        };
+#pragma warning restore CA2000 // Dispose objects before losing scope
+
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddView("empty_histogram", new ExplicitBucketHistogramConfiguration { Boundaries = [] })
+            .AddReader(reader)
+            .Build();
+
+        // Metrics with the names of the samples which are generated for a histogram and a counter
+        meter.CreateHistogram<double>("generated_histogram").Record(7);
+        meter.CreateGauge<double>("generated_histogram_sum").Record(100);
+        meter.CreateGauge<double>("generated_histogram_count").Record(100);
+        meter.CreateCounter<int>("generated_counter").Add(1);
+        meter.CreateGauge<double>("generated_counter_created").Record(100);
+
+        // Points with the same labels in a different order once their keys are escaped
+        var counter = meter.CreateCounter<int>("ordered_counter");
+        counter.Add(1, new KeyValuePair<string, object?>("a.b", "1"), new KeyValuePair<string, object?>("aZ", "2"));
+        counter.Add(2, new KeyValuePair<string, object?>("a_b", "1"), new KeyValuePair<string, object?>("aZ", "2"));
+
+        // A histogram without any buckets, which only has a sum and a count
+        var histogram = meter.CreateHistogram<double>("empty_histogram");
+        histogram.Record(1, new KeyValuePair<string, object?>("a.b", "value"));
+        histogram.Record(2, new KeyValuePair<string, object?>("a_b", "value"));
+
+        var response = await exporter.CollectionManager.EnterCollect(GetProtocol(openMetricsRequested), TestContext.Current.CancellationToken);
+
+        string output;
+
+        try
+        {
+            Assert.True(response.Succeeded);
+            output = Encoding.UTF8.GetString(response.View.Array!, response.View.Offset, response.View.Count);
+        }
+        finally
+        {
+            exporter.CollectionManager.ExitCollect(response);
+        }
+
+        var samples = output
+            .Split('\n')
+            .Where(line => line.Length > 0 && line[0] != '#')
+            .ToList();
+
+        var series = samples
+            .Select(sample => sample.Split(' '))
+            .Select(parts => string.Join(" ", parts, 0, parts.Length - 1))
+            .ToList();
+
+        Assert.Equal(series.Count, series.Distinct(StringComparer.Ordinal).Count());
+
+        // The samples that are generated for a metric are those of the metric which they are generated for
+        Assert.Single(samples, s => s.StartsWith("generated_histogram_sum", StringComparison.Ordinal) && s.EndsWith(" 7", StringComparison.Ordinal));
+        Assert.Single(samples, s => s.StartsWith("generated_histogram_count", StringComparison.Ordinal) && s.EndsWith(" 1", StringComparison.Ordinal));
+
+        // Only OpenMetrics has the "_created" sample of a counter, so that is the only format in which the gauge is dropped
+        var createdSamples = samples.Where(s => s.StartsWith("generated_counter_created", StringComparison.Ordinal)).ToList();
+
+        Assert.Single(createdSamples);
+        Assert.Equal(!openMetricsRequested, createdSamples[0].EndsWith(" 100", StringComparison.Ordinal));
+
+        Assert.Single(samples, s => s.StartsWith("ordered_counter_total", StringComparison.Ordinal));
+        Assert.Single(samples, s => s.StartsWith("empty_histogram_sum", StringComparison.Ordinal));
+        Assert.Single(samples, s => s.StartsWith("empty_histogram_count", StringComparison.Ordinal));
+    }
+
     [Fact]
     public async Task EnterCollectKeepsEverySeriesWhenTheBufferHasToBeExpanded()
     {

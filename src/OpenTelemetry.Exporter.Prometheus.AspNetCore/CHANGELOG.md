@@ -46,8 +46,10 @@ Notes](../../RELEASENOTES.md).
 
 * Fixed a scrape response containing the same series (metric name and labels)
   more than once, which causes Prometheus to reject the whole response, such as
-  when metric or tag names are the same once escaped or the scope information
-  is disabled. Duplicate series are now dropped, and a warning event is written.
+  when metric or tag names are the same once escaped, the scope information is
+  disabled, or a metric has the name of a sample that is generated for another
+  one (for example `_sum`). Duplicate series are now dropped, and a warning
+  event is written.
   ([#8076](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8076))
 
 ## 1.20.1-beta.1
