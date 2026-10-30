@@ -205,9 +205,11 @@ internal sealed class PrometheusAnyValueWriter : JsonStringArrayTagWriter<Promet
                 case '\\' when inString:
                     i++;
                     break;
+
                 case '"':
                     inString = !inString;
                     break;
+
                 case '+' when inString:
                     length += 5;
                     break;

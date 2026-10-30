@@ -214,8 +214,10 @@ internal abstract class JsonStringArrayTagWriter<TTagState> : TagWriter<TTagStat
             else
             {
                 var writer = threadWriter!;
-                var replaceWriter = threadStream.Capacity > MaxThreadStaticStreamCapacity
+                var replaceWriter =
+                    threadStream.Capacity > MaxThreadStaticStreamCapacity
                     || writer.BytesCommitted + writer.BytesPending > MaxThreadStaticStreamCapacity;
+
                 threadStream.SetLength(0);
 
                 // Discard incomplete JSON before disposal: Dispose would otherwise flush
