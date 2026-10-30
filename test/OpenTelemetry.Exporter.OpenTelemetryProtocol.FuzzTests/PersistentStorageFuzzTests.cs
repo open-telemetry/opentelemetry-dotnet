@@ -200,6 +200,7 @@ public class PersistentStorageFuzzTests
 
                             leased = true;
                             break;
+
                         default:
                             break;
                     }
