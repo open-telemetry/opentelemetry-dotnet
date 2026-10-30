@@ -21,11 +21,11 @@ Notes](../../RELEASENOTES.md).
 * Fixed the `*` and `?` wildcards of source, meter and view name patterns not
   matching line feeds, and a name with a trailing line feed matching a pattern
   which does not end in a wildcard.
-  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+  ([#8074](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8074))
 
 * Fixed `OTEL_RESOURCE_ATTRIBUTES` values being decoded as form data, which
   changed a `+` to a space. Values are now only percent-decoded.
-  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+  ([#8074](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8074))
 
 ## 1.21.0-rc.1
 
