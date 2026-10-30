@@ -90,6 +90,23 @@ public sealed class OtelEnvResourceDetectorTests : IDisposable
         Assert.Contains(new KeyValuePair<string, object>(key, value), resource.Attributes);
     }
 
+    [Theory]
+    [InlineData("version=1.0+build5", "version", "1.0+build5")]
+    [InlineData("expr=a+b%2Bc", "expr", "a+b+c")]
+    [InlineData("flags=+x+", "flags", "+x+")]
+    public void OtelEnvResource_WithEnvVar_DoesNotDecodePlusAsSpace(string envVarValue, string key, string value)
+    {
+        // Arrange
+        Environment.SetEnvironmentVariable(OtelEnvResourceDetector.EnvVarKey, envVarValue);
+        var resource = new OtelEnvResourceDetector(
+            new ConfigurationBuilder().AddEnvironmentVariables().Build())
+            .Detect();
+
+        // Assert
+        Assert.Single(resource.Attributes);
+        Assert.Contains(new KeyValuePair<string, object>(key, value), resource.Attributes);
+    }
+
     [Fact]
     public void OtelEnvResource_UsingIConfiguration()
     {

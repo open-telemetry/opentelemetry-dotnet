@@ -23,6 +23,10 @@ Notes](../../RELEASENOTES.md).
   which does not end in a wildcard.
   ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
 
+* Fixed `OTEL_RESOURCE_ATTRIBUTES` values being decoded as form data, which
+  changed a `+` to a space. Values are now only percent-decoded.
+  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+
 ## 1.21.0-rc.1
 
 Released 2026-Oct-28
