@@ -148,6 +148,9 @@ public class PrometheusExpositionFuzzTests
             ("# TYPE a gauge\na 1\n# TYPE b gauge\nb 1\na{x=\"1\"} 2\n", false, ErrorKind.Structure),
             ("# TYPE a gauge\na{x=\"1\",x=\"2\"} 1\n", false, ErrorKind.DuplicateLabels),
             ("# TYPE a gauge\na{x=\"1\"} 1\na{x=\"1\"} 2\n", false, ErrorKind.DuplicateSeries),
+            ("# TYPE a gauge\na{x=\"1\",y=\"2\"} 1\na{y=\"2\",x=\"1\"} 2\n", false, ErrorKind.DuplicateSeries),
+            ("# TYPE a gauge\na{k1=\"a,k2=b\"} 1\na{k1=\"a\",k2=\"b\"} 2\n", false, null),
+            ("# TYPE h histogram\nh_bucket{le=\"+Inf\"} 1\nh_sum{} 1\nh_count{} 1\n# TYPE h_sum gauge\nh_sum{} 5\n", false, ErrorKind.DuplicateSeries),
             ("# TYPE a gauge\na-b 1\n", false, ErrorKind.Syntax),
             ("# TYPE a gauge\na{x=\"1\"} one\n", false, ErrorKind.Syntax),
             ("# TYPE a gauge\na 1\n", true, ErrorKind.Directive),
@@ -197,6 +200,12 @@ public class PrometheusExpositionFuzzTests
         foreach (var meterSpec in scenario.Meters)
         {
             builder.AddMeter(meterSpec.Name);
+        }
+
+        // A histogram without any buckets only has its sum and count.
+        foreach (var name in scenario.Meters.SelectMany(static m => m.Instruments).Where(static i => i.Kind == InstrumentKind.Histogram && i.EmptyBuckets).Select(static i => i.Name).Distinct(StringComparer.Ordinal))
+        {
+            builder.AddView(name, new ExplicitBucketHistogramConfiguration { Boundaries = [] });
         }
 
         using var provider = builder.Build();
@@ -392,6 +401,8 @@ public class PrometheusExpositionFuzzTests
             "x.y.z",
             "x_y_z",
             "ns/attr",
+            "aZ",
+            "a0",
         ];
 
         private static readonly string[] InstrumentNames =
@@ -413,6 +424,13 @@ public class PrometheusExpositionFuzzTests
             "x",
             "total",
             "a/b",
+            "latency",
+            "latency_sum",
+            "latency_count",
+            "latency_bucket",
+            "events",
+            "events_created",
+            "events_total",
         ];
 
         private static readonly string[] MeterNames =
@@ -570,6 +588,7 @@ public class PrometheusExpositionFuzzTests
             from name in Gen.Elements(InstrumentNames)
             from unit in Gen.Elements(Units)
             from description in Gen.OneOf(Gen.Constant<string?>(null), TextGen.Select(static t => (string?)t))
+            from emptyBuckets in Gen.Frequency((3, Gen.Constant(false)), (1, Gen.Constant(true)))
             from measurementCount in Gen.Choose(1, 5)
             from measurements in Gen.ArrayOf(MeasurementGen(), measurementCount)
             select new InstrumentSpec
@@ -578,6 +597,7 @@ public class PrometheusExpositionFuzzTests
                 Name = name,
                 Unit = unit,
                 Description = description,
+                EmptyBuckets = emptyBuckets,
                 Measurements = measurements.ToList(),
             };
 
@@ -645,6 +665,15 @@ public class PrometheusExpositionFuzzTests
                 this.ValidateFamily(family);
             }
         }
+
+        // The label names and values are not escaped in the key, so each is prefixed with its length so that the
+        // key is different for every label set (otherwise {k1="a,k2=b"} and {k1="a",k2="b"} would have the same key).
+        private static string GetLabelSetKey(IEnumerable<KeyValuePair<string, string>> labels)
+            => string.Join(
+                ",",
+                labels
+                    .OrderBy(static l => l.Key, StringComparer.Ordinal)
+                    .Select(static l => l.Key.Length.ToString(CultureInfo.InvariantCulture) + ":" + l.Key + "=" + l.Value.Length.ToString(CultureInfo.InvariantCulture) + ":" + l.Value));
 
         private static bool BelongsTo(string family, string sample)
             => sample == family || (sample.StartsWith(family, StringComparison.Ordinal) && Array.IndexOf(SampleSuffixes, sample.Substring(family.Length)) >= 0);
@@ -1027,7 +1056,7 @@ public class PrometheusExpositionFuzzTests
                 }
             }
 
-            var seriesKey = name + "{" + string.Join(",", labels.OrderBy(static l => l.Key, StringComparer.Ordinal).Select(static l => l.Key + "=" + l.Value)) + "}";
+            var seriesKey = name.Length.ToString(CultureInfo.InvariantCulture) + ":" + name + "{" + GetLabelSetKey(labels) + "}";
 
             if (!this.series.Add(seriesKey))
             {
@@ -1070,7 +1099,7 @@ public class PrometheusExpositionFuzzTests
                 return;
             }
 
-            foreach (var group in family.Samples.GroupBy(static s => string.Join(",", s.Labels.Where(static l => l.Key != "le").OrderBy(static l => l.Key, StringComparer.Ordinal).Select(static l => l.Key + "=" + l.Value))))
+            foreach (var group in family.Samples.GroupBy(static s => GetLabelSetKey(s.Labels.Where(static l => l.Key != "le"))))
             {
                 var buckets = group.Where(static s => s.Name.EndsWith("_bucket", StringComparison.Ordinal)).ToList();
                 var counts = group.Where(static s => s.Name.EndsWith("_count", StringComparison.Ordinal)).ToList();
@@ -1082,9 +1111,15 @@ public class PrometheusExpositionFuzzTests
                     continue;
                 }
 
-                if (counts.Count != 1 || sums.Count != 1 || buckets.Count == 0)
+                if (counts.Count != 1 || sums.Count != 1)
                 {
-                    this.Error("histogram '" + family.Name + "' does not have exactly one _count, one _sum and at least one bucket");
+                    this.Error("histogram '" + family.Name + "' does not have exactly one _count and one _sum");
+                    continue;
+                }
+
+                if (buckets.Count == 0)
+                {
+                    // A histogram which is configured to have no buckets only has a sum and a count.
                     continue;
                 }
 
@@ -1335,6 +1370,8 @@ public class PrometheusExpositionFuzzTests
         public string? Unit { get; set; }
 
         public string? Description { get; set; }
+
+        public bool EmptyBuckets { get; set; }
 
         public List<MeasurementSpec> Measurements { get; set; } = [];
     }
