@@ -213,14 +213,22 @@ internal abstract class JsonStringArrayTagWriter<TTagState> : TagWriter<TTagStat
             }
             else
             {
+                var writer = threadWriter!;
+                var replaceWriter = threadStream.Capacity > MaxThreadStaticStreamCapacity
+                    || writer.BytesCommitted + writer.BytesPending > MaxThreadStaticStreamCapacity;
                 threadStream.SetLength(0);
-                if (threadStream.Capacity > MaxThreadStaticStreamCapacity)
+
+                // Discard incomplete JSON before disposal: Dispose would otherwise flush
+                // rejected bytes into the stream. Reset alone retains the writer's buffer.
+                writer.Reset(threadStream);
+                if (replaceWriter)
                 {
+                    writer.Dispose();
                     threadStream.Capacity = 0;
+                    threadWriter = writer = new Utf8JsonWriter(threadStream);
                 }
 
-                threadWriter!.Reset(threadStream);
-                return new(threadStream, threadWriter);
+                return new(threadStream, writer);
             }
         }
 
