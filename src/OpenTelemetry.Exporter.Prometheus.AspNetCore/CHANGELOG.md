@@ -48,7 +48,7 @@ Notes](../../RELEASENOTES.md).
   more than once, which causes Prometheus to reject the whole response, such as
   when metric or tag names are the same once escaped or the scope information
   is disabled. Duplicate series are now dropped, and a warning event is written.
-  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+  ([#8076](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8076))
 
 ## 1.20.1-beta.1
 
