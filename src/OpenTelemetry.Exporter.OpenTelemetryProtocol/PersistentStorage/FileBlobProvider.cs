@@ -24,6 +24,7 @@ public class FileBlobProvider : PersistentBlobProvider, IDisposable
     private readonly long retentionPeriodInMilliseconds;
     private readonly int writeTimeoutInMilliseconds;
     private readonly System.Timers.Timer maintenanceTimer;
+    private readonly bool checkPermissions;
     private bool disposedValue;
 
     /// <summary>
@@ -60,7 +61,8 @@ public class FileBlobProvider : PersistentBlobProvider, IDisposable
     /// path exceeds system defined maximum length.
     /// </exception>
     /// <exception cref="UnauthorizedAccessException">
-    /// insufficient privileges for provided path.
+    /// insufficient privileges for provided path, or, on .NET on non-Windows platforms, the
+    /// path is not owned by the current user or its contents could be changed by another user.
     /// </exception>
     /// <exception cref="NotSupportedException">
     /// path contains a colon character (:) that is not part of a drive label ("C:\").
@@ -77,11 +79,23 @@ public class FileBlobProvider : PersistentBlobProvider, IDisposable
         int maintenancePeriodInMilliseconds = 120000,
         long retentionPeriodInMilliseconds = 172800000,
         int writeTimeoutInMilliseconds = 60000)
+        : this(path, checkPermissions: true, maxSizeInBytes, maintenancePeriodInMilliseconds, retentionPeriodInMilliseconds, writeTimeoutInMilliseconds)
+    {
+    }
+
+    internal FileBlobProvider(
+        string path,
+        bool checkPermissions,
+        long maxSizeInBytes = 52428800,
+        int maintenancePeriodInMilliseconds = 120000,
+        long retentionPeriodInMilliseconds = 172800000,
+        int writeTimeoutInMilliseconds = 60000)
     {
         Guard.ThrowIfNull(path);
 
         // TODO: Validate time period values
-        this.DirectoryPath = PersistentStorageHelper.CreateSubdirectory(path);
+        this.checkPermissions = checkPermissions;
+        this.DirectoryPath = PersistentStorageHelper.CreateSubdirectory(path, checkPermissions);
         this.directorySizeTracker = new DirectorySizeTracker(maxSizeInBytes, path);
         this.retentionPeriodInMilliseconds = retentionPeriodInMilliseconds;
         this.writeTimeoutInMilliseconds = writeTimeoutInMilliseconds;
@@ -177,7 +191,7 @@ public class FileBlobProvider : PersistentBlobProvider, IDisposable
         {
             if (!Directory.Exists(this.DirectoryPath))
             {
-                PersistentStorageHelper.CreateSubdirectory(this.DirectoryPath);
+                PersistentStorageHelper.CreateSubdirectory(this.DirectoryPath, this.checkPermissions);
             }
         }
         catch (Exception)
