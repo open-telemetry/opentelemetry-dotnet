@@ -100,11 +100,11 @@ using (var activity = MyActivitySource.StartActivity("Foo"))
 }
 ```
 
-### Option 4 - Use Activity.RecordException
+### Option 4 - Use Activity.AddException
 
 Both options 1 and 2 above showed the most basic reporting of Exception, by
 leveraging Activity status. Neither of the approach actually records the
-Exception itself to do more richer debugging. `Activity.RecordException()`
+Exception itself to do more richer debugging. `Activity.AddException()`
 allows the exception to be stored in the Activity as ActivityEvent as per
 [OpenTelemetry
 convention](https://github.com/open-telemetry/semantic-conventions/blob/main/docs/exceptions/exceptions-spans.md),
@@ -120,7 +120,7 @@ using (var activity = MyActivitySource.StartActivity("Foo"))
     catch (SomeException ex)
     {
         activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
-        activity?.RecordException(ex);
+        activity?.AddException(ex);
     }
 }
 ```
@@ -184,7 +184,7 @@ public class Program
 
         while (activity != null)
         {
-            activity.RecordException(ex);
+            activity.AddException(ex);
             activity.Dispose();
             activity = activity.Parent;
         }
