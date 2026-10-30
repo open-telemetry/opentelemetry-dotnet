@@ -7,6 +7,10 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Fixed unbounded resource serialization buffer growth and incorrect buffer
+  reuse after buffer allocation failures.
+  ([#8069](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8069))
+
 * Added support for batching the metric points exported by the periodic
   exporting metric reader. Set
   `PeriodicExportingMetricReaderOptions.MaxExportBatchSize` to limit the
