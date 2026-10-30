@@ -177,7 +177,7 @@ public static class MeterProviderBuilderExtensions
                     // views over their lifetime. Atomic groups in ConvertToRegexPattern prevent
                     // backtracking between stars, with the match timeout retained as a safety net.
                     // See https://github.com/open-telemetry/opentelemetry-dotnet/issues/7787.
-                    var regex = new Regex(pattern, RegexOptions.Compiled | RegexOptions.IgnoreCase, TimeSpan.FromSeconds(1));
+                    var regex = new Regex(pattern, RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Singleline, TimeSpan.FromSeconds(1));
                     meterProviderBuilderSdk.AddView(instrument => WildcardHelper.IsMatch(regex, instrument.Name) ? metricStreamConfiguration : null);
                 }
                 else

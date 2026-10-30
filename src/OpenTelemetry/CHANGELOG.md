@@ -18,6 +18,11 @@ Notes](../../RELEASENOTES.md).
   Configuration reloads retain the last successful values when access is denied.
   ([#8070](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8070))
 
+* Fixed the `*` and `?` wildcards of source, meter and view name patterns not
+  matching line feeds, and a name with a trailing line feed matching a pattern
+  which does not end in a wildcard.
+  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+
 ## 1.21.0-rc.1
 
 Released 2026-Oct-28

@@ -68,7 +68,8 @@ internal static class WildcardHelper
             "|",
             from p in patterns select "(?:" + ConvertToRegexPattern(p) + ')');
 
-        var pattern = "^(?:" + convertedPattern + ")$";
+        // The anchor at the end is '\z' rather than '$', which would also match before a trailing line feed.
+        var pattern = "^(?:" + convertedPattern + ")\\z";
 
         // RegexOptions.NonBacktracking is not used as it has a fixed automata-size limit that many
         // source patterns can exceed and it retains a much larger automaton per Regex instance
@@ -76,12 +77,16 @@ internal static class WildcardHelper
         // Atomic groups in ConvertToRegexPattern prevent backtracking between stars.
         // The match timeout remains as a safety net.
         // See https://github.com/open-telemetry/opentelemetry-dotnet/issues/7787.
-        return new Regex(pattern, RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.IgnoreCase, RegexMatchTimeout);
+        // RegexOptions.Singleline is required so that '*' and '?' match line feeds in names, like any other character.
+        return new Regex(pattern, RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.IgnoreCase | RegexOptions.Singleline, RegexMatchTimeout);
     }
 
     /// <summary>
     /// Converts a wildcard pattern to an unanchored regular expression pattern
     /// without backtracking between <c>*</c> wildcards.
+    /// <para/>
+    /// The wildcards are converted to <c>.</c>, so the pattern must be used with <see cref="RegexOptions.Singleline"/>
+    /// for them to match line feeds.
     /// </summary>
     /// <param name="pattern">The wildcard pattern to convert.</param>
     /// <param name="questionMarkIsWildcard">Whether <c>?</c> matches a single character or is literal.</param>
