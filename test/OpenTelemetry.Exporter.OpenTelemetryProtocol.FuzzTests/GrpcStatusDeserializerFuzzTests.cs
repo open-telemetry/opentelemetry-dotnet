@@ -93,7 +93,8 @@ public class GrpcStatusDeserializerFuzzTests
             // (Where the reference rejects the message, the exporter is free to fall back to no delay.)
             if (referenceAccepted && actual != expected)
             {
-                throw new InvalidOperationException($"The reference decoder read a retry delay of {expected?.ToString() ?? "none"} but the exporter read {actual?.ToString() ?? "none"} from: {Convert.ToBase64String(data)}");
+                throw new InvalidOperationException(
+                    $"The reference decoder read a retry delay of {expected?.ToString() ?? "none"} but the exporter read {actual?.ToString() ?? "none"} from: {Convert.ToBase64String(data)}");
             }
 
             return true;
@@ -221,7 +222,8 @@ public class GrpcStatusDeserializerFuzzTests
     {
         var tag = input.ReadTag();
 
-        if (tag != 0 && WireFormat.GetTagWireType(tag) is not (WireFormat.WireType.Varint or WireFormat.WireType.Fixed64 or WireFormat.WireType.LengthDelimited or WireFormat.WireType.Fixed32))
+        if (tag != 0 &&
+            WireFormat.GetTagWireType(tag) is not (WireFormat.WireType.Varint or WireFormat.WireType.Fixed64 or WireFormat.WireType.LengthDelimited or WireFormat.WireType.Fixed32))
         {
             throw new InvalidDataException("Invalid wire type.");
         }
@@ -438,12 +440,15 @@ public class GrpcStatusDeserializerFuzzTests
                     }
 
                     return copy;
+
                 case 1:
                     // Truncate.
                     return copy.AsSpan(0, index).ToArray();
+
                 case 2:
                     // Insert bytes.
                     return [.. copy.AsSpan(0, index), .. Enumerable.Repeat(value, count), .. copy.AsSpan(index)];
+
                 default:
                     // Overwrite with a continuation byte, producing long varints.
                     for (var i = 0; i < count && index + i < copy.Length; i++)
@@ -476,12 +481,15 @@ public class GrpcStatusDeserializerFuzzTests
                 case WireFormat.WireType.Varint:
                     writer.RawVarint((ulong)varint);
                     break;
+
                 case WireFormat.WireType.Fixed64:
                     writer.Raw(payload);
                     break;
+
                 case WireFormat.WireType.LengthDelimited:
                     writer.RawVarint((ulong)length).Raw(payload.AsSpan(0, length).ToArray());
                     break;
+
                 default:
                     writer.Raw(payload.AsSpan(0, 4).ToArray());
                     break;

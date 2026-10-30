@@ -68,7 +68,11 @@ public class OtlpExporterOptionsExtensionsTests
     [InlineData("key1=a%2Cb%2Cc,key2=value2", "key1", "a,b,c", 2)]
     [InlineData("Authorization=Basic%20abc%2Cdef", "Authorization", "Basic abc,def", 1)]
     [InlineData("key1=a%3Db", "key1", "a=b", 1)]
-    public void GetHeaders_PercentEncodedSeparatorsInValue_AreDataAndNotSeparators(string inputOptionHeaders, string key, string expectedValue, int expectedHeaderCount)
+    public void GetHeaders_PercentEncodedSeparatorsInValue_AreDataAndNotSeparators(
+        string inputOptionHeaders,
+        string key,
+        string expectedValue,
+        int expectedHeaderCount)
     {
         var options = new OtlpExporterOptions { Headers = inputOptionHeaders };
 

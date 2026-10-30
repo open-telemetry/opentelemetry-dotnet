@@ -181,6 +181,7 @@ public class PersistentStorageFuzzTests
                             content = operation.Content;
                             leased = false;
                             break;
+
                         case OperationKind.WriteWithLease:
                             if (!blob.TryWrite(operation.Content.AsSpan(), leasePeriodMilliseconds: 60_000))
                             {
@@ -190,6 +191,7 @@ public class PersistentStorageFuzzTests
                             content = operation.Content;
                             leased = true;
                             break;
+
                         case OperationKind.Lease:
                             if (!blob.TryLease(60_000))
                             {
