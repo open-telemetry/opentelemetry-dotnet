@@ -81,6 +81,7 @@ internal abstract class JsonStringArrayTagWriter<TTagState> : TagWriter<TTagStat
         public override void EndWriteArray(ref JsonArrayTagWriterState state)
         {
             state.Writer.WriteEndArray();
+            this.ThrowIfTooLong(state, 0);
             state.Writer.Flush();
         }
 
@@ -140,23 +141,36 @@ internal abstract class JsonStringArrayTagWriter<TTagState> : TagWriter<TTagStat
         public override bool TryBeginNestedArrayValue(ref JsonArrayTagWriterState state)
         {
             state.Writer.WriteStartArray();
+            this.ThrowIfTooLong(state, 0);
             return true;
         }
 
         public override void EndNestedArrayValue(ref JsonArrayTagWriterState state)
-            => state.Writer.WriteEndArray();
+        {
+            state.Writer.WriteEndArray();
+            this.ThrowIfTooLong(state, 0);
+        }
 
         public override bool TryBeginNestedObjectValue(ref JsonArrayTagWriterState state)
         {
             state.Writer.WriteStartObject();
+            this.ThrowIfTooLong(state, 0);
             return true;
         }
 
         public override void WriteNestedObjectPropertyName(ref JsonArrayTagWriterState state, string name)
-            => state.Writer.WritePropertyName(name);
+        {
+            // As for a string value, reject a name that cannot fit before its escaped form is buffered.
+            this.ThrowIfTooLong(state, name.Length);
+            state.Writer.WritePropertyName(name);
+            this.ThrowIfTooLong(state, 0);
+        }
 
         public override void EndNestedObjectValue(ref JsonArrayTagWriterState state)
-            => state.Writer.WriteEndObject();
+        {
+            state.Writer.WriteEndObject();
+            this.ThrowIfTooLong(state, 0);
+        }
 
         private static JsonArrayTagWriterState EnsureWriter()
         {

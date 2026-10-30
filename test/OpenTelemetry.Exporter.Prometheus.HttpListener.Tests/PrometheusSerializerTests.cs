@@ -22,6 +22,7 @@ public sealed partial class PrometheusSerializerTests
     internal static readonly VerifySettings VerifySettings = CreateVerifySettings();
     private static readonly int[] LabelValueArrayCase = [1, 2, 3];
     private static readonly string[] LabelValueOversizedArrayCase = ["0123456789", "0123456789", "0123456789", "0123456789"];
+    private static readonly string[] LabelValueBoundaryArrayCase = ["0123456789012345678901234567890123"];
     private static readonly byte[] LabelValueByteArrayCase = [1, 2, 3];
 
     public static TheoryData<string> EscapingSchemes =>
@@ -1956,6 +1957,50 @@ public sealed partial class PrometheusSerializerTests
         var writer = new PrometheusAnyValueWriter(40);
 
         Assert.Equal(expectedValue, writer.ToLabelValueString("key", map));
+    }
+
+    [Fact]
+    public void ToLabelValueStringTruncatesArrayWhoseStructuralJsonExceedsMaximumLength()
+    {
+        var writer = new PrometheusAnyValueWriter(40);
+
+        var nestedArrays = new object[20];
+        for (var i = 0; i < nestedArrays.Length; i++)
+        {
+            nestedArrays[i] = Array.Empty<int>();
+        }
+
+        Assert.Equal("TRUNCATED", writer.ToLabelValueString("key", nestedArrays));
+    }
+
+    [Fact]
+    public void ToLabelValueStringTruncatesArrayContainingMapWithOversizedKey()
+    {
+        var writer = new PrometheusAnyValueWriter(40);
+
+        var map = new Dictionary<string, object?> { [new string('k', 1000)] = Array.Empty<int>() };
+
+        Assert.Equal("TRUNCATED", writer.ToLabelValueString("key", new object[] { map }));
+    }
+
+    [Theory]
+    [InlineData(38, """["0123456789012345678901234567890123"]""")]
+    [InlineData(37, "TRUNCATED")]
+    public void ToLabelValueStringTruncatesArrayOnlyWhenClosingTokenExceedsMaximumLength(int maxJsonLength, string expectedValue)
+    {
+        var writer = new PrometheusAnyValueWriter(maxJsonLength);
+
+        Assert.Equal(expectedValue, writer.ToLabelValueString("key", LabelValueBoundaryArrayCase));
+    }
+
+    [Theory]
+    [InlineData(33, """{"a":"0123456789012345678901234"}""")]
+    [InlineData(32, "TRUNCATED")]
+    public void ToLabelValueStringTruncatesMapOnlyWhenClosingTokenExceedsMaximumLength(int maxJsonLength, string expectedValue)
+    {
+        var writer = new PrometheusAnyValueWriter(maxJsonLength);
+
+        Assert.Equal(expectedValue, writer.ToLabelValueString("key", new Dictionary<string, object?> { ["a"] = "0123456789012345678901234" }));
     }
 
     [Fact]

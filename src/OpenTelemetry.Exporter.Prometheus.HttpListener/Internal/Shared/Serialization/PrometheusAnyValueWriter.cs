@@ -142,6 +142,13 @@ internal sealed class PrometheusAnyValueWriter : JsonStringArrayTagWriter<Promet
             }
 
             writer.WriteEndObject();
+
+            if (this.IsTooLong(writer, 0))
+            {
+                this.WriteTruncated(ref state, key, kvList);
+                return;
+            }
+
             writer.Flush();
         }
         finally
