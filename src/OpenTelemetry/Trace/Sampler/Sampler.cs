@@ -11,7 +11,7 @@ namespace OpenTelemetry.Trace;
 /// </summary>
 public abstract class Sampler
 {
-    private readonly object shutdownLock = new();
+    private readonly Lock shutdownLock = new();
     private ShutdownState shutdownState;
 
     /// <summary>
@@ -125,7 +125,7 @@ public abstract class Sampler
     private bool ShutdownCore(int timeoutMilliseconds, out bool alreadyShutdown)
     {
         // A call made while another is running shutdown waits for it to finish, for up to its own timeout
-        if (!Monitor.TryEnter(this.shutdownLock, timeoutMilliseconds))
+        if (!this.shutdownLock.TryEnter(timeoutMilliseconds))
         {
             alreadyShutdown = true;
             return false;
@@ -161,7 +161,7 @@ public abstract class Sampler
         }
         finally
         {
-            Monitor.Exit(this.shutdownLock);
+            this.shutdownLock.Exit();
         }
     }
 }
