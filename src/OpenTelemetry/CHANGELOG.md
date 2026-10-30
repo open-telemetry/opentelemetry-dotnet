@@ -6,6 +6,14 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Fixed an exception when downscaling empty exponential histogram buckets after
+  a reset.
+  ([#8064](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8064))
+
+* Fixed tracing callbacks continuing after provider shutdown or disposal on older
+  target frameworks.
+  ([#8065](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8065))
+
 * Non-finite histogram measurements (`NaN`, `+Inf`, `-Inf`) are now dropped
   rather than recorded, so they can no longer permanently corrupt the sum,
   min, and max of a cumulative histogram stream. This aligns the explicit-bucket

@@ -544,9 +544,9 @@ public class OtlpLogExporterTests
     }
 
     [Fact]
-    public void CheckToOtlpLogRecordTimestamps_BridgeApi_UnsetTimestamp()
+    public void CheckToOtlpLogRecordTimestamps_LogsApi_UnsetTimestamp()
     {
-        // When the Bridge API caller leaves Timestamp as DateTime.MinValue
+        // When the Logs API caller leaves Timestamp as DateTime.MinValue
         // (not set), the serializer must write:
         //   time_unix_nano         = 0   (unknown/missing per OTLP spec)
         //   observed_time_unix_nano >= the time of observation (MUST be set per OTLP spec)
@@ -555,13 +555,13 @@ public class OtlpLogExporterTests
             .AddInMemoryExporter(logRecords)
             .Build();
 
-        var bridgeLogger = loggerProvider.GetLogger("OtlpLogExporterTests");
+        var logger = loggerProvider.GetLogger("OtlpLogExporterTests");
 
         // Capture a lower-bound for the observation timestamp before emitting.
         var beforeEmitUtc = DateTime.UtcNow;
 
         // Emit with default LogRecordData -- Timestamp stays DateTime.MinValue.
-        bridgeLogger.EmitLog(new LogRecordData());
+        logger.EmitLog(new LogRecordData());
 
         Assert.Single(logRecords);
         Assert.Equal(DateTime.MinValue, logRecords[0].Timestamp);
@@ -581,18 +581,18 @@ public class OtlpLogExporterTests
     }
 
     [Fact]
-    public void CheckToOtlpLogRecordTimestamps_BridgeApi_DefaultData()
+    public void CheckToOtlpLogRecordTimestamps_LogsApi_DefaultData()
     {
         var logRecords = new List<LogRecord>();
         using var loggerProvider = Sdk.CreateLoggerProviderBuilder()
             .AddInMemoryExporter(logRecords)
             .Build();
 
-        var bridgeLogger = loggerProvider.GetLogger("OtlpLogExporterTests");
+        var logger = loggerProvider.GetLogger("OtlpLogExporterTests");
 
         var beforeEmitUtc = DateTime.UtcNow;
 
-        bridgeLogger.EmitLog(default);
+        logger.EmitLog(default);
 
         Assert.Single(logRecords);
         Assert.Equal(DateTime.MinValue, logRecords[0].Timestamp);
@@ -610,21 +610,21 @@ public class OtlpLogExporterTests
     }
 
     [Fact]
-    public void CheckToOtlpLogRecordTimestamps_BridgeApi_TimestampSetObservedTimestampUnset()
+    public void CheckToOtlpLogRecordTimestamps_LogsApi_TimestampSetObservedTimestampUnset()
     {
         var logRecords = new List<LogRecord>();
         using var loggerProvider = Sdk.CreateLoggerProviderBuilder()
             .AddInMemoryExporter(logRecords)
             .Build();
 
-        var bridgeLogger = loggerProvider.GetLogger("OtlpLogExporterTests");
+        var logger = loggerProvider.GetLogger("OtlpLogExporterTests");
         var timestamp = new DateTime(2020, 1, 2, 3, 4, 5, DateTimeKind.Utc);
         LogRecordData data = default;
         data.Timestamp = timestamp;
 
         var beforeEmitUtc = DateTime.UtcNow;
 
-        bridgeLogger.EmitLog(data);
+        logger.EmitLog(data);
 
         Assert.Single(logRecords);
         Assert.Equal(timestamp, logRecords[0].Timestamp);
@@ -849,7 +849,7 @@ public class OtlpLogExporterTests
     [Theory]
     [InlineData(true)]
     [InlineData(false)]
-    public void LogRecordBodyIsExportedWhenUsingBridgeApi(bool isBodySet)
+    public void LogRecordBodyIsExportedWhenUsingLogsApi(bool isBodySet)
     {
         LogRecordAttributeList attributes = default;
         attributes.Add("name", "tomato");
@@ -948,8 +948,8 @@ public class OtlpLogExporterTests
             .AddInMemoryExporter(logRecords)
             .Build();
 
-        var bridgeLogger = loggerProvider.GetLogger("OtlpLogExporterTests");
-        bridgeLogger.EmitLog(new LogRecordData(), attributes);
+        var logger = loggerProvider.GetLogger("OtlpLogExporterTests");
+        logger.EmitLog(new LogRecordData(), attributes);
 
         Assert.Single(logRecords);
 
@@ -1983,7 +1983,7 @@ public class OtlpLogExporterTests
     [Theory]
     [InlineData("my_instrumentation_scope_name", "my_instrumentation_scope_name")]
     [InlineData(null, "")]
-    public void LogRecordLoggerNameIsExportedWhenUsingBridgeApi(string? loggerName, string expectedScopeName)
+    public void LogRecordLoggerNameIsExportedWhenUsingLogsApi(string? loggerName, string expectedScopeName)
     {
         var logRecords = new List<LogRecord>();
 
@@ -2013,7 +2013,7 @@ public class OtlpLogExporterTests
     [InlineData(null, "")]
     [InlineData("", "")]
 #pragma warning disable CA1054 // Change the type of parameter from 'string' to 'System.Uri'
-    public void LogRecordLoggerSchemaUrlIsExportedWhenUsingBridgeApi(string? schemaUrl, string expectedSchemaUrl)
+    public void LogRecordLoggerSchemaUrlIsExportedWhenUsingLogsApi(string? schemaUrl, string expectedSchemaUrl)
 #pragma warning restore CA1054 // Change the type of parameter from 'string' to 'System.Uri'
     {
         var logRecords = new List<LogRecord>();
@@ -2111,7 +2111,7 @@ public class OtlpLogExporterTests
     [InlineData(null, "")]
     [InlineData("", "")]
     [InlineData("   ", "   ")]
-    public void LogRecordLoggerVersionIsExportedWhenUsingBridgeApi(string? version, string expectedVersion)
+    public void LogRecordLoggerVersionIsExportedWhenUsingLogsApi(string? version, string expectedVersion)
     {
         var logRecords = new List<LogRecord>();
 
@@ -2176,7 +2176,7 @@ public class OtlpLogExporterTests
     [Theory]
     [InlineData(true)]
     [InlineData(false)]
-    public void LogRecordEventNameIsExportedWhenUsingBridgeApi(bool emitEventName)
+    public void LogRecordEventNameIsExportedWhenUsingLogsApi(bool emitEventName)
     {
         LogRecordAttributeList attributes = default;
         attributes.Add("name", "tomato");
