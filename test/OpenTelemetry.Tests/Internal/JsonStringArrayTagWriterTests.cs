@@ -162,7 +162,7 @@ public class JsonStringArrayTagWriterTests
         TestTagWriter.Tag tag = default;
         var result = TestTagWriter.Limited.TryWriteTag(ref tag, new KeyValuePair<string, object?>("array", data));
 
-        Assert.True(result);
+        Assert.True(result, $"TryWriteTag returned false instead of writing '{expectedValue}'.");
         Assert.Equal(expectedValue, tag.Value);
     }
 
@@ -171,6 +171,7 @@ public class JsonStringArrayTagWriterTests
     {
         using var stream = new MemoryStream();
         var characters = new char[1];
+        var mismatches = new List<string>();
 
         // Surrogates are only valid as pairs, so are covered separately.
         for (var c = 0; c <= char.MaxValue; c++)
@@ -181,8 +182,17 @@ public class JsonStringArrayTagWriterTests
             }
 
             characters[0] = (char)c;
-            Assert.Equal(WrittenLength(stream, characters), TestTagWriter.GetEscapedLength(characters, long.MaxValue));
+
+            var written = WrittenLength(stream, characters);
+            var counted = TestTagWriter.GetEscapedLength(characters, long.MaxValue);
+
+            if (written != counted)
+            {
+                mismatches.Add($"U+{c:X4}: JSON writer wrote {written} byte(s) but {counted} were counted.");
+            }
         }
+
+        Assert.True(mismatches.Count == 0, $"{mismatches.Count} character(s) were counted incorrectly: {string.Join(" ", mismatches.Take(10))}");
 
         characters = "\ud83d\ude00".ToCharArray();
         Assert.Equal(WrittenLength(stream, characters), TestTagWriter.GetEscapedLength(characters, long.MaxValue));
@@ -211,12 +221,18 @@ public class JsonStringArrayTagWriterTests
     [Fact]
     public void ArrayWhoseJsonExceedsMaximumLengthDoesNotAffectNextArray()
     {
+        var oversized = new string('x', 1000).Split('x');
+
         TestTagWriter.Tag tag = default;
-        Assert.True(TestTagWriter.Limited.TryWriteTag(ref tag, new KeyValuePair<string, object?>("array", new string('x', 1000).Split('x'))));
+        var result = TestTagWriter.Limited.TryWriteTag(ref tag, new KeyValuePair<string, object?>("array", oversized));
+
+        Assert.True(result, $"TryWriteTag returned false for an oversized array of {oversized.Length} element(s) instead of writing 'TRUNCATED'.");
         Assert.Equal("TRUNCATED", tag.Value);
 
         tag = default;
-        Assert.True(TestTagWriter.Limited.TryWriteTag(ref tag, new KeyValuePair<string, object?>("array", SmallArray)));
+        result = TestTagWriter.Limited.TryWriteTag(ref tag, new KeyValuePair<string, object?>("array", SmallArray));
+
+        Assert.True(result, $"TryWriteTag returned false for an array of {SmallArray.Length} element(s) written after an oversized array.");
         Assert.Equal("[1,2,3]", tag.Value);
     }
 

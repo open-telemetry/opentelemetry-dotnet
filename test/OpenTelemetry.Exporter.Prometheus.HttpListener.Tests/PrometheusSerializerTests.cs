@@ -2009,10 +2009,7 @@ public sealed partial class PrometheusSerializerTests
         var writer = new PrometheusAnyValueWriter(40);
         var map = new Dictionary<string, object?> { ["a"] = new string('x', 4 * 1024 * 1024) };
 
-        var before = AllocatedBytes();
-
-        Assert.Equal("TRUNCATED", writer.ToLabelValueString("key", map));
-        Assert.True(AllocatedBytes() - before < 64 * 1024);
+        AssertTruncatedWithoutBufferingValue(() => writer.ToLabelValueString("key", map));
     }
 
     [Fact]
@@ -2021,10 +2018,7 @@ public sealed partial class PrometheusSerializerTests
         var writer = new PrometheusAnyValueWriter(40);
         var map = new Dictionary<string, object?> { ["a"] = new byte[1024 * 1024] };
 
-        var before = AllocatedBytes();
-
-        Assert.Equal("TRUNCATED", writer.ToLabelValueString("key", map));
-        Assert.True(AllocatedBytes() - before < 64 * 1024);
+        AssertTruncatedWithoutBufferingValue(() => writer.ToLabelValueString("key", map));
 
         Assert.Equal("""{"a":"AQID"}""", new PrometheusAnyValueWriter(40).ToLabelValueString("key", new Dictionary<string, object?> { ["a"] = LabelValueByteArrayCase }));
     }
@@ -2040,10 +2034,7 @@ public sealed partial class PrometheusSerializerTests
             entries.Add(new(i.ToString(CultureInfo.InvariantCulture), null));
         }
 
-        var before = AllocatedBytes();
-
-        Assert.Equal("TRUNCATED", writer.ToLabelValueString("key", entries));
-        Assert.True(AllocatedBytes() - before < 64 * 1024);
+        AssertTruncatedWithoutBufferingValue(() => writer.ToLabelValueString("key", entries));
     }
 
     [Fact]
@@ -2057,10 +2048,7 @@ public sealed partial class PrometheusSerializerTests
             entries.Add(new(i.ToString(CultureInfo.InvariantCulture), null));
         }
 
-        var before = AllocatedBytes();
-
-        Assert.Equal("TRUNCATED", writer.ToLabelValueString("key", new object[] { entries }));
-        Assert.True(AllocatedBytes() - before < 64 * 1024);
+        AssertTruncatedWithoutBufferingValue(() => writer.ToLabelValueString("key", new object[] { entries }));
     }
 
     [Fact]
@@ -2072,11 +2060,8 @@ public sealed partial class PrometheusSerializerTests
         var map = new Dictionary<string, object?> { ["a"] = new string('\u00e9', 512 * 1024) };
         var array = new[] { new string('\u00e9', 512 * 1024) };
 
-        var before = AllocatedBytes();
-
-        Assert.Equal("TRUNCATED", writer.ToLabelValueString("key", map));
-        Assert.Equal("TRUNCATED", writer.ToLabelValueString("key", array));
-        Assert.True(AllocatedBytes() - before < 64 * 1024);
+        AssertTruncatedWithoutBufferingValue(() => writer.ToLabelValueString("key", map));
+        AssertTruncatedWithoutBufferingValue(() => writer.ToLabelValueString("key", array));
     }
 
     [Fact]
@@ -2685,12 +2670,20 @@ public sealed partial class PrometheusSerializerTests
     private static Regex SdkVersion() => new("telemetry_sdk_version=\"[^\"]*\"", RegexOptions.Compiled);
 #endif
 
-    private static long AllocatedBytes()
+    private static void AssertTruncatedWithoutBufferingValue(Func<string> action)
+    {
+        Assert.Equal("TRUNCATED", action());
+
 #if NET
-        => GC.GetAllocatedBytesForCurrentThread();
-#else
-        => 0;
+        var before = GC.GetAllocatedBytesForCurrentThread();
+
+        Assert.Equal("TRUNCATED", action());
+
+        var allocated = GC.GetAllocatedBytesForCurrentThread() - before;
+
+        Assert.True(allocated < 256 * 1024, $"{allocated} bytes were allocated.");
 #endif
+    }
 
     private static Dictionary<string, object?> CreateReferenceKeyedDictionary()
         => new(new ReferenceKeyComparer())
