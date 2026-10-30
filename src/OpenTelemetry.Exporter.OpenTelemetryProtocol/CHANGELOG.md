@@ -15,6 +15,21 @@ Notes](../../RELEASENOTES.md).
   is denied.
   ([#8070](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8070))
 
+* Fixed `OTEL_EXPORTER_OTLP_HEADERS` (and the `Headers` option) being decoded
+  before it was split into headers, so that a percent-encoded `,` in a value
+  started a new header and encoded leading or trailing whitespace was removed.
+  ([#8075](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8075))
+
+* Fixed the retry delay of a gRPC response being ignored or misread when a
+  length which does not fit in an `int` was truncated instead of being
+  rejected.
+  ([#8075](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8075))
+
+* Fixed the retry delay of a gRPC response being ignored or misread when a
+  field did not have the wire type that its number defines, instead of the
+  field being skipped.
+  ([#8075](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8075))
+
 ## 1.21.0-rc.1
 
 Released 2026-Oct-28

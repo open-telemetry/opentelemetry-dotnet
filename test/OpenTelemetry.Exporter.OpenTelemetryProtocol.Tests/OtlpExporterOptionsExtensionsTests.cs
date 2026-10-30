@@ -58,11 +58,42 @@ public class OtlpExporterOptionsExtensionsTests
     [InlineData("key1= value with spaces ,key2=another value", "key1=value with spaces,key2=another value")]
     [InlineData("=value1", "=value1")]
     [InlineData("key1=", "key1=")]
-    [InlineData("key1=value1%2Ckey2=value2", "key1=value1,key2=value2")]
-    [InlineData("key1=value1%2Ckey2=value2%2Ckey3=value3", "key1=value1,key2=value2,key3=value3")]
+    [InlineData("key%31=value%31", "key1=value1")]
     [InlineData("Authorization=Basic Zm9vOmJhcg==", "Authorization=Basic Zm9vOmJhcg==")]
     public void GetHeaders_ValidAndUrlEncodedHeaders_ReturnsCorrectHeaders(string inputOptionHeaders, string expectedNormalizedOptional)
         => VerifyHeaders(inputOptionHeaders, expectedNormalizedOptional);
+
+    [Theory]
+    [InlineData("key1=value1%2Ckey2=value2", "key1", "value1,key2=value2", 1)]
+    [InlineData("key1=a%2Cb%2Cc,key2=value2", "key1", "a,b,c", 2)]
+    [InlineData("Authorization=Basic%20abc%2Cdef", "Authorization", "Basic abc,def", 1)]
+    [InlineData("key1=a%3Db", "key1", "a=b", 1)]
+    public void GetHeaders_PercentEncodedSeparatorsInValue_AreDataAndNotSeparators(
+        string inputOptionHeaders,
+        string key,
+        string expectedValue,
+        int expectedHeaderCount)
+    {
+        var options = new OtlpExporterOptions { Headers = inputOptionHeaders };
+
+        var headers = options.GetHeaders<Dictionary<string, string>>((d, k, v) => d.Add(k, v));
+
+        Assert.Equal(expectedValue, headers[key]);
+        Assert.Equal(options.StandardHeaders.Length + expectedHeaderCount, headers.Count);
+    }
+
+    [Theory]
+    [InlineData("key1=%20value1%20", "key1", " value1 ")]
+    [InlineData("key1 = %20value1%20 ,key2=value2", "key1", " value1 ")]
+    [InlineData("key1=%09tabbed", "key1", "\ttabbed")]
+    public void GetHeaders_PercentEncodedWhitespaceInValue_IsPreserved(string inputOptionHeaders, string key, string expectedValue)
+    {
+        var options = new OtlpExporterOptions { Headers = inputOptionHeaders };
+
+        var headers = options.GetHeaders<Dictionary<string, string>>((d, k, v) => d.Add(k, v));
+
+        Assert.Equal(expectedValue, headers[key]);
+    }
 
     [Theory]
 #pragma warning disable CS0618 // Suppressing gRPC obsolete warning
