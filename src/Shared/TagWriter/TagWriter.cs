@@ -199,6 +199,15 @@ internal abstract class TagWriter<TTagState, TArrayState>
 
     protected static IEnumerable<KeyValuePair<string, object?>> DeduplicateKeys(IEnumerable<KeyValuePair<string, object?>> kvList)
     {
+        TryDeduplicateKeys(kvList, long.MaxValue, out var result);
+        return result;
+    }
+
+    protected static bool TryDeduplicateKeys(
+        IEnumerable<KeyValuePair<string, object?>> kvList,
+        long maxEntries,
+        out IEnumerable<KeyValuePair<string, object?>> result)
+    {
         // See https://github.com/open-telemetry/opentelemetry-specification/blob/v1.62.0/specification/common/README.md#mapstring-anyvalue;
         // exported maps must only contain unique keys. Keys are compared case-sensitively and, as when setting an attribute that already
         // exists, the last value for a key wins. The key keeps the position at which it first appeared.
@@ -209,14 +218,28 @@ internal abstract class TagWriter<TTagState, TArrayState>
         {
             // The keys of the dictionary are already unique when compared ordinally. Other comparers
             // (e.g. ReferenceEqualityComparer) can allow keys containing the same text, so are not trusted.
-            return dictionary;
+            result = dictionary;
+            return dictionary.Count <= maxEntries;
+        }
+
+        result = kvList;
+
+        if (kvList is ICollection<KeyValuePair<string, object?>> { Count: var count } && count > maxEntries)
+        {
+            return false;
         }
 
         var items = new List<KeyValuePair<string, object?>>();
         var indexes = new Dictionary<string, int>(StringComparer.Ordinal);
+        long enumerated = 0;
 
         foreach (var kvp in kvList)
         {
+            if (++enumerated > maxEntries)
+            {
+                return false;
+            }
+
             if (indexes.TryGetValue(kvp.Key, out var index))
             {
                 items[index] = kvp;
@@ -228,7 +251,8 @@ internal abstract class TagWriter<TTagState, TArrayState>
             }
         }
 
-        return items;
+        result = items;
+        return true;
     }
 
     protected abstract bool TryWriteEmptyTag(ref TTagState state, string key, object? value);
@@ -618,10 +642,16 @@ internal abstract class TagWriter<TTagState, TArrayState>
             return false;
         }
 
+        if (!TryDeduplicateKeys(kvList, this.arrayWriter.MaxNestedObjectEntries, out var entries))
+        {
+            // Signals "the buffer is too small" in the same way as the array writer does.
+            throw new ArgumentException("The map has too many entries to be written.");
+        }
+
         recursionDepth++;
         try
         {
-            foreach (var kvp in DeduplicateKeys(kvList))
+            foreach (var kvp in entries)
             {
                 this.arrayWriter.WriteNestedObjectPropertyName(ref arrayState, kvp.Key);
                 this.WriteArrayItem(ref arrayState, kvp.Value, tagValueMaxLength);

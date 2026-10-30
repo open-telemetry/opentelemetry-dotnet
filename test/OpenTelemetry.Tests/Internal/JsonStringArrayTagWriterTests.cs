@@ -7,6 +7,8 @@ namespace OpenTelemetry.Internal.Tests;
 
 public class JsonStringArrayTagWriterTests
 {
+    private static readonly int[] SmallArray = [1, 2, 3];
+
     [Theory]
     [InlineData([new char[] { }, "[]"])]
     [InlineData([new char[] { 'a' }, """["a"]"""])]
@@ -123,30 +125,128 @@ public class JsonStringArrayTagWriterTests
     [Fact]
     public void ThreadStaticStreamCapacityIsReducedAfterLargeWrite()
     {
-        var streamField = typeof(JsonStringArrayTagWriter<TestTagWriter.Tag>.JsonArrayTagWriter).GetField("threadStream", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
-        var writerField = typeof(JsonStringArrayTagWriter<TestTagWriter.Tag>.JsonArrayTagWriter).GetField("threadWriter", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
-        Assert.NotNull(streamField);
-        Assert.NotNull(writerField);
+        var writer = new JsonStringArrayTagWriter<TestTagWriter.Tag>.JsonArrayTagWriter(long.MaxValue);
+        var largeValue = new string('x', 128 * 1024);
+        var largeState = VerifySerialization(writer, largeValue, $"""["{largeValue}"]""");
 
-        var largeData = new[] { new string('x', 128 * 1024) };
-        VerifySerialization(largeData, $"""["{largeData[0]}"]""");
+        Assert.True(largeState.Stream.Capacity > 64 * 1024);
 
-        var largeStream = (MemoryStream?)streamField.GetValue(null);
-        var largeWriter = writerField.GetValue(null);
-        Assert.NotNull(largeStream);
-        Assert.NotNull(largeWriter);
-        Assert.True(largeStream.Capacity > 64 * 1024);
+        var reusedState = VerifySerialization(writer, "small", """["small"]""");
 
-        string[] smallData = ["small"];
-        VerifySerialization(smallData, """["small"]""");
+        Assert.Same(largeState.Stream, reusedState.Stream);
+        Assert.NotSame(largeState.Writer, reusedState.Writer);
+        Assert.True(reusedState.Stream.Capacity <= 64 * 1024);
 
-        var reusedStream = (MemoryStream?)streamField.GetValue(null);
-        var reusedWriter = writerField.GetValue(null);
-        Assert.NotNull(reusedStream);
-        Assert.NotNull(reusedWriter);
-        Assert.Same(largeStream, reusedStream);
-        Assert.Same(largeWriter, reusedWriter);
-        Assert.True(reusedStream.Capacity <= 64 * 1024);
+        var nextState = VerifySerialization(writer, "small", """["small"]""");
+
+        Assert.Same(reusedState.Writer, nextState.Writer);
+    }
+
+    [Fact]
+    public void ThreadStaticWriterIsReplacedAfterLargeAbandonedWrite()
+    {
+        var writer = new JsonStringArrayTagWriter<TestTagWriter.Tag>.JsonArrayTagWriter(128 * 1024);
+        var abandonedState = writer.BeginWriteArray();
+        var value = new string('x', 96 * 1024);
+        writer.WriteStringValue(ref abandonedState, value);
+
+        Assert.Throws<ArgumentException>(() => writer.WriteStringValue(ref abandonedState, value));
+
+        Assert.True(abandonedState.Writer.BytesPending > 64 * 1024);
+        Assert.True(abandonedState.Stream.Capacity <= 64 * 1024);
+
+        var reusedState = VerifySerialization(writer, "small", """["small"]""");
+
+        Assert.NotSame(abandonedState.Writer, reusedState.Writer);
+        Assert.Same(abandonedState.Stream, reusedState.Stream);
+
+        // Discarding the old writer must not flush its rejected JSON into the stream.
+        Assert.True(reusedState.Stream.Capacity <= 64 * 1024);
+    }
+
+    [Theory]
+    [InlineData(new[] { "short" }, """["short"]""")]
+    [InlineData(new[] { "012345678901234567890123456789012345678901234567890123456789" }, """["012345678901234567890123456789012345678901234567890123456789"]""")]
+    [InlineData(new[] { "012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789" }, "TRUNCATED")]
+    [InlineData(new[] { "\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001" }, "TRUNCATED")]
+    [InlineData(new[] { "0123456789", "0123456789", "0123456789", "0123456789", "0123456789", "0123456789", "0123456789" }, "TRUNCATED")]
+    public void ArrayWhoseJsonExceedsMaximumLengthIsTruncated(string[] data, string expectedValue)
+    {
+        TestTagWriter.Tag tag = default;
+        var result = TestTagWriter.Limited.TryWriteTag(ref tag, new KeyValuePair<string, object?>("array", data));
+
+        Assert.True(result, $"TryWriteTag returned false instead of writing '{expectedValue}'.");
+        Assert.Equal(expectedValue, tag.Value);
+    }
+
+    [Fact]
+    public void GetEscapedLengthMatchesLengthWrittenByJsonWriter()
+    {
+        using var stream = new MemoryStream();
+        var characters = new char[1];
+        var mismatches = new List<string>();
+
+        // Surrogates are only valid as pairs, so are covered separately.
+        for (var c = 0; c <= char.MaxValue; c++)
+        {
+            if (char.IsSurrogate((char)c))
+            {
+                continue;
+            }
+
+            characters[0] = (char)c;
+
+            var written = WrittenLength(stream, characters);
+            var counted = TestTagWriter.GetEscapedLength(characters, long.MaxValue);
+
+            if (written != counted)
+            {
+                mismatches.Add($"U+{c:X4}: JSON writer wrote {written} byte(s) but {counted} were counted.");
+            }
+        }
+
+        Assert.True(mismatches.Count == 0, $"{mismatches.Count} character(s) were counted incorrectly: {string.Join(" ", mismatches.Take(10))}");
+
+        characters = "\ud83d\ude00".ToCharArray();
+        Assert.Equal(WrittenLength(stream, characters), TestTagWriter.GetEscapedLength(characters, long.MaxValue));
+
+        static long WrittenLength(MemoryStream stream, char[] value)
+        {
+            stream.SetLength(0);
+            using var writer = new System.Text.Json.Utf8JsonWriter(stream);
+            writer.WriteStringValue(value);
+            writer.Flush();
+
+            // Excludes the quotes
+            return stream.Length - 2;
+        }
+    }
+
+    [Fact]
+    public void GetEscapedLengthStopsCountingOnceLimitIsExceeded()
+    {
+        var value = new string('\u00e9', 1000);
+
+        Assert.Equal(54, TestTagWriter.GetEscapedLength(value, 50));
+        Assert.Equal(6000, TestTagWriter.GetEscapedLength(value, 6000));
+    }
+
+    [Fact]
+    public void ArrayWhoseJsonExceedsMaximumLengthDoesNotAffectNextArray()
+    {
+        var oversized = new string('x', 1000).Split('x');
+
+        TestTagWriter.Tag tag = default;
+        var result = TestTagWriter.Limited.TryWriteTag(ref tag, new KeyValuePair<string, object?>("array", oversized));
+
+        Assert.True(result, $"TryWriteTag returned false for an oversized array of {oversized.Length} element(s) instead of writing 'TRUNCATED'.");
+        Assert.Equal("TRUNCATED", tag.Value);
+
+        tag = default;
+        result = TestTagWriter.Limited.TryWriteTag(ref tag, new KeyValuePair<string, object?>("array", SmallArray));
+
+        Assert.True(result, $"TryWriteTag returned false for an array of {SmallArray.Length} element(s) written after an oversized array.");
+        Assert.Equal("[1,2,3]", tag.Value);
     }
 
     private static void VerifySerialization(Array data, string expectedValue)
@@ -158,13 +258,34 @@ public class JsonStringArrayTagWriterTests
         Assert.Equal(expectedValue, tag.Value);
     }
 
+    private static JsonStringArrayTagWriter<TestTagWriter.Tag>.JsonArrayTagWriterState VerifySerialization(
+        JsonStringArrayTagWriter<TestTagWriter.Tag>.JsonArrayTagWriter writer,
+        string value,
+        string expectedValue)
+    {
+        var state = writer.BeginWriteArray();
+        writer.WriteStringValue(ref state, value);
+        writer.EndWriteArray(ref state);
+
+        Assert.Equal(expectedValue, Encoding.UTF8.GetString(state.Stream.GetBuffer(), 0, (int)state.Stream.Length));
+
+        return state;
+    }
+
     private sealed class TestTagWriter : JsonStringArrayTagWriter<TestTagWriter.Tag>
     {
         private TestTagWriter()
         {
         }
 
+        private TestTagWriter(long maxJsonLength)
+            : base(maxJsonLength)
+        {
+        }
+
         public static TestTagWriter Instance { get; } = new();
+
+        public static TestTagWriter Limited { get; } = new(80);
 
         protected override void WriteIntegralTag(ref Tag state, string key, long value)
             => throw new NotImplementedException();
@@ -176,7 +297,10 @@ public class JsonStringArrayTagWriterTests
             => throw new NotImplementedException();
 
         protected override void WriteStringTag(ref Tag state, string key, ReadOnlySpan<char> value)
-            => throw new NotImplementedException();
+        {
+            state.Key = key;
+            state.Value = value.ToString();
+        }
 
         protected override void WriteArrayTag(ref Tag state, string key, ArraySegment<byte> arrayUtf8JsonBytes)
         {
