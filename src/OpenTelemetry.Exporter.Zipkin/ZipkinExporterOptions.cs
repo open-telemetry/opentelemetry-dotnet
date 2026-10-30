@@ -30,7 +30,7 @@ public sealed class ZipkinExporterOptions
     /// Initializes zipkin endpoint.
     /// </summary>
     public ZipkinExporterOptions()
-         : this(new ConfigurationBuilder().AddEnvironmentVariables().Build(), new())
+         : this(EnvironmentVariablesConfiguration.Create(), new())
     {
     }
 

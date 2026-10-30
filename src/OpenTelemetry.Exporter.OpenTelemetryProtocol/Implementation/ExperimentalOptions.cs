@@ -18,7 +18,7 @@ internal sealed class ExperimentalOptions
     public const string OtlpDiskRetryCheckPermissionsEnvVar = "OTEL_DOTNET_EXPERIMENTAL_OTLP_DISK_RETRY_CHECK_PERMISSIONS";
 
     public ExperimentalOptions()
-        : this(new ConfigurationBuilder().AddEnvironmentVariables().Build())
+        : this(EnvironmentVariablesConfiguration.Create())
     {
     }
 
