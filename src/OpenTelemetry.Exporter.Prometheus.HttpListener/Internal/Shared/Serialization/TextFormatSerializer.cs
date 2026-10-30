@@ -202,6 +202,14 @@ internal abstract class TextFormatSerializer
 
                 var seriesEnd = cursor;
 
+                // A series that has already been written is not written again, as the response would not be valid.
+                if (options.Series is { } registry && !registry.TryAdd(buffer, seriesStart, seriesEnd - seriesStart))
+                {
+                    registry.RecordDropped(metric.Name);
+                    cursor = seriesStart;
+                    continue;
+                }
+
                 buffer[cursor++] = unchecked((byte)' ');
 
                 if (isLongValue)
@@ -247,6 +255,28 @@ internal abstract class TextFormatSerializer
                 try
                 {
                     var serializedTags = new ReadOnlySpan<byte>(serializedTagsBuffer, 0, serializedTagsLength);
+
+                    if (options.Series is { } registry)
+                    {
+                        // The series of the histogram is identified by the name and labels of its first bucket (up to the
+                        // value of the le label, which the buckets of every histogram have). It is then written again below.
+                        var seriesStart = cursor;
+
+                        cursor = this.WriteHistogramBucketName(buffer, cursor, prometheusMetric);
+                        cursor = WriteSerializedTagValues(buffer, cursor, serializedTags, appendTrailingComma: true);
+                        cursor = WriteAsciiStringNoEscape(buffer, cursor, "le=\"");
+
+                        var added = registry.TryAdd(buffer, seriesStart, cursor - seriesStart);
+
+                        cursor = seriesStart;
+
+                        if (!added)
+                        {
+                            registry.RecordDropped(metric.Name);
+                            continue;
+                        }
+                    }
+
                     var hasNegativeBucketBounds = false;
                     var previousBound = double.NegativeInfinity;
 

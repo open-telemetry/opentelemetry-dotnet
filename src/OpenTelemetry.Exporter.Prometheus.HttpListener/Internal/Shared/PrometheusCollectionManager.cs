@@ -32,6 +32,7 @@ internal sealed class PrometheusCollectionManager
     private readonly long baseTimestamp = Stopwatch.GetTimestamp();
     private readonly PrometheusExporter.ExportFunc onCollectRef;
     private readonly Dictionary<Metric, PrometheusMetric> metricsCache;
+    private readonly SeriesRegistry series = new(); // Only used while a response is being written, which is never concurrent.
     private readonly int maxBufferSize;
 
     private int metricsCacheCount;
@@ -654,12 +655,18 @@ internal sealed class PrometheusCollectionManager
 
             var cursor = this.targetInfoEnabled ? this.WriteTargetInfo(serializer, state) : 0;
             var metricStates = this.GetMetricStates(serializer, metrics);
+
+            this.series.Clear();
+
             var options = new TextFormatSerializerOptions(
                 suppressScopeInfo: !this.scopeInfoEnabled,
-                resourceConstantLabels: this.GetResourceConstantLabels());
+                resourceConstantLabels: this.GetResourceConstantLabels(),
+                series: this.series);
 
             foreach (var metricState in metricStates)
             {
+                var seriesMark = this.series.Count;
+
                 while (true)
                 {
                     try
@@ -680,12 +687,20 @@ internal sealed class PrometheusCollectionManager
                     }
                     catch (Exception ex) when (ex is IndexOutOfRangeException or ArgumentException)
                     {
+                        // The metric is written again, so the series that it had written must be forgotten.
+                        this.series.Rollback(seriesMark);
+
                         if (!state.TryExpandBuffer())
                         {
                             throw;
                         }
                     }
                 }
+            }
+
+            if (this.series.DroppedCount > 0)
+            {
+                PrometheusExporterEventSource.Log.DuplicateSeriesDropped(this.series.DroppedCount, this.series.FirstDroppedMetricName!);
             }
 
             while (true)

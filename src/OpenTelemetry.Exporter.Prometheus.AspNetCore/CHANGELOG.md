@@ -44,6 +44,12 @@ Notes](../../RELEASENOTES.md).
 * Add support for .NET 11.0.
   ([#6899](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6899))
 
+* Fixed a scrape response containing the same series (metric name and labels)
+  more than once, which causes Prometheus to reject the whole response, such as
+  when metric or tag names are the same once escaped or the scope information
+  is disabled. Duplicate series are now dropped, and a warning event is written.
+  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+
 ## 1.20.1-beta.1
 
 Released 2026-Oct-20
