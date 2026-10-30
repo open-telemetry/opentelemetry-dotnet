@@ -6,12 +6,22 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+## 1.21.0-rc.1
+
+Released 2026-Oct-28
+
 * The OpenTelemetry providers are now initialized in
   `IHostedLifecycleService.StartingAsync` instead of `IHostedService.StartAsync`
   so that telemetry emitted by other hosted services during `StartingAsync` is
   captured. `ITelemetryHostInitializer.Initialize()` is invoked only once per
   host start.
   ([#7998](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7998))
+
+* **Breaking Change** Dropped support for `net8.0` and `net9.0`.
+  ([#6899](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6899))
+
+* Add support for .NET 11.0.
+  ([#6899](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6899))
 
 ## 1.20.1
 

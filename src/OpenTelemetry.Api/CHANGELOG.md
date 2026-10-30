@@ -12,6 +12,10 @@ Notes](../../RELEASENOTES.md).
   startup to temporarily restore insecure legacy sharing.
   ([#8042](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8042))
 
+## 1.21.0-rc.1
+
+Released 2026-Oct-28
+
 ## 1.20.1
 
 Released 2026-Oct-20
@@ -23,6 +27,19 @@ Released 2026-Oct-20
 * Fixed `TracerProvider.GetTracer` caching a new tracer for each call with equal
   array-valued scope tags.
   ([#7960](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7960))
+
+* **Breaking Change** Dropped support for `net8.0` and `net9.0`.
+  ([#6899](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6899))
+
+* Update `System.Diagnostics.DiagnosticSource` dependency to `11.0.0-rc.3.26522.148`
+  for all target frameworks.
+  ([#6899](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6899))
+
+* Add full support for W3C Trace Context Level 2 grammar.
+  ([#6899](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6899))
+
+* Add support for .NET 11.0.
+  ([#6899](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6899))
 
 ## 1.20.0
 

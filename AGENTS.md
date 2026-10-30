@@ -29,14 +29,14 @@ dotnet test test/OpenTelemetry.Tests/OpenTelemetry.Tests.csproj --filter "FullyQ
 **Test for a specific TFM** (Windows also supports `net472`):
 
 ```sh
-dotnet test test/OpenTelemetry.Tests/OpenTelemetry.Tests.csproj --framework net10.0
+dotnet test test/OpenTelemetry.Tests/OpenTelemetry.Tests.csproj --framework net11.0
 ```
 
 **Test all projects for a specific TFM** (as CI does, skipping the projects
 which do not target it):
 
 ```sh
-dotnet build ./build/OpenTelemetry.proj -t:Test -p:Configuration=Release -p:TargetFramework=net10.0
+dotnet build ./build/OpenTelemetry.proj -t:Test -p:Configuration=Release -p:TargetFramework=net11.0
 ```
 
 **Check code formatting:**

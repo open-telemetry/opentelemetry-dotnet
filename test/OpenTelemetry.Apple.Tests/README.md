@@ -9,7 +9,7 @@ under the iOS runtime.
 
 ## What is covered
 
-`OpenTelemetry.Apple.TestApp` is a `net10.0-ios` app that wires up the SDK (logs,
+`OpenTelemetry.Apple.TestApp` is a `net11.0-ios` app that wires up the SDK (logs,
 metrics and traces) with the real OTLP/HTTP exporter and emits each signal while
 running on an iOS simulator.
 

@@ -7,6 +7,10 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+## 1.21.0-rc.1
+
+Released 2026-Oct-28
+
 * Fixed experimental in-memory retries exceeding the export timeout when a
   retried request stalls.
   ([#7977](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7977))
@@ -36,6 +40,12 @@ Notes](../../RELEASENOTES.md).
 * Fixed arrays of string-valued key/value pairs being
   exported as arrays of strings instead of maps.
   ([#7694](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7694))
+
+* **Breaking Change** Dropped support for `net8.0` and `net9.0`.
+  ([#6899](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6899))
+
+* Add support for .NET 11.0.
+  ([#6899](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6899))
 
 ## 1.20.1
 
