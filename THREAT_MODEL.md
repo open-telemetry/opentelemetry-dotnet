@@ -1,7 +1,7 @@
 # Threat model
 
 See
-[Security Response Guidelines](https://github.com/open-telemetry/sig-security/blob/main/security-response.md)
+[Security Policy](https://github.com/open-telemetry/.github/blob/main/SECURITY.md)
 for the general security and threat model for OpenTelemetry projects.
 
 Additional context specific to this project can be found in the sections below.
