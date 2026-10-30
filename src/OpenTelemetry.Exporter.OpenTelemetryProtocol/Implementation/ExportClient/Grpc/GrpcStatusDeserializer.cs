@@ -63,16 +63,17 @@ internal static class GrpcStatusDeserializer
 
                 switch (fieldNumber)
                 {
-                    case 1: // code
+                    case 1 when wireType == WIRETYPE_VARINT: // code
                         status.Code = DecodeInt32(stream);
                         break;
-                    case 2: // message
+                    case 2 when wireType == WIRETYPE_LENGTH_DELIMITED: // message
                         status.Message = DecodeString(stream);
                         break;
-                    case 3: // details
+                    case 3 when wireType == WIRETYPE_LENGTH_DELIMITED: // details
                         status.Details.Add(DecodeAny(stream));
                         break;
                     default:
+                        // A field which does not have the wire type of its number is an unknown field
                         SkipField(stream, wireType);
                         break;
                 }
@@ -115,7 +116,7 @@ internal static class GrpcStatusDeserializer
 
                 switch (fieldNumber)
                 {
-                    case 1: // retry_delay
+                    case 1 when wireType == WIRETYPE_LENGTH_DELIMITED: // retry_delay
                         retryInfo = new RetryInfo(DecodeDuration(stream));
                         break;
                     default:
@@ -146,10 +147,10 @@ internal static class GrpcStatusDeserializer
 
             switch (fieldNumber)
             {
-                case 1: // seconds
+                case 1 when wireType == WIRETYPE_VARINT: // seconds
                     seconds = DecodeInt64(stream);
                     break;
-                case 2: // nanos
+                case 2 when wireType == WIRETYPE_VARINT: // nanos
                     nanos = DecodeInt32(stream);
                     break;
                 default:
@@ -180,10 +181,10 @@ internal static class GrpcStatusDeserializer
 
             switch (fieldNumber)
             {
-                case 1: // type_url
+                case 1 when wireType == WIRETYPE_LENGTH_DELIMITED: // type_url
                     typeUrl = DecodeString(stream);
                     break;
-                case 2: // value
+                case 2 when wireType == WIRETYPE_LENGTH_DELIMITED: // value
                     value = DecodeBytes(stream);
                     break;
                 default:

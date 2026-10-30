@@ -25,6 +25,11 @@ Notes](../../RELEASENOTES.md).
   rejected.
   ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
 
+* Fixed the retry delay of a gRPC response being ignored or misread when a
+  field did not have the wire type that its number defines, instead of the
+  field being skipped.
+  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+
 ## 1.21.0-rc.1
 
 Released 2026-Oct-28
