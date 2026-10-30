@@ -180,17 +180,25 @@ public class EnvironmentVariablesConfigurationTests
             case Resource resource:
                 Assert.Empty(resource.Attributes);
                 break;
+
             case BatchExportActivityProcessorOptions options:
                 Assert.Equal(2048, options.MaxQueueSize);
                 break;
+
             case BatchExportLogRecordProcessorOptions options:
                 Assert.Equal(2048, options.MaxQueueSize);
                 break;
+
             case PeriodicExportingMetricReaderOptions options:
                 Assert.Null(options.ExportIntervalMilliseconds);
                 break;
+
             case IConfiguration configuration:
                 Assert.Empty(configuration.AsEnumerable());
+                break;
+
+            default:
+                Assert.Fail($"Unexpected configuration type: {result.GetType().FullName}.");
                 break;
         }
     }

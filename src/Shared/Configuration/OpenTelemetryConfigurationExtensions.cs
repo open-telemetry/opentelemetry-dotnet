@@ -3,7 +3,6 @@
 
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
-using System.Security;
 
 namespace Microsoft.Extensions.Configuration;
 
@@ -20,7 +19,7 @@ internal static class OpenTelemetryConfigurationExtensions
         {
             return configuration[key];
         }
-        catch (SecurityException)
+        catch (System.Security.SecurityException)
         {
             // A configuration provider may defer reading a restricted environment variable.
             return null;

@@ -1,7 +1,6 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-using System.Security;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
@@ -207,7 +206,7 @@ public class HostEnvironmentResourceDetectorTests
 
     private sealed class DeniedConfigurationProvider : ConfigurationProvider
     {
-        public override bool TryGet(string key, out string? value) => throw new SecurityException();
+        public override bool TryGet(string key, out string? value) => throw new System.Security.SecurityException();
     }
 
     private sealed class FakeHostEnvironment : IHostEnvironment

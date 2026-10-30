@@ -1,7 +1,6 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-using System.Security;
 using Microsoft.Extensions.Configuration.EnvironmentVariables;
 
 namespace Microsoft.Extensions.Configuration;
@@ -25,7 +24,7 @@ internal static class EnvironmentVariablesConfiguration
             {
                 base.Load();
             }
-            catch (SecurityException)
+            catch (System.Security.SecurityException)
             {
                 // Keep the last successful snapshot (initially empty) and the source so a later
                 // successful reload can read the environment again.

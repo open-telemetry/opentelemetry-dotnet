@@ -38,12 +38,18 @@ public class EnvironmentVariablesConfigurationTests
             case OtlpExporterOptions options:
                 Assert.Equal(10000, options.TimeoutMilliseconds);
                 break;
+
             case SdkLimitOptions options:
                 Assert.Equal(128, options.AttributeCountLimit);
                 break;
+
             case ExperimentalOptions options:
                 Assert.False(options.EnableInMemoryRetry);
                 Assert.False(options.EnableDiskRetry);
+                break;
+
+            default:
+                Assert.Fail($"Unexpected options type: {result.GetType().FullName}.");
                 break;
         }
     }
