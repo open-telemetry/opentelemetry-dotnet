@@ -16,7 +16,7 @@ internal sealed class ExperimentalOptions
     public const string OtlpDiskRetryDirectoryPathEnvVar = "OTEL_DOTNET_EXPERIMENTAL_OTLP_DISK_RETRY_DIRECTORY_PATH";
 
     public ExperimentalOptions()
-        : this(new ConfigurationBuilder().AddEnvironmentVariables().Build())
+        : this(EnvironmentVariablesConfiguration.Create())
     {
     }
 
