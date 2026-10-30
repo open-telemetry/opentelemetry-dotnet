@@ -204,6 +204,9 @@ public sealed class OtlpExporterOptionsTests : IDisposable
     [InlineData("none", OtlpExportCompression.None)]
     [InlineData("None", OtlpExportCompression.None)]
     [InlineData("NONE", OtlpExportCompression.None)]
+    [InlineData("zstd", OtlpExportCompression.Zstd)]
+    [InlineData("Zstd", OtlpExportCompression.Zstd)]
+    [InlineData("ZSTD", OtlpExportCompression.Zstd)]
     public void OtlpExporterOptions_AppliesCompressionFromEnvironment(string value, OtlpExportCompression expected)
     {
         var values = new Dictionary<string, string?>

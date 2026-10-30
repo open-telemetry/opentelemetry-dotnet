@@ -343,7 +343,19 @@ appBuilder.Services.AddOptions<OtlpExporterOptions>()
 > traces, the full URL will look like `http://your-custom-endpoint/v1/traces`.
 
 * `Compression`: Optionally compress the export payload. The default is no
-  compression. The only supported compression option is `OtlpExportCompression.GZip`.
+  compression. The supported compression options are `OtlpExportCompression.GZip`
+  and `OtlpExportCompression.Zstd`.
+
+  > [!NOTE]
+  > `OtlpExportCompression.Zstd` requires .NET 11 or later and is not available
+  > in when using Blazor. Where Zstandard is not available, GZip is used
+  > instead. Receivers are not required to support Zstandard, so if a receiver
+  > rejects a Zstandard-compressed request (with `415`/`400` for
+  > `http/protobuf`, or `UNIMPLEMENTED` for `grpc`), the request is sent again
+  > using GZip, and GZip is then used for all further requests if that succeeds.
+  > If three requests in a row are rejected and then fail again using GZip,
+  > GZip is also used for all further requests, so that each request is not
+  > sent twice indefinitely.
 
 * `Headers`: Optional headers for the connection.
 
@@ -453,7 +465,7 @@ or reader
 
   | Environment variable             | `OtlpExporterOptions` property         |
   | ---------------------------------| ---------------------------------------|
-  | `OTEL_EXPORTER_OTLP_COMPRESSION` | `Compression` (`none` or `gzip`)       |
+  | `OTEL_EXPORTER_OTLP_COMPRESSION` | `Compression` (`none`/`gzip`/`zstd`)   |
   | `OTEL_EXPORTER_OTLP_ENDPOINT`    | `Endpoint`                             |
   | `OTEL_EXPORTER_OTLP_HEADERS`     | `Headers`                              |
   | `OTEL_EXPORTER_OTLP_PROTOCOL`    | `Protocol` (`grpc` or `http/protobuf`) |
@@ -491,7 +503,7 @@ or reader
 
   | Environment variable                  | `OtlpExporterOptions` property         | UseOtlpExporter | AddOtlpExporter |
   | --------------------------------------| ---------------------------------------|-----------------|-----------------|
-  | `OTEL_EXPORTER_OTLP_LOGS_COMPRESSION` | `Compression` (`none` or `gzip`)       | Supported       | Not supported   |
+  | `OTEL_EXPORTER_OTLP_LOGS_COMPRESSION` | `Compression` (`none`/`gzip`/`zstd`)   | Supported       | Not supported   |
   | `OTEL_EXPORTER_OTLP_LOGS_ENDPOINT`    | `Endpoint`                             | Supported       | Not supported   |
   | `OTEL_EXPORTER_OTLP_LOGS_HEADERS`     | `Headers`                              | Supported       | Not supported   |
   | `OTEL_EXPORTER_OTLP_LOGS_PROTOCOL`    | `Protocol` (`grpc` or `http/protobuf`) | Supported       | Not supported   |
@@ -529,7 +541,7 @@ or reader
 
   | Environment variable                     | `OtlpExporterOptions` property         | UseOtlpExporter | AddOtlpExporter |
   | -----------------------------------------| ---------------------------------------|-----------------|-----------------|
-  | `OTEL_EXPORTER_OTLP_METRICS_COMPRESSION` | `Compression` (`none` or `gzip`)       | Supported       | Not supported   |
+  | `OTEL_EXPORTER_OTLP_METRICS_COMPRESSION` | `Compression` (`none`/`gzip`/`zstd`)   | Supported       | Not supported   |
   | `OTEL_EXPORTER_OTLP_METRICS_ENDPOINT`    | `Endpoint`                             | Supported       | Not supported   |
   | `OTEL_EXPORTER_OTLP_METRICS_HEADERS`     | `Headers`                              | Supported       | Not supported   |
   | `OTEL_EXPORTER_OTLP_METRICS_PROTOCOL`    | `Protocol` (`grpc` or `http/protobuf`) | Supported       | Not supported   |
@@ -553,7 +565,7 @@ or reader
 
   | Environment variable                    | `OtlpExporterOptions` property         | UseOtlpExporter | AddOtlpExporter |
   | ----------------------------------------| ---------------------------------------|-----------------|-----------------|
-  | `OTEL_EXPORTER_OTLP_TRACES_COMPRESSION` | `Compression` (`none` or `gzip`)       | Supported       | Not supported   |
+  | `OTEL_EXPORTER_OTLP_TRACES_COMPRESSION` | `Compression` (`none`/`gzip`/`zstd`)   | Supported       | Not supported   |
   | `OTEL_EXPORTER_OTLP_TRACES_ENDPOINT`    | `Endpoint`                             | Supported       | Not supported   |
   | `OTEL_EXPORTER_OTLP_TRACES_HEADERS`     | `Headers`                              | Supported       | Not supported   |
   | `OTEL_EXPORTER_OTLP_TRACES_PROTOCOL`    | `Protocol` (`grpc` or `http/protobuf`) | Supported       | Not supported   |

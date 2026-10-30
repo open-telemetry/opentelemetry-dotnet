@@ -386,6 +386,29 @@ internal sealed class OpenTelemetryProtocolExporterEventSource : EventSource, IC
     internal void RetryDeadlineExceeded()
         => this.WriteEvent(43);
 
+    [Event(
+        44,
+        Message = "Zstandard compression is not supported on this platform. GZip compression will be used instead.",
+        Level = EventLevel.Warning)]
+    internal void ZstdCompressionNotSupported()
+        => this.WriteEvent(44);
+
+    [NonEvent]
+    internal void ZstdCompressionRejected(Uri endpoint)
+    {
+        if (Log.IsEnabled(EventLevel.Warning, EventKeywords.All))
+        {
+            this.ZstdCompressionRejected(RedactEndpointUri(endpoint));
+        }
+    }
+
+    [Event(
+        45,
+        Message = "The request to endpoint '{0}' compressed with Zstandard was rejected. The request will be sent again compressed with GZip.",
+        Level = EventLevel.Warning)]
+    internal void ZstdCompressionRejected(string endpoint)
+        => this.WriteEvent(45, endpoint);
+
     private static string RedactEndpointUri(Uri endpoint)
     {
         var authority = endpoint.GetComponents(UriComponents.SchemeAndServer, UriFormat.UriEscaped);

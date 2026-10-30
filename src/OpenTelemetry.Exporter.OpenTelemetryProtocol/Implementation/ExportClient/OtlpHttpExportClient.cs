@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics.Tracing;
+using System.Net;
 #if NETFRAMEWORK
 using System.Net.Http;
 #endif
@@ -23,14 +24,14 @@ internal sealed class OtlpHttpExportClient : OtlpExportClient
     internal override MediaTypeHeaderValue MediaTypeHeader => MediaHeaderValue;
 
     /// <inheritdoc/>
-    public override ExportClientResponse SendExportRequest(byte[] buffer, int contentLength, DateTime deadlineUtc, CancellationToken cancellationToken = default)
+    protected override ExportClientResponse SendExportRequest(byte[] buffer, int contentLength, OtlpExportCompression compression, DateTime deadlineUtc, CancellationToken cancellationToken)
     {
         try
         {
-            using var httpRequest = this.CreateHttpRequest(buffer, contentLength);
+            using var httpRequest = this.CreateHttpRequest(buffer, contentLength, compression);
 
 #if NETFRAMEWORK
-            if (this.CompressionEnabled)
+            if (compression != OtlpExportCompression.None)
             {
                 // The length of the compressed content is not known up front, so unless the request
                 // is sent chunked HttpClientHandler buffers the entire compressed body in memory first.
@@ -96,8 +97,20 @@ internal sealed class OtlpHttpExportClient : OtlpExportClient
         }
     }
 
-    protected override HttpContent CreateHttpContent(byte[] buffer, int contentLength) =>
-        this.CompressionEnabled
-            ? new GZipHttpContent(buffer, contentLength, this.MediaTypeHeader)
-            : base.CreateHttpContent(buffer, contentLength);
+    /// <inheritdoc/>
+    /// <remarks>
+    /// Receivers that do not support a Content-Encoding should return 415, but may return 400.
+    /// </remarks>
+    protected override bool IsCompressionRejected(ExportClientResponse response) =>
+        response is ExportClientHttpResponse { StatusCode: HttpStatusCode.UnsupportedMediaType or HttpStatusCode.BadRequest };
+
+    protected override HttpContent CreateHttpContent(byte[] buffer, int contentLength, OtlpExportCompression compression) =>
+        compression switch
+        {
+            OtlpExportCompression.GZip => new GZipHttpContent(buffer, contentLength, this.MediaTypeHeader),
+#if NET11_0_OR_GREATER
+            OtlpExportCompression.Zstd => new ZstdHttpContent(buffer, contentLength, this.MediaTypeHeader, this.GetZstdCompressor()),
+#endif
+            _ => base.CreateHttpContent(buffer, contentLength, compression),
+        };
 }
