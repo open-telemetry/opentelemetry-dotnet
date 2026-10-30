@@ -377,7 +377,7 @@ public sealed class LogRecord
     /// known at the source.
     /// </summary>
     /// <remarks><inheritdoc cref="Sdk.CreateLoggerProviderBuilder" path="/remarks"/></remarks>
-    [Experimental(DiagnosticDefinitions.LogsBridgeExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
+    [Experimental(DiagnosticDefinitions.LogsExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
     public
 #else
     /// <summary>
@@ -397,7 +397,7 @@ public sealed class LogRecord
     /// Gets or sets the log <see cref="LogRecordSeverity"/>.
     /// </summary>
     /// <remarks><inheritdoc cref="Sdk.CreateLoggerProviderBuilder" path="/remarks"/></remarks>
-    [Experimental(DiagnosticDefinitions.LogsBridgeExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
+    [Experimental(DiagnosticDefinitions.LogsExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
     public
 #else
     /// <summary>
@@ -418,12 +418,12 @@ public sealed class LogRecord
     /// </summary>
     /// <remarks>
     /// <para><inheritdoc cref="Sdk.CreateLoggerProviderBuilder" path="/remarks"/></para>
-    /// Note: When using the Log Bridge API (for example <see
+    /// Note: When using the Logs API (for example <see
     /// cref="Logger.EmitLog(in LogRecordData)"/>) <see cref="Logger"/> is
     /// typically the <see cref="Logs.Logger"/> which emitted the <see
     /// cref="LogRecord"/> however the value may be different if <see
     /// cref="CategoryName"/> is modified.</remarks>
-    [Experimental(DiagnosticDefinitions.LogsBridgeExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
+    [Experimental(DiagnosticDefinitions.LogsExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
     public Logger Logger { get; internal set; } = InstrumentationScopeLogger.Default;
 #else
     /// <summary>
