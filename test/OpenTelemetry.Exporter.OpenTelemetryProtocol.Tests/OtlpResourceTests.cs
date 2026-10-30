@@ -1,6 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Buffers;
 using System.Runtime.CompilerServices;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Serializer;
 using OpenTelemetry.Proto.Trace.V1;
@@ -79,6 +80,91 @@ public class OtlpResourceTests
         Assert.False(reference.TryGetTarget(out _), "Resource should not be kept alive after serialization.");
     }
 
+    [Theory]
+    [InlineData(2048)]
+    [InlineData(4096)]
+    public void SerializeResourceToBytesRejectsResourceExceedingLimit(int maxBufferSize)
+    {
+        var resource = ResourceBuilder.CreateEmpty()
+            .AddAttributes([new("key", new string('x', maxBufferSize))])
+            .Build();
+        var pool = new TrackingArrayPool();
+
+        Assert.Throws<InvalidOperationException>(() =>
+            ProtobufOtlpResourceSerializer.SerializeResourceToBytes(resource, pool, maxBufferSize));
+
+        Assert.All(pool.RequestedSizes, size => Assert.InRange(size, 1, maxBufferSize));
+        Assert.Equal(pool.Rented, pool.Returned);
+        Assert.All(pool.Returned, static array => Assert.All(array, static value => Assert.Equal(0, value)));
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(2000)]
+    [InlineData(3000)]
+    [InlineData(4077)]
+    public void SerializeResourceToBytesPreservesResourceWithinLimit(int valueLength)
+    {
+        const int MaxBufferSize = 4096;
+        var value = new string('x', valueLength);
+        var resource = ResourceBuilder.CreateEmpty()
+            .AddAttributes([new("key", value)])
+            .Build();
+        var pool = new TrackingArrayPool();
+
+        var serialized = ProtobufOtlpResourceSerializer.SerializeResourceToBytes(resource, pool, MaxBufferSize);
+
+        var expected = new Proto.Resource.V1.Resource
+        {
+            Attributes =
+            {
+                new Proto.Common.V1.KeyValue
+                {
+                    Key = "key",
+                    Value = new Proto.Common.V1.AnyValue { StringValue = value },
+                },
+            },
+        };
+        Assert.Equal(expected, ResourceSpans.Parser.ParseFrom(serialized).Resource);
+        Assert.InRange(serialized.Length, 1, MaxBufferSize);
+        Assert.All(pool.RequestedSizes, size => Assert.InRange(size, 1, MaxBufferSize));
+        Assert.Equal(pool.Rented, pool.Returned);
+        Assert.All(pool.Returned, static array => Assert.All(array, static value => Assert.Equal(0, value)));
+    }
+
+    [Fact]
+    public void SerializeResourceToBytesRejectsResourceExceedingLimitWithOversizedRental()
+    {
+        var resource = ResourceBuilder.CreateEmpty()
+            .AddAttributes([new("key", new string('x', 3000))])
+            .Build();
+        var pool = new TrackingArrayPool(minimumBufferSize: 4096);
+
+        Assert.Throws<InvalidOperationException>(() =>
+            ProtobufOtlpResourceSerializer.SerializeResourceToBytes(resource, pool, 2048));
+
+        Assert.Single(pool.Rented);
+        Assert.Equal(pool.Rented, pool.Returned);
+        Assert.All(pool.Returned, static array => Assert.All(array, static value => Assert.Equal(0, value)));
+    }
+
+    [Fact]
+    public void SerializeResourceToBytesReturnsBufferOnceWhenGrowthFails()
+    {
+        var resource = ResourceBuilder.CreateEmpty()
+            .AddAttributes([new("key", new string('x', 3000))])
+            .Build();
+        var allocationFailure = new InvalidOperationException("Simulated buffer rental failure.");
+        var pool = new TrackingArrayPool(allocationFailure);
+
+        var exception = Assert.Throws<InvalidOperationException>(() =>
+            ProtobufOtlpResourceSerializer.SerializeResourceToBytes(resource, pool, 4096));
+
+        Assert.Same(allocationFailure, exception);
+        Assert.Equal(pool.Rented, pool.Returned);
+        Assert.All(pool.Returned, static array => Assert.All(array, static value => Assert.Equal(0, value)));
+    }
+
     [MethodImpl(MethodImplOptions.NoInlining)]
     private static WeakReference<Resource> CreateSerializedResourceWeakReference()
     {
@@ -91,5 +177,39 @@ public class OtlpResourceTests
         _ = ProtobufOtlpResourceSerializer.WriteResource(buffer, 0, resource);
 
         return new WeakReference<Resource>(resource);
+    }
+
+    private sealed class TrackingArrayPool(
+        InvalidOperationException? growthFailure = null,
+        int minimumBufferSize = 0) : ArrayPool<byte>
+    {
+        public List<int> RequestedSizes { get; } = [];
+
+        public List<byte[]> Rented { get; } = [];
+
+        public List<byte[]> Returned { get; } = [];
+
+        public override byte[] Rent(int minimumLength)
+        {
+            this.RequestedSizes.Add(minimumLength);
+            if (this.Rented.Count > 0 && growthFailure != null)
+            {
+                throw growthFailure;
+            }
+
+            var buffer = new byte[Math.Max(minimumLength, minimumBufferSize)];
+            this.Rented.Add(buffer);
+            return buffer;
+        }
+
+        public override void Return(byte[] array, bool clearArray = false)
+        {
+            if (clearArray)
+            {
+                array.AsSpan().Clear();
+            }
+
+            this.Returned.Add(array);
+        }
     }
 }

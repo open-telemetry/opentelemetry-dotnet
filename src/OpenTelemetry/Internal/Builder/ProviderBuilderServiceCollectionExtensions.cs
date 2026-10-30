@@ -79,7 +79,7 @@ internal static class ProviderBuilderServiceCollectionExtensions
         // point of this registration is to make IConfiguration available in
         // those cases.
         services.TryAddSingleton<IConfiguration>(
-            sp => new ConfigurationBuilder().AddEnvironmentVariables().Build());
+            sp => EnvironmentVariablesConfiguration.Create());
 
         // Automatic resolution precedes application callbacks on creation and reload.
         services.RegisterOptionsFactory((_, configuration, name) =>

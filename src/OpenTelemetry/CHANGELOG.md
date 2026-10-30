@@ -14,6 +14,10 @@ Notes](../../RELEASENOTES.md).
   target frameworks.
   ([#8065](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8065))
 
+* Fixed initialization failures when environment variable access is denied.
+  Configuration reloads retain the last successful values when access is denied.
+  ([#8070](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8070))
+
 * Added `Sampler.Shutdown` and the overridable `Sampler.OnShutdown` to allow
   samplers to release resources, as described in the
   [specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk.md#shutdown-1).
