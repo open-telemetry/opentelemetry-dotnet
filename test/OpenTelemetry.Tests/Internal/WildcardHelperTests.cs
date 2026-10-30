@@ -145,7 +145,7 @@ public class WildcardHelperTests
     [InlineData("foo*", "foo\n", true)]
     [InlineData("foo*", "foo\nbar", true)]
     [InlineData("foo*", "FOO\r\nbar", true)]
-    [InlineData("foo*", "fo", false)]
+    [InlineData("foo*", "f", false)]
     [InlineData("foo*", "bar\nfoo", false)]
     [InlineData("*", "\n", true)]
     public void GetWildcardRegex_AgreesWithTheWildcardPrefixForTheSamePattern(string pattern, string matchWith, bool expected)
