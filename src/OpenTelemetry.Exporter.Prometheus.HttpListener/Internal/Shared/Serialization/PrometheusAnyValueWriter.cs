@@ -181,6 +181,52 @@ internal sealed class PrometheusAnyValueWriter : JsonStringArrayTagWriter<Promet
         state.IsJsonLiteral = true;
     }
 
+    private static long GetEscapedBase64StringLength(ReadOnlySpan<byte> value, long limit)
+    {
+        var length = GetBase64StringLength(value.Length);
+
+        // Base64 index 62 is '+', which the default JSON encoder writes as \u002B.
+        // Count those indices directly so the five extra bytes per '+' are included
+        // without allocating the encoded string. Padding cannot introduce a '+'.
+        for (var i = 0; i < value.Length && length <= limit; i += 3)
+        {
+            var first = value[i];
+            if (first >> 2 == 62)
+            {
+                length += 5;
+            }
+
+            if (i + 1 >= value.Length)
+            {
+                break;
+            }
+
+            var second = value[i + 1];
+            if ((((first & 0x03) << 4) | (second >> 4)) == 62)
+            {
+                length += 5;
+            }
+
+            if (i + 2 >= value.Length)
+            {
+                break;
+            }
+
+            var third = value[i + 2];
+            if ((((second & 0x0F) << 2) | (third >> 6)) == 62)
+            {
+                length += 5;
+            }
+
+            if ((third & 0x3F) == 62)
+            {
+                length += 5;
+            }
+        }
+
+        return length;
+    }
+
     private long GetPendingLength(Utf8JsonWriter writer, KeyValuePair<string, object?> entry, int? tagValueMaxLength, out bool includesValue)
     {
         includesValue = false;
@@ -202,7 +248,7 @@ internal sealed class PrometheusAnyValueWriter : JsonStringArrayTagWriter<Promet
 
             case byte[] bytes when bytes.GetType() == typeof(byte[]):
                 var byteCount = tagValueMaxLength is { } maxBytes ? Math.Min(bytes.Length, maxBytes) : bytes.Length;
-                length += GetBase64StringLength(byteCount);
+                length += GetEscapedBase64StringLength(bytes.AsSpan(0, byteCount), remaining - length);
                 includesValue = true;
                 break;
         }

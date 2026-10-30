@@ -8,6 +8,7 @@ using System.Globalization;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using OpenTelemetry.Exporter.Prometheus.Serialization;
 using OpenTelemetry.Metrics;
@@ -2021,6 +2022,55 @@ public sealed partial class PrometheusSerializerTests
         AssertTruncatedWithoutBufferingValue(() => writer.ToLabelValueString("key", map));
 
         Assert.Equal("""{"a":"AQID"}""", new PrometheusAnyValueWriter(40).ToLabelValueString("key", new Dictionary<string, object?> { ["a"] = LabelValueByteArrayCase }));
+    }
+
+    [Theory]
+    [InlineData("+AAA")]
+    [InlineData("A+AA")]
+    [InlineData("AA+A")]
+    [InlineData("AAA+")]
+    [InlineData("++++")]
+    public void ToLabelValueStringTruncatesMapWithEscapedBase64BeforeEncodingIt(string base64Group)
+    {
+        var writer = new PrometheusAnyValueWriter(512 * 1024);
+        var group = Convert.FromBase64String(base64Group);
+        var bytes = new byte[192 * 1024];
+        for (var offset = 0; offset < bytes.Length; offset += group.Length)
+        {
+            group.CopyTo(bytes, offset);
+        }
+
+        var map = new Dictionary<string, object?> { ["a"] = bytes };
+
+        AssertTruncatedWithoutBufferingValue(() => writer.ToLabelValueString("key", map));
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("AQID")]
+    [InlineData("+A==")]
+    [InlineData("A+A=")]
+    [InlineData("AA+A")]
+    [InlineData("AAA+")]
+    [InlineData("++++")]
+    [InlineData("++A=")]
+    [InlineData("////")]
+    public void ToLabelValueStringPreservesEscapedBase64AtExactLimit(string base64)
+    {
+        var map = new Dictionary<string, object?> { ["a"] = Convert.FromBase64String(base64) };
+        using var stream = new MemoryStream();
+        using (var jsonWriter = new Utf8JsonWriter(stream))
+        {
+            jsonWriter.WriteStartObject();
+            jsonWriter.WriteString("a", base64);
+            jsonWriter.WriteEndObject();
+        }
+
+        var expected = Encoding.UTF8.GetString(stream.ToArray());
+        var length = stream.Length;
+
+        Assert.Equal(expected, new PrometheusAnyValueWriter(length).ToLabelValueString("key", map));
+        Assert.Equal("TRUNCATED", new PrometheusAnyValueWriter(length - 1).ToLabelValueString("key", map));
     }
 
     [Fact]
