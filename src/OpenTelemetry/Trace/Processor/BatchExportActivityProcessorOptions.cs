@@ -26,7 +26,7 @@ public class BatchExportActivityProcessorOptions : BatchExportProcessorOptions<A
     /// Initializes a new instance of the <see cref="BatchExportActivityProcessorOptions"/> class.
     /// </summary>
     public BatchExportActivityProcessorOptions()
-        : this(new ConfigurationBuilder().AddEnvironmentVariables().Build())
+        : this(EnvironmentVariablesConfiguration.Create())
     {
     }
 

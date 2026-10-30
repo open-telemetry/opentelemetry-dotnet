@@ -11,6 +11,10 @@ Notes](../../RELEASENOTES.md).
   reuse after buffer allocation failures.
   ([#8069](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8069))
 
+* Fixed exporter option initialization failing when environment variable access
+  is denied.
+  ([#8070](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8070))
+
 * Added support for batching the metric points exported by the periodic
   exporting metric reader. Set
   `PeriodicExportingMetricReaderOptions.MaxExportBatchSize` to limit the

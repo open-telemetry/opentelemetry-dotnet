@@ -24,7 +24,7 @@ public class PeriodicExportingMetricReaderOptions
     /// Initializes a new instance of the <see cref="PeriodicExportingMetricReaderOptions"/> class.
     /// </summary>
     public PeriodicExportingMetricReaderOptions()
-        : this(new ConfigurationBuilder().AddEnvironmentVariables().Build())
+        : this(EnvironmentVariablesConfiguration.Create())
     {
     }
 
