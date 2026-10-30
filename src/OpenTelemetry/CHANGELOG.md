@@ -18,6 +18,22 @@ Notes](../../RELEASENOTES.md).
   Configuration reloads retain the last successful values when access is denied.
   ([#8070](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8070))
 
+* Added support for batching the metric points exported by
+  `PeriodicExportingMetricReader`. When a maximum export batch size is set,
+  using the new constructor overload or
+  `PeriodicExportingMetricReaderOptions.MaxExportBatchSize`, the metric
+  points of each collection are split into batches of at most that many
+  metric points, even if that splits up the metric points of a single
+  metric. The batches are exported serially with the export timeout
+  applying to each export. It can also be configured with the
+  `OTEL_METRIC_EXPORT_MAX_BATCH_SIZE` environment variable.
+  ([#8053](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8053))
+
+* Fixed `PeriodicExportingMetricReader` exporting a collection which was still
+  in progress when `Shutdown()` timed out to its exporter after the exporter
+  had been shut down.
+  ([#8053](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8053))
+
 ## 1.21.0-rc.1
 
 Released 2026-Oct-28

@@ -120,15 +120,15 @@ internal sealed class PeriodicExportingMetricReaderThreadWorker : PeriodicExport
             {
                 case 0: // export
                     OpenTelemetrySdkEventSource.Log.MetricReaderEvent("PeriodicExportingMetricReader calling MetricReader.Collect because Export was triggered.");
-                    this.MetricReader.Collect(this.ExportTimeoutMilliseconds);
+                    this.MetricReader.Collect(this.CollectTimeoutMilliseconds);
                     break;
                 case 1: // shutdown
                     OpenTelemetrySdkEventSource.Log.MetricReaderEvent("PeriodicExportingMetricReader calling MetricReader.Collect because Shutdown was triggered.");
-                    this.MetricReader.Collect(this.ExportTimeoutMilliseconds);
+                    this.MetricReader.Collect(this.CollectTimeoutMilliseconds);
                     return;
                 case WaitHandle.WaitTimeout: // timer
                     OpenTelemetrySdkEventSource.Log.MetricReaderEvent("PeriodicExportingMetricReader calling MetricReader.Collect because the export interval has elapsed.");
-                    this.MetricReader.Collect(this.ExportTimeoutMilliseconds);
+                    this.MetricReader.Collect(this.CollectTimeoutMilliseconds);
                     break;
                 default:
                     break;

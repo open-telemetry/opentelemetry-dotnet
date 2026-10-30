@@ -1,0 +1,4 @@
+OpenTelemetry.Metrics.PeriodicExportingMetricReader.MaxExportBatchSize.get -> int?
+OpenTelemetry.Metrics.PeriodicExportingMetricReader.PeriodicExportingMetricReader(OpenTelemetry.BaseExporter<OpenTelemetry.Metrics.Metric!>! exporter, int exportIntervalMilliseconds, int exportTimeoutMilliseconds, int maxExportBatchSize) -> void
+OpenTelemetry.Metrics.PeriodicExportingMetricReaderOptions.MaxExportBatchSize.get -> int?
+OpenTelemetry.Metrics.PeriodicExportingMetricReaderOptions.MaxExportBatchSize.set -> void

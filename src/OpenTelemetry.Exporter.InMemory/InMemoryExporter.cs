@@ -1,6 +1,8 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using OpenTelemetry.Metrics;
+
 namespace OpenTelemetry.Exporter;
 
 public class InMemoryExporter<T> : BaseExporter<T>
@@ -58,6 +60,15 @@ public class InMemoryExporter<T> : BaseExporter<T>
 
         foreach (var data in batch)
         {
+            // A metric whose metric points are split between export batches is
+            // only added for the first of them. Once the batches have been
+            // exported, the Metric exposes all of its metric points again, so
+            // adding it for each batch would duplicate them.
+            if (typeof(T) == typeof(Metric) && ((Metric)(object)data).AggregatorStore.ExportWindowStart > 0)
+            {
+                continue;
+            }
+
             this.exportedItems.Add(data);
         }
 
