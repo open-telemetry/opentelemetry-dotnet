@@ -50,4 +50,8 @@ public sealed class AlwaysRecordSampler : Sampler
             _ => result, // Undefined behaviour - invalid value
         };
     }
+
+    /// <inheritdoc/>
+    protected override bool OnShutdown(int timeoutMilliseconds)
+        => ShutdownShared(this.rootSampler, timeoutMilliseconds);
 }

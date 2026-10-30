@@ -419,7 +419,9 @@ returned by the previous one, so several libraries can take part without
 conflicting. Returning `null` or throwing from a callback fails the build.
 
 When a callback returns a sampler other than the one it was given, the provider
-disposes only the final resolved sampler.
+shuts down (and disposes, if it implements `IDisposable`) only the final
+resolved sampler. A callback which wraps the sampler it was given should shut
+the inner sampler down from its own `OnShutdown` override.
 
 #### Troubleshooting: spans dropped due to an unsampled parent
 

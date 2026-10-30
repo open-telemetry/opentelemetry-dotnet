@@ -333,6 +333,24 @@ Custom samplers can be implemented to cover more scenarios:
   implement the `ShouldSample` method.
 * `ShouldSample` should be thread safe, and should not block or take long time,
   since it will be called on critical code path.
+* Samplers which hold resources (for example, a background task which refreshes
+  a remote sampling configuration) should override the protected `OnShutdown`
+  method to release them. It is invoked by `Sampler.Shutdown`, which the
+  `TracerProvider` calls when it is shut down or disposed, and only runs once
+  (even if called concurrently). The `TracerProvider` stops calling
+  `ShouldSample` as it begins to shut the sampler down, but a call to
+  `ShouldSample` which is already in progress at that point may still be
+  running, so it must remain safe while resources are released. Samplers which
+  do not hold any resources do not need to do anything.
+* Samplers which delegate to other samplers should call `Shutdown` on each of
+  the samplers they delegate to from `OnShutdown`, as the `TracerProvider` only
+  knows about the outermost sampler. The built-in `ParentBasedSampler` and
+  `AlwaysRecordSampler` do this for the samplers they were created with.
+* `Sampler` does not implement `IDisposable`, to avoid requiring every sampler
+  to be disposed. A custom sampler may still implement `IDisposable`, in which
+  case the `TracerProvider` disposes of it after shutting it down. The
+  `TracerProvider` does not dispose of samplers which a built-in sampler wraps,
+  so prefer `OnShutdown` for releasing resources.
 
 ```csharp
 class MySampler : Sampler

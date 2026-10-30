@@ -1,0 +1,2 @@
+OpenTelemetry.Trace.Sampler.Shutdown(int timeoutMilliseconds = -1) -> bool
+virtual OpenTelemetry.Trace.Sampler.OnShutdown(int timeoutMilliseconds) -> bool

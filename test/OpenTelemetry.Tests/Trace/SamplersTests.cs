@@ -234,6 +234,264 @@ public class SamplersTests
         Assert.Throws<InvalidOperationException>(() => activitySource.StartActivity("ThrowingSampler"));
     }
 
+    [Fact]
+    public void SamplerShutdownInvokesOnShutdownOnce()
+    {
+        var sampler = new ShutdownTrackingSampler();
+
+        Assert.True(sampler.Shutdown());
+        Assert.False(sampler.Shutdown());
+        Assert.False(sampler.Shutdown(1_000));
+
+        Assert.Equal(1, sampler.ShutdownCalls);
+        Assert.Equal(Timeout.Infinite, sampler.LastTimeout);
+    }
+
+    [Theory]
+    [InlineData(-2)]
+    [InlineData(int.MinValue)]
+    public void SamplerShutdownThrowsForInvalidTimeoutWithoutShuttingDown(int timeoutMilliseconds)
+    {
+        var sampler = new ShutdownTrackingSampler();
+
+        Assert.Throws<ArgumentOutOfRangeException>(() => sampler.Shutdown(timeoutMilliseconds));
+        Assert.Equal(0, sampler.ShutdownCalls);
+
+        Assert.True(sampler.Shutdown());
+        Assert.Equal(1, sampler.ShutdownCalls);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void SamplerShutdownReturnsFalseWhenOnShutdownFails(bool throws)
+    {
+        var sampler = new ShutdownTrackingSampler
+        {
+            Result = false,
+            Exception = throws ? new InvalidOperationException("test exception") : null,
+        };
+
+        Assert.False(sampler.Shutdown());
+        Assert.Equal(1, sampler.ShutdownCalls);
+    }
+
+    [Fact]
+    public void SamplerShutdownConcurrentCallsInvokeOnShutdownOnce()
+    {
+        const int threadCount = 8;
+
+        var sampler = new ShutdownTrackingSampler();
+        var successes = 0;
+
+        using var start = new ManualResetEventSlim();
+
+        // Dedicated threads, so that the calls are not serialized by thread pool starvation
+        var threads = new Thread[threadCount];
+        for (var i = 0; i < threads.Length; i++)
+        {
+            threads[i] = new Thread(() =>
+            {
+                start.Wait();
+
+                if (sampler.Shutdown())
+                {
+                    Interlocked.Increment(ref successes);
+                }
+            });
+
+            threads[i].Start();
+        }
+
+        start.Set();
+
+        foreach (var thread in threads)
+        {
+            thread.Join();
+        }
+
+        Assert.Equal(1, sampler.ShutdownCalls);
+        Assert.Equal(1, successes);
+    }
+
+    [Fact]
+    public void BuiltInSamplersShutdownSucceeds()
+    {
+        Assert.True(new AlwaysOnSampler().Shutdown());
+        Assert.True(new AlwaysOffSampler().Shutdown());
+        Assert.True(new TraceIdRatioBasedSampler(0.5).Shutdown());
+        Assert.True(new ParentBasedSampler(new AlwaysOnSampler()).Shutdown());
+        Assert.True(new AlwaysRecordSampler(new AlwaysOffSampler()).Shutdown());
+    }
+
+    [Fact]
+    public void ParentBasedSamplerShutdownShutsDownRootSampler()
+    {
+        var root = new ShutdownTrackingSampler();
+
+        Assert.True(new ParentBasedSampler(root).Shutdown());
+
+        Assert.Equal(1, root.ShutdownCalls);
+    }
+
+    [Fact]
+    public void ParentBasedSamplerShutdownShutsDownEachDelegateOnce()
+    {
+        var root = new ShutdownTrackingSampler();
+        var shared = new ShutdownTrackingSampler();
+        var local = new ShutdownTrackingSampler();
+
+        var sampler = new ParentBasedSampler(
+            root,
+            remoteParentSampled: shared,
+            remoteParentNotSampled: shared,
+            localParentSampled: local,
+            localParentNotSampled: root);
+
+        Assert.True(sampler.Shutdown());
+        Assert.False(sampler.Shutdown());
+
+        Assert.Equal(1, root.ShutdownCalls);
+        Assert.Equal(1, shared.ShutdownCalls);
+        Assert.Equal(1, local.ShutdownCalls);
+    }
+
+    [Fact]
+    public void ParentBasedSamplerShutdownDoesNotFailWhenDelegateWasAlreadyShutDownByAnotherDelegate()
+    {
+        // The leaf is shut down through the wrapper before the direct delegate is reached
+        var leaf = new ShutdownTrackingSampler();
+        var sampler = new ParentBasedSampler(new AlwaysRecordSampler(leaf), remoteParentSampled: leaf);
+
+        Assert.True(sampler.Shutdown());
+
+        Assert.Equal(1, leaf.ShutdownCalls);
+    }
+
+    [Fact]
+    public void SharedSamplerShutdownReportsTheRecordedFailureToEveryCaller()
+    {
+        var failing = new ShutdownTrackingSampler { Result = false };
+
+        // Only the first one to reach the sampler shuts it down, but all of them see that it failed
+        Assert.False(new AlwaysRecordSampler(failing).Shutdown());
+        Assert.False(new ParentBasedSampler(failing).Shutdown());
+        Assert.False(new ParentBasedSampler(new AlwaysRecordSampler(failing)).Shutdown());
+
+        Assert.Equal(1, failing.ShutdownCalls);
+    }
+
+    [Fact]
+    public void SharedSamplerShutdownDoesNotReportSuccessWhileAnotherShutdownIsRunning()
+    {
+        using var entered = new ManualResetEventSlim();
+        using var release = new ManualResetEventSlim();
+
+        var shared = new ShutdownTrackingSampler
+        {
+            Callback = () =>
+            {
+                entered.Set();
+                release.Wait(TimeSpan.FromSeconds(30));
+            },
+        };
+
+        var firstResult = false;
+        var waitingResult = false;
+
+        var first = new Thread(() => firstResult = new AlwaysRecordSampler(shared).Shutdown());
+        var waiting = new Thread(() => waitingResult = new AlwaysRecordSampler(shared).Shutdown());
+
+        first.Start();
+
+        try
+        {
+            Assert.True(entered.Wait(TimeSpan.FromSeconds(30), TestContext.Current.CancellationToken));
+
+            // Not finished within the timeout
+            Assert.False(new AlwaysRecordSampler(shared).Shutdown(50));
+
+            // Waits for the shutdown which is running, rather than reporting its own result
+            waiting.Start();
+        }
+        finally
+        {
+            release.Set();
+            first.Join();
+
+            if (waiting.ThreadState != System.Threading.ThreadState.Unstarted)
+            {
+                waiting.Join();
+            }
+        }
+
+        Assert.True(firstResult);
+        Assert.True(waitingResult);
+        Assert.Equal(1, shared.ShutdownCalls);
+
+        // Once finished, the outcome is reported without waiting
+        Assert.True(new AlwaysRecordSampler(shared).Shutdown(0));
+    }
+
+    [Fact]
+    public void ParentBasedSamplerShutdownShutsDownAllDelegatesWhenOneFails()
+    {
+        var root = new ShutdownTrackingSampler { Result = false };
+        var remote = new ShutdownTrackingSampler();
+        var local = new ShutdownTrackingSampler { Exception = new InvalidOperationException("test exception") };
+
+        var sampler = new ParentBasedSampler(root, remote, localParentSampled: local);
+
+        Assert.False(sampler.Shutdown());
+
+        Assert.Equal(1, root.ShutdownCalls);
+        Assert.Equal(1, remote.ShutdownCalls);
+        Assert.Equal(1, local.ShutdownCalls);
+    }
+
+    [Fact]
+    public void ParentBasedSamplerShutdownDoesNotShutDownSharedBuiltInSamplers()
+    {
+        // The defaults are shared by every provider, so shutting one
+        // sampler down must not make the next one report a failure.
+        Assert.True(new ParentBasedSampler(AlwaysOnSampler.Instance).Shutdown());
+        Assert.True(new ParentBasedSampler(AlwaysOnSampler.Instance).Shutdown());
+        Assert.True(new AlwaysRecordSampler(AlwaysOnSampler.Instance).Shutdown());
+        Assert.True(new AlwaysRecordSampler(AlwaysOnSampler.Instance).Shutdown());
+    }
+
+    [Fact]
+    public void ParentBasedSamplerShutdownSharesTimeoutBetweenDelegates()
+    {
+        var root = new ShutdownTrackingSampler();
+        var local = new ShutdownTrackingSampler();
+
+        Assert.True(new ParentBasedSampler(root, localParentSampled: local).Shutdown(60_000));
+
+        Assert.InRange(root.LastTimeout, 1, 60_000);
+        Assert.InRange(local.LastTimeout, 1, root.LastTimeout);
+
+        root = new ShutdownTrackingSampler();
+
+        Assert.True(new ParentBasedSampler(root).Shutdown());
+        Assert.Equal(Timeout.Infinite, root.LastTimeout);
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void AlwaysRecordSamplerShutdownShutsDownRootSampler(bool succeeds)
+    {
+        var root = new ShutdownTrackingSampler { Result = succeeds };
+        var sampler = new AlwaysRecordSampler(root);
+
+        Assert.Equal(succeeds, sampler.Shutdown(5_000));
+        Assert.False(sampler.Shutdown(5_000));
+
+        Assert.Equal(1, root.ShutdownCalls);
+        Assert.Equal(5_000, root.LastTimeout);
+    }
+
     private static void RunLegacyActivitySamplerTest(SamplingDecision samplingDecision, string? samplerTraceState)
     {
         var existingTraceState = "a=1,b=2";
@@ -293,6 +551,33 @@ public class SamplersTests
         public override SamplingResult ShouldSample(in SamplingParameters samplingParameters)
         {
             throw new InvalidOperationException("ThrowingSampler");
+        }
+    }
+
+    private sealed class ShutdownTrackingSampler : Sampler
+    {
+        private int shutdownCalls;
+
+        public bool Result { get; set; } = true;
+
+        public Exception? Exception { get; set; }
+
+        public Action? Callback { get; set; }
+
+        public int ShutdownCalls => Volatile.Read(ref this.shutdownCalls);
+
+        public int LastTimeout { get; private set; }
+
+        public override SamplingResult ShouldSample(in SamplingParameters samplingParameters)
+            => new(SamplingDecision.RecordAndSample);
+
+        protected override bool OnShutdown(int timeoutMilliseconds)
+        {
+            Interlocked.Increment(ref this.shutdownCalls);
+            this.LastTimeout = timeoutMilliseconds;
+            this.Callback?.Invoke();
+
+            return this.Exception is { } exception ? throw exception : this.Result;
         }
     }
 }

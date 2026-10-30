@@ -18,6 +18,18 @@ Notes](../../RELEASENOTES.md).
   Configuration reloads retain the last successful values when access is denied.
   ([#8070](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8070))
 
+* Added `Sampler.Shutdown` and the overridable `Sampler.OnShutdown` to allow
+  samplers to release resources, as described in the
+  [specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk.md#shutdown-1).
+  `TracerProvider` now calls `Shutdown` on its sampler when it is shut down or
+  disposed, and `ParentBasedSampler` and `AlwaysRecordSampler` call `Shutdown`
+  on the samplers they delegate to.
+  ([#8060](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8060))
+
+* The `TracerProvider` now disposes of its sampler after its listener has
+  stopped calling the sampler, rather than before the processors are shut down.
+  ([#8060](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8060))
+
 ## 1.21.0-rc.1
 
 Released 2026-Oct-28

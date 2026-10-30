@@ -808,6 +808,18 @@ public class TracerProviderBuilderExtensionsTests
     }
 
     [Fact]
+    public void ConfigureBuilderThrowingBeforeSamplerIsResolvedFailsBuild()
+    {
+        // The provider has no sampler to shut down or dispose when cleaning up after the failure
+        var builder = Sdk.CreateTracerProviderBuilder()
+            .ConfigureBuilder((sp, builder) => throw new InvalidOperationException("test exception"));
+
+        var exception = Assert.Throws<InvalidOperationException>(builder.Build);
+
+        Assert.Equal("test exception", exception.Message);
+    }
+
+    [Fact]
     public void ConfigureSamplerThrowingFailsBuild()
     {
         var builder = Sdk.CreateTracerProviderBuilder()
@@ -834,6 +846,8 @@ public class TracerProviderBuilderExtensionsTests
                 : throw new InvalidOperationException("test exception"));
 
         Assert.Throws<InvalidOperationException>(builder.Build);
+        Assert.Equal(1, intermediateSampler.ShutdownCalls);
+        Assert.True(intermediateSampler.ShutdownBeforeDispose);
         Assert.True(intermediateSampler.Disposed);
     }
 
@@ -888,10 +902,301 @@ public class TracerProviderBuilderExtensionsTests
         tracerProvider.Dispose();
 
         Assert.True(returnedSampler.Disposed);
+        Assert.Equal(1, returnedSampler.ShutdownCalls);
 
-        // Note: The SDK only disposes the sampler it ends up holding. Disposing
-        // a sampler which was replaced is the responsibility of the callback.
+        // Note: The SDK only shuts down and disposes the sampler it ends up holding.
+        // Disposing a sampler which was replaced is the responsibility of the callback.
         Assert.False(resolvedSampler.Disposed);
+        Assert.Equal(0, resolvedSampler.ShutdownCalls);
+    }
+
+    [Theory]
+    [InlineData(Timeout.Infinite)]
+    [InlineData(60_000)]
+    public void TracerProviderShutdownShutsDownSamplerOnceAndDoesNotCallItAfterwards(int timeoutMilliseconds)
+    {
+        var activitySourceName = Utils.GetCurrentMethodName();
+        using var activitySource = new ActivitySource(activitySourceName);
+
+#pragma warning disable CA2000 // Dispose objects before losing scope - disposal is what the test asserts
+        var sampler = new MyDisposableSampler();
+#pragma warning restore CA2000 // Dispose objects before losing scope
+
+        var tracerProvider = Sdk.CreateTracerProviderBuilder()
+            .AddSource(activitySourceName)
+            .SetSampler(sampler)
+            .Build();
+
+        using (var activity = activitySource.StartActivity("before"))
+        {
+            Assert.NotNull(activity);
+        }
+
+        Assert.Equal(1, sampler.ShouldSampleCalls);
+        Assert.Equal(0, sampler.ShutdownCalls);
+
+        Assert.True(tracerProvider.Shutdown(timeoutMilliseconds));
+
+        Assert.Equal(1, sampler.ShutdownCalls);
+        Assert.False(sampler.Disposed);
+
+        if (timeoutMilliseconds == Timeout.Infinite)
+        {
+            Assert.Equal(Timeout.Infinite, sampler.ShutdownTimeout);
+        }
+        else
+        {
+            // The time spent shutting down the processors and listener is not available to the sampler
+            Assert.InRange(sampler.ShutdownTimeout, 0, timeoutMilliseconds);
+        }
+
+        using (var activity = activitySource.StartActivity("after"))
+        {
+            Assert.Null(activity);
+        }
+
+        tracerProvider.Dispose();
+
+        // Shutting down again via Dispose does not shut the sampler down a second time
+        Assert.Equal(1, sampler.ShutdownCalls);
+        Assert.True(sampler.ShutdownBeforeDispose);
+        Assert.True(sampler.Disposed);
+        Assert.Equal(1, sampler.ShouldSampleCalls);
+        Assert.False(sampler.ShouldSampleAfterShutdown);
+    }
+
+    [Theory]
+    [InlineData("always_on")]
+    [InlineData("always_off")]
+    public void TracerProviderShutdownSucceedsForEveryProviderUsingASharedSampler(string samplerConfigValue)
+    {
+        // These samplers are process-wide instances, so shutting one provider down must not
+        // make the shutdown of any other provider which was configured the same way fail.
+        var first = Sdk.CreateTracerProviderBuilder().AddSamplerConfiguration(samplerConfigValue).Build();
+        var second = Sdk.CreateTracerProviderBuilder().AddSamplerConfiguration(samplerConfigValue).Build();
+
+        Assert.True(first.Shutdown());
+        Assert.True(second.Shutdown());
+
+        first.Dispose();
+        second.Dispose();
+    }
+
+    [Fact]
+    public void TracerProviderShutdownDoesNotCallSamplerForActivitiesCapturedBeforeShutdown()
+    {
+        var activitySourceName = Utils.GetCurrentMethodName();
+        using var activitySource = new ActivitySource(activitySourceName);
+
+#pragma warning disable CA2000 // Dispose objects before losing scope - disposal is what the test asserts
+        var sampler = new MyDisposableSampler();
+#pragma warning restore CA2000 // Dispose objects before losing scope
+
+        using var entered = new ManualResetEventSlim();
+        using var release = new ManualResetEventSlim();
+
+        // A listener which is registered first and blocks while the activity is being created.
+        // ActivitySource has already captured the listeners at this point, including the one
+        // for the provider below, so disposing the provider's listener does not stop it being called.
+        using var blockingListener = new ActivityListener
+        {
+            ShouldListenTo = source => source.Name == activitySourceName,
+            Sample = (ref ActivityCreationOptions<ActivityContext> options) =>
+            {
+                entered.Set();
+                release.Wait(TimeSpan.FromSeconds(30));
+                return ActivitySamplingResult.None;
+            },
+        };
+
+        ActivitySource.AddActivityListener(blockingListener);
+
+        var tracerProvider = Sdk.CreateTracerProviderBuilder()
+            .AddSource(activitySourceName)
+            .SetSampler(sampler)
+            .Build();
+
+        var thread = new Thread(() => activitySource.StartActivity("captured")?.Dispose());
+        thread.Start();
+
+        try
+        {
+            Assert.True(entered.Wait(TimeSpan.FromSeconds(30), TestContext.Current.CancellationToken));
+
+            Assert.True(tracerProvider.Shutdown());
+        }
+        finally
+        {
+            release.Set();
+            thread.Join();
+            tracerProvider.Dispose();
+        }
+
+        Assert.Equal(1, sampler.ShutdownCalls);
+        Assert.Equal(0, sampler.ShouldSampleCalls);
+        Assert.False(sampler.ShouldSampleAfterShutdown);
+    }
+
+    [Fact]
+    public void TracerProviderShutdownDoesNotCallSamplerForActivityWhichWasBeingCreatedBeforeShutdown()
+    {
+        var activitySourceName = Utils.GetCurrentMethodName();
+        using var activitySource = new ActivitySource(activitySourceName);
+
+#pragma warning disable CA2000 // Dispose objects before losing scope - disposal is what the test asserts
+        var sampler = new MyDisposableSampler();
+#pragma warning restore CA2000 // Dispose objects before losing scope
+
+        using var entered = new ManualResetEventSlim();
+        using var release = new ManualResetEventSlim();
+
+        var blockedThreadId = 0;
+        var originalGenerator = Activity.TraceIdGenerator;
+
+        // Creating the parameters for the sampler generates the trace ID, which can run user code
+        // Only block the thread this test uses, as the generator is shared with any other test
+        Activity.TraceIdGenerator = () =>
+        {
+            if (Environment.CurrentManagedThreadId == Volatile.Read(ref blockedThreadId))
+            {
+                entered.Set();
+                release.Wait(TimeSpan.FromSeconds(30));
+            }
+
+            return ActivityTraceId.CreateRandom();
+        };
+
+        var tracerProvider = Sdk.CreateTracerProviderBuilder()
+            .AddSource(activitySourceName)
+            .SetSampler(sampler)
+            .Build();
+
+        var thread = new Thread(() =>
+        {
+            Volatile.Write(ref blockedThreadId, Environment.CurrentManagedThreadId);
+            activitySource.StartActivity("blocked")?.Dispose();
+        });
+
+        thread.Start();
+
+        try
+        {
+            Assert.True(entered.Wait(TimeSpan.FromSeconds(30), TestContext.Current.CancellationToken));
+
+            Assert.True(tracerProvider.Shutdown());
+        }
+        finally
+        {
+            release.Set();
+            thread.Join();
+            Activity.TraceIdGenerator = originalGenerator;
+            tracerProvider.Dispose();
+        }
+
+        Assert.Equal(1, sampler.ShutdownCalls);
+        Assert.Equal(0, sampler.ShouldSampleCalls);
+        Assert.False(sampler.ShouldSampleAfterShutdown);
+    }
+
+    [Fact]
+    public void TracerProviderShutdownDoesNotCallSamplerForLegacyActivityCapturedBeforeShutdown()
+    {
+        var operationName = Utils.GetCurrentMethodName();
+
+#pragma warning disable CA2000 // Dispose objects before losing scope - disposal is what the test asserts
+        var sampler = new MyDisposableSampler();
+#pragma warning restore CA2000 // Dispose objects before losing scope
+
+        using var entered = new ManualResetEventSlim();
+        using var release = new ManualResetEventSlim();
+
+        // A listener which is registered first and blocks while the activity is being started.
+        // Activities which have no source are all listened to through the same, default, source.
+        using var blockingListener = new ActivityListener
+        {
+            ShouldListenTo = source => string.IsNullOrEmpty(source.Name),
+            ActivityStarted = activity =>
+            {
+                if (activity.OperationName == operationName)
+                {
+                    entered.Set();
+                    release.Wait(TimeSpan.FromSeconds(30));
+                }
+            },
+        };
+
+        ActivitySource.AddActivityListener(blockingListener);
+
+        var tracerProvider = Sdk.CreateTracerProviderBuilder()
+            .AddLegacySource(operationName)
+            .SetSampler(sampler)
+            .Build();
+
+        var isAllDataRequested = true;
+
+        var thread = new Thread(() =>
+        {
+            using var activity = new Activity(operationName);
+            activity.Start();
+            isAllDataRequested = activity.IsAllDataRequested;
+        });
+
+        thread.Start();
+
+        try
+        {
+            Assert.True(entered.Wait(TimeSpan.FromSeconds(30), TestContext.Current.CancellationToken));
+
+            Assert.True(tracerProvider.Shutdown());
+        }
+        finally
+        {
+            release.Set();
+            thread.Join();
+            tracerProvider.Dispose();
+        }
+
+        Assert.False(isAllDataRequested);
+        Assert.Equal(1, sampler.ShutdownCalls);
+        Assert.Equal(0, sampler.ShouldSampleCalls);
+        Assert.False(sampler.ShouldSampleAfterShutdown);
+    }
+
+    [Fact]
+    public void TracerProviderDisposeShutsDownSamplerAfterProcessorsAndListener()
+    {
+        var activitySourceName = Utils.GetCurrentMethodName();
+        using var activitySource = new ActivitySource(activitySourceName);
+
+#pragma warning disable CA2000 // Dispose objects before losing scope - disposal is what the test asserts
+        var sampler = new MyDisposableSampler();
+#pragma warning restore CA2000 // Dispose objects before losing scope
+
+        Activity? activityDuringProcessorShutdown = null;
+
+        // Something which is created while the processors are shutting down is still sampled
+        using var processor = new ShutdownCallbackProcessor(() =>
+        {
+            activityDuringProcessorShutdown = activitySource.StartActivity("during shutdown");
+            activityDuringProcessorShutdown?.Dispose();
+        });
+
+        var tracerProvider = Sdk.CreateTracerProviderBuilder()
+            .AddSource(activitySourceName)
+            .SetSampler(sampler)
+            .AddProcessor(processor)
+            .Build();
+
+        Assert.Equal(0, sampler.ShutdownCalls);
+
+        tracerProvider.Dispose();
+
+        Assert.NotNull(activityDuringProcessorShutdown);
+        Assert.Equal(1, sampler.ShouldSampleCalls);
+        Assert.False(sampler.ShouldSampleAfterShutdown);
+        Assert.Equal(1, sampler.ShutdownCalls);
+        Assert.True(sampler.ShutdownBeforeDispose);
+        Assert.True(sampler.Disposed);
     }
 
     [Fact]
@@ -1027,10 +1332,52 @@ public class TracerProviderBuilderExtensionsTests
     {
         public bool Disposed { get; private set; }
 
-        public override SamplingResult ShouldSample(in SamplingParameters samplingParameters)
-            => new(SamplingDecision.RecordAndSample);
+        public int ShutdownCalls { get; private set; }
 
-        public void Dispose() => this.Disposed = true;
+        public int ShutdownTimeout { get; private set; }
+
+        public bool ShutdownBeforeDispose { get; private set; }
+
+        public int ShouldSampleCalls { get; private set; }
+
+        public bool ShouldSampleAfterShutdown { get; private set; }
+
+        public override SamplingResult ShouldSample(in SamplingParameters samplingParameters)
+        {
+            this.ShouldSampleCalls++;
+            this.ShouldSampleAfterShutdown |= this.ShutdownCalls > 0 || this.Disposed;
+
+            return new(SamplingDecision.RecordAndSample);
+        }
+
+        public void Dispose()
+        {
+            this.ShutdownBeforeDispose = this.ShutdownCalls > 0;
+            this.Disposed = true;
+        }
+
+        protected override bool OnShutdown(int timeoutMilliseconds)
+        {
+            this.ShutdownCalls++;
+            this.ShutdownTimeout = timeoutMilliseconds;
+            return true;
+        }
+    }
+
+    private sealed class ShutdownCallbackProcessor : BaseProcessor<Activity>
+    {
+        private readonly Action callback;
+
+        public ShutdownCallbackProcessor(Action callback)
+        {
+            this.callback = callback;
+        }
+
+        protected override bool OnShutdown(int timeoutMilliseconds)
+        {
+            this.callback();
+            return base.OnShutdown(timeoutMilliseconds);
+        }
     }
 
     private sealed class MyInstrumentation : IDisposable
