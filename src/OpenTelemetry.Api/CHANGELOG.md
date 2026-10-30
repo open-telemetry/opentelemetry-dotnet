@@ -6,6 +6,10 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Update `System.Diagnostics.DiagnosticSource` dependency to `11.0.0`
+  for all target frameworks.
+  ([#8066](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8066))
+
 ## 1.21.0-rc.1
 
 Released 2026-Oct-28
