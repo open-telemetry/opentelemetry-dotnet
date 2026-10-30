@@ -136,16 +136,10 @@ public class JsonStringArrayTagWriterTests
         Assert.Same(largeState.Stream, reusedState.Stream);
         Assert.NotSame(largeState.Writer, reusedState.Writer);
         Assert.True(reusedState.Stream.Capacity <= 64 * 1024);
-    }
 
-    [Fact]
-    public void ThreadStaticWriterIsReusedAfterSmallWrite()
-    {
-        var writer = new JsonStringArrayTagWriter<TestTagWriter.Tag>.JsonArrayTagWriter(long.MaxValue);
-        var firstState = VerifySerialization(writer, "small", """["small"]""");
-        var reusedState = VerifySerialization(writer, "small", """["small"]""");
+        var nextState = VerifySerialization(writer, "small", """["small"]""");
 
-        Assert.Same(firstState.Writer, reusedState.Writer);
+        Assert.Same(reusedState.Writer, nextState.Writer);
     }
 
     [Fact]
@@ -153,16 +147,10 @@ public class JsonStringArrayTagWriterTests
     {
         var writer = new JsonStringArrayTagWriter<TestTagWriter.Tag>.JsonArrayTagWriter(128 * 1024);
         var abandonedState = writer.BeginWriteArray();
+        var value = new string('x', 96 * 1024);
+        writer.WriteStringValue(ref abandonedState, value);
 
-        Assert.Throws<ArgumentException>(() =>
-        {
-            for (var i = 0; i < 64 * 1024; i++)
-            {
-                writer.WriteStringValue(ref abandonedState, "x");
-            }
-
-            writer.EndWriteArray(ref abandonedState);
-        });
+        Assert.Throws<ArgumentException>(() => writer.WriteStringValue(ref abandonedState, value));
 
         Assert.True(abandonedState.Writer.BytesPending > 64 * 1024);
         Assert.True(abandonedState.Stream.Capacity <= 64 * 1024);
