@@ -419,6 +419,55 @@ public class GrpcStatusDeserializerTests
         Assert.Throws<InvalidDataException>(() => GrpcStatusDeserializer.DeserializeStatus(grpcStatusDetailsBin));
     }
 
+    [Theory]
+    [InlineData(1L << 32)]
+    [InlineData((1L << 32) + 3)]
+    [InlineData((1L << 33) + 3)]
+    [InlineData(long.MaxValue)]
+    public void DeserializeStatus_AnyValueLengthThatDoesNotFitInInt32_IsRejected(long declaredLength)
+    {
+        // The length of the value is that of the 3 bytes which follow it, plus a multiple of 2^32 which is truncated by a cast to int.
+        var any = new List<byte>();
+        any.AddRange(EncodeLengthDelimitedField(1, "type.googleapis.com/google.rpc.RetryInfo"u8.ToArray()));
+        any.Add(0x12);
+        any.AddRange(EncodeVarint(declaredLength));
+        any.AddRange([0x0A, 0x01, 0x08]);
+
+        var grpcStatusDetailsBin = Convert.ToBase64String(EncodeLengthDelimitedField(3, [.. any]));
+
+        Assert.ThrowsAny<Exception>(() => GrpcStatusDeserializer.DeserializeStatus(grpcStatusDetailsBin));
+        Assert.Null(GrpcStatusDeserializer.TryGetGrpcRetryDelay(grpcStatusDetailsBin));
+    }
+
+    [Theory]
+    [InlineData(1L << 32)]
+    [InlineData(1L << 33)]
+    [InlineData(1L << 40)]
+    public void DeserializeStatus_AnyTypeUrlLengthThatDoesNotFitInInt32_IsRejected(long lengthOverflow)
+    {
+        var typeUrl = "type.googleapis.com/google.rpc.RetryInfo"u8.ToArray();
+        var retryInfo = new Google.Rpc.RetryInfo { RetryDelay = new Duration { Seconds = 7 } }.ToByteArray();
+
+        var any = new List<byte> { 0x0A };
+        any.AddRange(EncodeVarint(lengthOverflow + typeUrl.Length));
+        any.AddRange(typeUrl);
+        any.AddRange(EncodeLengthDelimitedField(2, retryInfo));
+
+        var grpcStatusDetailsBin = Convert.ToBase64String(EncodeLengthDelimitedField(3, [.. any]));
+
+        Assert.ThrowsAny<Exception>(() => GrpcStatusDeserializer.DeserializeStatus(grpcStatusDetailsBin));
+        Assert.Null(GrpcStatusDeserializer.TryGetGrpcRetryDelay(grpcStatusDetailsBin));
+    }
+
+    private static byte[] EncodeLengthDelimitedField(int fieldNumber, byte[] value)
+    {
+        var encoded = new List<byte>();
+        encoded.AddRange(EncodeVarint((fieldNumber << 3) | 2));
+        encoded.AddRange(EncodeVarint(value.Length));
+        encoded.AddRange(value);
+        return [.. encoded];
+    }
+
     private static byte[] EncodeVarint(long value)
     {
         var encoded = new List<byte>();

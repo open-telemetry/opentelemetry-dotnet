@@ -20,6 +20,11 @@ Notes](../../RELEASENOTES.md).
   started a new header and encoded leading or trailing whitespace was removed.
   ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
 
+* Fixed the retry delay of a gRPC response being ignored or misread when a
+  length which does not fit in an `int` was truncated instead of being
+  rejected.
+  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+
 ## 1.21.0-rc.1
 
 Released 2026-Oct-28

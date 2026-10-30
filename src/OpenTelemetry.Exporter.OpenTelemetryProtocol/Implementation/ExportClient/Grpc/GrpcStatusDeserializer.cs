@@ -239,9 +239,13 @@ internal static class GrpcStatusDeserializer
 
     private static byte[] DecodeBytes(Stream stream)
     {
-        var length = (int)DecodeVarint(stream);
+        // The length is validated before it is narrowed, otherwise a length which does not fit in an int
+        // (such as 2^32 + n) would be read as a much smaller one and the message accepted.
+        var declaredLength = DecodeVarint(stream);
 
-        CheckLength(length, stream);
+        CheckLength(declaredLength, stream);
+
+        var length = (int)declaredLength;
 
         var buffer = new byte[length];
         int read = stream.Read(buffer, 0, length);
