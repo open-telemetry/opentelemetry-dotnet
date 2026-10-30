@@ -2004,6 +2004,82 @@ public sealed partial class PrometheusSerializerTests
     }
 
     [Fact]
+    public void ToLabelValueStringTruncatesMapWithOversizedStringValueBeforeCopyingIt()
+    {
+        var writer = new PrometheusAnyValueWriter(40);
+        var map = new Dictionary<string, object?> { ["a"] = new string('x', 4 * 1024 * 1024) };
+
+        var before = AllocatedBytes();
+
+        Assert.Equal("TRUNCATED", writer.ToLabelValueString("key", map));
+        Assert.True(AllocatedBytes() - before < 64 * 1024);
+    }
+
+    [Fact]
+    public void ToLabelValueStringTruncatesMapWithOversizedByteArrayValueBeforeEncodingIt()
+    {
+        var writer = new PrometheusAnyValueWriter(40);
+        var map = new Dictionary<string, object?> { ["a"] = new byte[1024 * 1024] };
+
+        var before = AllocatedBytes();
+
+        Assert.Equal("TRUNCATED", writer.ToLabelValueString("key", map));
+        Assert.True(AllocatedBytes() - before < 64 * 1024);
+
+        Assert.Equal("""{"a":"AQID"}""", new PrometheusAnyValueWriter(40).ToLabelValueString("key", new Dictionary<string, object?> { ["a"] = LabelValueByteArrayCase }));
+    }
+
+    [Fact]
+    public void ToLabelValueStringTruncatesMapWithTooManyEntriesBeforeDeduplicatingThem()
+    {
+        var writer = new PrometheusAnyValueWriter(40);
+        var entries = new List<KeyValuePair<string, object?>>();
+
+        for (var i = 0; i < 100_000; i++)
+        {
+            entries.Add(new(i.ToString(CultureInfo.InvariantCulture), null));
+        }
+
+        var before = AllocatedBytes();
+
+        Assert.Equal("TRUNCATED", writer.ToLabelValueString("key", entries));
+        Assert.True(AllocatedBytes() - before < 64 * 1024);
+    }
+
+    [Fact]
+    public void ToLabelValueStringTruncatesNestedMapWithTooManyEntries()
+    {
+        var writer = new PrometheusAnyValueWriter(40);
+        var entries = new List<KeyValuePair<string, object?>>();
+
+        for (var i = 0; i < 100_000; i++)
+        {
+            entries.Add(new(i.ToString(CultureInfo.InvariantCulture), null));
+        }
+
+        var before = AllocatedBytes();
+
+        Assert.Equal("TRUNCATED", writer.ToLabelValueString("key", new object[] { entries }));
+        Assert.True(AllocatedBytes() - before < 64 * 1024);
+    }
+
+    [Fact]
+    public void ToLabelValueStringTruncatesStringWhoseEscapedFormExceedsMaximumLengthBeforeBufferingIt()
+    {
+        var writer = new PrometheusAnyValueWriter(512 * 1024);
+
+        // Each character is escaped to 6 bytes, so the escaped form is 3 MiB for a 512 KiB limit.
+        var map = new Dictionary<string, object?> { ["a"] = new string('\u00e9', 512 * 1024) };
+        var array = new[] { new string('\u00e9', 512 * 1024) };
+
+        var before = AllocatedBytes();
+
+        Assert.Equal("TRUNCATED", writer.ToLabelValueString("key", map));
+        Assert.Equal("TRUNCATED", writer.ToLabelValueString("key", array));
+        Assert.True(AllocatedBytes() - before < 64 * 1024);
+    }
+
+    [Fact]
     public void ToLabelValueStringTruncatesNestedValuesWhoseJsonExceedsMaximumLength()
     {
         var writer = new PrometheusAnyValueWriter(40);
@@ -2607,6 +2683,13 @@ public sealed partial class PrometheusSerializerTests
     private static Regex SpanOrTraceIds() => new("(?m)(trace_{1,2}id|span_{1,2}id)=\"[^\"]*\"", RegexOptions.Compiled);
 
     private static Regex SdkVersion() => new("telemetry_sdk_version=\"[^\"]*\"", RegexOptions.Compiled);
+#endif
+
+    private static long AllocatedBytes()
+#if NET
+        => GC.GetAllocatedBytesForCurrentThread();
+#else
+        => 0;
 #endif
 
     private static Dictionary<string, object?> CreateReferenceKeyedDictionary()

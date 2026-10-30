@@ -167,6 +167,48 @@ public class JsonStringArrayTagWriterTests
     }
 
     [Fact]
+    public void GetEscapedLengthMatchesLengthWrittenByJsonWriter()
+    {
+        using var stream = new MemoryStream();
+        var characters = new char[1];
+
+        // Surrogates are only valid as pairs, so are covered separately.
+        for (var c = 0; c <= char.MaxValue; c++)
+        {
+            if (char.IsSurrogate((char)c))
+            {
+                continue;
+            }
+
+            characters[0] = (char)c;
+            Assert.Equal(WrittenLength(stream, characters), TestTagWriter.GetEscapedLength(characters, long.MaxValue));
+        }
+
+        characters = "\ud83d\ude00".ToCharArray();
+        Assert.Equal(WrittenLength(stream, characters), TestTagWriter.GetEscapedLength(characters, long.MaxValue));
+
+        static long WrittenLength(MemoryStream stream, char[] value)
+        {
+            stream.SetLength(0);
+            using var writer = new System.Text.Json.Utf8JsonWriter(stream);
+            writer.WriteStringValue(value);
+            writer.Flush();
+
+            // Excludes the quotes
+            return stream.Length - 2;
+        }
+    }
+
+    [Fact]
+    public void GetEscapedLengthStopsCountingOnceLimitIsExceeded()
+    {
+        var value = new string('\u00e9', 1000);
+
+        Assert.Equal(54, TestTagWriter.GetEscapedLength(value, 50));
+        Assert.Equal(6000, TestTagWriter.GetEscapedLength(value, 6000));
+    }
+
+    [Fact]
     public void ArrayWhoseJsonExceedsMaximumLengthDoesNotAffectNextArray()
     {
         TestTagWriter.Tag tag = default;

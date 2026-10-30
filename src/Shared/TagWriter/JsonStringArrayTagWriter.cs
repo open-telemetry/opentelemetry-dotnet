@@ -3,6 +3,7 @@
 
 using System.Diagnostics;
 using System.Globalization;
+using System.Text.Encodings.Web;
 using System.Text.Json;
 
 namespace OpenTelemetry.Internal;
@@ -22,6 +23,35 @@ internal abstract class JsonStringArrayTagWriter<TTagState> : TagWriter<TTagStat
         : base(new JsonArrayTagWriter(maxJsonLength))
     {
     }
+
+    internal static long GetEscapedLength(ReadOnlySpan<char> value, long limit)
+    {
+        long length = 0;
+
+        foreach (var c in value)
+        {
+            length += c switch
+            {
+                '\b' or '\t' or '\n' or '\f' or '\r' or '\\' => 2,
+                < ' ' => 6,
+                <= '~' => JavaScriptEncoder.Default.WillEncode(c) ? 6 : 1,
+                _ => 6,
+            };
+
+            if (length > limit)
+            {
+                break;
+            }
+        }
+
+        return length;
+    }
+
+    internal static long GetBase64StringLength(int byteCount)
+        => (((long)byteCount + 2) / 3 * 4) + 2;
+
+    internal static long GetMaxEntries(long maxJsonLength)
+        => Math.Max(0, (maxJsonLength - 1) / 5);
 
     protected sealed override void WriteArrayTag(ref TTagState state, string key, ref JsonArrayTagWriterState value)
     {
@@ -70,6 +100,8 @@ internal abstract class JsonStringArrayTagWriter<TTagState> : TagWriter<TTagStat
         {
             this.maxJsonLength = maxJsonLength;
         }
+
+        public override long MaxNestedObjectEntries => GetMaxEntries(this.maxJsonLength);
 
         public override JsonArrayTagWriterState BeginWriteArray()
         {
@@ -120,9 +152,8 @@ internal abstract class JsonStringArrayTagWriter<TTagState> : TagWriter<TTagStat
 
         public override void WriteStringValue(ref JsonArrayTagWriterState state, ReadOnlySpan<char> value)
         {
-            // Every character is encoded as at least one byte, so this rejects a value that cannot
-            // fit before the (up to six times larger) escaped form of it is buffered.
-            this.ThrowIfTooLong(state, value.Length);
+            // This rejects a value that cannot fit before the (up to six times larger) escaped form of it is buffered.
+            this.ThrowIfStringTooLong(state, value);
             state.Writer.WriteStringValue(value);
             this.ThrowIfTooLong(state, 0);
         }
@@ -132,7 +163,7 @@ internal abstract class JsonStringArrayTagWriter<TTagState> : TagWriter<TTagStat
             // See https://github.com/open-telemetry/opentelemetry-specification/blob/v1.60.0/specification/common/README.md#byte-arrays;
             // byte arrays are Base64-encoded when nested inside another array or map, the same
             // as when they are the top-level attribute value.
-            this.ThrowIfTooLong(state, value.Length);
+            this.ThrowIfTooLong(state, GetBase64StringLength(value.Length));
             state.Writer.WriteBase64StringValue(value);
             this.ThrowIfTooLong(state, 0);
             return true;
@@ -161,7 +192,7 @@ internal abstract class JsonStringArrayTagWriter<TTagState> : TagWriter<TTagStat
         public override void WriteNestedObjectPropertyName(ref JsonArrayTagWriterState state, string name)
         {
             // As for a string value, reject a name that cannot fit before its escaped form is buffered.
-            this.ThrowIfTooLong(state, name.Length);
+            this.ThrowIfStringTooLong(state, name);
             state.Writer.WritePropertyName(name);
             this.ThrowIfTooLong(state, 0);
         }
@@ -195,7 +226,13 @@ internal abstract class JsonStringArrayTagWriter<TTagState> : TagWriter<TTagStat
 
         // Signals "the buffer is too small" in the way TagWriter expects of an array writer. As
         // TryResize is not overridden the buffer cannot be grown, so the array is dropped.
-        private void ThrowIfTooLong(JsonArrayTagWriterState state, int pendingLength)
+        private void ThrowIfStringTooLong(JsonArrayTagWriterState state, ReadOnlySpan<char> value)
+        {
+            var remaining = this.maxJsonLength - state.Writer.BytesCommitted - state.Writer.BytesPending;
+            this.ThrowIfTooLong(state, GetEscapedLength(value, remaining) + 2);
+        }
+
+        private void ThrowIfTooLong(JsonArrayTagWriterState state, long pendingLength)
         {
             if (state.Writer.BytesCommitted + state.Writer.BytesPending + pendingLength > this.maxJsonLength)
             {

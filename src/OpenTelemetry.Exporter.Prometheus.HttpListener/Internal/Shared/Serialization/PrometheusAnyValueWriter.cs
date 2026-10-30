@@ -90,6 +90,14 @@ internal sealed class PrometheusAnyValueWriter : JsonStringArrayTagWriter<Promet
         IEnumerable<KeyValuePair<string, object?>> kvList,
         int? tagValueMaxLength)
     {
+        // Like an array, an oversized map is replaced with "TRUNCATED". The entries are bounded first so
+        // that the keys of an unbounded map are not buffered in order to deduplicate them.
+        if (!TryDeduplicateKeys(kvList, GetMaxEntries(this.maxJsonLength), out var entries))
+        {
+            this.WriteTruncated(ref state, key, kvList);
+            return;
+        }
+
         using var stream = new MemoryStream();
         var writer = new Utf8JsonWriter(stream);
 
@@ -97,15 +105,21 @@ internal sealed class PrometheusAnyValueWriter : JsonStringArrayTagWriter<Promet
         {
             writer.WriteStartObject();
 
-            foreach (var kvp in DeduplicateKeys(kvList))
+            foreach (var kvp in entries)
             {
+                // A name or value that cannot fit is rejected before it is converted (or its escaped form,
+                // which is up to six times larger, is buffered) by working out how big that would be.
+                var pendingLength = this.GetPendingLength(writer, kvp, tagValueMaxLength, out var includesValue);
+                if (this.IsTooLong(writer, pendingLength))
+                {
+                    this.WriteTruncated(ref state, key, kvList);
+                    return;
+                }
+
                 AnyValue nestedValue = default;
                 if (this.TryWriteTag(ref nestedValue, kvp.Key, kvp.Value, tagValueMaxLength))
                 {
-                    // Every character is encoded as at least one byte, so a name or value that
-                    // cannot fit is rejected before the (up to six times larger) escaped form of
-                    // it is buffered. Like an array, an oversized map is replaced with "TRUNCATED".
-                    if (this.IsTooLong(writer, kvp.Key.Length + (nestedValue.Value?.Length ?? 0)))
+                    if (this.IsTooLong(writer, includesValue ? pendingLength : pendingLength + (nestedValue.Value?.Length ?? 0)))
                     {
                         this.WriteTruncated(ref state, key, kvList);
                         return;
@@ -167,7 +181,36 @@ internal sealed class PrometheusAnyValueWriter : JsonStringArrayTagWriter<Promet
         state.IsJsonLiteral = true;
     }
 
-    private bool IsTooLong(Utf8JsonWriter writer, int pendingLength)
+    private long GetPendingLength(Utf8JsonWriter writer, KeyValuePair<string, object?> entry, int? tagValueMaxLength, out bool includesValue)
+    {
+        includesValue = false;
+        var remaining = this.maxJsonLength - writer.BytesCommitted - writer.BytesPending;
+        var length = GetEscapedLength(entry.Key, remaining) + 2;
+
+        switch (entry.Value)
+        {
+            case string stringValue:
+                var characters = stringValue.AsSpan();
+                if (tagValueMaxLength is { } maxChars && characters.Length > maxChars)
+                {
+                    characters = characters.Slice(0, maxChars);
+                }
+
+                length += GetEscapedLength(characters, remaining - length) + 2;
+                includesValue = true;
+                break;
+
+            case byte[] bytes when bytes.GetType() == typeof(byte[]):
+                var byteCount = tagValueMaxLength is { } maxBytes ? Math.Min(bytes.Length, maxBytes) : bytes.Length;
+                length += GetBase64StringLength(byteCount);
+                includesValue = true;
+                break;
+        }
+
+        return length;
+    }
+
+    private bool IsTooLong(Utf8JsonWriter writer, long pendingLength)
         => writer.BytesCommitted + writer.BytesPending + pendingLength > this.maxJsonLength;
 
     private void WriteTruncated(ref AnyValue state, string key, IEnumerable<KeyValuePair<string, object?>> kvList)
