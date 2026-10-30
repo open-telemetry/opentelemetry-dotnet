@@ -22,7 +22,7 @@ internal sealed class SdkLimitOptions
     private bool logRecordAttributeCountLimitSet;
 
     public SdkLimitOptions()
-        : this(new ConfigurationBuilder().AddEnvironmentVariables().Build())
+        : this(EnvironmentVariablesConfiguration.Create())
     {
     }
 

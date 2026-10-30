@@ -1,6 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Security;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
@@ -10,6 +11,18 @@ namespace OpenTelemetry.Extensions.Hosting.Tests;
 
 public class HostEnvironmentResourceDetectorTests
 {
+    [Fact]
+    public void Detect_ConfigurationAccessDenied_AppliesHostDefaults()
+    {
+        var configuration = new ConfigurationBuilder().Add(new DeniedConfigurationSource()).Build();
+        var detector = new HostEnvironmentResourceDetector(CreateEnvironment("MyApp", "Staging"), configuration);
+
+        var resource = detector.Detect();
+
+        Assert.Contains(resource.Attributes, a => a.Key == "service.name" && (string)a.Value == "MyApp");
+        Assert.Contains(resource.Attributes, a => a.Key == "deployment.environment.name" && (string)a.Value == "staging");
+    }
+
     [Fact]
     public void Detect_NullConfiguration_AppliesHostDefaults()
     {
@@ -186,6 +199,16 @@ public class HostEnvironmentResourceDetectorTests
 
     private static IConfiguration BuildConfiguration(Dictionary<string, string?> values)
         => new ConfigurationBuilder().AddInMemoryCollection(values).Build();
+
+    private sealed class DeniedConfigurationSource : IConfigurationSource
+    {
+        public IConfigurationProvider Build(IConfigurationBuilder builder) => new DeniedConfigurationProvider();
+    }
+
+    private sealed class DeniedConfigurationProvider : ConfigurationProvider
+    {
+        public override bool TryGet(string key, out string? value) => throw new SecurityException();
+    }
 
     private sealed class FakeHostEnvironment : IHostEnvironment
     {

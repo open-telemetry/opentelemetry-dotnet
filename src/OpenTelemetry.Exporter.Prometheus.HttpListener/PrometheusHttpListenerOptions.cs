@@ -30,7 +30,7 @@ public class PrometheusHttpListenerOptions
     /// Initializes a new instance of the <see cref="PrometheusHttpListenerOptions"/> class.
     /// </summary>
     public PrometheusHttpListenerOptions()
-         : this(new ConfigurationBuilder().AddEnvironmentVariables().Build())
+         : this(EnvironmentVariablesConfiguration.Create())
     {
     }
 
