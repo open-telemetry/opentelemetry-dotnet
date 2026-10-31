@@ -2406,6 +2406,20 @@ public sealed class PrometheusCollectionManagerTests
         bytes.Record(1, new KeyValuePair<string, object?>("k", new byte[] { 1 }));
         bytes.Record(2, new KeyValuePair<string, object?>("k", new byte[] { 1 }));
 
+        // A label without a value, which is the same as one that does not exist
+        var empty = meter.CreateGauge<double>("empty_gauge");
+        empty.Record(1);
+        empty.Record(2, new KeyValuePair<string, object?>("k", string.Empty));
+
+        // Different strings (and characters) which are written as the same label value, as the surrogates are not a pair
+        var surrogates = meter.CreateGauge<double>("surrogate_gauge");
+        surrogates.Record(1, new KeyValuePair<string, object?>("k", "\uD800"));
+        surrogates.Record(2, new KeyValuePair<string, object?>("k", "\uD801"));
+
+        var characters = meter.CreateGauge<double>("character_gauge");
+        characters.Record(1, new KeyValuePair<string, object?>("k", '\uD800'));
+        characters.Record(2, new KeyValuePair<string, object?>("k", '\uD801'));
+
         // Points with the same labels in a different order once their keys are escaped
         var counter = meter.CreateCounter<int>("ordered_counter");
         counter.Add(1, new KeyValuePair<string, object?>("a.b", "1"), new KeyValuePair<string, object?>("aZ", "2"));
@@ -2464,6 +2478,9 @@ public sealed class PrometheusCollectionManagerTests
         Assert.Single(samples, s => s.StartsWith("dropped_histogram_sum_count", StringComparison.Ordinal));
         Assert.Single(samples, s => s.StartsWith("mixed_gauge", StringComparison.Ordinal));
         Assert.Single(samples, s => s.StartsWith("array_gauge", StringComparison.Ordinal));
+        Assert.Single(samples, s => s.StartsWith("empty_gauge", StringComparison.Ordinal));
+        Assert.Single(samples, s => s.StartsWith("surrogate_gauge", StringComparison.Ordinal));
+        Assert.Single(samples, s => s.StartsWith("character_gauge", StringComparison.Ordinal));
         Assert.Single(samples, s => s.StartsWith("bytes_gauge", StringComparison.Ordinal));
         Assert.Single(samples, s => s.StartsWith("ordered_counter_total", StringComparison.Ordinal));
         Assert.Single(samples, s => s.StartsWith("reserved_histogram_sum", StringComparison.Ordinal));

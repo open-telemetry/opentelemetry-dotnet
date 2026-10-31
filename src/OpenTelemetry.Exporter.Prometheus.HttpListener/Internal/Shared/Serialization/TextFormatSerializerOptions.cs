@@ -22,7 +22,8 @@ internal readonly struct TextFormatSerializerOptions
     /// The registry used to drop series that have already been written to the scrape response, or <see langword="null"/> to write them all.
     /// </summary>
     /// <remarks>
-    /// The labels of a series are written ordered by their names when it is used, so that the series are the same whenever their labels are.
+    /// The labels of a series are written ordered by their names, and without those that have no value, when it is used,
+    /// so that the series are the same whenever their labels are.
     /// </remarks>
     public readonly SeriesRegistry? Series;
 

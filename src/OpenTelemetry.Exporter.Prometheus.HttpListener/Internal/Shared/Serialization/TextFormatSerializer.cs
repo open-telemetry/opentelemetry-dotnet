@@ -87,6 +87,7 @@ internal abstract class TextFormatSerializer
     private static readonly string[] ReservedExemplarLabelNames = ["trace_id", "span_id"];
 
     private static readonly string[] HistogramSampleSuffixes = ["_bucket", "_sum", "_count"];
+    private static readonly byte[] ReplacementCharacter = [0xEF, 0xBF, 0xBD];
 
     private string[]? reservedExemplarOutputKeys;
 
@@ -808,6 +809,11 @@ internal abstract class TextFormatSerializer
         return cursor;
     }
 
+    // Whether the bytes contain the replacement character, which is written for each surrogate that is not part of a pair,
+    // so different values can be written as the same label value. It is rare, and a search for it is fast.
+    internal static bool ContainsReplacementCharacter(byte[] buffer, int start, int end)
+        => new ReadOnlySpan<byte>(buffer, start, end - start).IndexOf(ReplacementCharacter) >= 0;
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal int WriteExemplar(byte[] buffer, int cursor, in Exemplar exemplar, bool isLongValue)
     {
@@ -862,7 +868,7 @@ internal abstract class TextFormatSerializer
     internal virtual string[] GetGeneratedSampleSuffixes(PrometheusMetric metric)
         => metric.Type == PrometheusType.Histogram ? HistogramSampleSuffixes : [];
 
-    // Whether any of the keys of the tags of the points of a metric are the same as another once they are escaped, or are not
+    // Whether any of the keys of the tags are the same as another once they are escaped, or are not
     // written as they are those of the labels of the metric, so that the series of different points can be the same.
     internal bool HasCollidingTagKeys(TagKeyTracker tracker, Metric metric)
     {
@@ -2052,6 +2058,8 @@ internal abstract class TextFormatSerializer
         int? maxLabelSetCharacters = null,
         bool sortLabels = false)
     {
+        // When series are compared, the labels are written in order so that the same series is always written the same,
+        // and without those that have no value, as they are the same as labels that do not exist.
         if (sortLabels && labels is List<LabelData> { Count: > 1 } sortable)
         {
             SortByOutputKey(sortable);
@@ -2080,6 +2088,11 @@ internal abstract class TextFormatSerializer
             for (var i = 0; i < labels.Count; i++)
             {
                 var label = labels[i];
+
+                if (sortLabels && label.Value.Length == 0)
+                {
+                    continue;
+                }
 
                 if (WriteLabel(buffer, ref cursor, label.OutputKey, label.Value, maxLabelSetCharacters, ref labelSetCharacters))
                 {
@@ -2118,6 +2131,11 @@ internal abstract class TextFormatSerializer
             foreach (var key in orderedOutputKeys)
             {
                 var value = GetMergedLabelValue(groupedLabels[key]);
+
+                if (sortLabels && value.Length == 0)
+                {
+                    continue;
+                }
 
                 if (WriteLabel(buffer, ref cursor, key, value, maxLabelSetCharacters, ref labelSetCharacters))
                 {

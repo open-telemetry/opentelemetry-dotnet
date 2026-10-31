@@ -149,6 +149,7 @@ public class PrometheusExpositionFuzzTests
             ("# TYPE a gauge\na{x=\"1\",x=\"2\"} 1\n", false, ErrorKind.DuplicateLabels),
             ("# TYPE a gauge\na{x=\"1\"} 1\na{x=\"1\"} 2\n", false, ErrorKind.DuplicateSeries),
             ("# TYPE a gauge\na{x=\"1\",y=\"2\"} 1\na{y=\"2\",x=\"1\"} 2\n", false, ErrorKind.DuplicateSeries),
+            ("# TYPE a gauge\na{} 1\na{x=\"\"} 2\n", false, ErrorKind.DuplicateSeries),
             ("# TYPE a gauge\na{k1=\"a,k2=b\"} 1\na{k1=\"a\",k2=\"b\"} 2\n", false, null),
             ("# TYPE h histogram\nh_bucket{le=\"+Inf\"} 1\nh_sum{} 1\nh_count{} 1\n# TYPE h_sum gauge\nh_sum{} 5\n", false, ErrorKind.DuplicateSeries),
             ("# TYPE h histogram\nh_bucket{le=\"+Inf\"} 1\nh_sum{} 1\nh_count{} 1\n# TYPE h_bucket gauge\nh_bucket{le=\"+Inf\"} 2\n", false, ErrorKind.DuplicateSeries),
@@ -720,6 +721,7 @@ public class PrometheusExpositionFuzzTests
             => string.Join(
                 ",",
                 labels
+                    .Where(static l => l.Value.Length > 0) // A label without a value is the same as one that does not exist
                     .OrderBy(static l => l.Key, StringComparer.Ordinal)
                     .Select(static l => l.Key.Length.ToString(CultureInfo.InvariantCulture) + ":" + l.Key + "=" + l.Value.Length.ToString(CultureInfo.InvariantCulture) + ":" + l.Value));
 

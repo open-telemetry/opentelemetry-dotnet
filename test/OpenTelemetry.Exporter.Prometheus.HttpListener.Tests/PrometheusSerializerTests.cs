@@ -725,6 +725,13 @@ public sealed partial class PrometheusSerializerTests
         Assert.Empty(tracker.Keys);
         Assert.False(tracker.HasAmbiguousValues);
 
+        // A label without a value is the same as one that does not exist
+        tracker.Observe(0, first, string.Empty);
+
+        Assert.True(tracker.HasAmbiguousValues);
+
+        tracker.Reset();
+
         // Different arrays are written as the same label value if they have the same items
         int[] items = [1];
         tracker.Observe(0, first, items);

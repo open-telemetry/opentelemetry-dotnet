@@ -697,9 +697,11 @@ internal sealed class PrometheusCollectionManager
                             metricState.Help,
                             options);
 
-                        if (!deduplicate && serializer.HasCollidingTagKeys(this.tagKeys, metricState.Metric))
+                        if (!deduplicate &&
+                            (serializer.HasCollidingTagKeys(this.tagKeys, metricState.Metric) ||
+                             TextFormatSerializer.ContainsReplacementCharacter(state.Buffer, metricStart, cursor)))
                         {
-                            // Tag keys of the metric are the same once they are escaped, so the series of
+                            // Tag keys or values of the metric can be the same once they are written, so the series of
                             // different points can be too. The metric is written again without any that are.
                             deduplicate = true;
                             continue;

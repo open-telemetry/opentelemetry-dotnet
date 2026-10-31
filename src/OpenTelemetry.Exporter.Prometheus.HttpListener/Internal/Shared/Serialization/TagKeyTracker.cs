@@ -51,6 +51,12 @@ internal sealed class TagKeyTracker
     {
         var type = value?.GetType();
 
+        // A label without a value is the same as one that does not exist.
+        if (value is null or string { Length: 0 })
+        {
+            this.HasAmbiguousValues = true;
+        }
+
         if (index < this.previousKeys.Length)
         {
             if (ReferenceEquals(this.previousKeys[index], key) && this.previousTypes[index] == type)
@@ -62,8 +68,9 @@ internal sealed class TagKeyTracker
             this.previousTypes[index] = type;
         }
 
-        // Only strings and primitives are always written as different label values when they are different, and
-        // this is only reached the first time that a type is seen for a position, so the check is not often made.
+        // Other than strings and primitives, different values can be written as the same label value. (Strings and
+        // primitives can too, but the serializer checks the bytes that it writes for that.) This is only reached the
+        // first time that a type is seen for a position, so the check is not often made.
         if (type is not null && type != typeof(string) && !type.IsPrimitive)
         {
             this.HasAmbiguousValues = true;
