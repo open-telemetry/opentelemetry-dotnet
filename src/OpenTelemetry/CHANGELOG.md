@@ -10,7 +10,7 @@ Notes](../../RELEASENOTES.md).
   `BatchActivityExportProcessor`. When set to `true`, activities which are
   recorded but not sampled (`SamplingDecision.RecordOnly`) are passed to the
   exporter. The default is `false`.
-  ([#NNNN](https://github.com/open-telemetry/opentelemetry-dotnet/pull/NNNN))
+  ([#8077](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8077))
 
 ## 1.21.0-rc.1
 
