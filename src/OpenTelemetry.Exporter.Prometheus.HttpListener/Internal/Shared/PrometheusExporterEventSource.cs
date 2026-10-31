@@ -122,4 +122,18 @@ internal sealed class PrometheusExporterEventSource : EventSource, IConfiguratio
         Level = EventLevel.Warning)]
     public void ScrapeAbandoned()
         => this.WriteEvent(14);
+
+    [Event(
+        15,
+        Message = "Dropped {0} series from the scrape response, such as those of metric '{1}', because they have the same name and labels as a series that was already written. This can be caused by metric or tag names that are the same once escaped, or by metrics of different meters when scope information is disabled.",
+        Level = EventLevel.Warning)]
+    public void DuplicateSeriesDropped(int count, string firstMetricName)
+        => this.WriteEvent(15, count, firstMetricName);
+
+    [Event(
+        16,
+        Message = "Dropping metric family '{0}' because its name is that of a sample which is written for metric family '{1}'.",
+        Level = EventLevel.Warning)]
+    public void ConflictingSampleName(string metricName, string generatedFor)
+        => this.WriteEvent(16, metricName, generatedFor);
 }

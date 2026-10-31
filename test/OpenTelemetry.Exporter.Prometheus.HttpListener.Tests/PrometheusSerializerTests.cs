@@ -465,6 +465,422 @@ public sealed partial class PrometheusSerializerTests
     [Theory]
     [InlineData(false)]
     [InlineData(true)]
+    public void WriteMetricDropsPointsWithTagKeysThatCollideOnceEscaped(bool useOpenMetrics)
+    {
+        var buffer = new byte[85000];
+        var metrics = new List<Metric>();
+
+        using var meter = CreateMeter();
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddInMemoryExporter(metrics)
+            .Build();
+
+        var counter = meter.CreateCounter<int>("test_counter");
+        counter.Add(1, new KeyValuePair<string, object?>("a.b", "value"));
+        counter.Add(2, new KeyValuePair<string, object?>("a_b", "value"));
+        counter.Add(4, new KeyValuePair<string, object?>("a_b", "other"));
+
+        provider.ForceFlush();
+
+        var series = new SeriesRegistry();
+        var cursor = WriteMetric(buffer, 0, metrics.Single(), useOpenMetrics, series: series);
+        var output = Encoding.UTF8.GetString(buffer, 0, cursor);
+
+        // The first of the two points that are the same series is written, and the other is dropped.
+        var samples = GetSampleLines(output, "test_counter_total");
+
+        Assert.Equal(2, samples.Count);
+        Assert.Single(samples, line => line.Contains("a_b=\"value\"", StringComparison.Ordinal));
+        Assert.Single(samples, line => line.Contains("a_b=\"other\"", StringComparison.Ordinal));
+        Assert.Equal(1, series.DroppedCount);
+        Assert.Equal("test_counter", series.FirstDroppedMetricName);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void WriteMetricDropsSeriesOfMetricsFromDifferentMetersWhenScopeInfoIsSuppressed(bool useOpenMetrics)
+    {
+        var buffer = new byte[85000];
+        var metrics = new List<Metric>();
+
+        using var firstMeter = new Meter(nameof(this.WriteMetricDropsSeriesOfMetricsFromDifferentMetersWhenScopeInfoIsSuppressed) + ".first");
+        using var secondMeter = new Meter(nameof(this.WriteMetricDropsSeriesOfMetricsFromDifferentMetersWhenScopeInfoIsSuppressed) + ".second");
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(firstMeter.Name)
+            .AddMeter(secondMeter.Name)
+            .AddInMemoryExporter(metrics)
+            .Build();
+
+        firstMeter.CreateCounter<int>("test_counter").Add(1, new KeyValuePair<string, object?>("key", "value"));
+        secondMeter.CreateCounter<int>("test_counter").Add(2, new KeyValuePair<string, object?>("key", "value"));
+        secondMeter.CreateCounter<int>("test_counter").Add(3, new KeyValuePair<string, object?>("key", "unique"));
+
+        provider.ForceFlush();
+
+        var series = new SeriesRegistry();
+        var cursor = 0;
+
+        foreach (var metric in metrics.OrderBy(m => m.MeterName, StringComparer.Ordinal))
+        {
+            cursor = WriteMetric(buffer, cursor, metric, useOpenMetrics, suppressScopeInfo: true, series: series);
+        }
+
+        var output = Encoding.UTF8.GetString(buffer, 0, cursor);
+
+        Assert.Equal(2, CountSamples(output, "test_counter_total"));
+        Assert.Contains("key=\"unique\"", output, StringComparison.Ordinal);
+        Assert.Equal(1, series.DroppedCount);
+
+        // Without the registry, the series is written twice.
+        cursor = 0;
+
+        foreach (var metric in metrics.OrderBy(m => m.MeterName, StringComparer.Ordinal))
+        {
+            cursor = WriteMetric(buffer, cursor, metric, useOpenMetrics, suppressScopeInfo: true);
+        }
+
+        Assert.Equal(3, CountSamples(Encoding.UTF8.GetString(buffer, 0, cursor), "test_counter_total"));
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void WriteMetricDropsHistogramsWithTheSameSeries(bool useOpenMetrics)
+    {
+        var buffer = new byte[85000];
+        var metrics = new List<Metric>();
+
+        using var firstMeter = new Meter(nameof(this.WriteMetricDropsHistogramsWithTheSameSeries) + ".first");
+        using var secondMeter = new Meter(nameof(this.WriteMetricDropsHistogramsWithTheSameSeries) + ".second");
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(firstMeter.Name)
+            .AddMeter(secondMeter.Name)
+            .AddInMemoryExporter(metrics)
+            .Build();
+
+        firstMeter.CreateHistogram<double>("test_histogram").Record(10, new KeyValuePair<string, object?>("key", "value"));
+        secondMeter.CreateHistogram<double>("test_histogram").Record(20, new KeyValuePair<string, object?>("key", "value"));
+        secondMeter.CreateHistogram<double>("test_histogram").Record(30, new KeyValuePair<string, object?>("key", "unique"));
+
+        provider.ForceFlush();
+
+        var series = new SeriesRegistry();
+        var cursor = 0;
+
+        foreach (var metric in metrics.OrderBy(m => m.MeterName, StringComparer.Ordinal))
+        {
+            cursor = WriteMetric(buffer, cursor, metric, useOpenMetrics, suppressScopeInfo: true, series: series);
+        }
+
+        var output = Encoding.UTF8.GetString(buffer, 0, cursor);
+
+        Assert.Equal(2, CountSamples(output, "test_histogram_count"));
+        Assert.Equal(2, CountSamples(output, "test_histogram_sum"));
+        Assert.Equal(1, series.DroppedCount);
+        Assert.Contains("test_histogram_sum{key=\"value\"} 10", output, StringComparison.Ordinal);
+        Assert.DoesNotContain("test_histogram_sum{key=\"value\"} 20", output, StringComparison.Ordinal);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void WriteMetricDropsPointsWithTheSameLabelsInADifferentOrderOnceEscaped(bool useOpenMetrics)
+    {
+        var buffer = new byte[85000];
+        var metrics = new List<Metric>();
+
+        using var meter = CreateMeter();
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddInMemoryExporter(metrics)
+            .Build();
+
+        // The tags are sorted by their key, so once the keys are escaped the labels of the two points are in a different order.
+        var counter = meter.CreateCounter<int>("test_counter");
+        counter.Add(1, new KeyValuePair<string, object?>("a.b", "1"), new KeyValuePair<string, object?>("aZ", "2"));
+        counter.Add(2, new KeyValuePair<string, object?>("a_b", "1"), new KeyValuePair<string, object?>("aZ", "2"));
+
+        provider.ForceFlush();
+
+        var series = new SeriesRegistry();
+        var cursor = WriteMetric(buffer, 0, metrics.Single(), useOpenMetrics, suppressScopeInfo: true, series: series);
+        var output = Encoding.UTF8.GetString(buffer, 0, cursor);
+
+        Assert.Single(GetSampleLines(output, "test_counter_total"));
+        Assert.Equal(1, series.DroppedCount);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void WriteMetricDropsHistogramsWithoutBucketsWithTheSameSeries(bool useOpenMetrics)
+    {
+        var buffer = new byte[85000];
+        var metrics = new List<Metric>();
+
+        using var meter = CreateMeter();
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddView("test_histogram", new ExplicitBucketHistogramConfiguration { Boundaries = [] })
+            .AddInMemoryExporter(metrics)
+            .Build();
+
+        var histogram = meter.CreateHistogram<double>("test_histogram");
+        histogram.Record(1, new KeyValuePair<string, object?>("a.b", "value"));
+        histogram.Record(2, new KeyValuePair<string, object?>("a_b", "value"));
+        histogram.Record(3, new KeyValuePair<string, object?>("a_b", "other"));
+
+        provider.ForceFlush();
+
+        var series = new SeriesRegistry();
+        var cursor = WriteMetric(buffer, 0, metrics.Single(), useOpenMetrics, suppressScopeInfo: true, series: series);
+        var output = Encoding.UTF8.GetString(buffer, 0, cursor);
+
+        // Without any buckets, the series of the histogram are those of its sum and count.
+        Assert.Empty(GetSampleLines(output, "test_histogram_bucket"));
+        Assert.Equal(2, GetSampleLines(output, "test_histogram_sum").Count);
+        Assert.Equal(2, GetSampleLines(output, "test_histogram_count").Count);
+        Assert.Single(GetSampleLines(output, "test_histogram_sum"), line => line.Contains("a_b=\"value\"", StringComparison.Ordinal));
+        Assert.Equal(1, series.DroppedCount);
+    }
+
+    [Theory]
+    [InlineData(new[] { "a.b", "a_b" }, true)]
+    [InlineData(new[] { "a.b", "aZ", "a_b" }, true)]
+    [InlineData(new[] { "a b", "a_b" }, true)]
+    [InlineData(new[] { "a.b", "a.c" }, false)]
+    [InlineData(new[] { "a_b", "c_d" }, false)]
+    [InlineData(new[] { "a.b" }, false)]
+    public void HasCollidingTagKeysIsTrueWhenKeysAreTheSameOnceEscaped(string[] keys, bool expected)
+    {
+        var metrics = new List<Metric>();
+
+        using var meter = CreateMeter();
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddInMemoryExporter(metrics)
+            .Build();
+
+        meter.CreateCounter<int>("test_counter").Add(1);
+
+        provider.ForceFlush();
+
+        var tracker = new TagKeyTracker();
+        var index = 0;
+
+        foreach (var key in keys ?? [])
+        {
+            tracker.Observe(index++, key, 1);
+        }
+
+        Assert.Equal(expected, TextFormatSerializer.PrometheusV1.HasCollidingTagKeys(tracker, metrics.Single()));
+    }
+
+    [Fact]
+    public void HasCollidingTagKeysIsTrueForTheKeyOfAHistogramWhichIsNotWritten()
+    {
+        var metrics = new List<Metric>();
+
+        using var meter = CreateMeter();
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddInMemoryExporter(metrics)
+            .Build();
+
+        meter.CreateHistogram<double>("test_histogram").Record(1);
+        meter.CreateCounter<int>("test_counter").Add(1);
+
+        provider.ForceFlush();
+
+        var tracker = new TagKeyTracker();
+
+        tracker.Observe(0, "le", "5000");
+
+        // The label of a bucket is not written for a tag that has its name, so a point with the tag has the same series as one without it.
+        Assert.True(TextFormatSerializer.PrometheusV1.HasCollidingTagKeys(tracker, metrics.Single(m => m.Name == "test_histogram")));
+        Assert.False(TextFormatSerializer.PrometheusV1.HasCollidingTagKeys(tracker, metrics.Single(m => m.Name == "test_counter")));
+    }
+
+    [Fact]
+    public void TagKeyTrackerObservesTheDistinctKeysOfTheTagsOfPoints()
+    {
+        var tracker = new TagKeyTracker();
+        var first = new string("key".ToCharArray());
+        var second = new string("key".ToCharArray());
+
+        tracker.Observe(0, first, 1);
+        tracker.Observe(0, first, 2);
+        tracker.Observe(1, "other", "value");
+        tracker.Observe(0, second, 3);
+
+        Assert.Equal(2, tracker.Keys.Count);
+        Assert.False(tracker.HasAmbiguousValues);
+
+        // The same key with values of different types is written as the same label
+        tracker.Observe(0, first, "1");
+
+        Assert.True(tracker.HasAmbiguousValues);
+
+        tracker.Reset();
+
+        Assert.Empty(tracker.Keys);
+        Assert.False(tracker.HasAmbiguousValues);
+
+        // A label without a value is the same as one that does not exist
+        tracker.Observe(0, first, string.Empty);
+
+        Assert.True(tracker.HasAmbiguousValues);
+
+        tracker.Reset();
+
+        // Different arrays are written as the same label value if they have the same items
+        int[] items = [1];
+        tracker.Observe(0, first, items);
+
+        Assert.True(tracker.HasAmbiguousValues);
+    }
+
+    [Fact]
+    public void SeriesRegistryForgetsTheSeriesWhenAFamilyStarts()
+    {
+        var registry = new SeriesRegistry();
+        var buffer = Encoding.UTF8.GetBytes("a{x=\"1\"}");
+
+        Assert.True(registry.TryAdd(buffer, 0, buffer.Length));
+        Assert.False(registry.TryAdd(buffer, 0, buffer.Length));
+
+        registry.RecordDropped("a");
+        registry.StartFamily();
+
+        Assert.Equal(0, registry.Count);
+        Assert.True(registry.TryAdd(buffer, 0, buffer.Length));
+
+        // What was dropped is only forgotten when the response is
+        Assert.Equal(1, registry.DroppedCount);
+
+        registry.Clear();
+
+        Assert.Equal(0, registry.DroppedCount);
+        Assert.Null(registry.FirstDroppedMetricName);
+    }
+
+    [Fact]
+    public void SeriesRegistryDoesNotDependOnTheBufferItsSeriesWereAddedFrom()
+    {
+        var registry = new SeriesRegistry();
+        var buffer = Encoding.UTF8.GetBytes("a_sum{x=\"1\"} 1\n");
+
+        Assert.True(registry.TryAdd(buffer, 0, 12));
+
+        // The buffer is overwritten, as the buffer of a response is when the series that it contained is not written.
+        Array.Clear(buffer, 0, buffer.Length);
+
+        var other = Encoding.UTF8.GetBytes("a_sum{x=\"1\"} 2\n");
+
+        Assert.False(registry.TryAdd(other, 0, 12));
+        Assert.Equal(1, registry.Count);
+    }
+
+    [Fact]
+    public void SeriesRegistryForgetsTheIdentitiesOfSeriesWhichAreRolledBackWhenTheyAreLongerThanTheRest()
+    {
+        var registry = new SeriesRegistry();
+
+        var first = Encoding.UTF8.GetBytes("a{x=\"1\"}");
+        var second = Encoding.UTF8.GetBytes("b{y=\"" + new string('v', 10_000) + "\"}");
+        var third = Encoding.UTF8.GetBytes("c{z=\"3\"}");
+
+        Assert.True(registry.TryAdd(first, 0, first.Length));
+
+        var mark = registry.Count;
+
+        Assert.True(registry.TryAdd(second, 0, second.Length));
+        Assert.True(registry.TryAdd(third, 0, third.Length));
+
+        registry.Rollback(mark);
+
+        Assert.False(registry.TryAdd(first, 0, first.Length));
+        Assert.True(registry.TryAdd(third, 0, third.Length));
+        Assert.True(registry.TryAdd(second, 0, second.Length));
+        Assert.False(registry.TryAdd(second, 0, second.Length));
+    }
+
+    [Fact]
+    public void SeriesRegistryDropsSeriesThatHaveAlreadyBeenAdded()
+    {
+        var buffer = Encoding.UTF8.GetBytes("a{x=\"1\"}b{x=\"1\"}a{x=\"1\"}a{x=\"2\"}");
+        var registry = new SeriesRegistry();
+
+        Assert.True(registry.TryAdd(buffer, 0, 8));
+        Assert.True(registry.TryAdd(buffer, 8, 8));
+        Assert.False(registry.TryAdd(buffer, 16, 8));
+        Assert.True(registry.TryAdd(buffer, 24, 8));
+        Assert.Equal(3, registry.Count);
+    }
+
+    [Fact]
+    public void SeriesRegistryForgetsSeriesWhenRolledBack()
+    {
+        var buffer = Encoding.UTF8.GetBytes("a{x=\"1\"}b{x=\"1\"}c{x=\"1\"}");
+        var registry = new SeriesRegistry();
+
+        Assert.True(registry.TryAdd(buffer, 0, 8));
+
+        var mark = registry.Count;
+
+        Assert.True(registry.TryAdd(buffer, 8, 8));
+        Assert.True(registry.TryAdd(buffer, 16, 8));
+
+        registry.Rollback(mark);
+
+        Assert.Equal(1, registry.Count);
+        Assert.False(registry.TryAdd(buffer, 0, 8));
+        Assert.True(registry.TryAdd(buffer, 8, 8));
+        Assert.True(registry.TryAdd(buffer, 16, 8));
+        Assert.False(registry.TryAdd(buffer, 8, 8));
+    }
+
+    [Fact]
+    public void SeriesRegistryDetectsDuplicatesAfterItHasGrown()
+    {
+        var series = Enumerable.Range(0, 5_000).Select(i => "series_" + i.ToString(CultureInfo.InvariantCulture) + "{}").ToList();
+        var buffer = Encoding.UTF8.GetBytes(string.Concat(series));
+        var registry = new SeriesRegistry();
+
+        var offsets = new List<(int Start, int Length)>();
+        var start = 0;
+
+        foreach (var entry in series)
+        {
+            offsets.Add((start, entry.Length));
+            Assert.True(registry.TryAdd(buffer, start, entry.Length));
+            start += entry.Length;
+        }
+
+        Assert.Equal(series.Count, registry.Count);
+
+        foreach (var (offset, length) in offsets)
+        {
+            Assert.False(registry.TryAdd(buffer, offset, length));
+        }
+
+        registry.Rollback(2_500);
+
+        Assert.Equal(2_500, registry.Count);
+        Assert.False(registry.TryAdd(buffer, offsets[0].Start, offsets[0].Length));
+        Assert.True(registry.TryAdd(buffer, offsets[4_999].Start, offsets[4_999].Length));
+
+        registry.Clear();
+
+        Assert.Equal(0, registry.Count);
+        Assert.True(registry.TryAdd(buffer, offsets[0].Start, offsets[0].Length));
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
     public async Task WriteMetricWithResourceConstantLabels(bool useOpenMetrics)
     {
         var buffer = new byte[85000];
@@ -2626,11 +3042,12 @@ public sealed partial class PrometheusSerializerTests
         bool useOpenMetrics,
         bool suppressScopeInfo = false,
         bool appendSuffixes = true,
-        IReadOnlyList<KeyValuePair<string, object>>? resourceConstantLabels = null)
+        IReadOnlyList<KeyValuePair<string, object>>? resourceConstantLabels = null,
+        SeriesRegistry? series = null)
     {
         TextFormatSerializer serializer = useOpenMetrics ? TextFormatSerializer.OpenMetricsV1 : TextFormatSerializer.PrometheusV1;
         var prometheusMetric = PrometheusMetric.Create(metric, disableTotalNameSuffixForCounters: false, appendSuffixes);
-        var options = new TextFormatSerializerOptions(suppressScopeInfo, resourceConstantLabels);
+        var options = new TextFormatSerializerOptions(suppressScopeInfo, resourceConstantLabels, series);
 
         return serializer.WriteMetric(
             buffer,
@@ -2644,6 +3061,14 @@ public sealed partial class PrometheusSerializerTests
             helpOverride: null,
             options);
     }
+
+    private static List<string> GetSampleLines(string output, string seriesName)
+        => output
+            .Split('\n')
+            .Where(line => line.StartsWith(seriesName, StringComparison.Ordinal) && line.Length > seriesName.Length && line[seriesName.Length] is ' ' or '{')
+            .ToList();
+
+    private static int CountSamples(string output, string seriesName) => GetSampleLines(output, seriesName).Count;
 
     private static string WriteMetricWithDotsEscaping(byte[] buffer, Metric metric)
         => WriteMetricWithEscaping(buffer, metric, PrometheusProtocol.DotsEscaping);

@@ -11,6 +11,10 @@ namespace OpenTelemetry.Exporter.Prometheus.Serialization;
 /// </summary>
 internal abstract class OpenMetricsSerializer : TextFormatSerializer
 {
+    private static readonly string[] CreatedSuffix = ["_created"];
+    private static readonly string[] CounterSampleSuffixes = ["_total", "_created"];
+    private static readonly string[] OpenMetricsHistogramSampleSuffixes = ["_bucket", "_sum", "_count", "_created"];
+
     protected override string UnknownMetricTypeName => "unknown";
 
     protected override string TargetInfoTypeName => "target";
@@ -51,6 +55,21 @@ internal abstract class OpenMetricsSerializer : TextFormatSerializer
              exemplarValue == double.NegativeInfinity);
 
         return exemplarValue <= upperBoundInclusive && isAboveLowerBound;
+    }
+
+    internal override string[] GetGeneratedSampleSuffixes(PrometheusMetric metric)
+    {
+        var names = metric.GetNameSet(this.Escaping);
+
+        return metric.Type switch
+        {
+            // The samples of a counter are only named differently to its family when the name has the "_total" suffix.
+            PrometheusType.Counter => string.Equals(names.OpenMetricsName, names.OpenMetricsMetadataName, StringComparison.Ordinal)
+                ? CreatedSuffix
+                : CounterSampleSuffixes,
+            PrometheusType.Histogram => OpenMetricsHistogramSampleSuffixes,
+            _ => [],
+        };
     }
 
     protected override ReadOnlySpan<byte> GetMetricNameBytes(PrometheusMetric metric)

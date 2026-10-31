@@ -32,6 +32,8 @@ internal sealed class PrometheusCollectionManager
     private readonly long baseTimestamp = Stopwatch.GetTimestamp();
     private readonly PrometheusExporter.ExportFunc onCollectRef;
     private readonly Dictionary<Metric, PrometheusMetric> metricsCache;
+    private readonly SeriesRegistry series = new(); // Only used while a response is being written, which is never concurrent.
+    private readonly TagKeyTracker tagKeys = new(); // As above.
     private readonly int maxBufferSize;
 
     private int metricsCacheCount;
@@ -654,19 +656,40 @@ internal sealed class PrometheusCollectionManager
 
             var cursor = this.targetInfoEnabled ? this.WriteTargetInfo(serializer, state) : 0;
             var metricStates = this.GetMetricStates(serializer, metrics);
-            var options = new TextFormatSerializerOptions(
-                suppressScopeInfo: !this.scopeInfoEnabled,
-                resourceConstantLabels: this.GetResourceConstantLabels());
+
+            this.series.Clear();
+            this.tagKeys.ClearOutputKeys();
+
+            var suppressScopeInfo = !this.scopeInfoEnabled;
+            var resourceConstantLabels = this.GetResourceConstantLabels();
 
             foreach (var metricState in metricStates)
             {
+                if (metricState.WriteType)
+                {
+                    // This is the first metric of a new metric family, and only the metrics of a family can have the same series.
+                    this.series.StartFamily();
+                }
+
+                var metricStart = cursor;
+                var seriesMark = this.series.Count;
+                var deduplicate = metricState.Deduplicate;
+
                 while (true)
                 {
                     try
                     {
+                        this.tagKeys.Reset();
+                        TextFormatSerializer.ResetReplacementCharacterWritten();
+
+                        // Series are only compared when they can be the same, as it is not free to do so.
+                        var options = deduplicate
+                            ? new TextFormatSerializerOptions(suppressScopeInfo, resourceConstantLabels, series: this.series)
+                            : new TextFormatSerializerOptions(suppressScopeInfo, resourceConstantLabels, tagKeys: this.tagKeys);
+
                         cursor = serializer.WriteMetric(
                             state.Buffer,
-                            cursor,
+                            metricStart,
                             metricState.Metric,
                             metricState.PrometheusMetric,
                             metricState.WriteType,
@@ -676,16 +699,34 @@ internal sealed class PrometheusCollectionManager
                             metricState.Help,
                             options);
 
+                        if (!deduplicate &&
+                            (serializer.HasCollidingTagKeys(this.tagKeys, metricState.Metric) ||
+                             TextFormatSerializer.WasReplacementCharacterWritten()))
+                        {
+                            // Tag keys or values of the metric can be the same once they are written, so the series of
+                            // different points can be too. The metric is written again without any that are.
+                            deduplicate = true;
+                            continue;
+                        }
+
                         break;
                     }
                     catch (Exception ex) when (ex is IndexOutOfRangeException or ArgumentException)
                     {
+                        // The metric is written again, so the series that it had written must be forgotten.
+                        this.series.Rollback(seriesMark);
+
                         if (!state.TryExpandBuffer())
                         {
                             throw;
                         }
                     }
                 }
+            }
+
+            if (this.series.DroppedCount > 0)
+            {
+                PrometheusExporterEventSource.Log.DuplicateSeriesDropped(this.series.DroppedCount, this.series.FirstDroppedMetricName!);
             }
 
             while (true)
@@ -983,15 +1024,69 @@ internal sealed class PrometheusCollectionManager
             return result != 0 ? result : string.CompareOrdinal(left.Metric.Name, right.Metric.Name);
         });
 
+        // The names of the samples that are written for a metric (such as the "_sum" of a histogram) cannot
+        // be the name of the samples of another metric family, so the family which has that name is dropped.
+        // The families are in order of their names, and the name of a sample is longer than that of its family, so
+        // whether a family has been dropped is known by the time that it is reached, and only the ones that were not reserve names.
+        for (var index = 0; index < precomputedMetricStates.Count; index++)
+        {
+            var precomputedMetricState = precomputedMetricStates[index];
+            var familyName = precomputedMetricState.MetadataName;
+
+            if (index > 0 && string.Equals(familyName, precomputedMetricStates[index - 1].MetadataName, StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            if (droppedMetricNames?.Contains(familyName) is true)
+            {
+                continue;
+            }
+
+            // The names which start with the name of the family follow it, so there is nothing to find unless the next one does.
+            var next = index + 1;
+
+            while (next < precomputedMetricStates.Count && string.Equals(precomputedMetricStates[next].MetadataName, familyName, StringComparison.Ordinal))
+            {
+                next++;
+            }
+
+            if (next == precomputedMetricStates.Count || !precomputedMetricStates[next].MetadataName.StartsWith(familyName, StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            foreach (var suffix in serializer.GetGeneratedSampleSuffixes(precomputedMetricState.PrometheusMetric))
+            {
+                var generatedName = familyName + suffix;
+
+                if (metadataStates.ContainsKey(generatedName))
+                {
+                    droppedMetricNames ??= [with(StringComparer.Ordinal)];
+                    droppedMetricNames.Add(generatedName);
+                    PrometheusExporterEventSource.Log.ConflictingSampleName(generatedName, familyName);
+                }
+            }
+        }
+
         var metricStates = new List<MetricState>(precomputedMetricStates.Count);
         var emittedMetricNames = new HashSet<string>(StringComparer.Ordinal);
 
-        foreach (var metricState in precomputedMetricStates)
+        for (var index = 0; index < precomputedMetricStates.Count; index++)
         {
+            var metricState = precomputedMetricStates[index];
+
             if (droppedMetricNames?.Contains(metricState.MetadataName) is true)
             {
                 continue;
             }
+
+            // A family which has more than one metric can have the same series for different metrics, such as when
+            // they are from different meters and the scope information that tells them apart is not written.
+            // The metrics of a family are together, as they are in order of their names.
+            var deduplicate =
+                (index > 0 && string.Equals(precomputedMetricStates[index - 1].MetadataName, metricState.MetadataName, StringComparison.Ordinal)) ||
+                (index + 1 < precomputedMetricStates.Count && string.Equals(precomputedMetricStates[index + 1].MetadataName, metricState.MetadataName, StringComparison.Ordinal));
 
             var writeMetadata = emittedMetricNames.Add(metricState.MetadataName);
             var metadataState = metadataStates[metricState.MetadataName];
@@ -1012,7 +1107,8 @@ internal sealed class PrometheusCollectionManager
                     writeUnit,
                     writeMetadata && metadataState.Help != null,
                     metadataState.Unit,
-                    metadataState.Help));
+                    metadataState.Help,
+                    deduplicate));
         }
 
         return metricStates;
@@ -1129,7 +1225,8 @@ internal sealed class PrometheusCollectionManager
             bool writeUnit,
             bool writeHelp,
             string? unit,
-            string? help)
+            string? help,
+            bool deduplicate)
         {
             this.Metric = metric;
             this.PrometheusMetric = prometheusMetric;
@@ -1138,6 +1235,7 @@ internal sealed class PrometheusCollectionManager
             this.WriteHelp = writeHelp;
             this.Unit = unit;
             this.Help = help;
+            this.Deduplicate = deduplicate;
         }
 
         public readonly Metric Metric { get; }
@@ -1153,6 +1251,8 @@ internal sealed class PrometheusCollectionManager
         public readonly string? Unit { get; }
 
         public readonly string? Help { get; }
+
+        public readonly bool Deduplicate { get; }
     }
 
     private readonly struct PrecomputedMetricState

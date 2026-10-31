@@ -2273,6 +2273,377 @@ public sealed class PrometheusCollectionManagerTests
         }
     }
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task EnterCollectDoesNotWriteTheSameSeriesMoreThanOnce(bool openMetricsRequested)
+    {
+        var prefix = nameof(this.EnterCollectDoesNotWriteTheSameSeriesMoreThanOnce);
+
+        using var firstMeter = new Meter(prefix + ".first");
+        using var secondMeter = new Meter(prefix + ".second");
+
+#pragma warning disable CA2000 // Dispose objects before losing scope
+        var exporter = new PrometheusExporter(new PrometheusExporterOptions
+        {
+            ScopeInfoEnabled = false,
+            TargetInfoEnabled = false,
+            ScrapeResponseCacheDurationMilliseconds = 0,
+        });
+
+        var reader = new BaseExportingMetricReader(exporter)
+        {
+            TemporalityPreference = MetricReaderTemporalityPreference.Cumulative,
+        };
+#pragma warning restore CA2000 // Dispose objects before losing scope
+
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(firstMeter.Name)
+            .AddMeter(secondMeter.Name)
+            .AddReader(reader)
+            .Build();
+
+        // The same instrument of two meters, which are not told apart without the scope information.
+        firstMeter.CreateCounter<int>("shared_counter").Add(1, new KeyValuePair<string, object?>("key", "value"));
+        secondMeter.CreateCounter<int>("shared_counter").Add(2, new KeyValuePair<string, object?>("key", "value"));
+
+        // Tags which are the same once they have been escaped.
+        var tagCounter = firstMeter.CreateCounter<int>("tag_counter");
+        tagCounter.Add(1, new KeyValuePair<string, object?>("a.b", "value"));
+        tagCounter.Add(2, new KeyValuePair<string, object?>("a_b", "value"));
+
+        // Instruments which have the same name once it has been escaped.
+        firstMeter.CreateCounter<int>("name.counter").Add(1);
+        firstMeter.CreateCounter<int>("name_counter").Add(2);
+
+        // The same histogram of two meters.
+        firstMeter.CreateHistogram<double>("shared_histogram").Record(1);
+        secondMeter.CreateHistogram<double>("shared_histogram").Record(2);
+
+        var response = await exporter.CollectionManager.EnterCollect(GetProtocol(openMetricsRequested), TestContext.Current.CancellationToken);
+
+        string output;
+
+        try
+        {
+            Assert.True(response.Succeeded);
+            output = Encoding.UTF8.GetString(response.View.Array!, response.View.Offset, response.View.Count);
+        }
+        finally
+        {
+            exporter.CollectionManager.ExitCollect(response);
+        }
+
+        var samples = output
+            .Split('\n')
+            .Where(line => line.Length > 0 && line[0] != '#' && !line.Contains("_created", StringComparison.Ordinal))
+            .ToList();
+
+        var series = samples
+            .Select(sample => sample.Split(' '))
+            .Select(parts => string.Join(" ", parts, 0, parts.Length - 1))
+            .ToList();
+
+        Assert.Equal(series.Count, series.Distinct(StringComparer.Ordinal).Count());
+        Assert.Single(series, s => s.StartsWith("shared_counter_total", StringComparison.Ordinal));
+        Assert.Equal(2, series.Count(s => s.StartsWith("tag_counter_total", StringComparison.Ordinal) || s.StartsWith("name_counter_total", StringComparison.Ordinal)));
+        Assert.Single(series, s => s.StartsWith("shared_histogram_count", StringComparison.Ordinal));
+        Assert.Single(series, s => s.StartsWith("shared_histogram_sum", StringComparison.Ordinal));
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task EnterCollectDoesNotWriteTheSameSeriesForMetricsWithTheNamesOfGeneratedSamplesOrLabelsInADifferentOrder(bool openMetricsRequested)
+    {
+        using var meter = CreateMeter();
+
+#pragma warning disable CA2000 // Dispose objects before losing scope
+        var exporter = new PrometheusExporter(new PrometheusExporterOptions
+        {
+            TargetInfoEnabled = false,
+            ScrapeResponseCacheDurationMilliseconds = 0,
+        });
+
+        var reader = new BaseExportingMetricReader(exporter)
+        {
+            TemporalityPreference = MetricReaderTemporalityPreference.Cumulative,
+        };
+#pragma warning restore CA2000 // Dispose objects before losing scope
+
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddView("empty_histogram", new ExplicitBucketHistogramConfiguration { Boundaries = [] })
+            .AddReader(reader)
+            .Build();
+
+        // Metrics with the names of the samples which are generated for a histogram and a counter
+        meter.CreateHistogram<double>("generated_histogram").Record(7);
+        meter.CreateGauge<double>("generated_histogram_sum").Record(100);
+        meter.CreateGauge<double>("generated_histogram_count").Record(100);
+        meter.CreateGauge<double>("generated_histogram_bucket").Record(100, new KeyValuePair<string, object?>("le", "+Inf"));
+        meter.CreateGauge<double>("generated_histogram_bucket").Record(100, new KeyValuePair<string, object?>("le", "6"));
+        meter.CreateCounter<int>("generated_counter").Add(1);
+        meter.CreateGauge<double>("generated_counter_created").Record(100);
+
+        // A family which is dropped does not reserve the names of its samples, whatever the order that the metrics are created in
+        meter.CreateHistogram<double>("dropped_histogram_sum").Record(1);
+        meter.CreateHistogram<double>("dropped_histogram").Record(1);
+        meter.CreateGauge<double>("dropped_histogram_sum_count").Record(100);
+
+        // Values of different types which are written as the same label value
+        var mixed = meter.CreateGauge<double>("mixed_gauge");
+        mixed.Record(1, new KeyValuePair<string, object?>("k", 1));
+        mixed.Record(2, new KeyValuePair<string, object?>("k", "1"));
+
+        // Different arrays with the same items, which are written as the same label value
+        var arrays = meter.CreateGauge<double>("array_gauge");
+        int[] items = [1];
+        arrays.Record(1, new KeyValuePair<string, object?>("k", items));
+        arrays.Record(2, new KeyValuePair<string, object?>("k", items.ToArray()));
+
+        var bytes = meter.CreateGauge<double>("bytes_gauge");
+        bytes.Record(1, new KeyValuePair<string, object?>("k", new byte[] { 1 }));
+        bytes.Record(2, new KeyValuePair<string, object?>("k", new byte[] { 1 }));
+
+        // A label without a value, which is the same as one that does not exist
+        var empty = meter.CreateGauge<double>("empty_gauge");
+        empty.Record(1);
+        empty.Record(2, new KeyValuePair<string, object?>("k", string.Empty));
+
+        // Different strings (and characters) which are written as the same label value, as the surrogates are not a pair
+        var surrogates = meter.CreateGauge<double>("surrogate_gauge");
+        surrogates.Record(1, new KeyValuePair<string, object?>("k", "\uD800"));
+        surrogates.Record(2, new KeyValuePair<string, object?>("k", "\uD801"));
+
+        var characters = meter.CreateGauge<double>("character_gauge");
+        characters.Record(1, new KeyValuePair<string, object?>("k", '\uD800'));
+        characters.Record(2, new KeyValuePair<string, object?>("k", '\uD801'));
+
+        // Points with the same labels in a different order once their keys are escaped
+        var counter = meter.CreateCounter<int>("ordered_counter");
+        counter.Add(1, new KeyValuePair<string, object?>("a.b", "1"), new KeyValuePair<string, object?>("aZ", "2"));
+        counter.Add(2, new KeyValuePair<string, object?>("a_b", "1"), new KeyValuePair<string, object?>("aZ", "2"));
+
+        // A histogram with points that only differ by a tag that is not written, as it is the label of the buckets
+        var reservedHistogram = meter.CreateHistogram<double>("reserved_histogram");
+        reservedHistogram.Record(1, new KeyValuePair<string, object?>("le", "5000"));
+        reservedHistogram.Record(2);
+
+        // A histogram without any buckets, which only has a sum and a count
+        var histogram = meter.CreateHistogram<double>("empty_histogram");
+        histogram.Record(1, new KeyValuePair<string, object?>("a.b", "value"));
+        histogram.Record(2, new KeyValuePair<string, object?>("a_b", "value"));
+
+        var response = await exporter.CollectionManager.EnterCollect(GetProtocol(openMetricsRequested), TestContext.Current.CancellationToken);
+
+        string output;
+
+        try
+        {
+            Assert.True(response.Succeeded);
+            output = Encoding.UTF8.GetString(response.View.Array!, response.View.Offset, response.View.Count);
+        }
+        finally
+        {
+            exporter.CollectionManager.ExitCollect(response);
+        }
+
+        var samples = output
+            .Split('\n')
+            .Where(line => line.Length > 0 && line[0] != '#')
+            .ToList();
+
+        var series = samples
+            .Select(sample => sample.Split(' '))
+            .Select(parts => string.Join(" ", parts, 0, parts.Length - 1))
+            .ToList();
+
+        Assert.Equal(series.Count, series.Distinct(StringComparer.Ordinal).Count());
+
+        // The samples that are generated for a metric are those of the metric which they are generated for
+        Assert.Single(samples, s => s.StartsWith("generated_histogram_sum", StringComparison.Ordinal) && s.EndsWith(" 7", StringComparison.Ordinal));
+        Assert.Single(samples, s => s.StartsWith("generated_histogram_count", StringComparison.Ordinal) && s.EndsWith(" 1", StringComparison.Ordinal));
+        Assert.Single(samples, s => s.StartsWith("generated_histogram_bucket", StringComparison.Ordinal) && s.Contains("le=\"+Inf\"", StringComparison.Ordinal) && s.EndsWith(" 1", StringComparison.Ordinal));
+
+        // The family of a metric with the name of the samples of another is dropped, so it is not written even if it is not the same series
+        Assert.DoesNotContain(samples, s => s.StartsWith("generated_histogram_bucket", StringComparison.Ordinal) && s.Contains("le=\"6\"", StringComparison.Ordinal));
+
+        // Only OpenMetrics has the "_created" sample of a counter, so that is the only format in which the gauge is dropped
+        var createdSamples = samples.Where(s => s.StartsWith("generated_counter_created", StringComparison.Ordinal)).ToList();
+
+        Assert.Single(createdSamples);
+        Assert.Equal(!openMetricsRequested, createdSamples[0].EndsWith(" 100", StringComparison.Ordinal));
+
+        Assert.Single(samples, s => s.StartsWith("dropped_histogram_sum_count", StringComparison.Ordinal));
+        Assert.Single(samples, s => s.StartsWith("mixed_gauge", StringComparison.Ordinal));
+        Assert.Single(samples, s => s.StartsWith("array_gauge", StringComparison.Ordinal));
+        Assert.Single(samples, s => s.StartsWith("empty_gauge", StringComparison.Ordinal));
+        Assert.Single(samples, s => s.StartsWith("surrogate_gauge", StringComparison.Ordinal));
+        Assert.Single(samples, s => s.StartsWith("character_gauge", StringComparison.Ordinal));
+        Assert.Single(samples, s => s.StartsWith("bytes_gauge", StringComparison.Ordinal));
+        Assert.Single(samples, s => s.StartsWith("ordered_counter_total", StringComparison.Ordinal));
+        Assert.Single(samples, s => s.StartsWith("reserved_histogram_sum", StringComparison.Ordinal));
+        Assert.Single(samples, s => s.StartsWith("empty_histogram_sum", StringComparison.Ordinal));
+        Assert.Single(samples, s => s.StartsWith("empty_histogram_count", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public async Task EnterCollectKeepsMetricsWithTheNameOfACounterSampleWhenCountersHaveNoTotalSuffix()
+    {
+        using var meter = CreateMeter();
+
+#pragma warning disable CA2000 // Dispose objects before losing scope
+        var exporter = new PrometheusExporter(new PrometheusExporterOptions
+        {
+            TargetInfoEnabled = false,
+            ScrapeResponseCacheDurationMilliseconds = 0,
+            TranslationStrategy = PrometheusTranslationStrategy.UnderscoreEscapingWithoutSuffixes,
+        });
+
+        var reader = new BaseExportingMetricReader(exporter)
+        {
+            TemporalityPreference = MetricReaderTemporalityPreference.Cumulative,
+        };
+#pragma warning restore CA2000 // Dispose objects before losing scope
+
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddReader(reader)
+            .Build();
+
+        // The counter is written as "requests", so "requests_total" is not the name of one of its samples
+        meter.CreateCounter<int>("requests").Add(1);
+        meter.CreateGauge<double>("requests_total").Record(100);
+
+        var response = await exporter.CollectionManager.EnterCollect(GetProtocol(openMetricsRequested: true), TestContext.Current.CancellationToken);
+
+        try
+        {
+            Assert.True(response.Succeeded);
+
+            var output = Encoding.UTF8.GetString(response.View.Array!, response.View.Offset, response.View.Count);
+            var samples = output.Split('\n').Where(line => line.Length > 0 && line[0] != '#').ToList();
+
+            Assert.Single(samples, s => s.StartsWith("requests{", StringComparison.Ordinal));
+            Assert.Single(samples, s => s.StartsWith("requests_total{", StringComparison.Ordinal));
+        }
+        finally
+        {
+            exporter.CollectionManager.ExitCollect(response);
+        }
+    }
+
+    [Fact]
+    public async Task EnterCollectDoesNotWriteTheSameSeriesMoreThanOnceWhenTheBufferHasToBeExpanded()
+    {
+        const int SeriesCount = 1_200; // Fewer than the default limit of the metric points of a metric
+
+        using var firstMeter = new Meter(nameof(this.EnterCollectDoesNotWriteTheSameSeriesMoreThanOnceWhenTheBufferHasToBeExpanded) + ".first");
+        using var secondMeter = new Meter(nameof(this.EnterCollectDoesNotWriteTheSameSeriesMoreThanOnceWhenTheBufferHasToBeExpanded) + ".second");
+
+#pragma warning disable CA2000 // Dispose objects before losing scope
+        var exporter = new PrometheusExporter(new PrometheusExporterOptions
+        {
+            ScopeInfoEnabled = false,
+            TargetInfoEnabled = false,
+            ScrapeResponseCacheDurationMilliseconds = 0,
+        });
+
+        var reader = new BaseExportingMetricReader(exporter)
+        {
+            TemporalityPreference = MetricReaderTemporalityPreference.Cumulative,
+        };
+#pragma warning restore CA2000 // Dispose objects before losing scope
+
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(firstMeter.Name)
+            .AddMeter(secondMeter.Name)
+            .AddReader(reader)
+            .Build();
+
+        var firstCounter = firstMeter.CreateCounter<int>("expanding_counter");
+        var secondCounter = secondMeter.CreateCounter<int>("expanding_counter");
+
+        for (var i = 0; i < SeriesCount; i++)
+        {
+            var tag = new KeyValuePair<string, object?>("key", "a_reasonably_long_value_for_the_series_" + i);
+
+            firstCounter.Add(1, tag);
+            secondCounter.Add(1, tag);
+        }
+
+        var response = await exporter.CollectionManager.EnterCollect(GetProtocol(openMetricsRequested: false), TestContext.Current.CancellationToken);
+
+        try
+        {
+            Assert.True(response.Succeeded);
+
+            // The buffer has to be expanded, so the metrics are written again, and the series that were written must be forgotten.
+            Assert.True(response.View.Count > PrometheusExporterOptions.InitialScrapeResponseSizeBytes);
+
+            var output = Encoding.UTF8.GetString(response.View.Array!, response.View.Offset, response.View.Count);
+
+            Assert.Equal(SeriesCount, output.Split('\n').Count(line => line.StartsWith("expanding_counter_total{", StringComparison.Ordinal)));
+        }
+        finally
+        {
+            exporter.CollectionManager.ExitCollect(response);
+        }
+    }
+
+    [Fact]
+    public async Task EnterCollectKeepsEverySeriesWhenTheBufferHasToBeExpanded()
+    {
+        const int SeriesCount = 1_500; // Fewer than the default limit of the metric points of a metric
+
+        using var meter = CreateMeter();
+
+#pragma warning disable CA2000 // Dispose objects before losing scope
+        var exporter = new PrometheusExporter(new PrometheusExporterOptions
+        {
+            TargetInfoEnabled = false,
+            ScrapeResponseCacheDurationMilliseconds = 0,
+        });
+
+        var reader = new BaseExportingMetricReader(exporter)
+        {
+            TemporalityPreference = MetricReaderTemporalityPreference.Cumulative,
+        };
+#pragma warning restore CA2000 // Dispose objects before losing scope
+
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddReader(reader)
+            .Build();
+
+        var counter = meter.CreateCounter<int>("large_counter");
+
+        for (var i = 0; i < SeriesCount; i++)
+        {
+            counter.Add(1, new KeyValuePair<string, object?>("key", "a_reasonably_long_value_for_the_series_" + i));
+        }
+
+        var response = await exporter.CollectionManager.EnterCollect(GetProtocol(openMetricsRequested: false), TestContext.Current.CancellationToken);
+
+        try
+        {
+            Assert.True(response.Succeeded);
+
+            // The buffer has to be larger than it is initially for all of the series to fit, so
+            // the metric is written again, and the series that it already wrote must not count as duplicates.
+            Assert.True(response.View.Count > PrometheusExporterOptions.InitialScrapeResponseSizeBytes);
+
+            var output = Encoding.UTF8.GetString(response.View.Array!, response.View.Offset, response.View.Count);
+
+            Assert.Equal(SeriesCount, output.Split('\n').Count(line => line.StartsWith("large_counter_total{", StringComparison.Ordinal)));
+        }
+        finally
+        {
+            exporter.CollectionManager.ExitCollect(response);
+        }
+    }
+
     private static int CountOccurrences(string value, string substring)
     {
         var count = 0;

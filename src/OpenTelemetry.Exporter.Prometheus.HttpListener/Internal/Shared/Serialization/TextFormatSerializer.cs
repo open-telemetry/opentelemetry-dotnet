@@ -86,6 +86,11 @@ internal abstract class TextFormatSerializer
 
     private static readonly string[] ReservedExemplarLabelNames = ["trace_id", "span_id"];
 
+    private static readonly string[] HistogramSampleSuffixes = ["_bucket", "_sum", "_count"];
+
+    [ThreadStatic]
+    private static bool replacementCharacterWritten;
+
     private string[]? reservedExemplarOutputKeys;
 
     private int serializedTagsBufferHint = 256;
@@ -202,6 +207,14 @@ internal abstract class TextFormatSerializer
 
                 var seriesEnd = cursor;
 
+                // A series which has already been written is not written again, as the response would not be valid.
+                if (options.Series is { } registry && !registry.TryAdd(buffer, seriesStart, seriesEnd - seriesStart))
+                {
+                    registry.RecordDropped(metric.Name);
+                    cursor = seriesStart;
+                    continue;
+                }
+
                 buffer[cursor++] = unchecked((byte)' ');
 
                 if (isLongValue)
@@ -247,6 +260,14 @@ internal abstract class TextFormatSerializer
                 try
                 {
                     var serializedTags = new ReadOnlySpan<byte>(serializedTagsBuffer, 0, serializedTagsLength);
+
+                    // The labels identify the series of the point, which is that of all of its buckets, sum and count.
+                    if (options.Series is { } histogramRegistry && !histogramRegistry.TryAdd(serializedTagsBuffer, 0, serializedTagsLength))
+                    {
+                        histogramRegistry.RecordDropped(metric.Name);
+                        continue;
+                    }
+
                     var hasNegativeBucketBounds = false;
                     var previousBound = double.NegativeInfinity;
 
@@ -790,6 +811,12 @@ internal abstract class TextFormatSerializer
         return cursor;
     }
 
+    // The replacement character is written for each surrogate that is not part of a pair, so different values can be
+    // written as the same label value. Whether it was written is remembered for the current thread, from when it is reset.
+    internal static void ResetReplacementCharacterWritten() => replacementCharacterWritten = false;
+
+    internal static bool WasReplacementCharacterWritten() => replacementCharacterWritten;
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal int WriteExemplar(byte[] buffer, int cursor, in Exemplar exemplar, bool isLongValue)
     {
@@ -840,6 +867,55 @@ internal abstract class TextFormatSerializer
         return cursor;
     }
 
+    // The suffixes of the names of the samples which are written for a metric in addition to the name of the metric.
+    internal virtual string[] GetGeneratedSampleSuffixes(PrometheusMetric metric)
+        => metric.Type == PrometheusType.Histogram ? HistogramSampleSuffixes : [];
+
+    // Whether any of the keys of the tags are the same as another once they are escaped, or are not
+    // written as they are those of the labels of the metric, so that the series of different points can be the same.
+    internal bool HasCollidingTagKeys(TagKeyTracker tracker, Metric metric)
+    {
+        // Values of different types (such as 1 and "1"), or different arrays, can be written as the same label value.
+        if (tracker.HasAmbiguousValues)
+        {
+            return true;
+        }
+
+        // The keys are almost always unchanged by escaping, in which case none of them can be the same as another.
+        var anyChanged = false;
+        var reservedKeys = metric.MetricType.IsHistogram() ? ReservedHistogramLabelNames : null;
+
+        foreach (var key in tracker.Keys)
+        {
+            var outputKey = this.GetOutputLabelKey(key, tracker.OutputKeys);
+
+            if (reservedKeys is not null && Array.IndexOf(reservedKeys, outputKey) >= 0)
+            {
+                return true;
+            }
+
+            anyChanged |= !string.Equals(outputKey, key, StringComparison.Ordinal);
+        }
+
+        if (!anyChanged || tracker.Keys.Count < 2)
+        {
+            return false;
+        }
+
+        var outputKeys = tracker.ScratchOutputKeys;
+        outputKeys.Clear();
+
+        foreach (var key in tracker.Keys)
+        {
+            if (!outputKeys.Add(this.GetOutputLabelKey(key, tracker.OutputKeys)))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal int WriteTags(
         byte[] buffer,
@@ -877,6 +953,10 @@ internal abstract class TextFormatSerializer
         var resourceConstantLabels = options.ResourceConstantLabels;
         var hasResourceConstantLabels = resourceConstantLabels is { Count: > 0 };
 
+        // The labels are written ordered by their names when the series that are the same are being dropped.
+        var tagKeys = options.TagKeys;
+        var sortLabels = options.Series is not null;
+
         try
         {
             if (writeEnclosingBraces)
@@ -899,7 +979,7 @@ internal abstract class TextFormatSerializer
                 WriteScopeLabels();
             }
 
-            if (TryWritePointTags())
+            if (!sortLabels && TryWritePointTags())
             {
                 if (writeEnclosingBraces)
                 {
@@ -927,8 +1007,11 @@ internal abstract class TextFormatSerializer
                 }
             }
 
+            var slowTagIndex = 0;
+
             foreach (var tag in tags)
             {
+                tagKeys?.Observe(slowTagIndex++, tag.Key, tag.Value);
                 this.AddLabel(tag.Key, tag.Value, ref labels, reservedOutputKeys);
             }
 
@@ -940,7 +1023,7 @@ internal abstract class TextFormatSerializer
                 }
             }
 
-            return WriteLabels(buffer, cursor, labels, writeEnclosingBraces, quotedNameBytes, quotedNameSuffix);
+            return WriteLabels(buffer, cursor, labels, writeEnclosingBraces, quotedNameBytes, quotedNameSuffix, sortLabels: sortLabels);
         }
         finally
         {
@@ -966,8 +1049,12 @@ internal abstract class TextFormatSerializer
 
         bool TryWritePointTags()
         {
+            var tagIndex = 0;
+
             foreach (var tag in tags)
             {
+                tagKeys?.Observe(tagIndex++, tag.Key, tag.Value);
+
                 if (!TryWriteLabel(tag.Key, tag.Value))
                 {
                     return false;
@@ -1724,12 +1811,14 @@ internal abstract class TextFormatSerializer
             }
 
             charsConsumed = 1;
+            replacementCharacterWritten = true;
             return UnicodeReplacementCharacter;
         }
 
         if (char.IsLowSurrogate(character))
         {
             charsConsumed = 1;
+            replacementCharacterWritten = true;
             return UnicodeReplacementCharacter;
         }
 
@@ -1755,6 +1844,7 @@ internal abstract class TextFormatSerializer
             return WriteUnicodeNoEscape(buffer, cursor, char.ConvertToUtf32(current, value[index]));
         }
 
+        replacementCharacterWritten = true;
         return WriteUnicodeNoEscape(buffer, cursor, 0xFFFD);
     }
 #endif
@@ -1947,6 +2037,24 @@ internal abstract class TextFormatSerializer
         return true;
     }
 
+    // A stable insertion sort (so labels with the same name are still merged in the order that they were in), as there are few labels.
+    private static void SortByOutputKey(List<LabelData> labels)
+    {
+        for (var i = 1; i < labels.Count; i++)
+        {
+            var label = labels[i];
+            var j = i - 1;
+
+            while (j >= 0 && string.CompareOrdinal(labels[j].OutputKey, label.OutputKey) > 0)
+            {
+                labels[j + 1] = labels[j];
+                j--;
+            }
+
+            labels[j + 1] = label;
+        }
+    }
+
     private static int WriteLabels(
         byte[] buffer,
         int cursor,
@@ -1954,8 +2062,16 @@ internal abstract class TextFormatSerializer
         bool writeEnclosingBraces,
         ReadOnlySpan<byte> quotedNameBytes,
         string? quotedNameSuffix,
-        int? maxLabelSetCharacters = null)
+        int? maxLabelSetCharacters = null,
+        bool sortLabels = false)
     {
+        // When series are compared, the labels are written in order so that the same series is always written the same,
+        // and without those that have no value, as they are the same as labels that do not exist.
+        if (sortLabels && labels is List<LabelData> { Count: > 1 } sortable)
+        {
+            SortByOutputKey(sortable);
+        }
+
         if (writeEnclosingBraces)
         {
             buffer[cursor++] = unchecked((byte)'{');
@@ -1979,6 +2095,11 @@ internal abstract class TextFormatSerializer
             for (var i = 0; i < labels.Count; i++)
             {
                 var label = labels[i];
+
+                if (sortLabels && label.Value.Length == 0)
+                {
+                    continue;
+                }
 
                 if (WriteLabel(buffer, ref cursor, label.OutputKey, label.Value, maxLabelSetCharacters, ref labelSetCharacters))
                 {
@@ -2017,6 +2138,11 @@ internal abstract class TextFormatSerializer
             foreach (var key in orderedOutputKeys)
             {
                 var value = GetMergedLabelValue(groupedLabels[key]);
+
+                if (sortLabels && value.Length == 0)
+                {
+                    continue;
+                }
 
                 if (WriteLabel(buffer, ref cursor, key, value, maxLabelSetCharacters, ref labelSetCharacters))
                 {
@@ -2488,6 +2614,18 @@ internal abstract class TextFormatSerializer
     // the negotiated scheme reverses it correctly; for example "otel_scope_dot_name" would
     // otherwise be incorrectly decoded under the dots scheme into "otel_scope.name", losing
     // the required "otel_scope_" prefix. The underscores scheme leaves the key unchanged.
+    // The output keys of a response are remembered, as most of the keys that are escaped are for the tags of every metric.
+    private string GetOutputLabelKey(string value, Dictionary<string, string> cache)
+    {
+        if (!cache.TryGetValue(value, out var outputKey))
+        {
+            outputKey = this.GetOutputLabelKey(value);
+            cache[value] = outputKey;
+        }
+
+        return outputKey;
+    }
+
     private string GetOutputLabelKey(string value)
     {
         // The dots and values schemes produce a reversible, legacy-valid ASCII label name. The
