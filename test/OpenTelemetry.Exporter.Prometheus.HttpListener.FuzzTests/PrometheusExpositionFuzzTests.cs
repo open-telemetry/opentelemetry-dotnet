@@ -151,6 +151,7 @@ public class PrometheusExpositionFuzzTests
             ("# TYPE a gauge\na{x=\"1\",y=\"2\"} 1\na{y=\"2\",x=\"1\"} 2\n", false, ErrorKind.DuplicateSeries),
             ("# TYPE a gauge\na{k1=\"a,k2=b\"} 1\na{k1=\"a\",k2=\"b\"} 2\n", false, null),
             ("# TYPE h histogram\nh_bucket{le=\"+Inf\"} 1\nh_sum{} 1\nh_count{} 1\n# TYPE h_sum gauge\nh_sum{} 5\n", false, ErrorKind.DuplicateSeries),
+            ("# TYPE h histogram\nh_bucket{le=\"+Inf\"} 1\nh_sum{} 1\nh_count{} 1\n# TYPE h_bucket gauge\nh_bucket{le=\"+Inf\"} 2\n", false, ErrorKind.DuplicateSeries),
             ("# TYPE a gauge\na-b 1\n", false, ErrorKind.Syntax),
             ("# TYPE a gauge\na{x=\"1\"} one\n", false, ErrorKind.Syntax),
             ("# TYPE a gauge\na 1\n", true, ErrorKind.Directive),
@@ -403,6 +404,7 @@ public class PrometheusExpositionFuzzTests
             "ns/attr",
             "aZ",
             "a0",
+            "le",
         ];
 
         private static readonly string[] InstrumentNames =
@@ -474,6 +476,28 @@ public class PrometheusExpositionFuzzTests
             from length in Gen.Choose(0, Math.Min(size + 2, 40))
             from chars in Gen.ArrayOf(TextChar, length)
             select new string(chars));
+
+        // The values of the le label of a bucket, which a metric which is named like a bucket can have the same value of
+        private static readonly Gen<string> BucketBoundGen = Gen.Elements(
+            "+Inf",
+            "0",
+            "0.0",
+            "5",
+            "5.0",
+            "10",
+            "10.0",
+            "25",
+            "50",
+            "75",
+            "100",
+            "250",
+            "500",
+            "750",
+            "1000",
+            "2500",
+            "5000",
+            "7500",
+            "10000");
 
         private static readonly Gen<double> ValueGen = Gen.Frequency(
             (6, Gen.Choose(0, 1000).Select(static v => (double)v)),
@@ -564,17 +588,41 @@ public class PrometheusExpositionFuzzTests
             from tags in Gen.ArrayOf(TagGen(), tagCount)
             from instrumentCount in Gen.Choose(1, 4)
             from instruments in Gen.ArrayOf(InstrumentGen(), instrumentCount)
+            from bucketClash in Gen.Frequency((5, Gen.Constant(false)), (1, Gen.Constant(true)))
+            from bound in BucketBoundGen
             select new MeterSpec
             {
                 Name = name,
                 Version = version,
                 Tags = tags.GroupBy(static t => t.Key, StringComparer.Ordinal).Select(static g => g.First()).ToList(),
-                Instruments = instruments.GroupBy(static i => i.Name, StringComparer.OrdinalIgnoreCase).Select(static g => g.First()).ToList(),
+                Instruments = instruments
+                    .Concat(bucketClash ? CreateBucketClash(bound) : [])
+                    .GroupBy(static i => i.Name, StringComparer.OrdinalIgnoreCase)
+                    .Select(static g => g.First())
+                    .ToList(),
             };
+
+        // A histogram, and a gauge which is named like its buckets and has the label of one of them (which they are
+        // unlikely to otherwise have, as it is the only label of the series, and its value has to be the bound of a bucket).
+        private static InstrumentSpec[] CreateBucketClash(string bound) =>
+        [
+            new InstrumentSpec
+            {
+                Kind = InstrumentKind.Histogram,
+                Name = "clash_latency",
+                Measurements = [new MeasurementSpec { Value = 1 }],
+            },
+            new InstrumentSpec
+            {
+                Kind = InstrumentKind.Gauge,
+                Name = "clash_latency_bucket",
+                Measurements = [new MeasurementSpec { Value = 2, Tags = [new("le", bound)] }],
+            },
+        ];
 
         private static Gen<KeyValuePair<string, string>> TagGen() =>
             from key in Gen.Elements(TagKeys)
-            from value in TextGen
+            from value in key == "le" ? BucketBoundGen : TextGen
             select new KeyValuePair<string, string>(key, value);
 
         private static Gen<InstrumentSpec> InstrumentGen() =>

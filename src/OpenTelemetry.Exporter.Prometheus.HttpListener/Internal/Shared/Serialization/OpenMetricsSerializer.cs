@@ -53,6 +53,13 @@ internal abstract class OpenMetricsSerializer : TextFormatSerializer
         return exemplarValue <= upperBoundInclusive && isAboveLowerBound;
     }
 
+    internal override string[] GetGeneratedSampleSuffixes(PrometheusType type) => type switch
+    {
+        PrometheusType.Counter => ["_total", "_created"],
+        PrometheusType.Histogram => ["_bucket", "_sum", "_count", "_created"],
+        _ => [],
+    };
+
     protected override ReadOnlySpan<byte> GetMetricNameBytes(PrometheusMetric metric)
         => metric.GetNameSet(this.Escaping).OpenMetricsNameBytes;
 

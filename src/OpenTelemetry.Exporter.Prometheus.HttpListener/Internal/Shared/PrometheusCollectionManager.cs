@@ -33,6 +33,7 @@ internal sealed class PrometheusCollectionManager
     private readonly PrometheusExporter.ExportFunc onCollectRef;
     private readonly Dictionary<Metric, PrometheusMetric> metricsCache;
     private readonly SeriesRegistry series = new(); // Only used while a response is being written, which is never concurrent.
+    private readonly TagKeyTracker tagKeys = new(); // As above.
     private readonly int maxBufferSize;
 
     private int metricsCacheCount;
@@ -658,22 +659,35 @@ internal sealed class PrometheusCollectionManager
 
             this.series.Clear();
 
-            var options = new TextFormatSerializerOptions(
-                suppressScopeInfo: !this.scopeInfoEnabled,
-                resourceConstantLabels: this.GetResourceConstantLabels(),
-                series: this.series);
+            var suppressScopeInfo = !this.scopeInfoEnabled;
+            var resourceConstantLabels = this.GetResourceConstantLabels();
 
             foreach (var metricState in metricStates)
             {
+                if (metricState.WriteType)
+                {
+                    // This is the first metric of a new metric family, and only the metrics of a family can have the same series.
+                    this.series.StartFamily();
+                }
+
+                var metricStart = cursor;
                 var seriesMark = this.series.Count;
+                var deduplicate = metricState.Deduplicate;
 
                 while (true)
                 {
                     try
                     {
+                        this.tagKeys.Reset();
+
+                        // Series are only compared when they can be the same, as it is not free to do so.
+                        var options = deduplicate
+                            ? new TextFormatSerializerOptions(suppressScopeInfo, resourceConstantLabels, series: this.series)
+                            : new TextFormatSerializerOptions(suppressScopeInfo, resourceConstantLabels, tagKeys: this.tagKeys);
+
                         cursor = serializer.WriteMetric(
                             state.Buffer,
-                            cursor,
+                            metricStart,
                             metricState.Metric,
                             metricState.PrometheusMetric,
                             metricState.WriteType,
@@ -682,6 +696,14 @@ internal sealed class PrometheusCollectionManager
                             metricState.Unit,
                             metricState.Help,
                             options);
+
+                        if (!deduplicate && serializer.HasCollidingTagKeys(this.tagKeys, metricState.Metric))
+                        {
+                            // Tag keys of the metric are the same once they are escaped, so the series of
+                            // different points can be too. The metric is written again without any that are.
+                            deduplicate = true;
+                            continue;
+                        }
 
                         break;
                     }
@@ -998,6 +1020,38 @@ internal sealed class PrometheusCollectionManager
             return result != 0 ? result : string.CompareOrdinal(left.Metric.Name, right.Metric.Name);
         });
 
+        // The names of the samples that are written for a metric (such as the "_sum" of a histogram) cannot
+        // be the name of the samples of another metric family, so the family which has that name is dropped.
+        foreach (var family in metadataStates)
+        {
+            if (droppedMetricNames?.Contains(family.Key) is true)
+            {
+                continue;
+            }
+
+            foreach (var suffix in serializer.GetGeneratedSampleSuffixes(family.Value.Type))
+            {
+                var generatedName = family.Key + suffix;
+
+                if (metadataStates.ContainsKey(generatedName))
+                {
+                    droppedMetricNames ??= [with(StringComparer.Ordinal)];
+                    droppedMetricNames.Add(generatedName);
+                    PrometheusExporterEventSource.Log.ConflictingSampleName(generatedName, family.Key);
+                }
+            }
+        }
+
+        // A family which has more than one metric can have the same series for different metrics, such as when
+        // they are from different meters and the scope information that tells them apart is not written.
+        var metricCounts = new Dictionary<string, int>(StringComparer.Ordinal);
+
+        foreach (var precomputedMetricState in precomputedMetricStates)
+        {
+            metricCounts.TryGetValue(precomputedMetricState.MetadataName, out var count);
+            metricCounts[precomputedMetricState.MetadataName] = count + 1;
+        }
+
         var metricStates = new List<MetricState>(precomputedMetricStates.Count);
         var emittedMetricNames = new HashSet<string>(StringComparer.Ordinal);
 
@@ -1027,7 +1081,8 @@ internal sealed class PrometheusCollectionManager
                     writeUnit,
                     writeMetadata && metadataState.Help != null,
                     metadataState.Unit,
-                    metadataState.Help));
+                    metadataState.Help,
+                    deduplicate: metricCounts[metricState.MetadataName] > 1));
         }
 
         return metricStates;
@@ -1144,7 +1199,8 @@ internal sealed class PrometheusCollectionManager
             bool writeUnit,
             bool writeHelp,
             string? unit,
-            string? help)
+            string? help,
+            bool deduplicate)
         {
             this.Metric = metric;
             this.PrometheusMetric = prometheusMetric;
@@ -1153,6 +1209,7 @@ internal sealed class PrometheusCollectionManager
             this.WriteHelp = writeHelp;
             this.Unit = unit;
             this.Help = help;
+            this.Deduplicate = deduplicate;
         }
 
         public readonly Metric Metric { get; }
@@ -1168,6 +1225,8 @@ internal sealed class PrometheusCollectionManager
         public readonly string? Unit { get; }
 
         public readonly string? Help { get; }
+
+        public readonly bool Deduplicate { get; }
     }
 
     private readonly struct PrecomputedMetricState

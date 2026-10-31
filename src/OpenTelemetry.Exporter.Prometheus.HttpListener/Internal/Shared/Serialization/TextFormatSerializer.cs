@@ -182,11 +182,6 @@ internal abstract class TextFormatSerializer
             cursor = this.WriteHelpMetadata(buffer, cursor, prometheusMetric, helpOverride ?? metric.Description);
         }
 
-        // A series which has already been written is not written again, as the response would not be valid. The
-        // series that are checked are those of the samples which are written, so a metric is also dropped when
-        // the name of the sample that is generated for another one (such as "_sum") is the same as its own.
-        var series = options.Series;
-
         if (!metric.MetricType.IsHistogram())
         {
             var isLongValue = ((int)metric.MetricType & 0b_0000_1111) == 0x0a; // I8
@@ -194,7 +189,6 @@ internal abstract class TextFormatSerializer
             foreach (ref readonly var metricPoint in metric.GetMetricPoints())
             {
                 var seriesStart = cursor;
-                var seriesMark = series?.Count ?? 0;
 
                 cursor = this.WriteSeriesAndTags(
                     buffer,
@@ -208,9 +202,10 @@ internal abstract class TextFormatSerializer
 
                 var seriesEnd = cursor;
 
-                if (series is not null && !series.TryAdd(buffer, seriesStart, seriesEnd - seriesStart))
+                // A series which has already been written is not written again, as the response would not be valid.
+                if (options.Series is { } registry && !registry.TryAdd(buffer, seriesStart, seriesEnd - seriesStart))
                 {
-                    series.RecordDropped(metric.Name);
+                    registry.RecordDropped(metric.Name);
                     cursor = seriesStart;
                     continue;
                 }
@@ -234,8 +229,6 @@ internal abstract class TextFormatSerializer
 
                 buffer[cursor++] = AsciiLineFeed;
 
-                var createdStart = cursor;
-
                 cursor = this.WriteCounterCreated(
                     buffer,
                     cursor,
@@ -244,22 +237,12 @@ internal abstract class TextFormatSerializer
                     in metricPoint,
                     in options,
                     new ReadOnlySpan<byte>(buffer, seriesStart, seriesEnd - seriesStart));
-
-                if (series is not null && cursor > createdStart && !series.TryAdd(buffer, createdStart, cursor - createdStart))
-                {
-                    series.Rollback(seriesMark);
-                    series.RecordDropped(metric.Name);
-                    cursor = seriesStart;
-                }
             }
         }
         else
         {
             foreach (ref readonly var metricPoint in metric.GetMetricPoints())
             {
-                var pointStart = cursor;
-                var pointMark = series?.Count ?? 0;
-
                 var tags = metricPoint.Tags;
 
                 var serializedTagsBuffer = this.SerializeTagsToPooledBuffer(
@@ -272,9 +255,15 @@ internal abstract class TextFormatSerializer
                 try
                 {
                     var serializedTags = new ReadOnlySpan<byte>(serializedTagsBuffer, 0, serializedTagsLength);
+
+                    // The labels identify the series of the point, which is that of all of its buckets, sum and count.
+                    if (options.Series is { } histogramRegistry && !histogramRegistry.TryAdd(serializedTagsBuffer, 0, serializedTagsLength))
+                    {
+                        histogramRegistry.RecordDropped(metric.Name);
+                        continue;
+                    }
+
                     var hasNegativeBucketBounds = false;
-                    var isFirstBucket = true;
-                    var isDuplicate = false;
                     var previousBound = double.NegativeInfinity;
 
                     long totalCount = 0;
@@ -289,18 +278,6 @@ internal abstract class TextFormatSerializer
                         cursor = WriteSerializedTagValues(buffer, cursor, serializedTags, appendTrailingComma: true);
 
                         cursor = WriteAsciiStringNoEscape(buffer, cursor, "le=\"");
-
-                        if (isFirstBucket)
-                        {
-                            isFirstBucket = false;
-
-                            // The name and labels of the first bucket (up to the value of the le label) identify the buckets.
-                            if (series is not null && !series.TryAdd(buffer, pointStart, cursor - pointStart))
-                            {
-                                isDuplicate = true;
-                                break;
-                            }
-                        }
 
                         if (histogramMeasurement.ExplicitBound != double.PositiveInfinity)
                         {
@@ -321,30 +298,12 @@ internal abstract class TextFormatSerializer
                         previousBound = histogramMeasurement.ExplicitBound;
                     }
 
-                    if (isDuplicate)
-                    {
-                        series!.Rollback(pointMark);
-                        series.RecordDropped(metric.Name);
-                        cursor = pointStart;
-                        continue;
-                    }
-
                     if (this.ShouldWriteSumAndCount(hasNegativeBucketBounds))
                     {
                         // OpenMetrics histograms with negative bucket thresholds MUST NOT expose
                         // _sum and therefore MUST NOT expose _count.
                         // See https://prometheus.io/docs/specs/om/open_metrics_spec/#histogram-1
-                        var sumStart = cursor;
-
                         cursor = this.WriteSeriesNameAndSerializedTags(buffer, cursor, prometheusMetric, "_sum", serializedTags);
-
-                        if (series is not null && !series.TryAdd(buffer, sumStart, cursor - sumStart))
-                        {
-                            series.Rollback(pointMark);
-                            series.RecordDropped(metric.Name);
-                            cursor = pointStart;
-                            continue;
-                        }
 
                         buffer[cursor++] = unchecked((byte)' ');
 
@@ -353,17 +312,7 @@ internal abstract class TextFormatSerializer
                         buffer[cursor++] = AsciiLineFeed;
 
                         // Histogram count
-                        var countStart = cursor;
-
                         cursor = this.WriteSeriesNameAndSerializedTags(buffer, cursor, prometheusMetric, "_count", serializedTags);
-
-                        if (series is not null && !series.TryAdd(buffer, countStart, cursor - countStart))
-                        {
-                            series.Rollback(pointMark);
-                            series.RecordDropped(metric.Name);
-                            cursor = pointStart;
-                            continue;
-                        }
 
                         buffer[cursor++] = unchecked((byte)' ');
 
@@ -371,16 +320,7 @@ internal abstract class TextFormatSerializer
                         buffer[cursor++] = AsciiLineFeed;
                     }
 
-                    var createdStart = cursor;
-
                     cursor = this.WriteHistogramCreated(buffer, cursor, prometheusMetric, in metricPoint, serializedTags);
-
-                    if (series is not null && cursor > createdStart && !series.TryAdd(buffer, createdStart, cursor - createdStart))
-                    {
-                        series.Rollback(pointMark);
-                        series.RecordDropped(metric.Name);
-                        cursor = pointStart;
-                    }
                 }
                 finally
                 {
@@ -916,6 +856,51 @@ internal abstract class TextFormatSerializer
         return cursor;
     }
 
+    // The suffixes of the names of the samples which are written for a metric in addition to the name of the metric.
+    internal virtual string[] GetGeneratedSampleSuffixes(PrometheusType type) => type switch
+    {
+        PrometheusType.Histogram => ["_bucket", "_sum", "_count"],
+        _ => [],
+    };
+
+    // Whether any of the keys of the tags of the points of a metric are the same as another once they are escaped, or are not
+    // written as they are those of the labels of the metric, so that the series of different points can be the same.
+    internal bool HasCollidingTagKeys(TagKeyTracker tracker, Metric metric)
+    {
+        // The keys are almost always unchanged by escaping, in which case none of them can be the same as another.
+        var anyChanged = false;
+        var reservedKeys = metric.MetricType.IsHistogram() ? ReservedHistogramLabelNames : null;
+
+        foreach (var key in tracker.Keys)
+        {
+            var outputKey = this.GetOutputLabelKey(key);
+
+            if (reservedKeys is not null && Array.IndexOf(reservedKeys, outputKey) >= 0)
+            {
+                return true;
+            }
+
+            anyChanged |= !string.Equals(outputKey, key, StringComparison.Ordinal);
+        }
+
+        if (!anyChanged || tracker.Keys.Count < 2)
+        {
+            return false;
+        }
+
+        var outputKeys = new HashSet<string>(StringComparer.Ordinal);
+
+        foreach (var key in tracker.Keys)
+        {
+            if (!outputKeys.Add(this.GetOutputLabelKey(key)))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal int WriteTags(
         byte[] buffer,
@@ -953,6 +938,10 @@ internal abstract class TextFormatSerializer
         var resourceConstantLabels = options.ResourceConstantLabels;
         var hasResourceConstantLabels = resourceConstantLabels is { Count: > 0 };
 
+        // The labels are written ordered by their names when the series that are the same are being dropped.
+        var tagKeys = options.TagKeys;
+        var sortLabels = options.Series is not null;
+
         try
         {
             if (writeEnclosingBraces)
@@ -975,7 +964,7 @@ internal abstract class TextFormatSerializer
                 WriteScopeLabels();
             }
 
-            if (TryWritePointTags())
+            if (!sortLabels && TryWritePointTags())
             {
                 if (writeEnclosingBraces)
                 {
@@ -1003,8 +992,11 @@ internal abstract class TextFormatSerializer
                 }
             }
 
+            var slowTagIndex = 0;
+
             foreach (var tag in tags)
             {
+                tagKeys?.Observe(slowTagIndex++, tag.Key);
                 this.AddLabel(tag.Key, tag.Value, ref labels, reservedOutputKeys);
             }
 
@@ -1016,7 +1008,7 @@ internal abstract class TextFormatSerializer
                 }
             }
 
-            return WriteLabels(buffer, cursor, labels, writeEnclosingBraces, quotedNameBytes, quotedNameSuffix);
+            return WriteLabels(buffer, cursor, labels, writeEnclosingBraces, quotedNameBytes, quotedNameSuffix, sortLabels: sortLabels);
         }
         finally
         {
@@ -1042,8 +1034,12 @@ internal abstract class TextFormatSerializer
 
         bool TryWritePointTags()
         {
+            var tagIndex = 0;
+
             foreach (var tag in tags)
             {
+                tagKeys?.Observe(tagIndex++, tag.Key);
+
                 if (!TryWriteLabel(tag.Key, tag.Value))
                 {
                     return false;
@@ -2023,6 +2019,24 @@ internal abstract class TextFormatSerializer
         return true;
     }
 
+    // A stable insertion sort (so labels with the same name are still merged in the order that they were in), as there are few labels.
+    private static void SortByOutputKey(List<LabelData> labels)
+    {
+        for (var i = 1; i < labels.Count; i++)
+        {
+            var label = labels[i];
+            var j = i - 1;
+
+            while (j >= 0 && string.CompareOrdinal(labels[j].OutputKey, label.OutputKey) > 0)
+            {
+                labels[j + 1] = labels[j];
+                j--;
+            }
+
+            labels[j + 1] = label;
+        }
+    }
+
     private static int WriteLabels(
         byte[] buffer,
         int cursor,
@@ -2030,8 +2044,14 @@ internal abstract class TextFormatSerializer
         bool writeEnclosingBraces,
         ReadOnlySpan<byte> quotedNameBytes,
         string? quotedNameSuffix,
-        int? maxLabelSetCharacters = null)
+        int? maxLabelSetCharacters = null,
+        bool sortLabels = false)
     {
+        if (sortLabels && labels is List<LabelData> { Count: > 1 } sortable)
+        {
+            SortByOutputKey(sortable);
+        }
+
         if (writeEnclosingBraces)
         {
             buffer[cursor++] = unchecked((byte)'{');

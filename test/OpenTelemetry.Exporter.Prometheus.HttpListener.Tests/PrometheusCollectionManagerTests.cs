@@ -2381,6 +2381,8 @@ public sealed class PrometheusCollectionManagerTests
         meter.CreateHistogram<double>("generated_histogram").Record(7);
         meter.CreateGauge<double>("generated_histogram_sum").Record(100);
         meter.CreateGauge<double>("generated_histogram_count").Record(100);
+        meter.CreateGauge<double>("generated_histogram_bucket").Record(100, new KeyValuePair<string, object?>("le", "+Inf"));
+        meter.CreateGauge<double>("generated_histogram_bucket").Record(100, new KeyValuePair<string, object?>("le", "6"));
         meter.CreateCounter<int>("generated_counter").Add(1);
         meter.CreateGauge<double>("generated_counter_created").Record(100);
 
@@ -2388,6 +2390,11 @@ public sealed class PrometheusCollectionManagerTests
         var counter = meter.CreateCounter<int>("ordered_counter");
         counter.Add(1, new KeyValuePair<string, object?>("a.b", "1"), new KeyValuePair<string, object?>("aZ", "2"));
         counter.Add(2, new KeyValuePair<string, object?>("a_b", "1"), new KeyValuePair<string, object?>("aZ", "2"));
+
+        // A histogram with points that only differ by a tag that is not written, as it is the label of the buckets
+        var reservedHistogram = meter.CreateHistogram<double>("reserved_histogram");
+        reservedHistogram.Record(1, new KeyValuePair<string, object?>("le", "5000"));
+        reservedHistogram.Record(2);
 
         // A histogram without any buckets, which only has a sum and a count
         var histogram = meter.CreateHistogram<double>("empty_histogram");
@@ -2423,6 +2430,10 @@ public sealed class PrometheusCollectionManagerTests
         // The samples that are generated for a metric are those of the metric which they are generated for
         Assert.Single(samples, s => s.StartsWith("generated_histogram_sum", StringComparison.Ordinal) && s.EndsWith(" 7", StringComparison.Ordinal));
         Assert.Single(samples, s => s.StartsWith("generated_histogram_count", StringComparison.Ordinal) && s.EndsWith(" 1", StringComparison.Ordinal));
+        Assert.Single(samples, s => s.StartsWith("generated_histogram_bucket", StringComparison.Ordinal) && s.Contains("le=\"+Inf\"", StringComparison.Ordinal) && s.EndsWith(" 1", StringComparison.Ordinal));
+
+        // The family of a metric with the name of the samples of another is dropped, so it is not written even if it is not the same series
+        Assert.DoesNotContain(samples, s => s.StartsWith("generated_histogram_bucket", StringComparison.Ordinal) && s.Contains("le=\"6\"", StringComparison.Ordinal));
 
         // Only OpenMetrics has the "_created" sample of a counter, so that is the only format in which the gauge is dropped
         var createdSamples = samples.Where(s => s.StartsWith("generated_counter_created", StringComparison.Ordinal)).ToList();
@@ -2431,8 +2442,67 @@ public sealed class PrometheusCollectionManagerTests
         Assert.Equal(!openMetricsRequested, createdSamples[0].EndsWith(" 100", StringComparison.Ordinal));
 
         Assert.Single(samples, s => s.StartsWith("ordered_counter_total", StringComparison.Ordinal));
+        Assert.Single(samples, s => s.StartsWith("reserved_histogram_sum", StringComparison.Ordinal));
         Assert.Single(samples, s => s.StartsWith("empty_histogram_sum", StringComparison.Ordinal));
         Assert.Single(samples, s => s.StartsWith("empty_histogram_count", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public async Task EnterCollectDoesNotWriteTheSameSeriesMoreThanOnceWhenTheBufferHasToBeExpanded()
+    {
+        const int SeriesCount = 1_200; // Fewer than the default limit of the metric points of a metric
+
+        using var firstMeter = new Meter(nameof(this.EnterCollectDoesNotWriteTheSameSeriesMoreThanOnceWhenTheBufferHasToBeExpanded) + ".first");
+        using var secondMeter = new Meter(nameof(this.EnterCollectDoesNotWriteTheSameSeriesMoreThanOnceWhenTheBufferHasToBeExpanded) + ".second");
+
+#pragma warning disable CA2000 // Dispose objects before losing scope
+        var exporter = new PrometheusExporter(new PrometheusExporterOptions
+        {
+            ScopeInfoEnabled = false,
+            TargetInfoEnabled = false,
+            ScrapeResponseCacheDurationMilliseconds = 0,
+        });
+
+        var reader = new BaseExportingMetricReader(exporter)
+        {
+            TemporalityPreference = MetricReaderTemporalityPreference.Cumulative,
+        };
+#pragma warning restore CA2000 // Dispose objects before losing scope
+
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(firstMeter.Name)
+            .AddMeter(secondMeter.Name)
+            .AddReader(reader)
+            .Build();
+
+        var firstCounter = firstMeter.CreateCounter<int>("expanding_counter");
+        var secondCounter = secondMeter.CreateCounter<int>("expanding_counter");
+
+        for (var i = 0; i < SeriesCount; i++)
+        {
+            var tag = new KeyValuePair<string, object?>("key", "a_reasonably_long_value_for_the_series_" + i);
+
+            firstCounter.Add(1, tag);
+            secondCounter.Add(1, tag);
+        }
+
+        var response = await exporter.CollectionManager.EnterCollect(GetProtocol(openMetricsRequested: false), TestContext.Current.CancellationToken);
+
+        try
+        {
+            Assert.True(response.Succeeded);
+
+            // The buffer has to be expanded, so the metrics are written again, and the series that were written must be forgotten.
+            Assert.True(response.View.Count > PrometheusExporterOptions.InitialScrapeResponseSizeBytes);
+
+            var output = Encoding.UTF8.GetString(response.View.Array!, response.View.Offset, response.View.Count);
+
+            Assert.Equal(SeriesCount, output.Split('\n').Count(line => line.StartsWith("expanding_counter_total{", StringComparison.Ordinal)));
+        }
+        finally
+        {
+            exporter.CollectionManager.ExitCollect(response);
+        }
     }
 
     [Fact]

@@ -129,4 +129,11 @@ internal sealed class PrometheusExporterEventSource : EventSource, IConfiguratio
         Level = EventLevel.Warning)]
     public void DuplicateSeriesDropped(int count, string firstMetricName)
         => this.WriteEvent(15, count, firstMetricName);
+
+    [Event(
+        16,
+        Message = "Dropping metric family '{0}' because its name is that of a sample which is written for metric family '{1}'.",
+        Level = EventLevel.Warning)]
+    public void ConflictingSampleName(string metricName, string generatedFor)
+        => this.WriteEvent(16, metricName, generatedFor);
 }

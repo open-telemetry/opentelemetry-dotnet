@@ -644,47 +644,14 @@ public sealed partial class PrometheusSerializerTests
     }
 
     [Theory]
-    [InlineData(false, "test_histogram_sum")]
-    [InlineData(false, "test_histogram_count")]
-    [InlineData(true, "test_histogram_sum")]
-    [InlineData(true, "test_histogram_count")]
-    public void WriteMetricDropsMetricsWithTheNameOfASampleGeneratedForAHistogram(bool useOpenMetrics, string gaugeName)
+    [InlineData(new[] { "a.b", "a_b" }, true)]
+    [InlineData(new[] { "a.b", "aZ", "a_b" }, true)]
+    [InlineData(new[] { "a b", "a_b" }, true)]
+    [InlineData(new[] { "a.b", "a.c" }, false)]
+    [InlineData(new[] { "a_b", "c_d" }, false)]
+    [InlineData(new[] { "a.b" }, false)]
+    public void HasCollidingTagKeysIsTrueWhenKeysAreTheSameOnceEscaped(string[] keys, bool expected)
     {
-        var buffer = new byte[85000];
-        var metrics = new List<Metric>();
-
-        using var meter = CreateMeter();
-        using var provider = Sdk.CreateMeterProviderBuilder()
-            .AddMeter(meter.Name)
-            .AddInMemoryExporter(metrics)
-            .Build();
-
-        meter.CreateHistogram<double>("test_histogram").Record(7);
-        meter.CreateGauge<double>(gaugeName).Record(100);
-
-        provider.ForceFlush();
-
-        var series = new SeriesRegistry();
-        var cursor = 0;
-
-        // The metrics are written in the order of their names, which is that of their families, so the histogram is first.
-        foreach (var metric in metrics.OrderBy(m => m.Name, StringComparer.Ordinal))
-        {
-            cursor = WriteMetric(buffer, cursor, metric, useOpenMetrics, suppressScopeInfo: true, series: series);
-        }
-
-        var output = Encoding.UTF8.GetString(buffer, 0, cursor);
-
-        Assert.Single(GetSampleLines(output, gaugeName));
-        Assert.DoesNotContain(gaugeName + "{} 100", output, StringComparison.Ordinal);
-        Assert.Equal(1, series.DroppedCount);
-        Assert.NotEmpty(GetSampleLines(output, "test_histogram_bucket"));
-    }
-
-    [Fact]
-    public void WriteMetricDropsMetricsWithTheNameOfTheCreatedSampleGeneratedForACounter()
-    {
-        var buffer = new byte[85000];
         var metrics = new List<Metric>();
 
         using var meter = CreateMeter();
@@ -694,51 +661,86 @@ public sealed partial class PrometheusSerializerTests
             .Build();
 
         meter.CreateCounter<int>("test_counter").Add(1);
-        meter.CreateGauge<double>("test_counter_created").Record(100);
 
         provider.ForceFlush();
 
-        var series = new SeriesRegistry();
-        var cursor = 0;
+        var tracker = new TagKeyTracker();
+        var index = 0;
 
-        foreach (var metric in metrics.OrderBy(m => m.Name, StringComparer.Ordinal))
+        foreach (var key in keys ?? [])
         {
-            cursor = WriteMetric(buffer, cursor, metric, useOpenMetrics: true, suppressScopeInfo: true, series: series);
+            tracker.Observe(index++, key);
         }
 
-        var output = Encoding.UTF8.GetString(buffer, 0, cursor);
-
-        Assert.Single(GetSampleLines(output, "test_counter_created"));
-        Assert.DoesNotContain("test_counter_created{} 100", output, StringComparison.Ordinal);
-        Assert.Equal(1, series.DroppedCount);
+        Assert.Equal(expected, TextFormatSerializer.PrometheusV1.HasCollidingTagKeys(tracker, metrics.Single()));
     }
 
-    [Theory]
-    [InlineData("a{x=\"1\",y=\"2\"}", "a{y=\"2\",x=\"1\"}", true)]
-    [InlineData("a{x=\"1\",y=\"2\",z=\"3\"}", "a{z=\"3\",x=\"1\",y=\"2\"}", true)]
-    [InlineData("a{x=\"1\",y=\"2\"} 1", "a{y=\"2\",x=\"1\"} 2", true)]
-    [InlineData("a{x=\"1\",y=\"2\"}", "a{x=\"2\",y=\"1\"}", false)]
-    [InlineData("a{k1=\"a,k2=b\"}", "a{k1=\"a\",k2=\"b\"}", false)]
-    [InlineData("a{k=\"x}\",j=\"y\"}", "a{j=\"y\",k=\"x}\"}", true)]
-    [InlineData("a{k=\"v\\\",x=\\\"1\",z=\"2\"}", "a{z=\"2\",k=\"v\\\",x=\\\"1\"}", true)]
-    [InlineData("a{k=\"v\\\",x=\\\"1\"}", "a{k=\"v\\\"\",x=\"1\"}", false)]
-    [InlineData("a{x=\"1\"}", "b{x=\"1\"}", false)]
-    [InlineData("a{}", "a{}", true)]
-    [InlineData("a{x=\"1\"}", "a{x=\"1\",y=\"2\"}", false)]
-    [InlineData("{\"a.b\",x=\"1\",y=\"2\"}", "{\"a.b\",y=\"2\",x=\"1\"}", true)]
-    [InlineData("{\"a.b\",x=\"1\"}", "{\"a.c\",x=\"1\"}", false)]
-    [InlineData("a_bucket{x=\"1\",y=\"2\",le=\"", "a_bucket{y=\"2\",x=\"1\",le=\"", true)]
-    [InlineData("a_bucket{x=\"1\",", "a_bucket{x=\"1\"}", true)]
-    public void SeriesRegistryIdentifiesSeriesByTheirNameAndLabelsInAnyOrder(string first, string second, bool expectedDuplicate)
+    [Fact]
+    public void HasCollidingTagKeysIsTrueForTheKeyOfAHistogramWhichIsNotWritten()
+    {
+        var metrics = new List<Metric>();
+
+        using var meter = CreateMeter();
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddInMemoryExporter(metrics)
+            .Build();
+
+        meter.CreateHistogram<double>("test_histogram").Record(1);
+        meter.CreateCounter<int>("test_counter").Add(1);
+
+        provider.ForceFlush();
+
+        var tracker = new TagKeyTracker();
+
+        tracker.Observe(0, "le");
+
+        // The label of a bucket is not written for a tag that has its name, so a point with the tag has the same series as one without it.
+        Assert.True(TextFormatSerializer.PrometheusV1.HasCollidingTagKeys(tracker, metrics.Single(m => m.Name == "test_histogram")));
+        Assert.False(TextFormatSerializer.PrometheusV1.HasCollidingTagKeys(tracker, metrics.Single(m => m.Name == "test_counter")));
+    }
+
+    [Fact]
+    public void TagKeyTrackerObservesTheDistinctKeysOfTheTagsOfPoints()
+    {
+        var tracker = new TagKeyTracker();
+        var first = new string("key".ToCharArray());
+        var second = new string("key".ToCharArray());
+
+        tracker.Observe(0, first);
+        tracker.Observe(0, first);
+        tracker.Observe(1, "other");
+        tracker.Observe(0, second);
+
+        Assert.Equal(2, tracker.Keys.Count);
+
+        tracker.Reset();
+
+        Assert.Empty(tracker.Keys);
+    }
+
+    [Fact]
+    public void SeriesRegistryForgetsTheSeriesWhenAFamilyStarts()
     {
         var registry = new SeriesRegistry();
+        var buffer = Encoding.UTF8.GetBytes("a{x=\"1\"}");
 
-        var firstBytes = Encoding.UTF8.GetBytes(first);
-        var secondBytes = Encoding.UTF8.GetBytes(second);
+        Assert.True(registry.TryAdd(buffer, 0, buffer.Length));
+        Assert.False(registry.TryAdd(buffer, 0, buffer.Length));
 
-        Assert.True(registry.TryAdd(firstBytes, 0, firstBytes.Length));
-        Assert.Equal(!expectedDuplicate, registry.TryAdd(secondBytes, 0, secondBytes.Length));
-        Assert.Equal(expectedDuplicate ? 1 : 2, registry.Count);
+        registry.RecordDropped("a");
+        registry.StartFamily();
+
+        Assert.Equal(0, registry.Count);
+        Assert.True(registry.TryAdd(buffer, 0, buffer.Length));
+
+        // What was dropped is only forgotten when the response is
+        Assert.Equal(1, registry.DroppedCount);
+
+        registry.Clear();
+
+        Assert.Equal(0, registry.DroppedCount);
+        Assert.Null(registry.FirstDroppedMetricName);
     }
 
     [Fact]
