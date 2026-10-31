@@ -12,8 +12,9 @@ namespace OpenTelemetry.Resources.FuzzTests;
 /// Fuzz tests for <see cref="OtelEnvResourceDetector"/>, which parses <c>OTEL_RESOURCE_ATTRIBUTES</c>.
 /// </summary>
 /// <remarks>
-/// The specification defines the value as a list of <c>key=value</c> pairs in the W3C Baggage format,
-/// separated by commas, where values are percent-encoded (and only percent-encoded).
+/// The Resource SDK specification defines the value as a list of <c>key=value</c> pairs separated by commas, where
+/// <c>,</c> and <c>=</c> must be percent-encoded, and other characters may be. The only encoding that is defined is
+/// percent-encoding (RFC 3986), so no other character (such as <c>+</c>) is changed when the value is decoded.
 /// </remarks>
 public class OtelEnvResourceDetectorFuzzTests
 {
@@ -40,11 +41,11 @@ public class OtelEnvResourceDetectorFuzzTests
         });
 
     [Property(MaxTest = MaxTests)]
-    public Property UnencodedBaggageCharactersAreNotTransformed() => Prop.ForAll(
-        Generators.RawBaggageAttributesArbitrary(),
+    public Property UnencodedCharactersOtherThanSeparatorsAreNotTransformed() => Prop.ForAll(
+        Generators.RawAttributesArbitrary(),
         static (attributes) =>
         {
-            // Characters such as '+' are valid, unencoded, baggage-octets. Only percent-escapes may be decoded.
+            // Only the ',' and '=' characters have to be encoded, so characters such as '+' are not changed. Only percent-escapes are decoded.
             var value = string.Join(",", attributes.Select(static a => a.Key + "=" + a.Value));
 
             return Matches(Detect(value), attributes);
@@ -63,7 +64,7 @@ public class OtelEnvResourceDetectorFuzzTests
 
     [Property(MaxTest = MaxTests)]
     public Property SurroundingWhitespaceAroundPairsIsIgnored() => Prop.ForAll(
-        Generators.RawBaggageAttributesArbitrary(),
+        Generators.RawAttributesArbitrary(),
         static (attributes) =>
         {
             var value = string.Join(" , ", attributes.Select(static a => " " + a.Key + " = " + Uri.EscapeDataString(a.Value) + " "));
@@ -94,10 +95,11 @@ public class OtelEnvResourceDetectorFuzzTests
 
         private static readonly Gen<char> UnreservedChar = Gen.Elements("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_.~".ToCharArray());
 
-        // The remaining baggage-octets, which are legal in a value without any encoding.
-        private static readonly Gen<char> RawBaggageChar = Gen.Frequency(
+        // Characters other than the separators, and the '%' that starts a percent-encoded character, which do not need to be encoded.
+        private static readonly Gen<char> RawChar = Gen.Frequency(
             (6, UnreservedChar),
-            (2, Gen.Elements("+*!$&'()/:?@[]{}|^<>#".ToCharArray())));
+            (2, Gen.Elements("+*!$&'()/:?@[]{}|^<>#\\\";~".ToCharArray())),
+            (1, Gen.Choose(0xA0, 0xD7FF).Select(static c => (char)c).Where(static c => !char.IsWhiteSpace(c))));
 
         private static readonly Gen<char> AnyValueChar = Gen.Frequency(
             (4, UnreservedChar),
@@ -120,7 +122,7 @@ public class OtelEnvResourceDetectorFuzzTests
 
         public static Arbitrary<List<KeyValuePair<string, string>>> AttributesArbitrary() => AttributesGen(AnyValueChar).ToArbitrary();
 
-        public static Arbitrary<List<KeyValuePair<string, string>>> RawBaggageAttributesArbitrary() => AttributesGen(RawBaggageChar).ToArbitrary();
+        public static Arbitrary<List<KeyValuePair<string, string>>> RawAttributesArbitrary() => AttributesGen(RawChar).ToArbitrary();
 
         private static Gen<List<KeyValuePair<string, string>>> AttributesGen(Gen<char> valueChar) =>
             from count in Gen.Choose(1, 5)
