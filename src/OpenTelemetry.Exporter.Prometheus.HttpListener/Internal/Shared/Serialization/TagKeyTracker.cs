@@ -4,22 +4,29 @@
 namespace OpenTelemetry.Exporter.Prometheus.Serialization;
 
 /// <summary>
-/// Keeps track of the keys of the tags of the points of a metric as they are written, so that it can be determined
-/// whether two of the keys are the same once they have been escaped, which can make the series of different points the same.
+/// Keeps track of the keys of the tags of the points of a metric, and the types of their values, as they are written, so that
+/// it can be determined whether two keys are the same once they have been escaped, or whether a key has values of different
+/// types (such as 1 and "1"), which can make the series of different points the same.
 /// </summary>
 /// <remarks>
-/// Almost all of the points of a metric have the same keys, which are the same strings, so each key is only compared
+/// Almost all of the points of a metric have the same keys with values of the same types, so each key is only compared
 /// with the key that was in the same position for the previous point. This type is not thread-safe.
 /// </remarks>
 internal sealed class TagKeyTracker
 {
-    private readonly HashSet<string> keys = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, Type?> keys = new(StringComparer.Ordinal);
     private readonly string?[] previousKeys = new string?[16];
+    private readonly Type?[] previousTypes = new Type?[16];
 
     /// <summary>
     /// Gets the distinct keys of the tags that were observed.
     /// </summary>
-    public IReadOnlyCollection<string> Keys => this.keys;
+    public IReadOnlyCollection<string> Keys => this.keys.Keys;
+
+    /// <summary>
+    /// Gets a value indicating whether any key was observed with values of different types.
+    /// </summary>
+    public bool HasMixedValueTypes { get; private set; }
 
     /// <summary>
     /// Forgets the keys, ready for the points of the next metric.
@@ -27,7 +34,9 @@ internal sealed class TagKeyTracker
     public void Reset()
     {
         this.keys.Clear();
+        this.HasMixedValueTypes = false;
         Array.Clear(this.previousKeys, 0, this.previousKeys.Length);
+        Array.Clear(this.previousTypes, 0, this.previousTypes.Length);
     }
 
     /// <summary>
@@ -35,18 +44,29 @@ internal sealed class TagKeyTracker
     /// </summary>
     /// <param name="index">The index of the tag in its point.</param>
     /// <param name="key">The key of the tag.</param>
-    public void Observe(int index, string key)
+    /// <param name="value">The value of the tag.</param>
+    public void Observe(int index, string key, object? value)
     {
+        var type = value?.GetType();
+
         if (index < this.previousKeys.Length)
         {
-            if (ReferenceEquals(this.previousKeys[index], key))
+            if (ReferenceEquals(this.previousKeys[index], key) && this.previousTypes[index] == type)
             {
                 return;
             }
 
             this.previousKeys[index] = key;
+            this.previousTypes[index] = type;
         }
 
-        _ = this.keys.Add(key);
+        if (!this.keys.TryGetValue(key, out var existing))
+        {
+            this.keys[key] = type;
+        }
+        else if (existing != type)
+        {
+            this.HasMixedValueTypes = true;
+        }
     }
 }

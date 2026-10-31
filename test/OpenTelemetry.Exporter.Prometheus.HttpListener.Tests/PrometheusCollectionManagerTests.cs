@@ -2386,6 +2386,16 @@ public sealed class PrometheusCollectionManagerTests
         meter.CreateCounter<int>("generated_counter").Add(1);
         meter.CreateGauge<double>("generated_counter_created").Record(100);
 
+        // A family which is dropped does not reserve the names of its samples, whatever the order that the metrics are created in
+        meter.CreateHistogram<double>("dropped_histogram_sum").Record(1);
+        meter.CreateHistogram<double>("dropped_histogram").Record(1);
+        meter.CreateGauge<double>("dropped_histogram_sum_count").Record(100);
+
+        // Values of different types which are written as the same label value
+        var mixed = meter.CreateGauge<double>("mixed_gauge");
+        mixed.Record(1, new KeyValuePair<string, object?>("k", 1));
+        mixed.Record(2, new KeyValuePair<string, object?>("k", "1"));
+
         // Points with the same labels in a different order once their keys are escaped
         var counter = meter.CreateCounter<int>("ordered_counter");
         counter.Add(1, new KeyValuePair<string, object?>("a.b", "1"), new KeyValuePair<string, object?>("aZ", "2"));
@@ -2441,10 +2451,58 @@ public sealed class PrometheusCollectionManagerTests
         Assert.Single(createdSamples);
         Assert.Equal(!openMetricsRequested, createdSamples[0].EndsWith(" 100", StringComparison.Ordinal));
 
+        Assert.Single(samples, s => s.StartsWith("dropped_histogram_sum_count", StringComparison.Ordinal));
+        Assert.Single(samples, s => s.StartsWith("mixed_gauge", StringComparison.Ordinal));
         Assert.Single(samples, s => s.StartsWith("ordered_counter_total", StringComparison.Ordinal));
         Assert.Single(samples, s => s.StartsWith("reserved_histogram_sum", StringComparison.Ordinal));
         Assert.Single(samples, s => s.StartsWith("empty_histogram_sum", StringComparison.Ordinal));
         Assert.Single(samples, s => s.StartsWith("empty_histogram_count", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public async Task EnterCollectKeepsMetricsWithTheNameOfACounterSampleWhenCountersHaveNoTotalSuffix()
+    {
+        using var meter = CreateMeter();
+
+#pragma warning disable CA2000 // Dispose objects before losing scope
+        var exporter = new PrometheusExporter(new PrometheusExporterOptions
+        {
+            TargetInfoEnabled = false,
+            ScrapeResponseCacheDurationMilliseconds = 0,
+            TranslationStrategy = PrometheusTranslationStrategy.UnderscoreEscapingWithoutSuffixes,
+        });
+
+        var reader = new BaseExportingMetricReader(exporter)
+        {
+            TemporalityPreference = MetricReaderTemporalityPreference.Cumulative,
+        };
+#pragma warning restore CA2000 // Dispose objects before losing scope
+
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddReader(reader)
+            .Build();
+
+        // The counter is written as "requests", so "requests_total" is not the name of one of its samples
+        meter.CreateCounter<int>("requests").Add(1);
+        meter.CreateGauge<double>("requests_total").Record(100);
+
+        var response = await exporter.CollectionManager.EnterCollect(GetProtocol(openMetricsRequested: true), TestContext.Current.CancellationToken);
+
+        try
+        {
+            Assert.True(response.Succeeded);
+
+            var output = Encoding.UTF8.GetString(response.View.Array!, response.View.Offset, response.View.Count);
+            var samples = output.Split('\n').Where(line => line.Length > 0 && line[0] != '#').ToList();
+
+            Assert.Single(samples, s => s.StartsWith("requests{", StringComparison.Ordinal));
+            Assert.Single(samples, s => s.StartsWith("requests_total{", StringComparison.Ordinal));
+        }
+        finally
+        {
+            exporter.CollectionManager.ExitCollect(response);
+        }
     }
 
     [Fact]

@@ -669,7 +669,7 @@ public sealed partial class PrometheusSerializerTests
 
         foreach (var key in keys ?? [])
         {
-            tracker.Observe(index++, key);
+            tracker.Observe(index++, key, 1);
         }
 
         Assert.Equal(expected, TextFormatSerializer.PrometheusV1.HasCollidingTagKeys(tracker, metrics.Single()));
@@ -693,7 +693,7 @@ public sealed partial class PrometheusSerializerTests
 
         var tracker = new TagKeyTracker();
 
-        tracker.Observe(0, "le");
+        tracker.Observe(0, "le", "5000");
 
         // The label of a bucket is not written for a tag that has its name, so a point with the tag has the same series as one without it.
         Assert.True(TextFormatSerializer.PrometheusV1.HasCollidingTagKeys(tracker, metrics.Single(m => m.Name == "test_histogram")));
@@ -707,16 +707,23 @@ public sealed partial class PrometheusSerializerTests
         var first = new string("key".ToCharArray());
         var second = new string("key".ToCharArray());
 
-        tracker.Observe(0, first);
-        tracker.Observe(0, first);
-        tracker.Observe(1, "other");
-        tracker.Observe(0, second);
+        tracker.Observe(0, first, 1);
+        tracker.Observe(0, first, 2);
+        tracker.Observe(1, "other", "value");
+        tracker.Observe(0, second, 3);
 
         Assert.Equal(2, tracker.Keys.Count);
+        Assert.False(tracker.HasMixedValueTypes);
+
+        // The same key with values of different types is written as the same label
+        tracker.Observe(0, first, "1");
+
+        Assert.True(tracker.HasMixedValueTypes);
 
         tracker.Reset();
 
         Assert.Empty(tracker.Keys);
+        Assert.False(tracker.HasMixedValueTypes);
     }
 
     [Fact]

@@ -86,6 +86,8 @@ internal abstract class TextFormatSerializer
 
     private static readonly string[] ReservedExemplarLabelNames = ["trace_id", "span_id"];
 
+    private static readonly string[] HistogramSampleSuffixes = ["_bucket", "_sum", "_count"];
+
     private string[]? reservedExemplarOutputKeys;
 
     private int serializedTagsBufferHint = 256;
@@ -857,16 +859,19 @@ internal abstract class TextFormatSerializer
     }
 
     // The suffixes of the names of the samples which are written for a metric in addition to the name of the metric.
-    internal virtual string[] GetGeneratedSampleSuffixes(PrometheusType type) => type switch
-    {
-        PrometheusType.Histogram => ["_bucket", "_sum", "_count"],
-        _ => [],
-    };
+    internal virtual string[] GetGeneratedSampleSuffixes(PrometheusMetric metric)
+        => metric.Type == PrometheusType.Histogram ? HistogramSampleSuffixes : [];
 
     // Whether any of the keys of the tags of the points of a metric are the same as another once they are escaped, or are not
     // written as they are those of the labels of the metric, so that the series of different points can be the same.
     internal bool HasCollidingTagKeys(TagKeyTracker tracker, Metric metric)
     {
+        // Values of different types (such as 1 and "1") are written as the same label value.
+        if (tracker.HasMixedValueTypes)
+        {
+            return true;
+        }
+
         // The keys are almost always unchanged by escaping, in which case none of them can be the same as another.
         var anyChanged = false;
         var reservedKeys = metric.MetricType.IsHistogram() ? ReservedHistogramLabelNames : null;
@@ -996,7 +1001,7 @@ internal abstract class TextFormatSerializer
 
             foreach (var tag in tags)
             {
-                tagKeys?.Observe(slowTagIndex++, tag.Key);
+                tagKeys?.Observe(slowTagIndex++, tag.Key, tag.Value);
                 this.AddLabel(tag.Key, tag.Value, ref labels, reservedOutputKeys);
             }
 
@@ -1038,7 +1043,7 @@ internal abstract class TextFormatSerializer
 
             foreach (var tag in tags)
             {
-                tagKeys?.Observe(tagIndex++, tag.Key);
+                tagKeys?.Observe(tagIndex++, tag.Key, tag.Value);
 
                 if (!TryWriteLabel(tag.Key, tag.Value))
                 {

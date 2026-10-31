@@ -1022,22 +1022,35 @@ internal sealed class PrometheusCollectionManager
 
         // The names of the samples that are written for a metric (such as the "_sum" of a histogram) cannot
         // be the name of the samples of another metric family, so the family which has that name is dropped.
-        foreach (var family in metadataStates)
+        // The families are in order of their names, and the name of a sample is longer than that of its family, so
+        // whether a family has been dropped is known by the time that it is reached, and only the ones that were not reserve names.
+        string? previousName = null;
+
+        foreach (var precomputedMetricState in precomputedMetricStates)
         {
-            if (droppedMetricNames?.Contains(family.Key) is true)
+            var familyName = precomputedMetricState.MetadataName;
+
+            if (string.Equals(familyName, previousName, StringComparison.Ordinal))
             {
                 continue;
             }
 
-            foreach (var suffix in serializer.GetGeneratedSampleSuffixes(family.Value.Type))
+            previousName = familyName;
+
+            if (droppedMetricNames?.Contains(familyName) is true)
             {
-                var generatedName = family.Key + suffix;
+                continue;
+            }
+
+            foreach (var suffix in serializer.GetGeneratedSampleSuffixes(precomputedMetricState.PrometheusMetric))
+            {
+                var generatedName = familyName + suffix;
 
                 if (metadataStates.ContainsKey(generatedName))
                 {
                     droppedMetricNames ??= [with(StringComparer.Ordinal)];
                     droppedMetricNames.Add(generatedName);
-                    PrometheusExporterEventSource.Log.ConflictingSampleName(generatedName, family.Key);
+                    PrometheusExporterEventSource.Log.ConflictingSampleName(generatedName, familyName);
                 }
             }
         }
