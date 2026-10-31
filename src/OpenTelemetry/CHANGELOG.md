@@ -6,6 +6,12 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Added `ExportUnsampledSpans` property to `SimpleActivityExportProcessor` and
+  `BatchActivityExportProcessor`. When set to `true`, activities which are
+  recorded but not sampled (`SamplingDecision.RecordOnly`) are passed to the
+  exporter. The default is `false`.
+  ([#NNNN](https://github.com/open-telemetry/opentelemetry-dotnet/pull/NNNN))
+
 ## 1.21.0-rc.1
 
 Released 2026-Oct-28

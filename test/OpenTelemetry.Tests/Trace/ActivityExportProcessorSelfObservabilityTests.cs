@@ -377,6 +377,66 @@ public class ActivityExportProcessorSelfObservabilityTests
     }
 
     [Fact]
+    public void RecordOnlySpansAreExportedAndCountedOnceWhenExportUnsampledSpansEnabled()
+    {
+        var exportedMetrics = new List<Metric>();
+        using var meterProvider = CreateMeterProvider(exportedMetrics);
+
+        var batchExported = new List<Activity>();
+        var simpleExported = new List<Activity>();
+
+        using var batchExporter = new InMemoryExporter<Activity>(batchExported);
+        using var simpleExporter = new InMemoryExporter<Activity>(simpleExported);
+
+        using var batch = new BatchActivityExportProcessor(batchExporter)
+        {
+            ExportUnsampledSpans = true,
+        };
+        using var simple = new SimpleActivityExportProcessor(simpleExporter)
+        {
+            ExportUnsampledSpans = true,
+        };
+
+        var sourceName = Utils.GetCurrentMethodName();
+
+        using var source = new ActivitySource(sourceName);
+
+        using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+            .AddSource(sourceName)
+            .SetSampler(new RecordOnlySampler())
+            .AddProcessor(batch)
+            .AddProcessor(simple)
+            .Build();
+
+        var activities = StartAndStopActivities(source, 3);
+
+        Assert.Equal(3, activities.Count);
+        Assert.All(activities, a =>
+        {
+            Assert.False(a.Recorded);
+            Assert.True(a.IsAllDataRequested);
+        });
+
+        batch.ForceFlush();
+        meterProvider.ForceFlush();
+
+        var points = GetMetricPoints(exportedMetrics);
+
+        var batchPoint = points.Single(p => HasTagValue(p, "otel.component.type", "batching_span_processor"));
+        var simplePoint = points.Single(p => HasTagValue(p, "otel.component.type", "simple_span_processor"));
+
+        Assert.Equal(3, batchPoint.GetSumLong());
+        Assert.Equal(3, simplePoint.GetSumLong());
+        Assert.False(HasTag(batchPoint, "error.type"));
+        Assert.False(HasTag(simplePoint, "error.type"));
+
+        // With ExportUnsampledSpans enabled, RECORD_ONLY spans take the export path:
+        // each one must be counted exactly once and reach the exporter.
+        Assert.Equal(3, batchExported.Count);
+        Assert.Equal(3, simpleExported.Count);
+    }
+
+    [Fact]
     public void RecordOnlySpansAreCountedAsSuccessAfterShutdown()
     {
         var exportedMetrics = new List<Metric>();

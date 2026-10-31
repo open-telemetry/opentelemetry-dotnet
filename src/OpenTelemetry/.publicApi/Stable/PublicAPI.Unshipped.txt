@@ -1,0 +1,4 @@
+OpenTelemetry.BatchActivityExportProcessor.ExportUnsampledSpans.get -> bool
+OpenTelemetry.BatchActivityExportProcessor.ExportUnsampledSpans.set -> void
+OpenTelemetry.SimpleActivityExportProcessor.ExportUnsampledSpans.get -> bool
+OpenTelemetry.SimpleActivityExportProcessor.ExportUnsampledSpans.set -> void
