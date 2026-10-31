@@ -47,18 +47,7 @@ internal abstract class TagWriter<TTagState, TArrayState>
         {
             // Ordered by how often each type is likely to appear for performance
             case string s:
-                if (tagValueMaxLength is { } length && s.Length > length)
-                {
-                    this.WriteStringTag(
-                        ref state,
-                        key,
-                        s.AsSpan(0, length));
-                }
-                else
-                {
-                    this.WriteStringTag(ref state, key, s);
-                }
-
+                this.WriteStringTag(ref state, key, s, tagValueMaxLength);
                 break;
             case int i:
                 this.WriteIntegralTag(ref state, key, i);
@@ -123,7 +112,7 @@ internal abstract class TagWriter<TTagState, TArrayState>
                 {
                     this.WriteArrayTagInternal(ref state, key, array, tagValueMaxLength);
                 }
-                catch (Exception ex) when (ex is IndexOutOfRangeException or ArgumentException)
+                catch (Exception ex) when (ex is IndexOutOfRangeException or ArgumentException or OutOfMemoryException)
                 {
                     throw;
                 }
@@ -159,6 +148,12 @@ internal abstract class TagWriter<TTagState, TArrayState>
             case IDictionary dictionary:
                 return this.TryWriteKvListTagWithinDepthLimit(ref state, key, value, AdaptDictionary(dictionary), tagValueMaxLength);
 
+#if NET
+            // Checked after the built-in types above, most of which also implement this interface.
+            case IUtf8SpanFormattable utf8SpanFormattable:
+                return this.TryWriteUtf8SpanFormattableTag(ref state, key, utf8SpanFormattable, tagValueMaxLength);
+#endif
+
             // All other types are converted to strings including the following
             // built-in value types:
             // case nint:    Pointer type.
@@ -166,32 +161,7 @@ internal abstract class TagWriter<TTagState, TArrayState>
             // case ulong:   May throw an exception on overflow (where ISpanFormattable not available).
             // case decimal: Converting to double produces rounding errors (where ISpanFormattable not available).
             default:
-                string? stringValue;
-                try
-                {
-                    stringValue = Convert.ToString(value, CultureInfo.InvariantCulture);
-                }
-                catch
-                {
-                    // If ToString throws an exception then the tag is ignored.
-                    return this.LogUnsupportedTagTypeAndReturnFalse(key, value);
-                }
-
-                if (stringValue == null)
-                {
-                    return this.LogUnsupportedTagTypeAndReturnFalse(key, value);
-                }
-
-                // Written outside of the try block so that an exception thrown
-                // because the buffer is full reaches the serializer, which
-                // resizes the buffer and retries, instead of the tag being dropped.
-                this.WriteStringTag(
-                    ref state,
-                    key,
-                    stringValue,
-                    tagValueMaxLength);
-
-                break;
+                return this.TryWriteToStringTag(ref state, key, value, tagValueMaxLength);
         }
 
         return true;
@@ -255,6 +225,28 @@ internal abstract class TagWriter<TTagState, TArrayState>
         return true;
     }
 
+    /// <summary>
+    /// Truncates a string to at most <paramref name="maxLength"/> UTF-16 chars without splitting a
+    /// surrogate pair, which would leave a lone surrogate that cannot be encoded as UTF-8.
+    /// </summary>
+    /// <param name="value">The string to truncate.</param>
+    /// <param name="maxLength">The maximum length in UTF-16 chars, if any.</param>
+    /// <returns>The leading part of <paramref name="value"/> that fits within the limit.</returns>
+    protected static ReadOnlySpan<char> TruncateString(ReadOnlySpan<char> value, int? maxLength)
+    {
+        if (maxLength is not { } length || value.Length <= length)
+        {
+            return value;
+        }
+
+        if (length > 0 && char.IsSurrogatePair(value[length - 1], value[length]))
+        {
+            length--;
+        }
+
+        return value.Slice(0, length);
+    }
+
     protected abstract bool TryWriteEmptyTag(ref TTagState state, string key, object? value);
 
     protected abstract bool TryWriteByteArrayTag(ref TTagState state, string key, ReadOnlySpan<byte> value);
@@ -272,16 +264,52 @@ internal abstract class TagWriter<TTagState, TArrayState>
 
     protected abstract void WriteArrayTag(ref TTagState state, string key, ref TArrayState value);
 
+#if NET
+    protected virtual bool TryWriteUtf8SpanFormattableTag(ref TTagState state, string key, IUtf8SpanFormattable value, int? tagValueMaxLength)
+        => this.TryWriteToStringTag(ref state, key, value, tagValueMaxLength);
+#endif
+
     protected abstract void WriteKvListTag(ref TTagState state, string key, IEnumerable<KeyValuePair<string, object?>> kvList, int? tagValueMaxLength);
 
     protected abstract void OnUnsupportedTagDropped(
         string tagKey,
         string tagValueTypeFullName);
 
-    private static ReadOnlySpan<char> TruncateString(ReadOnlySpan<char> value, int? maxLength)
-        => maxLength is { } maxLengthValue && value.Length > maxLengthValue
-           ? value.Slice(0, maxLengthValue)
-           : value;
+    protected bool LogUnsupportedTagTypeAndReturnFalse(string key, object value)
+    {
+        this.OnUnsupportedTagDropped(key, value.GetType().ToString());
+        return false;
+    }
+
+    protected bool TryWriteToStringTag(ref TTagState state, string key, object value, int? tagValueMaxLength)
+    {
+        string? stringValue;
+        try
+        {
+            stringValue = Convert.ToString(value, CultureInfo.InvariantCulture);
+        }
+        catch (Exception ex) when (ex is not OutOfMemoryException)
+        {
+            // If ToString throws an exception then the tag is ignored.
+            return this.LogUnsupportedTagTypeAndReturnFalse(key, value);
+        }
+
+        if (stringValue == null)
+        {
+            return this.LogUnsupportedTagTypeAndReturnFalse(key, value);
+        }
+
+        // Written outside of the try block so that an exception thrown
+        // because the buffer is full reaches the serializer, which
+        // resizes the buffer and retries, instead of the tag being dropped.
+        this.WriteStringTag(
+            ref state,
+            key,
+            stringValue,
+            tagValueMaxLength);
+
+        return true;
+    }
 
     private static IEnumerable<KeyValuePair<string, object?>> AdaptStringKvList(IEnumerable<KeyValuePair<string, string?>> source)
     {
@@ -325,7 +353,7 @@ internal abstract class TagWriter<TTagState, TArrayState>
                     key,
                     TruncateString(stringValue.AsSpan(), tagValueMaxLength));
             }
-            catch (Exception ex) when (ex is IndexOutOfRangeException or ArgumentException)
+            catch (Exception ex) when (ex is IndexOutOfRangeException or ArgumentException or OutOfMemoryException)
             {
                 recursionDepth = 0;
                 throw;
@@ -345,7 +373,7 @@ internal abstract class TagWriter<TTagState, TArrayState>
         {
             this.WriteKvListTag(ref state, key, kvList, tagValueMaxLength);
         }
-        catch (Exception ex) when (ex is IndexOutOfRangeException or ArgumentException)
+        catch (Exception ex) when (ex is IndexOutOfRangeException or ArgumentException or OutOfMemoryException)
         {
             recursionDepth = 0;
             throw;
@@ -834,7 +862,7 @@ internal abstract class TagWriter<TTagState, TArrayState>
     {
         if (maxLength is { } length && value.Length > length)
         {
-            this.WriteStringTag(ref state, key, value.AsSpan(0, length));
+            this.WriteStringTag(ref state, key, TruncateString(value.AsSpan(), length));
         }
         else
         {
@@ -846,17 +874,11 @@ internal abstract class TagWriter<TTagState, TArrayState>
     {
         if (maxLength is { } length && value.Length > length)
         {
-            this.arrayWriter.WriteStringValue(ref state, value.AsSpan(0, length));
+            this.arrayWriter.WriteStringValue(ref state, TruncateString(value.AsSpan(), length));
         }
         else
         {
             this.arrayWriter.WriteStringValue(ref state, value);
         }
-    }
-
-    private bool LogUnsupportedTagTypeAndReturnFalse(string key, object value)
-    {
-        this.OnUnsupportedTagDropped(key, value.GetType().ToString());
-        return false;
     }
 }

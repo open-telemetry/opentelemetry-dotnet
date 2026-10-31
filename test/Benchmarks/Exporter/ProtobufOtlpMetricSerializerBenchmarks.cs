@@ -75,7 +75,7 @@ public class ProtobufOtlpMetricSerializerBenchmarks
 
     [Benchmark]
     public int WriteMetricsData()
-        => ProtobufOtlpMetricSerializer.WriteMetricsData(ref this.buffer, 0, Resource.Empty, in this.batch);
+        => ProtobufOtlpMetricSerializer.WriteMetricsData(ref this.buffer, 0, Resource.Empty, in this.batch, out _);
 
     [GlobalCleanup]
     public void Cleanup()

@@ -15,6 +15,17 @@ Notes](../../RELEASENOTES.md).
   is denied.
   ([#8070](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8070))
 
+* Added the experimental `OTEL_DOTNET_EXPERIMENTAL_OTLP_UTF8_SPANS` setting.
+  When set to `true`, attribute values implementing `IUtf8SpanFormattable`
+  (.NET 8+) that are not already handled as a built-in type are formatted
+  directly into the export buffer with `TryFormat` and exported as string
+  attributes, instead of through `ToString()`.
+  ([#7929](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7929))
+
+* An `OutOfMemoryException` thrown while converting an attribute value to a
+  string is no longer swallowed and the attribute dropped; it now propagates.
+  ([#7929](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7929))
+
 ## 1.21.0-rc.1
 
 Released 2026-Oct-28
@@ -54,6 +65,11 @@ Released 2026-Oct-28
 
 * Add support for .NET 11.0.
   ([#6899](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6899))
+
+* Fixed string attribute values truncated by an attribute value length limit
+  ending in half of a surrogate pair. The truncated value now ends before the
+  pair instead.
+  ([#7929](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7929))
 
 ## 1.20.1
 

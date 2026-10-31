@@ -732,6 +732,31 @@ want to solicit feedback from the community.
 
       Added in **TBD** (Unreleased).
 
+  * `OTEL_DOTNET_EXPERIMENTAL_OTLP_UTF8_SPANS`
+
+    When set to `true` (.NET 8+), attribute values implementing
+    `IUtf8SpanFormattable` that are not already handled as a built-in type are
+    formatted directly into the export buffer with `TryFormat` instead of
+    through `ToString()`. `TryFormat` must return `false` only when the
+    destination is too small, and must not throw for any other reason: an
+    `ArgumentException` or `IndexOutOfRangeException` is treated as the
+    destination being too small. Without an attribute value length limit, a
+    value that never fits grows the export buffer to its maximum size and the
+    batch is dropped. Values are exported as string attributes.
+
+    The setting is read once from the environment variable (not from
+    `IConfiguration`) and applies to every OTLP exporter in the process.
+
+    Built-in types such as `Int128`, `DateOnly`, `TimeOnly`, `Version` and
+    `IPAddress` also take this path once it is enabled.
+
+    A formatter may write anywhere in the space it is given, and all of that
+    space is cleared before the export buffer goes back to the shared array
+    pool. That space is 3 bytes per char of the attribute value length limit,
+    or the rest of the export buffer when there is no limit.
+
+    Added in **TBD** (Unreleased).
+
 > [!NOTE]
 > Disk retry is not supported on browser-based platforms.
 

@@ -79,15 +79,20 @@ internal sealed class SerializationBuffer(int initialSize, ArrayPool<byte>? pool
     /// </summary>
     /// <param name="buffer">The buffer returned by <see cref="Rent"/>.</param>
     /// <param name="serializedLength">The number of bytes written to the buffer.</param>
-    public void Return(byte[] buffer, int serializedLength)
+    /// <param name="dirtyLength">
+    /// The number of leading bytes that may have been written, which can be more than
+    /// <paramref name="serializedLength"/> when a value was rolled back or formatted with scratch space.
+    /// </param>
+    public void Return(byte[] buffer, int serializedLength, int dirtyLength)
     {
         System.Diagnostics.Debug.Assert((uint)serializedLength <= (uint)buffer.Length, "Serialized length was invalid.");
+        System.Diagnostics.Debug.Assert((uint)dirtyLength <= (uint)buffer.Length, "Dirty length was invalid.");
 
         // Use the actual payload length rather than the rented capacity so a single
         // large export does not force every subsequent export to rent the same size.
         this.nextSize = Math.Max(this.initialSize, serializedLength);
 
-        var dirtyLength = Math.Max(this.dirtyLength, serializedLength);
+        dirtyLength = Math.Max(this.dirtyLength, Math.Max(serializedLength, dirtyLength));
 
 #if NETFRAMEWORK || NETSTANDARD2_0_OR_GREATER
         if (buffer.Length > MaxPooledArrayLength &&
