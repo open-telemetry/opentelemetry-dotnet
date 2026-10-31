@@ -866,8 +866,8 @@ internal abstract class TextFormatSerializer
     // written as they are those of the labels of the metric, so that the series of different points can be the same.
     internal bool HasCollidingTagKeys(TagKeyTracker tracker, Metric metric)
     {
-        // Values of different types (such as 1 and "1") are written as the same label value.
-        if (tracker.HasMixedValueTypes)
+        // Values of different types (such as 1 and "1"), or different arrays, can be written as the same label value.
+        if (tracker.HasAmbiguousValues)
         {
             return true;
         }

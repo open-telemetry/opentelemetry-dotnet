@@ -713,17 +713,23 @@ public sealed partial class PrometheusSerializerTests
         tracker.Observe(0, second, 3);
 
         Assert.Equal(2, tracker.Keys.Count);
-        Assert.False(tracker.HasMixedValueTypes);
+        Assert.False(tracker.HasAmbiguousValues);
 
         // The same key with values of different types is written as the same label
         tracker.Observe(0, first, "1");
 
-        Assert.True(tracker.HasMixedValueTypes);
+        Assert.True(tracker.HasAmbiguousValues);
 
         tracker.Reset();
 
         Assert.Empty(tracker.Keys);
-        Assert.False(tracker.HasMixedValueTypes);
+        Assert.False(tracker.HasAmbiguousValues);
+
+        // Different arrays are written as the same label value if they have the same items
+        int[] items = [1];
+        tracker.Observe(0, first, items);
+
+        Assert.True(tracker.HasAmbiguousValues);
     }
 
     [Fact]

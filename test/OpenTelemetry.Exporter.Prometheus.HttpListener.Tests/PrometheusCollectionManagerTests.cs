@@ -2396,6 +2396,16 @@ public sealed class PrometheusCollectionManagerTests
         mixed.Record(1, new KeyValuePair<string, object?>("k", 1));
         mixed.Record(2, new KeyValuePair<string, object?>("k", "1"));
 
+        // Different arrays with the same items, which are written as the same label value
+        var arrays = meter.CreateGauge<double>("array_gauge");
+        int[] items = [1];
+        arrays.Record(1, new KeyValuePair<string, object?>("k", items));
+        arrays.Record(2, new KeyValuePair<string, object?>("k", items.ToArray()));
+
+        var bytes = meter.CreateGauge<double>("bytes_gauge");
+        bytes.Record(1, new KeyValuePair<string, object?>("k", new byte[] { 1 }));
+        bytes.Record(2, new KeyValuePair<string, object?>("k", new byte[] { 1 }));
+
         // Points with the same labels in a different order once their keys are escaped
         var counter = meter.CreateCounter<int>("ordered_counter");
         counter.Add(1, new KeyValuePair<string, object?>("a.b", "1"), new KeyValuePair<string, object?>("aZ", "2"));
@@ -2453,6 +2463,8 @@ public sealed class PrometheusCollectionManagerTests
 
         Assert.Single(samples, s => s.StartsWith("dropped_histogram_sum_count", StringComparison.Ordinal));
         Assert.Single(samples, s => s.StartsWith("mixed_gauge", StringComparison.Ordinal));
+        Assert.Single(samples, s => s.StartsWith("array_gauge", StringComparison.Ordinal));
+        Assert.Single(samples, s => s.StartsWith("bytes_gauge", StringComparison.Ordinal));
         Assert.Single(samples, s => s.StartsWith("ordered_counter_total", StringComparison.Ordinal));
         Assert.Single(samples, s => s.StartsWith("reserved_histogram_sum", StringComparison.Ordinal));
         Assert.Single(samples, s => s.StartsWith("empty_histogram_sum", StringComparison.Ordinal));
