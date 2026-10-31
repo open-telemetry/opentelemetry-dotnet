@@ -22,13 +22,29 @@ internal sealed class TagKeyTracker
     /// <summary>
     /// Gets the distinct keys of the tags that were observed.
     /// </summary>
-    public IReadOnlyCollection<string> Keys => this.keys.Keys;
+    public Dictionary<string, Type?>.KeyCollection Keys => this.keys.Keys;
+
+    /// <summary>
+    /// Gets the output label keys of the keys that were observed for the metrics of the response, which is used by the
+    /// serializer and must be cleared with <see cref="ClearOutputKeys"/> when the response changes.
+    /// </summary>
+    public Dictionary<string, string> OutputKeys { get; } = new(StringComparer.Ordinal);
+
+    /// <summary>
+    /// Gets a set that the serializer can use to find duplicate output keys without allocating one for each metric.
+    /// </summary>
+    public HashSet<string> ScratchOutputKeys { get; } = new(StringComparer.Ordinal);
 
     /// <summary>
     /// Gets a value indicating whether any key was observed with values of different types, or with values
     /// of a type for which different values can be written as the same label value.
     /// </summary>
     public bool HasAmbiguousValues { get; private set; }
+
+    /// <summary>
+    /// Forgets the output label keys, ready for the next response to be written.
+    /// </summary>
+    public void ClearOutputKeys() => this.OutputKeys.Clear();
 
     /// <summary>
     /// Forgets the keys, ready for the points of the next metric.

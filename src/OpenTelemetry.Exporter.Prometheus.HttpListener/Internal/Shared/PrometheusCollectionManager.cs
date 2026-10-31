@@ -658,6 +658,7 @@ internal sealed class PrometheusCollectionManager
             var metricStates = this.GetMetricStates(serializer, metrics);
 
             this.series.Clear();
+            this.tagKeys.ClearOutputKeys();
 
             var suppressScopeInfo = !this.scopeInfoEnabled;
             var resourceConstantLabels = this.GetResourceConstantLabels();
@@ -679,6 +680,7 @@ internal sealed class PrometheusCollectionManager
                     try
                     {
                         this.tagKeys.Reset();
+                        TextFormatSerializer.ResetReplacementCharacterWritten();
 
                         // Series are only compared when they can be the same, as it is not free to do so.
                         var options = deduplicate
@@ -699,7 +701,7 @@ internal sealed class PrometheusCollectionManager
 
                         if (!deduplicate &&
                             (serializer.HasCollidingTagKeys(this.tagKeys, metricState.Metric) ||
-                             TextFormatSerializer.ContainsReplacementCharacter(state.Buffer, metricStart, cursor)))
+                             TextFormatSerializer.WasReplacementCharacterWritten()))
                         {
                             // Tag keys or values of the metric can be the same once they are written, so the series of
                             // different points can be too. The metric is written again without any that are.
@@ -1026,20 +1028,30 @@ internal sealed class PrometheusCollectionManager
         // be the name of the samples of another metric family, so the family which has that name is dropped.
         // The families are in order of their names, and the name of a sample is longer than that of its family, so
         // whether a family has been dropped is known by the time that it is reached, and only the ones that were not reserve names.
-        string? previousName = null;
-
-        foreach (var precomputedMetricState in precomputedMetricStates)
+        for (var index = 0; index < precomputedMetricStates.Count; index++)
         {
+            var precomputedMetricState = precomputedMetricStates[index];
             var familyName = precomputedMetricState.MetadataName;
 
-            if (string.Equals(familyName, previousName, StringComparison.Ordinal))
+            if (index > 0 && string.Equals(familyName, precomputedMetricStates[index - 1].MetadataName, StringComparison.Ordinal))
             {
                 continue;
             }
 
-            previousName = familyName;
-
             if (droppedMetricNames?.Contains(familyName) is true)
+            {
+                continue;
+            }
+
+            // The names which start with the name of the family follow it, so there is nothing to find unless the next one does.
+            var next = index + 1;
+
+            while (next < precomputedMetricStates.Count && string.Equals(precomputedMetricStates[next].MetadataName, familyName, StringComparison.Ordinal))
+            {
+                next++;
+            }
+
+            if (next == precomputedMetricStates.Count || !precomputedMetricStates[next].MetadataName.StartsWith(familyName, StringComparison.Ordinal))
             {
                 continue;
             }
@@ -1057,25 +1069,24 @@ internal sealed class PrometheusCollectionManager
             }
         }
 
-        // A family which has more than one metric can have the same series for different metrics, such as when
-        // they are from different meters and the scope information that tells them apart is not written.
-        var metricCounts = new Dictionary<string, int>(StringComparer.Ordinal);
-
-        foreach (var precomputedMetricState in precomputedMetricStates)
-        {
-            metricCounts.TryGetValue(precomputedMetricState.MetadataName, out var count);
-            metricCounts[precomputedMetricState.MetadataName] = count + 1;
-        }
-
         var metricStates = new List<MetricState>(precomputedMetricStates.Count);
         var emittedMetricNames = new HashSet<string>(StringComparer.Ordinal);
 
-        foreach (var metricState in precomputedMetricStates)
+        for (var index = 0; index < precomputedMetricStates.Count; index++)
         {
+            var metricState = precomputedMetricStates[index];
+
             if (droppedMetricNames?.Contains(metricState.MetadataName) is true)
             {
                 continue;
             }
+
+            // A family which has more than one metric can have the same series for different metrics, such as when
+            // they are from different meters and the scope information that tells them apart is not written.
+            // The metrics of a family are together, as they are in order of their names.
+            var deduplicate =
+                (index > 0 && string.Equals(precomputedMetricStates[index - 1].MetadataName, metricState.MetadataName, StringComparison.Ordinal)) ||
+                (index + 1 < precomputedMetricStates.Count && string.Equals(precomputedMetricStates[index + 1].MetadataName, metricState.MetadataName, StringComparison.Ordinal));
 
             var writeMetadata = emittedMetricNames.Add(metricState.MetadataName);
             var metadataState = metadataStates[metricState.MetadataName];
@@ -1097,7 +1108,7 @@ internal sealed class PrometheusCollectionManager
                     writeMetadata && metadataState.Help != null,
                     metadataState.Unit,
                     metadataState.Help,
-                    deduplicate: metricCounts[metricState.MetadataName] > 1));
+                    deduplicate));
         }
 
         return metricStates;

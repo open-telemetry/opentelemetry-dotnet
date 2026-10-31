@@ -87,7 +87,9 @@ internal abstract class TextFormatSerializer
     private static readonly string[] ReservedExemplarLabelNames = ["trace_id", "span_id"];
 
     private static readonly string[] HistogramSampleSuffixes = ["_bucket", "_sum", "_count"];
-    private static readonly byte[] ReplacementCharacter = [0xEF, 0xBF, 0xBD];
+
+    [ThreadStatic]
+    private static bool replacementCharacterWritten;
 
     private string[]? reservedExemplarOutputKeys;
 
@@ -809,10 +811,11 @@ internal abstract class TextFormatSerializer
         return cursor;
     }
 
-    // Whether the bytes contain the replacement character, which is written for each surrogate that is not part of a pair,
-    // so different values can be written as the same label value. It is rare, and a search for it is fast.
-    internal static bool ContainsReplacementCharacter(byte[] buffer, int start, int end)
-        => new ReadOnlySpan<byte>(buffer, start, end - start).IndexOf(ReplacementCharacter) >= 0;
+    // The replacement character is written for each surrogate that is not part of a pair, so different values can be
+    // written as the same label value. Whether it was written is remembered for the current thread, from when it is reset.
+    internal static void ResetReplacementCharacterWritten() => replacementCharacterWritten = false;
+
+    internal static bool WasReplacementCharacterWritten() => replacementCharacterWritten;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal int WriteExemplar(byte[] buffer, int cursor, in Exemplar exemplar, bool isLongValue)
@@ -884,7 +887,7 @@ internal abstract class TextFormatSerializer
 
         foreach (var key in tracker.Keys)
         {
-            var outputKey = this.GetOutputLabelKey(key);
+            var outputKey = this.GetOutputLabelKey(key, tracker.OutputKeys);
 
             if (reservedKeys is not null && Array.IndexOf(reservedKeys, outputKey) >= 0)
             {
@@ -899,11 +902,12 @@ internal abstract class TextFormatSerializer
             return false;
         }
 
-        var outputKeys = new HashSet<string>(StringComparer.Ordinal);
+        var outputKeys = tracker.ScratchOutputKeys;
+        outputKeys.Clear();
 
         foreach (var key in tracker.Keys)
         {
-            if (!outputKeys.Add(this.GetOutputLabelKey(key)))
+            if (!outputKeys.Add(this.GetOutputLabelKey(key, tracker.OutputKeys)))
             {
                 return true;
             }
@@ -1807,12 +1811,14 @@ internal abstract class TextFormatSerializer
             }
 
             charsConsumed = 1;
+            replacementCharacterWritten = true;
             return UnicodeReplacementCharacter;
         }
 
         if (char.IsLowSurrogate(character))
         {
             charsConsumed = 1;
+            replacementCharacterWritten = true;
             return UnicodeReplacementCharacter;
         }
 
@@ -1838,6 +1844,7 @@ internal abstract class TextFormatSerializer
             return WriteUnicodeNoEscape(buffer, cursor, char.ConvertToUtf32(current, value[index]));
         }
 
+        replacementCharacterWritten = true;
         return WriteUnicodeNoEscape(buffer, cursor, 0xFFFD);
     }
 #endif
@@ -2607,6 +2614,18 @@ internal abstract class TextFormatSerializer
     // the negotiated scheme reverses it correctly; for example "otel_scope_dot_name" would
     // otherwise be incorrectly decoded under the dots scheme into "otel_scope.name", losing
     // the required "otel_scope_" prefix. The underscores scheme leaves the key unchanged.
+    // The output keys of a response are remembered, as most of the keys that are escaped are for the tags of every metric.
+    private string GetOutputLabelKey(string value, Dictionary<string, string> cache)
+    {
+        if (!cache.TryGetValue(value, out var outputKey))
+        {
+            outputKey = this.GetOutputLabelKey(value);
+            cache[value] = outputKey;
+        }
+
+        return outputKey;
+    }
+
     private string GetOutputLabelKey(string value)
     {
         // The dots and values schemes produce a reversible, legacy-valid ASCII label name. The
