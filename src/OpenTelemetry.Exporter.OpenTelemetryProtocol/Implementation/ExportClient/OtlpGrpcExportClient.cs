@@ -159,9 +159,12 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
             string? grpcAcceptEncodingHeader = null;
             if (status.StatusCode == StatusCode.Unimplemented)
             {
+                // The header may be sent as more than one field, so the values are joined rather
+                // than using GetHeaderValue(), which throws for repeated fields and would cause
+                // the UNIMPLEMENTED status to be replaced by a retryable Unavailable one.
                 grpcAcceptEncodingHeader =
-                    GrpcProtocolHelpers.GetHeaderValue(httpResponse.Headers, GrpcAcceptEncodingHeader) ??
-                    GrpcProtocolHelpers.GetHeaderValue(trailingHeaders, GrpcAcceptEncodingHeader);
+                    GrpcProtocolHelpers.GetListHeaderValue(httpResponse.Headers, GrpcAcceptEncodingHeader) ??
+                    GrpcProtocolHelpers.GetListHeaderValue(trailingHeaders, GrpcAcceptEncodingHeader);
             }
 
             OpenTelemetryProtocolExporterEventSource.Log.ExportFailure(this.Endpoint, "Export failed due to unexpected status code.", status);

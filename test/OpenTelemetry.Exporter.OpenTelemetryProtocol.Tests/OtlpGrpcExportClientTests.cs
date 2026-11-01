@@ -292,7 +292,7 @@ public class OtlpGrpcExportClientTests
         var buffer = BuildGrpcFrame("grpc test payload for compression"u8.ToArray());
 
         using var listener = new TestEventListener(OpenTelemetryProtocolExporterEventSource.Log, EventLevel.Warning);
-        using var testHandler = new GrpcEncodingMessageHandler(encoding => encoding == "zstd" ? StatusCode.Unimplemented : StatusCode.OK, acceptEncoding);
+        using var testHandler = new GrpcEncodingMessageHandler(encoding => encoding == "zstd" ? StatusCode.Unimplemented : StatusCode.OK, acceptEncoding is null ? null : [acceptEncoding]);
         using var httpClient = new HttpClient(testHandler, disposeHandler: false);
 
         var exportClient = CreateZstdExportClient(httpClient);
@@ -319,7 +319,7 @@ public class OtlpGrpcExportClientTests
         var buffer = BuildGrpcFrame("grpc test payload for compression"u8.ToArray());
 
         // The receiver supports zstd, so the error is unrelated to the compression used.
-        using var testHandler = new GrpcEncodingMessageHandler(_ => StatusCode.Unimplemented, acceptEncoding);
+        using var testHandler = new GrpcEncodingMessageHandler(_ => StatusCode.Unimplemented, [acceptEncoding]);
         using var httpClient = new HttpClient(testHandler, disposeHandler: false);
 
         var exportClient = CreateZstdExportClient(httpClient);
@@ -329,6 +329,45 @@ public class OtlpGrpcExportClientTests
         Assert.False(response.Success);
         Assert.Equal(["zstd"], testHandler.GrpcEncodings);
         Assert.Equal(OtlpExportCompression.Zstd, exportClient.Compression);
+    }
+
+    [Theory]
+    [InlineData("identity", "gzip", true)]
+    [InlineData("identity", "zstd", false)]
+    [InlineData("zstd", "gzip", false)]
+    public void SendExportRequest_GrpcExport_ZstdCompression_UnimplementedWithRepeatedAcceptEncodingFields_RetriesWithGzipOnlyIfZstdIsNotAdvertised(
+        string firstEncoding,
+        string secondEncoding,
+        bool retriesWithGzip)
+    {
+        var buffer = BuildGrpcFrame("grpc test payload for compression"u8.ToArray());
+
+        // The header is sent as two fields, which must be treated as one list rather than as an error.
+        using var testHandler = new GrpcEncodingMessageHandler(
+            encoding => encoding == "zstd" ? StatusCode.Unimplemented : StatusCode.OK,
+            [firstEncoding, secondEncoding]);
+        using var httpClient = new HttpClient(testHandler, disposeHandler: false);
+
+        var exportClient = CreateZstdExportClient(httpClient);
+
+        var response = exportClient.SendExportRequest(buffer, buffer.Length, DateTime.UtcNow.AddSeconds(10), TestContext.Current.CancellationToken);
+
+        if (retriesWithGzip)
+        {
+            Assert.True(response.Success);
+            Assert.Equal(["zstd", "gzip"], testHandler.GrpcEncodings);
+            Assert.Equal(OtlpExportCompression.GZip, exportClient.Compression);
+        }
+        else
+        {
+            var grpcResponse = Assert.IsType<ExportClientGrpcResponse>(response);
+            Assert.False(grpcResponse.Success);
+
+            // Not the retryable Unavailable status that an exception reading the header would produce
+            Assert.Equal(StatusCode.Unimplemented, grpcResponse.Status?.StatusCode);
+            Assert.Equal(["zstd"], testHandler.GrpcEncodings);
+            Assert.Equal(OtlpExportCompression.Zstd, exportClient.Compression);
+        }
     }
 
     [Theory]
@@ -666,7 +705,7 @@ public class OtlpGrpcExportClientTests
     }
 
 #if NET11_0_OR_GREATER
-    private sealed class GrpcEncodingMessageHandler(Func<string?, StatusCode> getStatusCode, string? acceptEncoding = null) : HttpMessageHandler
+    private sealed class GrpcEncodingMessageHandler(Func<string?, StatusCode> getStatusCode, string[]? acceptEncodings = null) : HttpMessageHandler
     {
         public List<string?> GrpcEncodings { get; } = [];
 
@@ -684,9 +723,13 @@ public class OtlpGrpcExportClientTests
 
             response.Headers.Add("grpc-status", ((int)getStatusCode(encoding)).ToString(System.Globalization.CultureInfo.InvariantCulture));
 
-            if (acceptEncoding != null)
+            if (acceptEncodings != null)
             {
-                response.Headers.Add("grpc-accept-encoding", acceptEncoding);
+                // Each value is sent as a separate field
+                foreach (var acceptEncoding in acceptEncodings)
+                {
+                    response.Headers.Add("grpc-accept-encoding", acceptEncoding);
+                }
             }
 
             return Task.FromResult(response);
