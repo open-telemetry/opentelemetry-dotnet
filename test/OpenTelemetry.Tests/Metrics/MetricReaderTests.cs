@@ -2,12 +2,17 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics.Metrics;
+using System.Diagnostics.Tracing;
+using OpenTelemetry.Internal;
 using OpenTelemetry.Tests;
 
 namespace OpenTelemetry.Metrics.Tests;
 
 public class MetricReaderTests
 {
+    private const string SkippedBatchMessage = "PeriodicExportingMetricReader skipped exporting a batch because the timeout period has elapsed.";
+    private const string SkippedAfterShutdownMessage = "PeriodicExportingMetricReader skipped exporting because the reader is shut down.";
+
     [Theory]
     [InlineData("counter", typeof(long), AggregationTemporality.Delta)]
     [InlineData("counter", typeof(double), AggregationTemporality.Delta)]
@@ -357,13 +362,32 @@ public class MetricReaderTests
             counter.Add(1, new KeyValuePair<string, object?>("key", i));
         }
 
+        // The remaining batches are skipped once the first of them is, instead of each one being
+        // built only to be skipped too, so the skipped batches are reported once rather than once each.
+        var flushThreadId = Environment.CurrentManagedThreadId;
+        var skippedBatches = 0;
+
+        using var listener = new MetricReaderEventListener(message =>
+        {
+            if (Environment.CurrentManagedThreadId == flushThreadId &&
+                string.Equals(message, SkippedBatchMessage, StringComparison.Ordinal))
+            {
+                skippedBatches++;
+            }
+        });
+
         Assert.False(provider.ForceFlush(timeoutMilliseconds: 500));
         Assert.Equal(1, exportCount);
+        Assert.Equal(1, skippedBatches);
     }
 
-    [Fact]
-    public void MaxExportBatchSize_ExportTimeoutAppliesToEachBatchExportedByWorker()
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void MaxExportBatchSize_ExportTimeoutAppliesToEachBatchExportedByWorker(bool threadingDisabled)
     {
+        using var threadingOverride = ThreadingHelper.BeginThreadingOverride(threadingDisabled);
+
         const int ExportTimeoutMilliseconds = 200;
 
         var exportCount = 0;
@@ -402,9 +426,13 @@ public class MetricReaderTests
         Assert.Equal(3, exportCount);
     }
 
-    [Fact]
-    public async Task MaxExportBatchSize_DoesNotExportBatchesAfterShutdownTimesOut()
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task MaxExportBatchSize_DoesNotExportBatchesAfterShutdownTimesOut(bool threadingDisabled)
     {
+        using var threadingOverride = ThreadingHelper.BeginThreadingOverride(threadingDisabled);
+
         using var exportStarted = new ManualResetEventSlim();
         using var allowExportToFinish = new ManualResetEventSlim();
 
@@ -470,17 +498,31 @@ public class MetricReaderTests
     }
 
     [Theory]
-    [InlineData(null)]
-    [InlineData(10)]
-    public void Shutdown_DoesNotExportWorkerCollectionAfterTimeout(int? maxExportBatchSize)
+    [InlineData(null, false)]
+    [InlineData(10, false)]
+    [InlineData(null, true)]
+    [InlineData(10, true)]
+    public void Shutdown_DoesNotExportWorkerCollectionAfterTimeout(int? maxExportBatchSize, bool threadingDisabled)
     {
+        using var threadingOverride = ThreadingHelper.BeginThreadingOverride(threadingDisabled);
+
         using var firstCollectionStarted = new ManualResetEventSlim();
         using var allowFirstCollectionToFinish = new ManualResetEventSlim();
-        using var nextCollectionStarted = new ManualResetEventSlim();
+        using var firstCollectionSkipped = new ManualResetEventSlim();
 
         var callbackCount = 0;
         var exportsAfterExporterShutdown = 0;
         var exporterShutdown = false;
+
+        // The first collection of the worker is exported after the exporter has been shut down, so it is skipped
+        using var listener = new MetricReaderEventListener(message =>
+        {
+            if (Volatile.Read(ref exporterShutdown) &&
+                string.Equals(message, SkippedAfterShutdownMessage, StringComparison.Ordinal))
+            {
+                firstCollectionSkipped.Set();
+            }
+        });
 
         using var meter = new Meter(Utils.GetCurrentMethodName());
 
@@ -491,10 +533,6 @@ public class MetricReaderTests
             {
                 firstCollectionStarted.Set();
                 allowFirstCollectionToFinish.Wait(TimeSpan.FromSeconds(30));
-            }
-            else
-            {
-                nextCollectionStarted.Set();
             }
 
             return 1;
@@ -539,8 +577,8 @@ public class MetricReaderTests
 
         allowFirstCollectionToFinish.Set();
 
-        // The worker only starts its next collection once the first one has finished
-        Assert.True(nextCollectionStarted.Wait(TimeSpan.FromSeconds(30), TestContext.Current.CancellationToken));
+        // The export of the first collection is skipped, rather than made to the shut down exporter
+        Assert.True(firstCollectionSkipped.Wait(TimeSpan.FromSeconds(30), TestContext.Current.CancellationToken));
         Assert.Equal(0, Volatile.Read(ref exportsAfterExporterShutdown));
     }
 
@@ -561,6 +599,29 @@ public class MetricReaderTests
 
     private static Task<bool> RunOnDedicatedThread(Func<bool> collect)
         => Task.Factory.StartNew(collect, CancellationToken.None, TaskCreationOptions.LongRunning, TaskScheduler.Default);
+
+    private sealed class MetricReaderEventListener : EventListener
+    {
+        private readonly Action<string> onMessage;
+
+        public MetricReaderEventListener(Action<string> onMessage)
+        {
+            this.onMessage = onMessage;
+            this.EnableEvents(OpenTelemetrySdkEventSource.Log, EventLevel.Verbose);
+        }
+
+        protected override void OnEventWritten(EventWrittenEventArgs eventData)
+        {
+            // The handler runs synchronously on the thread which wrote the event
+            if (eventData.EventSource == OpenTelemetrySdkEventSource.Log &&
+                eventData.EventName == nameof(OpenTelemetrySdkEventSource.MetricReaderEvent) &&
+                eventData.Payload is { Count: > 0 } payload &&
+                payload[0] is string message)
+            {
+                this.onMessage(message);
+            }
+        }
+    }
 
     private sealed class BlockingMetricReader : MetricReader
     {

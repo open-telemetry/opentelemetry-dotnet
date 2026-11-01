@@ -168,7 +168,12 @@ public class PeriodicExportingMetricReader : BaseExportingMetricReader
     }
 
     private bool ExportMetrics(in Batch<Metric> metrics, int timeoutMilliseconds)
+        => this.ExportMetrics(metrics, timeoutMilliseconds, out _);
+
+    private bool ExportMetrics(in Batch<Metric> metrics, int timeoutMilliseconds, out bool skipped)
     {
+        skipped = false;
+
         // The export timeout also applies to exports which are not started by the
         // worker, such as those of MeterProvider.ForceFlush(), when it is shorter.
         if (this.ExportTimeoutMilliseconds > 0 &&
@@ -190,6 +195,7 @@ public class PeriodicExportingMetricReader : BaseExportingMetricReader
             if (remainingMilliseconds <= 0)
             {
                 OpenTelemetrySdkEventSource.Log.MetricReaderEvent("PeriodicExportingMetricReader skipped exporting because the reader is shut down.");
+                skipped = true;
                 return false;
             }
 
@@ -219,6 +225,7 @@ public class PeriodicExportingMetricReader : BaseExportingMetricReader
         var batchMetricCount = 0;
         var batchMetricPointCount = 0;
         var result = true;
+        var skipped = false;
 
         try
         {
@@ -231,7 +238,7 @@ public class PeriodicExportingMetricReader : BaseExportingMetricReader
                 // do not fit in the space left in the current batch. Only the last
                 // metric of a batch can continue into the next one, and its window
                 // is not moved until the batch it is in has been exported.
-                for (var offset = 0; offset < metricPointCount;)
+                for (var offset = 0; offset < metricPointCount && !skipped;)
                 {
                     var count = Math.Min(metricPointCount - offset, maxExportBatchSize - batchMetricPointCount);
 
@@ -243,16 +250,24 @@ public class PeriodicExportingMetricReader : BaseExportingMetricReader
 
                     if (batchMetricPointCount == maxExportBatchSize)
                     {
-                        result = this.ExportBatch(batchMetrics, batchMetricCount, startedAt, timeoutMilliseconds) && result;
+                        // A failed export does not stop the remaining batches from being exported,
+                        // but a skipped one means that none of them can be, so the rest of the
+                        // collection is not split into batches only to be skipped too.
+                        result = this.ExportBatch(batchMetrics, batchMetricCount, startedAt, timeoutMilliseconds, out skipped) && result;
                         batchMetricCount = 0;
                         batchMetricPointCount = 0;
                     }
                 }
+
+                if (skipped)
+                {
+                    break;
+                }
             }
 
-            if (batchMetricCount > 0)
+            if (batchMetricCount > 0 && !skipped)
             {
-                result = this.ExportBatch(batchMetrics, batchMetricCount, startedAt, timeoutMilliseconds) && result;
+                result = this.ExportBatch(batchMetrics, batchMetricCount, startedAt, timeoutMilliseconds, out _) && result;
             }
         }
         finally
@@ -268,7 +283,7 @@ public class PeriodicExportingMetricReader : BaseExportingMetricReader
         return result;
     }
 
-    private bool ExportBatch(Metric[] metrics, int count, long? startedAt, int timeoutMilliseconds)
+    private bool ExportBatch(Metric[] metrics, int count, long? startedAt, int timeoutMilliseconds, out bool skipped)
     {
         if (startedAt is { } timestamp)
         {
@@ -277,11 +292,12 @@ public class PeriodicExportingMetricReader : BaseExportingMetricReader
             if (timeoutMilliseconds <= 0)
             {
                 OpenTelemetrySdkEventSource.Log.MetricReaderEvent("PeriodicExportingMetricReader skipped exporting a batch because the timeout period has elapsed.");
+                skipped = true;
                 return false;
             }
         }
 
-        return this.ExportMetrics(new Batch<Metric>(metrics, count), timeoutMilliseconds);
+        return this.ExportMetrics(new Batch<Metric>(metrics, count), timeoutMilliseconds, out skipped);
     }
 
 #pragma warning disable CA1859 // Change return type of method 'CreateWorker' from 'PeriodicExportingMetricReaderWorker' to 'PeriodicExportingMetricReaderThreadWorker' for improved performance
