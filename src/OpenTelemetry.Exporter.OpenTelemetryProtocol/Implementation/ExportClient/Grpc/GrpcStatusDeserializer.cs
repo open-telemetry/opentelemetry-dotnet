@@ -117,7 +117,8 @@ internal static class GrpcStatusDeserializer
                 switch (fieldNumber)
                 {
                     case 1 when wireType == WIRETYPE_LENGTH_DELIMITED: // retry_delay
-                        retryInfo = new RetryInfo(DecodeDuration(stream));
+                        // A repeated occurrence of a singular message field is merged into the previous one
+                        retryInfo = new RetryInfo(DecodeDuration(stream, retryInfo?.RetryDelay));
                         break;
                     default:
                         SkipField(stream, wireType);
@@ -129,15 +130,15 @@ internal static class GrpcStatusDeserializer
         return retryInfo;
     }
 
-    private static Duration DecodeDuration(Stream stream)
+    private static Duration DecodeDuration(Stream stream, Duration? previous)
     {
         var length = DecodeVarint(stream);
 
         CheckLength(length, stream);
 
         var endPosition = stream.Position + length;
-        long seconds = 0;
-        int nanos = 0;
+        long seconds = previous?.Seconds ?? 0;
+        int nanos = previous?.Nanos ?? 0;
 
         while (stream.Position < endPosition)
         {

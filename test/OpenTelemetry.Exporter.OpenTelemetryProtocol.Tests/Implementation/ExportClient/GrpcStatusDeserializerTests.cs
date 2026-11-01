@@ -510,6 +510,29 @@ public class GrpcStatusDeserializerTests
         Assert.Equal(TimeSpan.FromSeconds(5), GrpcStatusDeserializer.TryGetGrpcRetryDelay(grpcStatusDetailsBin));
     }
 
+    [Theory]
+    [InlineData(new byte[] { 0x0A, 0x02, 0x08, 0x05, 0x0A, 0x00 }, 5 * TimeSpan.TicksPerSecond)] // seconds = 5, then an empty duration
+    [InlineData(new byte[] { 0x0A, 0x00, 0x0A, 0x02, 0x08, 0x05 }, 5 * TimeSpan.TicksPerSecond)] // an empty duration, then seconds = 5
+    [InlineData(new byte[] { 0x0A, 0x02, 0x08, 0x05, 0x0A, 0x02, 0x10, 0x64 }, (5 * TimeSpan.TicksPerSecond) + 1)] // seconds = 5, then nanos = 100
+    [InlineData(new byte[] { 0x0A, 0x02, 0x08, 0x05, 0x0A, 0x02, 0x08, 0x07 }, 7 * TimeSpan.TicksPerSecond)] // seconds = 5, then seconds = 7
+    public void TryGetGrpcRetryDelay_RepeatedRetryDelayFields_AreMerged(byte[] retryInfo, long expectedTicks)
+    {
+        ArgumentNullException.ThrowIfNull(retryInfo);
+
+        // A repeated occurrence of a singular message field is merged into the previous one, as any other protobuf decoder would
+        var any = new List<byte>();
+        any.AddRange(EncodeLengthDelimitedField(1, "type.googleapis.com/google.rpc.RetryInfo"u8.ToArray()));
+        any.AddRange(EncodeLengthDelimitedField(2, retryInfo));
+
+        var grpcStatusDetailsBin = Convert.ToBase64String(EncodeLengthDelimitedField(3, [.. any]));
+
+        Assert.Equal(TimeSpan.FromTicks(expectedTicks), GrpcStatusDeserializer.TryGetGrpcRetryDelay(grpcStatusDetailsBin));
+
+        // Cross-check against the reference protobuf implementation
+        var expected = Google.Rpc.RetryInfo.Parser.ParseFrom(retryInfo).RetryDelay;
+        Assert.Equal(TimeSpan.FromTicks(expectedTicks), expected.ToTimeSpan());
+    }
+
     private static byte[] EncodeLengthDelimitedField(int fieldNumber, byte[] value)
     {
         var encoded = new List<byte>();

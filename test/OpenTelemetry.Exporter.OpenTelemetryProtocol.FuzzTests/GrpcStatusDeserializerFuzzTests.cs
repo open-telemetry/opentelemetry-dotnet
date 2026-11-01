@@ -267,7 +267,8 @@ public class GrpcStatusDeserializerFuzzTests
         {
             if (WireFormat.GetTagFieldNumber(tag) == 1 && WireFormat.GetTagWireType(tag) == WireFormat.WireType.LengthDelimited)
             {
-                result = ReadDuration(input.ReadBytes());
+                // A repeated occurrence of a singular message field is merged into the previous one.
+                result = ReadDuration(input.ReadBytes(), result);
             }
             else
             {
@@ -278,11 +279,11 @@ public class GrpcStatusDeserializerFuzzTests
         return result;
     }
 
-    private static (long Seconds, int Nanos) ReadDuration(ByteString bytes)
+    private static (long Seconds, int Nanos) ReadDuration(ByteString bytes, (long Seconds, int Nanos)? previous)
     {
         using var input = new CodedInputStream(bytes.ToByteArray());
-        long seconds = 0;
-        var nanos = 0;
+        var seconds = previous?.Seconds ?? 0;
+        var nanos = previous?.Nanos ?? 0;
 
         uint tag;
         while ((tag = ReadStrictTag(input)) != 0)
@@ -349,6 +350,7 @@ public class GrpcStatusDeserializerFuzzTests
                 from retryPosition in Gen.Choose(0, detailCount)
                 from includeRetry in Gen.Elements(true, false)
                 from hasDelay in Gen.Elements(true, true, false)
+                from repeatDelay in Gen.Elements(true, false)
                 from seconds in Gen.OneOf(Gen.Choose(-5, 3600).Select(static s => (long)s), Gen.Choose(0, int.MaxValue).Select(static s => (long)s))
                 from nanos in Gen.OneOf(Gen.Choose(0, 999_999_999), Gen.Choose(-999_999_999, 0))
                 from unknownBeforeCode in Gen.ArrayOf(UnknownField(minFieldNumber: 4), 2)
@@ -359,6 +361,7 @@ public class GrpcStatusDeserializerFuzzTests
                     otherDetails,
                     includeRetry ? retryPosition : -1,
                     hasDelay,
+                    repeatDelay,
                     seconds,
                     nanos,
                     unknownBeforeCode);
@@ -397,11 +400,32 @@ public class GrpcStatusDeserializerFuzzTests
             return gen.ToArbitrary();
         }
 
-        public static byte[] EncodeRetryInfo(long seconds, int nanos, bool hasDelay)
+        public static byte[] EncodeRetryInfo(long seconds, int nanos, bool hasDelay, bool repeatDelay = false)
         {
             var writer = new Writer();
 
-            if (hasDelay)
+            if (hasDelay && repeatDelay)
+            {
+                // The same delay split across repeated retry_delay fields (with an empty one in between),
+                // which a conformant decoder merges into a single duration.
+                var secondsOnly = new Writer();
+                var nanosOnly = new Writer();
+
+                if (seconds != 0)
+                {
+                    secondsOnly.Int64(1, seconds);
+                }
+
+                if (nanos != 0)
+                {
+                    nanosOnly.Int32(2, nanos);
+                }
+
+                writer.Bytes(1, secondsOnly.ToArray());
+                writer.Bytes(1, []);
+                writer.Bytes(1, nanosOnly.ToArray());
+            }
+            else if (hasDelay)
             {
                 var duration = new Writer();
 
@@ -513,6 +537,7 @@ public class GrpcStatusDeserializerFuzzTests
             byte[][] otherDetails,
             int retryPosition,
             bool hasDelay,
+            bool repeatDelay,
             long seconds,
             int nanos,
             byte[][] unknownFields)
@@ -542,7 +567,7 @@ public class GrpcStatusDeserializerFuzzTests
             {
                 if (i == retryPosition)
                 {
-                    var retryInfo = EncodeRetryInfo(seconds, nanos, hasDelay);
+                    var retryInfo = EncodeRetryInfo(seconds, nanos, hasDelay, repeatDelay);
                     var any = new Writer().String(1, RetryInfoTypeUrl).Bytes(2, retryInfo).ToArray();
                     writer.Bytes(3, any);
 

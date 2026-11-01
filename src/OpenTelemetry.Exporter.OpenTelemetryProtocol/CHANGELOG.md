@@ -30,6 +30,10 @@ Notes](../../RELEASENOTES.md).
   field being skipped.
   ([#8075](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8075))
 
+* Fixed the retry delay of a gRPC response being misread when the `retry_delay`
+  field was repeated, instead of the occurrences being merged.
+  ([#8075](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8075))
+
 ## 1.21.0-rc.1
 
 Released 2026-Oct-28
