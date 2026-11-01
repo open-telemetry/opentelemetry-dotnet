@@ -12,7 +12,7 @@ namespace OpenTelemetry.Trace;
 public abstract class Sampler
 {
     private readonly Lock shutdownLock = new();
-    private ShutdownState shutdownState;
+    private volatile ShutdownState shutdownState;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="Sampler"/> class.
@@ -34,6 +34,12 @@ public abstract class Sampler
     /// Gets or sets the sampler description.
     /// </summary>
     public string Description { get; protected set; }
+
+    /// <summary>
+    /// Gets a value indicating whether <see cref="Shutdown"/> has begun, for samplers
+    /// which delegate to other samplers to stop doing so once it has.
+    /// </summary>
+    internal bool IsShutdown => this.shutdownState != ShutdownState.NotStarted;
 
     /// <summary>
     /// Checks whether activity needs to be created and tracked.

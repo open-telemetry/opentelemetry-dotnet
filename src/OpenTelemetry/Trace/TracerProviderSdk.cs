@@ -397,7 +397,7 @@ internal sealed class TracerProviderSdk : TracerProvider
             ? Stopwatch.Remaining(timeoutMilliseconds, startedAt)
             : timeoutMilliseconds;
 
-        return this.ShutdownSampler(samplerTimeoutMilliseconds) && result;
+        return this.ShutdownSampler(this.Sampler, samplerTimeoutMilliseconds) && result;
     }
 
     protected override void Dispose(bool disposing)
@@ -433,7 +433,7 @@ internal sealed class TracerProviderSdk : TracerProvider
                 this.listener?.Dispose();
 
                 // Shutdown the sampler last, as the listener calls it for anything that is created until the listener is disposed
-                this.ShutdownSampler(5_000);
+                this.ShutdownSampler(this.Sampler, 5_000);
                 (this.Sampler as IDisposable)?.Dispose();
 
                 this.OwnedServiceProvider?.Dispose();
@@ -741,8 +741,12 @@ internal sealed class TracerProviderSdk : TracerProvider
             }
         }
 
-        CleanUp(() => this.ShutdownSampler(0));
-        CleanUp(() => (this.Sampler as IDisposable)?.Dispose());
+        // this.Sampler is not assigned if the build failed before the sampler was resolved,
+        // in which case any sampler already registered with the builder (such as one created by a factory) is cleaned up.
+        var sampler = ((Sampler?)this.Sampler) ?? state.Sampler;
+
+        CleanUp(() => this.ShutdownSampler(sampler, 0));
+        CleanUp(() => (sampler as IDisposable)?.Dispose());
 
         if (this.OwnedServiceProvider != null)
         {
@@ -763,7 +767,7 @@ internal sealed class TracerProviderSdk : TracerProvider
         }
     }
 
-    private bool ShutdownSampler(int timeoutMilliseconds)
+    private bool ShutdownSampler(Sampler? sampler, int timeoutMilliseconds)
     {
         // The listener being disposed does not stop the callbacks of an ActivitySource which
         // had already captured it from being called, so also stop them from reaching the sampler.
@@ -772,9 +776,7 @@ internal sealed class TracerProviderSdk : TracerProvider
         // Preventing that would need every sampling call to synchronize with shutdown.
         this.samplerShutdown = true;
 
-        return this.Sampler is { } sampler
-            ? Sampler.ShutdownShared(sampler, timeoutMilliseconds)
-            : true;
+        return sampler is null || Sampler.ShutdownShared(sampler, timeoutMilliseconds);
     }
 
     private void RunGetRequestedDataAlwaysOnSampler(Activity activity)

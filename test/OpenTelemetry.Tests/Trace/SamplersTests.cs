@@ -325,6 +325,41 @@ public class SamplersTests
     }
 
     [Fact]
+    public void ParentBasedSamplerDropsWithoutDelegatingOnceShutdownHasBegun()
+    {
+        var root = new ShutdownTrackingSampler();
+        var sampler = new ParentBasedSampler(root);
+        var parameters = new SamplingParameters(default, this.traceId, "Name", ActivityKind.Internal, null, null);
+
+        Assert.Equal(SamplingDecision.RecordAndSample, sampler.ShouldSample(parameters).Decision);
+
+        // The decision is also Drop while shutdown is still running
+        var duringShutdown = SamplingDecision.RecordAndSample;
+        root.Callback = () => duringShutdown = sampler.ShouldSample(parameters).Decision;
+
+        Assert.True(sampler.Shutdown());
+        Assert.Equal(SamplingDecision.Drop, duringShutdown);
+        Assert.Equal(SamplingDecision.Drop, sampler.ShouldSample(parameters).Decision);
+    }
+
+    [Fact]
+    public void AlwaysRecordSamplerDropsWithoutDelegatingOnceShutdownHasBegun()
+    {
+        var root = new ShutdownTrackingSampler();
+        var sampler = new AlwaysRecordSampler(root);
+        var parameters = new SamplingParameters(default, this.traceId, "Name", ActivityKind.Internal, null, null);
+
+        Assert.Equal(SamplingDecision.RecordAndSample, sampler.ShouldSample(parameters).Decision);
+
+        var duringShutdown = SamplingDecision.RecordAndSample;
+        root.Callback = () => duringShutdown = sampler.ShouldSample(parameters).Decision;
+
+        Assert.True(sampler.Shutdown());
+        Assert.Equal(SamplingDecision.Drop, duringShutdown);
+        Assert.Equal(SamplingDecision.Drop, sampler.ShouldSample(parameters).Decision);
+    }
+
+    [Fact]
     public void ParentBasedSamplerShutdownShutsDownRootSampler()
     {
         var root = new ShutdownTrackingSampler();

@@ -85,6 +85,12 @@ public sealed class ParentBasedSampler : Sampler
     /// <inheritdoc />
     public override SamplingResult ShouldSample(in SamplingParameters samplingParameters)
     {
+        if (this.IsShutdown)
+        {
+            // Do not delegate to samplers which are being, or have been, shut down
+            return new SamplingResult(SamplingDecision.Drop);
+        }
+
         var parentContext = samplingParameters.ParentContext;
         if (parentContext.TraceId == default)
         {

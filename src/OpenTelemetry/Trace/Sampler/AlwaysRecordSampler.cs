@@ -41,6 +41,12 @@ public sealed class AlwaysRecordSampler : Sampler
     /// <inheritdoc/>
     public override SamplingResult ShouldSample(in SamplingParameters samplingParameters)
     {
+        if (this.IsShutdown)
+        {
+            // Do not delegate to a sampler which is being, or has been, shut down
+            return new SamplingResult(SamplingDecision.Drop);
+        }
+
         var result = this.rootSampler.ShouldSample(samplingParameters);
 
         return result.Decision switch

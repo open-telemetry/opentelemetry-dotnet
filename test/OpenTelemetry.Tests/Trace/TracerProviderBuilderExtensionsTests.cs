@@ -820,6 +820,26 @@ public class TracerProviderBuilderExtensionsTests
     }
 
     [Fact]
+    public void FailedBuildShutsDownAndDisposesSamplerWhichWasNotYetResolved()
+    {
+#pragma warning disable CA2000 // Dispose objects before losing scope - failed provider build should dispose the sampler
+        var sampler = new MyDisposableSampler();
+#pragma warning restore CA2000 // Dispose objects before losing scope
+
+        // The sampler is registered with the builder, but the build fails before the provider resolves it
+        var builder = Sdk.CreateTracerProviderBuilder()
+            .SetSampler(sp => sampler)
+            .ConfigureBuilder((sp, builder) => throw new InvalidOperationException("test exception"));
+
+        var exception = Assert.Throws<InvalidOperationException>(builder.Build);
+
+        Assert.Equal("test exception", exception.Message);
+        Assert.Equal(1, sampler.ShutdownCalls);
+        Assert.True(sampler.ShutdownBeforeDispose);
+        Assert.True(sampler.Disposed);
+    }
+
+    [Fact]
     public void ConfigureSamplerThrowingFailsBuild()
     {
         var builder = Sdk.CreateTracerProviderBuilder()
