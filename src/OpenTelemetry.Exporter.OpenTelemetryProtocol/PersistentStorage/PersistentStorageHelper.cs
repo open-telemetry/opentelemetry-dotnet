@@ -24,6 +24,7 @@ internal static class PersistentStorageHelper
 
 #if NET
     private const int MaximumSymbolicLinks = 40;
+    private const int MaximumEntryArchiveLength = 64 * 1024;
     private const int RootUserId = 0;
     private const UnixFileMode GroupOrOtherWrite = UnixFileMode.GroupWrite | UnixFileMode.OtherWrite;
 #endif
@@ -823,8 +824,10 @@ internal static class PersistentStorageHelper
         // .NET has no API that returns the owner of a file system entry, but tar archives record the owner, permissions
         // and type of each entry they contain, and TarWriter reads them from the file system without following symbolic
         // links. The entry is written to an in-memory archive and then read back. The PAX format is used so that user IDs
-        // of any size can be represented.
-        using var stream = new MemoryStream();
+        // of any size can be represented. The path could be replaced by a regular file after its attributes were read
+        // above, whose contents would then be copied into the archive, so the size of the archive is bounded. An entry for
+        // a directory or a symbolic link is a few kilobytes at most (the target of a link can be up to 4 KiB long).
+        using var stream = new BoundedMemoryStream(MaximumEntryArchiveLength);
 
         using (var writer = new TarWriter(stream, TarEntryFormat.Pax, leaveOpen: true))
         {

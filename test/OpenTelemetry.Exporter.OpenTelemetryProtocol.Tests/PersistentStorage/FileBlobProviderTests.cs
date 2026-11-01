@@ -3,6 +3,7 @@
 
 using System.Runtime.InteropServices;
 #if NET
+using System.Formats.Tar;
 using System.Runtime.Versioning;
 #endif
 using OpenTelemetry.PersistentStorage.FileSystem;
@@ -561,6 +562,38 @@ public class FileBlobProviderTests
         Assert.Equal(Path.GetFullPath(relativePath), provider.DirectoryPath);
         Assert.True(provider.TryCreateBlob([1, 2, 3], out var blob));
         Assert.Equal(provider.DirectoryPath, Path.GetDirectoryName(Assert.IsType<FileBlob>(blob).FullPath));
+    }
+
+    [Fact]
+    public void BoundedMemoryStream_FileReplacedAfterAttributesWereRead_DoesNotBufferTheFile()
+    {
+        using var root = new TemporaryDirectory();
+
+        // If a path is replaced by a regular file after it was checked to be a directory, archiving it
+        // would copy its contents into memory, so the size of the archive must be bounded
+        var path = Path.Combine(root.Path, "large");
+        File.WriteAllBytes(path, new byte[1024 * 1024]);
+
+        using var stream = new BoundedMemoryStream(64 * 1024);
+        using var writer = new TarWriter(stream, TarEntryFormat.Pax, leaveOpen: true);
+
+        Assert.Throws<IOException>(() => writer.WriteEntry(path, entryName: "entry"));
+        Assert.True(stream.Length <= 64 * 1024);
+    }
+
+    [Fact]
+    public void BoundedMemoryStream_WritesUpToTheMaximumLength()
+    {
+        using var stream = new BoundedMemoryStream(4);
+
+        stream.Write([1, 2], 0, 2);
+        stream.WriteByte(3);
+        stream.Write(new ReadOnlySpan<byte>([4]));
+
+        Assert.Equal([1, 2, 3, 4], stream.ToArray());
+        Assert.Throws<IOException>(() => stream.WriteByte(5));
+        Assert.Throws<IOException>(() => stream.Write([5], 0, 1));
+        Assert.Throws<IOException>(() => stream.Write(new ReadOnlySpan<byte>([5])));
     }
 
     [Fact]
