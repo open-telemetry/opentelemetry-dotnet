@@ -672,7 +672,7 @@ internal sealed class PrometheusCollectionManager
                 }
 
                 var metricStart = cursor;
-                var seriesMark = this.series.Count;
+                var seriesMark = this.series.Mark();
                 var deduplicate = metricState.Deduplicate;
 
                 while (true)

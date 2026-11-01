@@ -1,7 +1,9 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Collections.Concurrent;
 using System.Diagnostics.Metrics;
+using System.Diagnostics.Tracing;
 using System.Runtime.CompilerServices;
 using System.Text;
 using OpenTelemetry.Metrics;
@@ -2396,6 +2398,11 @@ public sealed class PrometheusCollectionManagerTests
         mixed.Record(1, new KeyValuePair<string, object?>("k", 1));
         mixed.Record(2, new KeyValuePair<string, object?>("k", "1"));
 
+        // A key which is repeated in a point, which is written as one label with the values merged
+        var repeated = meter.CreateGauge<double>("repeated_gauge");
+        repeated.Record(1, new KeyValuePair<string, object?>("k", "a"), new KeyValuePair<string, object?>("k", "a"));
+        repeated.Record(2, new KeyValuePair<string, object?>("k", "a;a"));
+
         // Different arrays with the same items, which are written as the same label value
         var arrays = meter.CreateGauge<double>("array_gauge");
         int[] items = [1];
@@ -2477,6 +2484,7 @@ public sealed class PrometheusCollectionManagerTests
 
         Assert.Single(samples, s => s.StartsWith("dropped_histogram_sum_count", StringComparison.Ordinal));
         Assert.Single(samples, s => s.StartsWith("mixed_gauge", StringComparison.Ordinal));
+        Assert.Single(samples, s => s.StartsWith("repeated_gauge", StringComparison.Ordinal));
         Assert.Single(samples, s => s.StartsWith("array_gauge", StringComparison.Ordinal));
         Assert.Single(samples, s => s.StartsWith("empty_gauge", StringComparison.Ordinal));
         Assert.Single(samples, s => s.StartsWith("surrogate_gauge", StringComparison.Ordinal));
@@ -2537,7 +2545,10 @@ public sealed class PrometheusCollectionManagerTests
     [Fact]
     public async Task EnterCollectDoesNotWriteTheSameSeriesMoreThanOnceWhenTheBufferHasToBeExpanded()
     {
-        const int SeriesCount = 1_200; // Fewer than the default limit of the metric points of a metric
+        const int SeriesCount = 600; // Fewer than the default limit of the metric points of a metric
+        const int UniqueSeriesCount = 600;
+
+        using var listener = new DuplicateSeriesListener("expanding_counter");
 
         using var firstMeter = new Meter(nameof(this.EnterCollectDoesNotWriteTheSameSeriesMoreThanOnceWhenTheBufferHasToBeExpanded) + ".first");
         using var secondMeter = new Meter(nameof(this.EnterCollectDoesNotWriteTheSameSeriesMoreThanOnceWhenTheBufferHasToBeExpanded) + ".second");
@@ -2565,12 +2576,20 @@ public sealed class PrometheusCollectionManagerTests
         var firstCounter = firstMeter.CreateCounter<int>("expanding_counter");
         var secondCounter = secondMeter.CreateCounter<int>("expanding_counter");
 
+        var padding = new string('x', 200);
+
         for (var i = 0; i < SeriesCount; i++)
         {
-            var tag = new KeyValuePair<string, object?>("key", "a_reasonably_long_value_for_the_series_" + i);
+            var tag = new KeyValuePair<string, object?>("key", padding + i);
 
             firstCounter.Add(1, tag);
             secondCounter.Add(1, tag);
+        }
+
+        // These are written after the duplicates of the second metric, which are skipped, and they do not fit in the buffer
+        for (var i = 0; i < UniqueSeriesCount; i++)
+        {
+            secondCounter.Add(1, new KeyValuePair<string, object?>("key", padding + "unique" + i));
         }
 
         var response = await exporter.CollectionManager.EnterCollect(GetProtocol(openMetricsRequested: false), TestContext.Current.CancellationToken);
@@ -2584,7 +2603,10 @@ public sealed class PrometheusCollectionManagerTests
 
             var output = Encoding.UTF8.GetString(response.View.Array!, response.View.Offset, response.View.Count);
 
-            Assert.Equal(SeriesCount, output.Split('\n').Count(line => line.StartsWith("expanding_counter_total{", StringComparison.Ordinal)));
+            Assert.Equal(SeriesCount + UniqueSeriesCount, output.Split('\n').Count(line => line.StartsWith("expanding_counter_total{", StringComparison.Ordinal)));
+
+            // The duplicates that were skipped before the buffer was expanded are skipped again when the metric is written again, but are only counted once.
+            Assert.Equal([SeriesCount], listener.Counts);
         }
         finally
         {
@@ -2768,6 +2790,32 @@ public sealed class PrometheusCollectionManagerTests
         throw new InvalidOperationException("MeterProvider could not bind a PrometheusHttpListener port.");
     }
 #endif
+
+    private sealed class DuplicateSeriesListener(string metricName) : EventListener
+    {
+        private readonly ConcurrentQueue<int> counts = [];
+
+        public IReadOnlyCollection<int> Counts => [.. this.counts];
+
+        protected override void OnEventSourceCreated(EventSource eventSource)
+        {
+            // The source may still be being created, when its instance is not yet available
+            if (string.Equals(eventSource.Name, "OpenTelemetry-Exporter-Prometheus", StringComparison.Ordinal))
+            {
+                this.EnableEvents(eventSource, EventLevel.Warning);
+            }
+        }
+
+        protected override void OnEventWritten(EventWrittenEventArgs eventData)
+        {
+            if (eventData.EventId == 15 &&
+                eventData.Payload is { Count: 2 } payload &&
+                string.Equals(payload[1] as string, metricName, StringComparison.Ordinal))
+            {
+                this.counts.Enqueue((int)payload[0]!);
+            }
+        }
+    }
 
     private sealed class CallbackLabelValue(Func<string> getValue)
     {

@@ -6,6 +6,21 @@ using System.Text;
 namespace OpenTelemetry.Exporter.Prometheus.Serialization;
 
 /// <summary>
+/// A position in a <see cref="SeriesRegistry"/> that it can be returned to.
+/// </summary>
+/// <param name="count">The number of series that had been added.</param>
+/// <param name="droppedCount">The number of series that had been dropped.</param>
+/// <param name="firstDroppedMetricName">The name of the first metric to have had a series dropped, if any.</param>
+internal readonly struct SeriesMark(int count, int droppedCount, string? firstDroppedMetricName)
+{
+    public int Count { get; } = count;
+
+    public int DroppedCount { get; } = droppedCount;
+
+    public string? FirstDroppedMetricName { get; } = firstDroppedMetricName;
+}
+
+/// <summary>
 /// Keeps track of the series (a metric name together with its labels) of the metrics of a metric family
 /// that have been written to a scrape response, so that a series is never written twice.
 /// </summary>
@@ -16,7 +31,8 @@ namespace OpenTelemetry.Exporter.Prometheus.Serialization;
 /// <para/>
 /// A series is identified by the bytes that it is written as, so the labels of the series must be written in the same
 /// order whenever they are the same. Series that are removed from the response must be removed using
-/// <see cref="Rollback"/>. This type is not thread-safe.
+/// <see cref="Rollback"/>, which also forgets the series that were dropped since the position was marked
+/// with <see cref="Mark"/>. This type is not thread-safe.
 /// </remarks>
 internal sealed class SeriesRegistry
 {
@@ -80,12 +96,20 @@ internal sealed class SeriesRegistry
     }
 
     /// <summary>
-    /// Removes the series that were added after there were <paramref name="count"/> series, as they were
-    /// removed from the response buffer.
+    /// Gets the current position, so that what is added or dropped after it can be removed with <see cref="Rollback"/>.
     /// </summary>
-    /// <param name="count">The <see cref="Count"/> to return to.</param>
-    public void Rollback(int count)
+    /// <returns>The current position.</returns>
+    public SeriesMark Mark() => new(this.added.Count, this.DroppedCount, this.FirstDroppedMetricName);
+
+    /// <summary>
+    /// Removes the series that were added after <paramref name="mark"/>, as they were removed from the response buffer,
+    /// and forgets the series that were dropped after it, as the metric that dropped them is written again.
+    /// </summary>
+    /// <param name="mark">The position returned by <see cref="Mark"/> to return to.</param>
+    public void Rollback(SeriesMark mark)
     {
+        var count = mark.Count;
+
         for (var index = this.added.Count - 1; index >= count; index--)
         {
             _ = this.series.Remove(this.added[index]);
@@ -95,6 +119,9 @@ internal sealed class SeriesRegistry
         {
             this.added.RemoveRange(count, this.added.Count - count);
         }
+
+        this.DroppedCount = mark.DroppedCount;
+        this.FirstDroppedMetricName = mark.FirstDroppedMetricName;
     }
 
     /// <summary>

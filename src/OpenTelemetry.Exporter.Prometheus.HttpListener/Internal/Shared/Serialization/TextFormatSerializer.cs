@@ -1057,6 +1057,9 @@ internal abstract class TextFormatSerializer
 
                 if (!TryWriteLabel(tag.Key, tag.Value))
                 {
+                    // The key is the same as that of another tag of the point once it is written, so the values
+                    // are merged into one label, which can be the same as the value of a tag of a different point.
+                    tagKeys?.ObserveRepeatedKey();
                     return false;
                 }
             }

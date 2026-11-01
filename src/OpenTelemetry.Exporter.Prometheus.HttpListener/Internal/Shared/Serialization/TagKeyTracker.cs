@@ -42,6 +42,13 @@ internal sealed class TagKeyTracker
     public bool HasAmbiguousValues { get; private set; }
 
     /// <summary>
+    /// Records that the same key was found more than once in a point, which the serializer writes as a
+    /// single label with the values merged, so that the series of different points can be the same
+    /// (such as <c>[("k", "a"), ("k", "a")]</c> and <c>[("k", "a;a")]</c>).
+    /// </summary>
+    public void ObserveRepeatedKey() => this.HasAmbiguousValues = true;
+
+    /// <summary>
     /// Forgets the output label keys, ready for the next response to be written.
     /// </summary>
     public void ClearOutputKeys() => this.OutputKeys.Clear();

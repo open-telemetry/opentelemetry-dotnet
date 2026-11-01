@@ -791,7 +791,7 @@ public sealed partial class PrometheusSerializerTests
 
         Assert.True(registry.TryAdd(first, 0, first.Length));
 
-        var mark = registry.Count;
+        var mark = registry.Mark();
 
         Assert.True(registry.TryAdd(second, 0, second.Length));
         Assert.True(registry.TryAdd(third, 0, third.Length));
@@ -825,12 +825,21 @@ public sealed partial class PrometheusSerializerTests
 
         Assert.True(registry.TryAdd(buffer, 0, 8));
 
-        var mark = registry.Count;
+        registry.RecordDropped("before");
+
+        var mark = registry.Mark();
 
         Assert.True(registry.TryAdd(buffer, 8, 8));
         Assert.True(registry.TryAdd(buffer, 16, 8));
 
+        registry.RecordDropped("after");
+        registry.RecordDropped("after");
+
         registry.Rollback(mark);
+
+        // What was dropped after the mark is written again, so it is forgotten with the series that were added
+        Assert.Equal(1, registry.DroppedCount);
+        Assert.Equal("before", registry.FirstDroppedMetricName);
 
         Assert.Equal(1, registry.Count);
         Assert.False(registry.TryAdd(buffer, 0, 8));
@@ -848,9 +857,15 @@ public sealed partial class PrometheusSerializerTests
 
         var offsets = new List<(int Start, int Length)>();
         var start = 0;
+        var mark = default(SeriesMark);
 
         foreach (var entry in series)
         {
+            if (offsets.Count == 2_500)
+            {
+                mark = registry.Mark();
+            }
+
             offsets.Add((start, entry.Length));
             Assert.True(registry.TryAdd(buffer, start, entry.Length));
             start += entry.Length;
@@ -863,7 +878,7 @@ public sealed partial class PrometheusSerializerTests
             Assert.False(registry.TryAdd(buffer, offset, length));
         }
 
-        registry.Rollback(2_500);
+        registry.Rollback(mark);
 
         Assert.Equal(2_500, registry.Count);
         Assert.False(registry.TryAdd(buffer, offsets[0].Start, offsets[0].Length));
