@@ -84,6 +84,28 @@ public class TaskWorkerTests
         Assert.True(worker.Shutdown(ShutdownTimeoutMilliseconds));
     }
 
+    [Fact]
+    public void PeriodicExportingMetricReaderTaskWorker_ShutdownBeforeStart_MakesFinalCollection()
+    {
+        // Arrange
+        using var reader = new TestMetricReader();
+        using var worker = new PeriodicExportingMetricReaderTaskWorker(
+            reader,
+            exportIntervalMilliseconds: WorkerDelayMilliseconds,
+            exportTimeoutMilliseconds: WorkerTimeoutMilliseconds);
+
+        // Shutdown is requested before the worker task has started running,
+        // as when it is requested before the worker is first scheduled.
+        Assert.True(worker.Shutdown(ShutdownTimeoutMilliseconds));
+
+        // Act
+        worker.Start();
+
+        // Assert
+        Assert.True(worker.Shutdown(ShutdownTimeoutMilliseconds));
+        Assert.Equal(1, reader.CollectCount);
+    }
+
     private static async Task WaitUntilAsync(Func<bool> condition, int timeoutMilliseconds)
     {
         var sw = Stopwatch.StartNew();
