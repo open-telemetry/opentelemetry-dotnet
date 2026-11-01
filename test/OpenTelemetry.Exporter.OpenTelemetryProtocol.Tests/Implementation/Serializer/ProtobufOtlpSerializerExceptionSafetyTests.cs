@@ -163,6 +163,25 @@ public class ProtobufOtlpSerializerExceptionSafetyTests(MaxSizeSerializationBuff
             // 3. A different logger now claims the pooled list the stale entry
             //    would point at, and the reused logger must still get its own scope.
             AssertScopes(SerializeLogs(b1, a2), ("LoggerB", ["b1"]), ("LoggerA", ["a2"]));
+
+            // 4. A single batch that interleaves records from the same logger, so
+            //    the later records resolve through the logger reference cache hit
+            //    rather than the miss that populated it. Every record must land in
+            //    its own logger's scope, in the order the records were exported.
+            AssertScopes(SerializeLogs(a1, b1, a2, a3), ("LoggerA", ["a1", "a2", "a3"]), ("LoggerB", ["b1"]));
+
+            // 5. The same interleaving straight after an export that fails, to
+            //    cover the cache hit path on state left behind by the failure.
+            Assert.Throws<IndexOutOfRangeException>(() => ProtobufOtlpLogSerializer.WriteLogsData(
+                ref failingBuffer,
+                failingBuffer.Length,
+                new SdkLimitOptions(),
+                new ExperimentalOptions(),
+                Resource.Empty,
+                new Batch<LogRecord>([a1, b1, a2], 3),
+                MaxSizeSerializationBufferFixture.MaxBufferSize));
+
+            AssertScopes(SerializeLogs(b1, a1, a2, a3), ("LoggerB", ["b1"]), ("LoggerA", ["a1", "a2", "a3"]));
         });
 
         this.maxSizeBuffer.AssertNotSwapped(failingBuffer);
