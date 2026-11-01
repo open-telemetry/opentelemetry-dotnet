@@ -142,32 +142,41 @@ public class PrometheusExpositionFuzzTests
     [Property(MaxTest = 100)]
     public Property ValidatorFlagsKnownBadExpositions() => Prop.ForAll(
         Gen.Elements(
-        new (string, bool, ErrorKind?)[]
+        new (string, bool, ErrorKind?, bool)[]
         {
-            ("# TYPE a gauge\n# TYPE a gauge\na 1\n", false, ErrorKind.Structure),
-            ("# TYPE a gauge\na 1\n# TYPE b gauge\nb 1\na{x=\"1\"} 2\n", false, ErrorKind.Structure),
-            ("# TYPE a gauge\na{x=\"1\",x=\"2\"} 1\n", false, ErrorKind.DuplicateLabels),
-            ("# TYPE a gauge\na{x=\"1\"} 1\na{x=\"1\"} 2\n", false, ErrorKind.DuplicateSeries),
-            ("# TYPE a gauge\na{x=\"1\",y=\"2\"} 1\na{y=\"2\",x=\"1\"} 2\n", false, ErrorKind.DuplicateSeries),
-            ("# TYPE a gauge\na{} 1\na{x=\"\"} 2\n", false, ErrorKind.DuplicateSeries),
-            ("# TYPE a gauge\na{k1=\"a,k2=b\"} 1\na{k1=\"a\",k2=\"b\"} 2\n", false, null),
-            ("# TYPE h histogram\nh_bucket{le=\"+Inf\"} 1\nh_sum{} 1\nh_count{} 1\n# TYPE h_sum gauge\nh_sum{} 5\n", false, ErrorKind.DuplicateSeries),
-            ("# TYPE h histogram\nh_bucket{le=\"+Inf\"} 1\nh_sum{} 1\nh_count{} 1\n# TYPE h_bucket gauge\nh_bucket{le=\"+Inf\"} 2\n", false, ErrorKind.DuplicateSeries),
-            ("# TYPE a gauge\na-b 1\n", false, ErrorKind.Syntax),
-            ("# TYPE a gauge\na{x=\"1\"} one\n", false, ErrorKind.Syntax),
-            ("# TYPE a gauge\na 1\n", true, ErrorKind.Directive),
-            ("# TYPE a gauge\na 1\n# EOF\n", false, ErrorKind.Directive),
-            ("# TYPE a counter\na 1\n# EOF\n", true, ErrorKind.CounterSuffix),
-            ("# TYPE a gauge\n# UNIT a seconds\na 1\n# EOF\n", true, ErrorKind.Unit),
-            ("# TYPE h histogram\nh_bucket{le=\"1\"} 1\nh_count 1\nh_sum 1\n", false, ErrorKind.Histogram),
-            ("# TYPE a gauge\n# HELP a help\na{x=\"1\"} 1\n", false, null),
-            ("# TYPE a_seconds gauge\n# UNIT a_seconds seconds\na_seconds 1\n# EOF\n", true, null),
+            ("# TYPE a gauge\n# TYPE a gauge\na 1\n", false, ErrorKind.Structure, false),
+            ("# TYPE a gauge\na 1\n# TYPE b gauge\nb 1\na{x=\"1\"} 2\n", false, ErrorKind.Structure, false),
+            ("# TYPE a gauge\na{x=\"1\",x=\"2\"} 1\n", false, ErrorKind.DuplicateLabels, false),
+            ("# TYPE a gauge\na{x=\"1\"} 1\na{x=\"1\"} 2\n", false, ErrorKind.DuplicateSeries, false),
+            ("# TYPE a gauge\na{x=\"1\",y=\"2\"} 1\na{y=\"2\",x=\"1\"} 2\n", false, ErrorKind.DuplicateSeries, false),
+            ("# TYPE a gauge\na{} 1\na{x=\"\"} 2\n", false, ErrorKind.DuplicateSeries, false),
+            ("# TYPE a gauge\na{k1=\"a,k2=b\"} 1\na{k1=\"a\",k2=\"b\"} 2\n", false, null, false),
+            ("# TYPE h histogram\nh_bucket{le=\"+Inf\"} 1\nh_sum{} 1\nh_count{} 1\n# TYPE h_sum gauge\nh_sum{} 5\n", false, ErrorKind.DuplicateSeries, false),
+            ("# TYPE h histogram\nh_bucket{le=\"+Inf\"} 1\nh_sum{} 1\nh_count{} 1\n# TYPE h_bucket gauge\nh_bucket{le=\"+Inf\"} 2\n", false, ErrorKind.DuplicateSeries, false),
+            ("# TYPE a gauge\na-b 1\n", false, ErrorKind.Syntax, false),
+            ("# TYPE a gauge\na{x=\"1\"} one\n", false, ErrorKind.Syntax, false),
+            ("# TYPE a gauge\na 1\n", true, ErrorKind.Directive, false),
+            ("# TYPE a gauge\na 1\n# EOF\n", false, ErrorKind.Directive, false),
+            ("# TYPE a counter\na 1\n# EOF\n", true, ErrorKind.CounterSuffix, false),
+            ("# TYPE a gauge\n# UNIT a seconds\na 1\n# EOF\n", true, ErrorKind.Unit, false),
+            ("# TYPE h histogram\nh_bucket{le=\"1\"} 1\nh_count 1\nh_sum 1\n", false, ErrorKind.Histogram, false),
+            ("# TYPE a gauge\n# HELP a help\na{x=\"1\"} 1\n", false, null, false),
+            ("# TYPE a_seconds gauge\n# UNIT a_seconds seconds\na_seconds 1\n# EOF\n", true, null, false),
+            ("# TYPE g gauge\ng_sum 1\n# EOF\n", true, ErrorKind.Structure, false),
+            ("# TYPE g gauge\ng 1\n# TYPE g_sum gauge\ng_sum 2\n# EOF\n", true, null, false),
+            ("# TYPE c counter\nc_total 1\nc_created 1\n# EOF\n", true, null, false),
+            ("# TYPE h histogram\nh_bucket{le=\"+Inf\"} 1\nh_sum 1\nh_count 1\nh_created 1\n# EOF\n", true, null, false),
+            ("# TYPE h histogram\nh_bucket{le=\"+Inf\"} 1\nh_sum 1\nh_count 1\nh_total 1\n# EOF\n", true, ErrorKind.Structure, false),
+            ("# TYPE \"g.name\" gauge\n{\"g.name\",x=\"1\"} 1\n{\"g.name\"} 2\n", false, null, true),
+            ("# TYPE \"g.name\" gauge\n{\"g.name\"x=\"1\"} 1\n", false, ErrorKind.Syntax, true),
         }).ToArbitrary(),
         static (example) =>
         {
-            var protocol = example.Item2
-                ? new PrometheusProtocol(PrometheusProtocol.OpenMetricsMediaType, null, PrometheusProtocol.OpenMetricsV0, isOpenMetrics: true)
-                : new PrometheusProtocol(PrometheusProtocol.PrometheusTextMediaType, null, PrometheusProtocol.PrometheusV0, isOpenMetrics: false);
+            var protocol = example.Item4
+                ? new PrometheusProtocol(PrometheusProtocol.PrometheusTextMediaType, PrometheusProtocol.AllowUtf8Escaping, PrometheusProtocol.PrometheusV1, isOpenMetrics: false)
+                : example.Item2
+                    ? new PrometheusProtocol(PrometheusProtocol.OpenMetricsMediaType, null, PrometheusProtocol.OpenMetricsV0, isOpenMetrics: true)
+                    : new PrometheusProtocol(PrometheusProtocol.PrometheusTextMediaType, null, PrometheusProtocol.PrometheusV0, isOpenMetrics: false);
 
             var errors = Validate(example.Item1, protocol);
 
@@ -663,18 +672,6 @@ public class PrometheusExpositionFuzzTests
 
     private sealed class ExpositionValidator(PrometheusProtocol protocol, List<(ErrorKind Kind, string Message)> errors)
     {
-        private static readonly string[] SampleSuffixes =
-        [
-            "_total",
-            "_created",
-            "_bucket",
-            "_count",
-            "_sum",
-            "_gcount",
-            "_gsum",
-            "_info",
-        ];
-
         private readonly bool openMetrics = protocol.IsOpenMetrics;
         private readonly bool allowUtf8Names = protocol.Escaping == PrometheusProtocol.AllowUtf8Escaping;
         private readonly Dictionary<string, Family> families = new(StringComparer.Ordinal);
@@ -725,8 +722,31 @@ public class PrometheusExpositionFuzzTests
                     .OrderBy(static l => l.Key, StringComparer.Ordinal)
                     .Select(static l => l.Key.Length.ToString(CultureInfo.InvariantCulture) + ":" + l.Key + "=" + l.Value.Length.ToString(CultureInfo.InvariantCulture) + ":" + l.Value));
 
-        private static bool BelongsTo(string family, string sample)
-            => sample == family || (sample.StartsWith(family, StringComparison.Ordinal) && Array.IndexOf(SampleSuffixes, sample.Substring(family.Length)) >= 0);
+        // The suffixes of the samples of a family depend on its type, such as _sum for a histogram or a summary but not for a gauge.
+        private static bool BelongsTo(Family family, string sample)
+        {
+            if (sample == family.Name)
+            {
+                return true;
+            }
+
+            if (!sample.StartsWith(family.Name, StringComparison.Ordinal))
+            {
+                return false;
+            }
+
+            var suffix = sample.Substring(family.Name.Length);
+
+            return family.Type switch
+            {
+                "counter" => suffix is "_total" or "_created",
+                "histogram" => suffix is "_bucket" or "_count" or "_sum" or "_created",
+                "gaugehistogram" => suffix is "_bucket" or "_gcount" or "_gsum",
+                "summary" => suffix is "_count" or "_sum" or "_created",
+                "info" => suffix is "_info",
+                _ => false,
+            };
+        }
 
         private static bool IsValidEscapedText(string text, bool openMetrics)
         {
@@ -998,9 +1018,15 @@ public class PrometheusExpositionFuzzTests
                     return;
                 }
 
+                // The name is followed by a comma if there are labels, or by the end of the set if there are not.
                 if (index < line.Length && line[index] == ',')
                 {
                     index++;
+                }
+                else if (index >= line.Length || line[index] != '}')
+                {
+                    this.Error("expected ',' or '}' after the metric name: " + line);
+                    return;
                 }
 
                 if (!this.TryReadLabels(line, ref index, labels, closing: '}'))
@@ -1115,7 +1141,7 @@ public class PrometheusExpositionFuzzTests
 
             var family = this.current;
 
-            if (family is null || !BelongsTo(family.Name, name))
+            if (family is null || !BelongsTo(family, name))
             {
                 // The sample is not part of the family that is open, so the family it belongs to is new.
                 family = this.Enter(name);
