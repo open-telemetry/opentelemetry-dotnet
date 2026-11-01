@@ -87,6 +87,8 @@ public class TaskWorkerTests
     [Fact]
     public void PeriodicExportingMetricReaderTaskWorker_ShutdownBeforeStart_MakesFinalCollection()
     {
+        EnsureThreadPoolWorkerThreadsAvailable();
+
         // Arrange
         using var reader = new TestMetricReader();
         using var worker = new PeriodicExportingMetricReaderTaskWorker(
