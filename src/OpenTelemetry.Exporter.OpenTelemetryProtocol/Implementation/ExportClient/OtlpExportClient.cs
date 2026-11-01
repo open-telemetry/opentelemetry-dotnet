@@ -143,14 +143,14 @@ internal abstract class OtlpExportClient : IExportClient
             {
                 // Only stop using Zstandard immediately if GZip succeeded, as otherwise the
                 // rejection was most likely caused by something other than the compression used.
-                Volatile.Write(ref this.zstdRejected, 1);
+                this.StopUsingZstd();
             }
             else if (Interlocked.Increment(ref this.zstdFallbackFailures) >= MaxConsecutiveZstdFallbackFailures)
             {
                 // The receiver keeps rejecting requests whatever their compression, such as when
                 // it responds with 400 to a payload it does not accept. Stop sending each
                 // request twice, which doubles the bandwidth and CPU used, for no benefit.
-                Volatile.Write(ref this.zstdRejected, 1);
+                this.StopUsingZstd();
             }
         }
         else if (compression == OtlpExportCompression.Zstd)
@@ -415,4 +415,19 @@ internal abstract class OtlpExportClient : IExportClient
 #else
         this.HttpClient.SendAsync(request, this.CompletionOption, cancellationToken).GetAwaiter().GetResult();
 #endif
+
+    /// <summary>
+    /// Permanently switches to using GZip, and releases the Zstandard encoder as nothing can use it again.
+    /// </summary>
+    /// <remarks>
+    /// Any export that is still using the encoder disposes of it once it has finished with it.
+    /// </remarks>
+    private void StopUsingZstd()
+    {
+        Volatile.Write(ref this.zstdRejected, 1);
+
+#if NET11_0_OR_GREATER
+        this.zstdCompressor?.Shutdown();
+#endif
+    }
 }
