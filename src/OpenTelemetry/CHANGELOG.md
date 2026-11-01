@@ -34,6 +34,11 @@ Notes](../../RELEASENOTES.md).
   had been shut down.
   ([#8053](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8053))
 
+* Fixed `PeriodicExportingMetricReader` not making its final collection when
+  `Shutdown()` was called before its background task had started running on
+  platforms where threading is not available, such as browsers.
+  ([#8053](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8053))
+
 ## 1.21.0-rc.1
 
 Released 2026-Oct-28
