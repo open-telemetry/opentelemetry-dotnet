@@ -111,6 +111,64 @@ public class ProtobufOtlpSerializerExceptionSafetyTests(MaxSizeSerializationBuff
     }
 
     [Fact]
+    public void WriteLogsData_ReusedLoggerAcrossBatches_DoesNotCarryStaleLoggerGroupingIntoNextExport()
+    {
+        var failingBuffer = this.maxSizeBuffer.GetBuffer();
+
+        RunOnDedicatedThread(() =>
+        {
+            var logRecords = new List<LogRecord>();
+
+            using (var loggerProvider = Sdk.CreateLoggerProviderBuilder()
+                .AddInMemoryExporter(logRecords)
+                .Build())
+            {
+                var loggerA = loggerProvider.GetLogger("LoggerA");
+                var loggerB = loggerProvider.GetLogger("LoggerB");
+
+                loggerA.EmitLog(new LogRecordData { Body = "a1" });
+                loggerA.EmitLog(new LogRecordData { Body = "a2" });
+                loggerB.EmitLog(new LogRecordData { Body = "b1" });
+                loggerA.EmitLog(new LogRecordData { Body = "a3" });
+            }
+
+            Assert.Equal(4, logRecords.Count);
+
+            var a1 = logRecords[0];
+            var a2 = logRecords[1];
+            var b1 = logRecords[2];
+            var a3 = logRecords[3];
+
+            // The same Logger instance is used by consecutive batches on this
+            // thread, so a grouping left behind by an earlier export would be
+            // found again, point at a list that was already returned to the pool
+            // and silently drop (or mis-attribute) the later records.
+
+            // 1. After a successful export.
+            AssertScopes(SerializeLogs(a1), ("LoggerA", ["a1"]));
+            AssertScopes(SerializeLogs(a2), ("LoggerA", ["a2"]));
+
+            // 2. After an export that fails part way through.
+            Assert.Throws<IndexOutOfRangeException>(() => ProtobufOtlpLogSerializer.WriteLogsData(
+                ref failingBuffer,
+                failingBuffer.Length,
+                new SdkLimitOptions(),
+                new ExperimentalOptions(),
+                Resource.Empty,
+                new Batch<LogRecord>([a1], 1),
+                MaxSizeSerializationBufferFixture.MaxBufferSize));
+
+            AssertScopes(SerializeLogs(a3), ("LoggerA", ["a3"]));
+
+            // 3. A different logger now claims the pooled list the stale entry
+            //    would point at, and the reused logger must still get its own scope.
+            AssertScopes(SerializeLogs(b1, a2), ("LoggerB", ["b1"]), ("LoggerA", ["a2"]));
+        });
+
+        this.maxSizeBuffer.AssertNotSwapped(failingBuffer);
+    }
+
+    [Fact]
     public void WriteMetricsData_AfterFailedSerialization_DoesNotCarryStaleBatchIntoNextExport()
     {
         var failingBuffer = this.maxSizeBuffer.GetBuffer();
@@ -285,6 +343,39 @@ public class ProtobufOtlpSerializerExceptionSafetyTests(MaxSizeSerializationBuff
     // Note: ProtobufOtlpMetricSerializer.ReturnMetricListToPool uses the same
     // null-safe guard but is private, and no production path can reach the null
     // state, so it is covered only by consistency with the other two serializers.
+
+    private static OtlpLogs.LogsData SerializeLogs(params LogRecord[] logRecords)
+    {
+        var buffer = new byte[8 * 1024];
+        var batch = new Batch<LogRecord>(logRecords, logRecords.Length);
+        var writePosition = ProtobufOtlpLogSerializer.WriteLogsData(
+            ref buffer,
+            0,
+            new SdkLimitOptions(),
+            new ExperimentalOptions(),
+            Resource.Empty,
+            batch);
+
+        using var stream = new MemoryStream(buffer, 0, writePosition);
+        return OtlpLogs.LogsData.Parser.ParseFrom(stream);
+    }
+
+    private static void AssertScopes(OtlpLogs.LogsData logsData, params (string Scope, string[] Bodies)[] expected)
+    {
+        var resourceLogs = Assert.Single(logsData.ResourceLogs);
+
+        var actual = resourceLogs.ScopeLogs
+            .Select(x => (Scope: x.Scope?.Name, Bodies: x.LogRecords.Select(r => r.Body.StringValue).ToArray()))
+            .ToArray();
+
+        Assert.Equal(expected.Length, actual.Length);
+
+        for (var i = 0; i < expected.Length; i++)
+        {
+            Assert.Equal(expected[i].Scope, actual[i].Scope);
+            Assert.Equal(expected[i].Bodies, actual[i].Bodies);
+        }
+    }
 
     private static void AssertOnlySecondBatchIsSerialized(LogRecord logRecord, string expectedScopeName)
     {
