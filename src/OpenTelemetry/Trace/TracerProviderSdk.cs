@@ -381,7 +381,7 @@ internal sealed class TracerProviderSdk : TracerProvider
 
         this.Instrumentations.Clear();
 
-#if NET11_0_OR_GREATER
+#if !NET10_0
         this.DetachTracingBridge();
 #endif
 
@@ -403,7 +403,7 @@ internal sealed class TracerProviderSdk : TracerProvider
 
                 this.Instrumentations.Clear();
 
-#if NET11_0_OR_GREATER
+#if !NET10_0
                 // Stop forwarding from the listener owned by ActivitySourceFactory before
                 // the sampler and processors are disposed, as it outlives this provider.
                 this.DetachTracingBridge();
@@ -694,14 +694,14 @@ internal sealed class TracerProviderSdk : TracerProvider
             : ActivitySamplingResult.None;
     }
 
-#if NET11_0_OR_GREATER
+#if !NET10_0
     private void DetachTracingBridge()
         => this.tracingBridge?.Detach(this);
 #endif
 
     private void DisposeBuiltState(TracerProviderBuilderSdk state)
     {
-#if NET11_0_OR_GREATER
+#if !NET10_0
         this.DetachTracingBridge();
 #endif
 

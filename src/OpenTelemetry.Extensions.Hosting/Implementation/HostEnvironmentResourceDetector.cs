@@ -49,7 +49,7 @@ internal sealed class HostEnvironmentResourceDetector(
             return false;
         }
 
-        if (attributeName == ServiceNameAttribute && !string.IsNullOrWhiteSpace(configuration[OtelServiceNameKey]))
+        if (attributeName == ServiceNameAttribute && configuration.TryGetStringValue(OtelServiceNameKey, out _))
         {
             return true;
         }
@@ -59,8 +59,7 @@ internal sealed class HostEnvironmentResourceDetector(
 
     internal bool IsAttributeInOtelResourceAttributes(string attributeName)
     {
-        var raw = configuration?[OtelResourceAttributesKey];
-        if (raw == null)
+        if (configuration == null || !configuration.TryGetStringValue(OtelResourceAttributesKey, out var raw))
         {
             return false;
         }

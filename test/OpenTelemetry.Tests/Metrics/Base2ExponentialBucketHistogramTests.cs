@@ -451,6 +451,40 @@ public class Base2ExponentialBucketHistogramTests
     }
 
     [Theory]
+    [InlineData(-1, 4, -1)]
+    [InlineData(1, 4, -1)]
+    [InlineData(-1, 16, -2)]
+    [InlineData(1, 16, -2)]
+    public void RecordAfterResetScalesEmptyOppositeSignBuckets(int sign, double value, int expectedScale)
+    {
+        var histogram = new Base2ExponentialBucketHistogram(maxBuckets: 2, scale: 0);
+        histogram.Record(-sign);
+        histogram.Reset(isMinMax: false);
+
+        histogram.Record(sign);
+        histogram.Record(sign * value);
+
+        var recordedBuckets = sign > 0 ? histogram.PositiveBuckets : histogram.NegativeBuckets;
+        var emptyBuckets = sign > 0 ? histogram.NegativeBuckets : histogram.PositiveBuckets;
+
+        Assert.Equal(expectedScale, histogram.Scale);
+        Assert.Equal(-1, recordedBuckets.Offset);
+        Assert.Equal(2, recordedBuckets.Size);
+        Assert.Equal(1, recordedBuckets[-1]);
+        Assert.Equal(1, recordedBuckets[0]);
+        Assert.Equal(0, emptyBuckets.Offset);
+        Assert.Equal(0, emptyBuckets.Size);
+
+        histogram.Record(-sign);
+
+        Assert.Equal(-1, emptyBuckets.Offset);
+        Assert.Equal(1, emptyBuckets.Size);
+        Assert.Equal(1, emptyBuckets[-1]);
+        Assert.Equal(1, recordedBuckets[-1]);
+        Assert.Equal(1, recordedBuckets[0]);
+    }
+
+    [Theory]
     [InlineData(1)]
     [InlineData(2)]
     [InlineData(3)]
