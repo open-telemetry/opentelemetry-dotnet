@@ -1153,7 +1153,7 @@ public struct MetricPoint
     {
         if (number < 0 || double.IsNaN(number) || double.IsInfinity(number))
         {
-            // Negatives are undefined for exponential histograms; non-finite values would also
+            // Negative values are rejected by this SDK path; non-finite values would also
             // poison RunningSum/RunningMin/RunningMax for the lifetime of a cumulative stream.
             this.CompleteUpdateWithoutMeasurement();
             return;
