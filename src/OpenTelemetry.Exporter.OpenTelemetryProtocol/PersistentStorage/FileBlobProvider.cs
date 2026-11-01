@@ -138,7 +138,7 @@ public class FileBlobProvider : PersistentBlobProvider, IDisposable
             var fileDateTime = PersistentStorageHelper.GetBlobCreationTime(file);
             if (fileDateTime > retentionDeadline)
             {
-                yield return new FileBlob(file, this.directorySizeTracker);
+                yield return new FileBlob(file, this.directorySizeTracker, this.IsDirectoryTrusted);
             }
         }
     }
@@ -270,7 +270,7 @@ public class FileBlobProvider : PersistentBlobProvider, IDisposable
         try
         {
             var blobFilePath = Path.Combine(this.DirectoryPath, PersistentStorageHelper.GetUniqueFileName(".blob"));
-            var blob = new FileBlob(blobFilePath, this.directorySizeTracker);
+            var blob = new FileBlob(blobFilePath, this.directorySizeTracker, this.IsDirectoryTrusted);
 
             return blob.TryWrite(buffer, leasePeriodMilliseconds) ? blob : null;
         }

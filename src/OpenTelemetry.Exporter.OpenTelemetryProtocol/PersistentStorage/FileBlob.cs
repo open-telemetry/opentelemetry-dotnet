@@ -19,6 +19,7 @@ public class FileBlob : PersistentBlob
 #endif
 {
     private readonly DirectorySizeTracker? directorySizeTracker;
+    private readonly Func<bool>? isDirectoryTrusted;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="FileBlob"/>
@@ -30,10 +31,11 @@ public class FileBlob : PersistentBlob
     {
     }
 
-    internal FileBlob(string fullPath, DirectorySizeTracker? directorySizeTracker)
+    internal FileBlob(string fullPath, DirectorySizeTracker? directorySizeTracker, Func<bool>? isDirectoryTrusted = null)
     {
         this.FullPath = fullPath;
         this.directorySizeTracker = directorySizeTracker;
+        this.isDirectoryTrusted = isDirectoryTrusted;
     }
 
     public string FullPath { get; private set; }
@@ -43,6 +45,15 @@ public class FileBlob : PersistentBlob
         try
         {
             buffer = PersistentStorageHelper.ReadAllBytes(this.FullPath, this.directorySizeTracker?.MaxSizeInBytes ?? int.MaxValue);
+
+            // The directory is verified before blobs are listed, but it could have been replaced by another user since
+            // then. A directory that is owned by the current user cannot be put back in its place once it has been
+            // removed, so verifying it again after the content was read means that content from a replacement is discarded.
+            if (this.isDirectoryTrusted?.Invoke() == false)
+            {
+                buffer = null;
+                return false;
+            }
         }
         catch (Exception ex)
         {

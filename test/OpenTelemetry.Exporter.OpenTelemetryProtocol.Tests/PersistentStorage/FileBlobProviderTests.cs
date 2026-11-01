@@ -623,6 +623,34 @@ public class FileBlobProviderTests
     }
 
     [Fact]
+    public void TryRead_DirectoryReplacedByDirectoryWritableByOtherUsersAfterBlobWasListed_DoesNotReturnForeignContent()
+    {
+        if (OperatingSystem.IsWindows())
+        {
+            Assert.Skip("Unix file modes do not apply on Windows.");
+            return;
+        }
+
+        using var root = new TemporaryDirectory();
+
+        var path = Path.Combine(root.Path, "traces");
+        using var provider = new FileBlobProvider(path);
+
+        Assert.True(provider.TryCreateBlob([1, 2, 3], out _));
+        Assert.True(provider.TryGetBlob(out var blob));
+
+        var blobPath = Assert.IsType<FileBlob>(blob).FullPath;
+
+        // Another user replaces the directory after the blob was listed, and before its content is read
+        Directory.Delete(path, recursive: true);
+        CreateDirectory(path, OwnerOnly | UnixFileMode.OtherWrite);
+        File.WriteAllBytes(blobPath, [4, 5, 6]);
+
+        Assert.False(blob.TryRead(out var data));
+        Assert.Null(data);
+    }
+
+    [Fact]
     public void TryGetBlob_DirectoryReplacedByDirectoryWritableByOtherUsersWithoutPermissionChecks_ReturnsBlobs()
     {
         if (OperatingSystem.IsWindows())
