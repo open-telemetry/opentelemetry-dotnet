@@ -142,7 +142,7 @@ public class ProtobufOtlpSerializerExceptionSafetyTests(MaxSizeSerializationBuff
             // The same Logger instance is used by consecutive batches on this
             // thread, so a grouping left behind by an earlier export would be
             // found again, point at a list that was already returned to the pool
-            // and silently drop (or mis-attribute) the later records.
+            // and silently drop (or misattribute) the later records.
 
             // 1. After a successful export.
             AssertScopes(SerializeLogs(a1), ("LoggerA", ["a1"]));
