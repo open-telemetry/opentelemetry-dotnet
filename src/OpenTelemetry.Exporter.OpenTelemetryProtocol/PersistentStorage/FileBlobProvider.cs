@@ -25,6 +25,7 @@ public class FileBlobProvider : PersistentBlobProvider, IDisposable
     private readonly int writeTimeoutInMilliseconds;
     private readonly System.Timers.Timer maintenanceTimer;
     private readonly bool checkPermissions;
+    private int directoryRejected;
     private bool disposedValue;
 
     /// <summary>
@@ -95,8 +96,11 @@ public class FileBlobProvider : PersistentBlobProvider, IDisposable
 
         // TODO: Validate time period values
         this.checkPermissions = checkPermissions;
-        this.DirectoryPath = PersistentStorageHelper.CreateSubdirectory(path, checkPermissions);
-        this.directorySizeTracker = new DirectorySizeTracker(maxSizeInBytes, path);
+
+        // A relative path is resolved once, so that the directory that is verified is the directory that is always used
+        // for blobs and for size tracking, even if the current directory of the process is changed after this point.
+        this.DirectoryPath = PersistentStorageHelper.CreateSubdirectory(Path.GetFullPath(path), checkPermissions);
+        this.directorySizeTracker = new DirectorySizeTracker(maxSizeInBytes, this.DirectoryPath);
         this.retentionPeriodInMilliseconds = retentionPeriodInMilliseconds;
         this.writeTimeoutInMilliseconds = writeTimeoutInMilliseconds;
 
@@ -114,6 +118,12 @@ public class FileBlobProvider : PersistentBlobProvider, IDisposable
 
     protected override IEnumerable<PersistentBlob> OnGetBlobs()
     {
+        // Blobs are replayed with the exporter's credentials, so none are read from a directory that is no longer trusted.
+        if (!this.IsDirectoryTrusted())
+        {
+            yield break;
+        }
+
         var retentionDeadline = DateTime.UtcNow - TimeSpan.FromMilliseconds(this.retentionPeriodInMilliseconds);
 
         foreach (var file in Directory.EnumerateFiles(this.DirectoryPath, "*.blob", SearchOption.TopDirectoryOnly).OrderByDescending(f => f))
@@ -199,10 +209,41 @@ public class FileBlobProvider : PersistentBlobProvider, IDisposable
             return;
         }
 
+        // The directory may have been removed and replaced by another user since it was last verified (for example
+        // beneath a sticky directory such as /tmp, where only its owner can remove it), so it is verified again
+        // even when it exists, and no files are removed from it if it can no longer be trusted.
+        if (!this.IsDirectoryTrusted())
+        {
+            return;
+        }
+
         PersistentStorageHelper.RemoveExpiredBlobs(this.DirectoryPath, this.retentionPeriodInMilliseconds, this.writeTimeoutInMilliseconds);
 
         // It is faster to calculate the directory size, instead of removing length of expired files.
         this.directorySizeTracker.RecountCurrentSize();
+    }
+
+    private bool IsDirectoryTrusted()
+    {
+        try
+        {
+            PersistentStorageHelper.VerifyDirectory(this.DirectoryPath, this.checkPermissions);
+            Volatile.Write(ref this.directoryRejected, 0);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            // Fail closed, but only report the first failure so that a directory that stays untrusted does not flood the log.
+            if (Interlocked.Exchange(ref this.directoryRejected, 1) == 0)
+            {
+                PersistentStorageEventSource.Log.PersistentStorageException(
+                    nameof(FileBlobProvider),
+                    $"The directory {this.DirectoryPath} can no longer be trusted, so it is not used",
+                    ex);
+            }
+
+            return false;
+        }
     }
 
     private bool CheckStorageSize(int bufferLength)
@@ -221,7 +262,7 @@ public class FileBlobProvider : PersistentBlobProvider, IDisposable
 
     private FileBlob? CreateFileBlob(ReadOnlySpan<byte> buffer, int leasePeriodMilliseconds = 0)
     {
-        if (!this.CheckStorageSize(buffer.Length))
+        if (!this.IsDirectoryTrusted() || !this.CheckStorageSize(buffer.Length))
         {
             return null;
         }

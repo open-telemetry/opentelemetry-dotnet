@@ -542,6 +542,101 @@ public class FileBlobProviderTests
 
 #if NET
     [Fact]
+    public void Constructor_RelativePath_UsesAbsolutePath()
+    {
+        using var root = new TemporaryDirectory();
+
+        // The directory that is verified must be the one that is used, even if the current directory changes later
+        var relativePath = Path.Combine(Path.GetRelativePath(Directory.GetCurrentDirectory(), root.Path), "traces");
+
+        if (Path.IsPathRooted(relativePath))
+        {
+            Assert.Skip("The temporary directory cannot be expressed as a relative path.");
+            return;
+        }
+
+        using var provider = new FileBlobProvider(relativePath);
+
+        Assert.True(Path.IsPathRooted(provider.DirectoryPath));
+        Assert.Equal(Path.GetFullPath(relativePath), provider.DirectoryPath);
+        Assert.True(provider.TryCreateBlob([1, 2, 3], out var blob));
+        Assert.Equal(provider.DirectoryPath, Path.GetDirectoryName(Assert.IsType<FileBlob>(blob).FullPath));
+    }
+
+    [Fact]
+    public void TryGetBlob_DirectoryReplacedByDirectoryWritableByOtherUsers_DoesNotReturnForeignBlobs()
+    {
+        if (OperatingSystem.IsWindows())
+        {
+            Assert.Skip("Unix file modes do not apply on Windows.");
+            return;
+        }
+
+        using var root = new TemporaryDirectory();
+
+        var path = Path.Combine(root.Path, "traces");
+        using var provider = new FileBlobProvider(path);
+
+        // Another user recreates the directory after it was verified, for example after it was cleaned up
+        Directory.Delete(path, recursive: true);
+        CreateDirectory(path, OwnerOnly | UnixFileMode.OtherWrite);
+
+        var blobPath = Path.Combine(path, PersistentStorageHelper.GetUniqueFileName(".blob"));
+        File.WriteAllBytes(blobPath, [1, 2, 3]);
+
+        Assert.False(provider.TryGetBlob(out _));
+        Assert.False(provider.TryCreateBlob([4, 5, 6], out _));
+        Assert.Equal([blobPath], Directory.GetFiles(path));
+    }
+
+    [Fact]
+    public void TryGetBlob_DirectoryReplacedByDirectoryWritableByOtherUsersWithoutPermissionChecks_ReturnsBlobs()
+    {
+        if (OperatingSystem.IsWindows())
+        {
+            Assert.Skip("Unix file modes do not apply on Windows.");
+            return;
+        }
+
+        using var root = new TemporaryDirectory();
+
+        var path = Path.Combine(root.Path, "traces");
+        using var provider = new FileBlobProvider(path, checkPermissions: false);
+
+        Directory.Delete(path, recursive: true);
+        CreateDirectory(path, OwnerOnly | UnixFileMode.OtherWrite);
+
+        Assert.True(provider.TryCreateBlob([1, 2, 3], out _));
+        Assert.True(provider.TryGetBlob(out _));
+    }
+
+    [Fact]
+    public async Task MaintenanceEvent_DirectoryReplacedByDirectoryWritableByOtherUsers_DoesNotRemoveFiles()
+    {
+        if (OperatingSystem.IsWindows())
+        {
+            Assert.Skip("Unix file modes do not apply on Windows.");
+            return;
+        }
+
+        using var root = new TemporaryDirectory();
+
+        var path = Path.Combine(root.Path, "traces");
+        using var provider = new FileBlobProvider(path, maintenancePeriodInMilliseconds: 50, retentionPeriodInMilliseconds: 1);
+
+        Directory.Delete(path, recursive: true);
+        CreateDirectory(path, OwnerOnly | UnixFileMode.OtherWrite);
+
+        // The blob has expired, so it would be removed by maintenance if the directory was trusted
+        var blobPath = Path.Combine(path, PersistentStorageHelper.GetUniqueFileName(".blob"));
+        File.WriteAllBytes(blobPath, [1, 2, 3]);
+
+        await Task.Delay(TimeSpan.FromSeconds(1), TestContext.Current.CancellationToken);
+
+        Assert.True(File.Exists(blobPath));
+    }
+
+    [Fact]
     public async Task MaintenanceEvent_RecreatesDeletedDirectoryWithOwnerOnlyPermissions()
     {
         if (OperatingSystem.IsWindows())

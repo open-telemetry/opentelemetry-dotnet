@@ -380,6 +380,22 @@ internal static class PersistentStorageHelper
         return path;
     }
 
+    /// <summary>
+    /// Verifies that a directory that was created by <see cref="CreateSubdirectory"/> can still be used, without creating it.
+    /// </summary>
+    /// <param name="path">The path of the directory.</param>
+    /// <param name="checkPermissions">Whether the permissions of the directory are checked.</param>
+    /// <exception cref="UnauthorizedAccessException">The directory could be changed by another user.</exception>
+    internal static void VerifyDirectory(string path, bool checkPermissions)
+    {
+#if NET
+        if (checkPermissions && !OperatingSystem.IsWindows())
+        {
+            EnsureDirectoryIsPrivate(path);
+        }
+#endif
+    }
+
     internal static DateTime GetDateTimeFromBlobName(string filePath)
     {
         var fileName = GetFileNameWithoutExtension(filePath);
