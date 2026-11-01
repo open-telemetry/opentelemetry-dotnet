@@ -96,19 +96,22 @@ public class WildcardHelperFuzzTests
         {
             var regex = WildcardHelper.GetWildcardRegex(scenario.Patterns);
 
-            var stopwatch = Stopwatch.StartNew();
-
             try
             {
+                var stopwatch = Stopwatch.StartNew();
+
                 // Deliberately not WildcardHelper.IsMatch(), which swallows timeouts and would hide them.
                 var actual = regex.IsMatch(scenario.Input);
+
+                // Only time the match itself, not the reference matcher below.
+                var elapsed = stopwatch.Elapsed;
 
                 // Whether a wildcard matches a line feed is not tested, so the reference is only used for names without one.
                 var matchesReference =
                     scenario.Input.Any(static c => c == '\n') ||
                     actual == scenario.Patterns.Any(p => ReferenceGlobMatch(p, scenario.Input));
 
-                return matchesReference && stopwatch.Elapsed < MaximumMatchDuration;
+                return matchesReference && elapsed < MaximumMatchDuration;
             }
             catch (RegexMatchTimeoutException)
             {
