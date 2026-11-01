@@ -260,17 +260,15 @@ public class OtlpHttpExportClientTests
         Assert.True(windowSize <= 8 * 1024 * 1024, $"The window size of {windowSize} bytes exceeds 8 MiB.");
     }
 
-    [Theory]
-    [InlineData(HttpStatusCode.UnsupportedMediaType)]
-    [InlineData(HttpStatusCode.BadRequest)]
-    public void SendExportRequest_WithZstdCompression_RejectedByReceiver_RetriesWithGzipAndThenUsesGzip(HttpStatusCode rejectionStatusCode)
+    [Fact]
+    public void SendExportRequest_WithZstdCompression_RejectedByReceiver_RetriesWithGzipAndThenUsesGzip()
     {
         const int ZstdCompressionRejectedEventId = 45;
 
         var payload = "00000000000000000000000000000000"u8.ToArray();
 
         using var listener = new TestEventListener(OpenTelemetryProtocolExporterEventSource.Log, EventLevel.Warning);
-        using var testHandler = new ContentEncodingHttpMessageHandler(encoding => encoding == "zstd" ? rejectionStatusCode : HttpStatusCode.OK);
+        using var testHandler = new ContentEncodingHttpMessageHandler(encoding => encoding == "zstd" ? HttpStatusCode.UnsupportedMediaType : HttpStatusCode.OK);
         using var httpClient = new HttpClient(testHandler, disposeHandler: false);
 
         var exportClient = CreateZstdExportClient(httpClient);
@@ -293,7 +291,9 @@ public class OtlpHttpExportClientTests
     {
         var payload = "00000000000000000000000000000000"u8.ToArray();
 
-        using var testHandler = new ContentEncodingHttpMessageHandler(_ => HttpStatusCode.BadRequest);
+        // A 415 for a reason other than the Content-Encoding, such as an unsupported Content-Type,
+        // also fails when the request is sent again with GZip.
+        using var testHandler = new ContentEncodingHttpMessageHandler(_ => HttpStatusCode.UnsupportedMediaType);
         using var httpClient = new HttpClient(testHandler, disposeHandler: false);
 
         var exportClient = CreateZstdExportClient(httpClient);
@@ -302,7 +302,7 @@ public class OtlpHttpExportClientTests
 
         var httpResponse = Assert.IsType<ExportClientHttpResponse>(response);
         Assert.False(httpResponse.Success);
-        Assert.Equal(HttpStatusCode.BadRequest, httpResponse.StatusCode);
+        Assert.Equal(HttpStatusCode.UnsupportedMediaType, httpResponse.StatusCode);
         Assert.Equal(["zstd", "gzip"], testHandler.ContentEncodings);
         Assert.Equal(OtlpExportCompression.Zstd, exportClient.Compression);
     }
@@ -312,7 +312,7 @@ public class OtlpHttpExportClientTests
     {
         var payload = "00000000000000000000000000000000"u8.ToArray();
 
-        using var testHandler = new ContentEncodingHttpMessageHandler(_ => HttpStatusCode.BadRequest);
+        using var testHandler = new ContentEncodingHttpMessageHandler(_ => HttpStatusCode.UnsupportedMediaType);
         using var httpClient = new HttpClient(testHandler, disposeHandler: false);
 
         var exportClient = CreateZstdExportClient(httpClient);
@@ -337,10 +337,10 @@ public class OtlpHttpExportClientTests
     public void SendExportRequest_WithZstdCompression_RejectedForOtherReasonNonConsecutively_KeepsUsingZstd()
     {
         var payload = "00000000000000000000000000000000"u8.ToArray();
-        var zstdStatusCode = HttpStatusCode.BadRequest;
+        var zstdStatusCode = HttpStatusCode.UnsupportedMediaType;
 
         using var testHandler = new ContentEncodingHttpMessageHandler(
-            encoding => encoding == "zstd" ? zstdStatusCode : HttpStatusCode.BadRequest);
+            encoding => encoding == "zstd" ? zstdStatusCode : HttpStatusCode.UnsupportedMediaType);
         using var httpClient = new HttpClient(testHandler, disposeHandler: false);
 
         var exportClient = CreateZstdExportClient(httpClient);
@@ -353,7 +353,7 @@ public class OtlpHttpExportClientTests
             // A request that is not rejected because of its compression resets the count
             zstdStatusCode = HttpStatusCode.InternalServerError;
             exportClient.SendExportRequest(payload, payload.Length, DateTime.UtcNow.AddSeconds(10), TestContext.Current.CancellationToken);
-            zstdStatusCode = HttpStatusCode.BadRequest;
+            zstdStatusCode = HttpStatusCode.UnsupportedMediaType;
         }
 
         Assert.Equal(OtlpExportCompression.Zstd, exportClient.Compression);
@@ -361,6 +361,7 @@ public class OtlpHttpExportClientTests
     }
 
     [Theory]
+    [InlineData(HttpStatusCode.BadRequest)]
     [InlineData(HttpStatusCode.InternalServerError)]
     [InlineData(HttpStatusCode.ServiceUnavailable)]
     [InlineData(HttpStatusCode.Unauthorized)]
@@ -377,6 +378,7 @@ public class OtlpHttpExportClientTests
 
         Assert.False(response.Success);
         Assert.Equal(["zstd"], testHandler.ContentEncodings);
+        Assert.Equal(OtlpExportCompression.Zstd, exportClient.Compression);
     }
 
     [Fact]
@@ -475,6 +477,31 @@ public class OtlpHttpExportClientTests
         compressor.Compress(outerPayload, next);
 
         Assert.Equal(outerPayload, DecompressZstd(next.ToArray()));
+    }
+
+    [Fact]
+    public void ZstdCompressor_ShutdownDuringCompression_CompressionCompletesAndLaterCompressionsStillWork()
+    {
+        var payload = "shutdown shutdown shutdown shutdown shutdown"u8.ToArray();
+        var compressor = new ZstdCompressor();
+
+        // Shuts down while the encoder is in use, so it is not cached when it is returned
+        // as nothing would then release it, which would retain its native memory.
+        using var destination = new CallbackOnFirstWriteStream(compressor.Shutdown);
+
+        compressor.Compress(payload, destination);
+
+        Assert.Equal(payload, DecompressZstd(destination.ToArray()));
+
+        for (var i = 0; i < 2; i++)
+        {
+            using var next = new MemoryStream();
+            compressor.Compress(payload, next);
+
+            Assert.Equal(payload, DecompressZstd(next.ToArray()));
+        }
+
+        compressor.Shutdown();
     }
 #else
     [Fact]

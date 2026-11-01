@@ -17,6 +17,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClie
 internal sealed class OtlpGrpcExportClient : OtlpExportClient
 {
     public const string GrpcStatusDetailsHeader = "grpc-status-details-bin";
+    public const string GrpcAcceptEncodingHeader = "grpc-accept-encoding";
 
     // A gRPC message frame header is 5 bytes:
     //   byte 0     - Compression flag (0 = not compressed, 1 = compressed).
@@ -152,6 +153,17 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
                 grpcStatusDetailsHeader = GrpcProtocolHelpers.GetHeaderValue(trailingHeaders, GrpcStatusDetailsHeader);
             }
 
+            // The encodings the server supports are only needed to decide whether a request that
+            // was rejected as UNIMPLEMENTED should be sent again with a different compression, and
+            // the response is disposed of before that decision is made.
+            string? grpcAcceptEncodingHeader = null;
+            if (status.StatusCode == StatusCode.Unimplemented)
+            {
+                grpcAcceptEncodingHeader =
+                    GrpcProtocolHelpers.GetHeaderValue(httpResponse.Headers, GrpcAcceptEncodingHeader) ??
+                    GrpcProtocolHelpers.GetHeaderValue(trailingHeaders, GrpcAcceptEncodingHeader);
+            }
+
             OpenTelemetryProtocolExporterEventSource.Log.ExportFailure(this.Endpoint, "Export failed due to unexpected status code.", status);
 
             return new ExportClientGrpcResponse(
@@ -159,7 +171,8 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
                 deadlineUtc: deadlineUtc,
                 exception: null,
                 status: status,
-                grpcStatusDetailsHeader: grpcStatusDetailsHeader);
+                grpcStatusDetailsHeader: grpcStatusDetailsHeader,
+                grpcAcceptEncodingHeader: grpcAcceptEncodingHeader);
         }
         catch (HttpRequestException ex) when (ex.InnerException is TimeoutException || IsTransientNetworkError(ex))
         {
@@ -234,11 +247,15 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
 
     /// <inheritdoc/>
     /// <remarks>
-    /// Servers that do not support a grpc-encoding return UNIMPLEMENTED.
+    /// Servers that do not support a grpc-encoding return UNIMPLEMENTED and may list the encodings
+    /// they do support in grpc-accept-encoding. If that lists zstd, the error is unrelated to the
+    /// compression used. Many servers (such as grpc-go and so the OpenTelemetry Collector) do not
+    /// send the header, so its absence is treated as the encoding not being supported.
     /// See https://github.com/grpc/grpc/blob/master/doc/compression.md.
     /// </remarks>
     protected override bool IsCompressionRejected(ExportClientResponse response) =>
-        response is ExportClientGrpcResponse { Status.StatusCode: StatusCode.Unimplemented };
+        response is ExportClientGrpcResponse { Status.StatusCode: StatusCode.Unimplemented } grpcResponse &&
+        !AcceptsEncoding(grpcResponse.GrpcAcceptEncodingHeader, "zstd");
 
     protected override HttpContent CreateHttpContent(byte[] buffer, int contentLength, OtlpExportCompression compression) =>
         compression != OtlpExportCompression.None
@@ -247,6 +264,25 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
 
     private static string GetEncodingName(OtlpExportCompression compression) =>
         compression == OtlpExportCompression.Zstd ? "zstd" : "gzip";
+
+    private static bool AcceptsEncoding(string? acceptEncodingHeader, string encoding)
+    {
+        if (acceptEncodingHeader is not { Length: > 0 })
+        {
+            return false;
+        }
+
+        // The value is a comma-separated list of encodings, such as "identity,deflate,gzip".
+        foreach (var candidate in acceptEncodingHeader.Split(','))
+        {
+            if (string.Equals(candidate.Trim(), encoding, StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
 
     private static bool IsTransientNetworkError(HttpRequestException ex) =>
         ex.InnerException is SocketException { SocketErrorCode: SocketError.TimedOut or SocketError.ConnectionReset or SocketError.HostUnreachable or SocketError.ConnectionRefused };

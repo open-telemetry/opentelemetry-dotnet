@@ -350,9 +350,10 @@ appBuilder.Services.AddOptions<OtlpExporterOptions>()
   > `OtlpExportCompression.Zstd` requires .NET 11 or later and is not available
   > in when using Blazor. Where Zstandard is not available, GZip is used
   > instead. Receivers are not required to support Zstandard, so if a receiver
-  > rejects a Zstandard-compressed request (with `415`/`400` for
-  > `http/protobuf`, or `UNIMPLEMENTED` for `grpc`), the request is sent again
-  > using GZip, and GZip is then used for all further requests if that succeeds.
+  > rejects a Zstandard-compressed request (with `415` for `http/protobuf`, or
+  > `UNIMPLEMENTED` for `grpc` unless the response's `grpc-accept-encoding`
+  > header lists `zstd`), the request is sent again using GZip, and GZip is then
+  > used for all further requests if that succeeds.
   > If three requests in a row are rejected and then fail again using GZip,
   > GZip is also used for all further requests, so that each request is not
   > sent twice indefinitely.

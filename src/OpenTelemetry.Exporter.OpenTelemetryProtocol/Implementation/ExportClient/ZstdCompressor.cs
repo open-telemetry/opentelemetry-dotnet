@@ -24,6 +24,7 @@ internal sealed class ZstdCompressor
     internal const int MaxWindowLog2 = 23;
 
     private ZstandardEncoder? cachedEncoder;
+    private int isShutdown;
 
     [UnsupportedOSPlatformGuard("browser")]
     [UnsupportedOSPlatformGuard("wasi")]
@@ -77,6 +78,9 @@ internal sealed class ZstdCompressor
     {
         Debug.Assert(IsSupported, "Zstandard compression is not supported on this platform.");
 
+        // Set before releasing the cached encoder, so that an encoder returned by an export that is
+        // still compressing either sees the flag and is disposed, or is cached in time to be released here.
+        Interlocked.Exchange(ref this.isShutdown, 1);
         Interlocked.Exchange(ref this.cachedEncoder, null)?.Dispose();
     }
 
@@ -102,12 +106,26 @@ internal sealed class ZstdCompressor
     [UnsupportedOSPlatform("wasi")]
     private void ReturnEncoder(ZstandardEncoder encoder)
     {
+        if (Volatile.Read(ref this.isShutdown) != 0)
+        {
+            // Shutdown ran while the encoder was in use, so do not retain its native memory.
+            // Later exports can still compress, but each uses (and then disposes of) its own encoder.
+            encoder.Dispose();
+            return;
+        }
+
         encoder.Reset();
 
         if (Interlocked.CompareExchange(ref this.cachedEncoder, encoder, null) != null)
         {
             // Another export returned an encoder first.
             encoder.Dispose();
+        }
+        else if (Volatile.Read(ref this.isShutdown) != 0)
+        {
+            // Shutdown ran after the check above but before the encoder was cached, and so may have
+            // missed it. Whichever of this and Shutdown removes it from the cache is the one that disposes of it.
+            Interlocked.Exchange(ref this.cachedEncoder, null)?.Dispose();
         }
     }
 }

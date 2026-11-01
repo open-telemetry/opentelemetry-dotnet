@@ -99,10 +99,12 @@ internal sealed class OtlpHttpExportClient : OtlpExportClient
 
     /// <inheritdoc/>
     /// <remarks>
-    /// Receivers that do not support a Content-Encoding should return 415, but may return 400.
+    /// Receivers that do not support a Content-Encoding must return 415. A 400 is not treated as a
+    /// rejection of the compression as OTLP/HTTP uses it for payloads that are permanently invalid,
+    /// which must not be sent again.
     /// </remarks>
     protected override bool IsCompressionRejected(ExportClientResponse response) =>
-        response is ExportClientHttpResponse { StatusCode: HttpStatusCode.UnsupportedMediaType or HttpStatusCode.BadRequest };
+        response is ExportClientHttpResponse { StatusCode: HttpStatusCode.UnsupportedMediaType };
 
     protected override HttpContent CreateHttpContent(byte[] buffer, int contentLength, OtlpExportCompression compression) =>
         compression switch
