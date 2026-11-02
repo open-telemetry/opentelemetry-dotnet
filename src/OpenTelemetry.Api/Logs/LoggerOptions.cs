@@ -13,7 +13,7 @@ namespace OpenTelemetry.Logs;
 /// A class containing options for configuring a <see cref="Logger"/>.
 /// </summary>
 /// <remarks><b>WARNING</b>: This is an experimental API which might change or be removed in the future. Use at your own risk.</remarks>
-[Experimental(DiagnosticDefinitions.LogsBridgeExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
+[Experimental(DiagnosticDefinitions.LogsExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
 public
 #else
 /// <summary>

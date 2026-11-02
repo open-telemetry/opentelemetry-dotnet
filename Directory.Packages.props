@@ -101,6 +101,7 @@
     <PackageVersion Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" Version="5.6.0" />
     <PackageVersion Include="Microsoft.Coyote" Version="1.7.11" />
     <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="10.0.14" />
+    <PackageVersion Include="Microsoft.Extensions.Diagnostics" Version="11.0.0-rc.3.26522.148" />
     <PackageVersion Include="Microsoft.Extensions.Hosting" Version="10.0.14" />
     <PackageVersion Include="Microsoft.Extensions.Http" Version="10.0.14" />
     <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.14" />

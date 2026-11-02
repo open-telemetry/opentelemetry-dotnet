@@ -8,6 +8,7 @@ using System.Globalization;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using OpenTelemetry.Exporter.Prometheus.Serialization;
 using OpenTelemetry.Metrics;
@@ -21,6 +22,8 @@ public sealed partial class PrometheusSerializerTests
 {
     internal static readonly VerifySettings VerifySettings = CreateVerifySettings();
     private static readonly int[] LabelValueArrayCase = [1, 2, 3];
+    private static readonly string[] LabelValueOversizedArrayCase = ["0123456789", "0123456789", "0123456789", "0123456789"];
+    private static readonly string[] LabelValueBoundaryArrayCase = ["0123456789012345678901234567890123"];
     private static readonly byte[] LabelValueByteArrayCase = [1, 2, 3];
 
     public static TheoryData<string> EscapingSchemes =>
@@ -1934,6 +1937,225 @@ public sealed partial class PrometheusSerializerTests
         Assert.Equal(expectedValue, Encoding.UTF8.GetString(buffer, 0, cursor));
     }
 
+    [Theory]
+    [InlineData("""{"a":1}""")]
+    [InlineData("TRUNCATED", "a", "012345678901234567890123456789012345678")]
+    [InlineData("TRUNCATED", "a", "0123456789", "b", "0123456789", "c", "0123456789")]
+    [InlineData("TRUNCATED", "a", "\u0001\u0001\u0001\u0001\u0001\u0001\u0001")]
+    public void ToLabelValueStringTruncatesMapWhoseJsonExceedsMaximumLength(string expectedValue, params string[] keysAndValues)
+    {
+        var map = new Dictionary<string, object?> { ["a"] = 1 };
+
+        if (keysAndValues.Length > 0)
+        {
+            map.Clear();
+            for (var i = 0; i < keysAndValues.Length; i += 2)
+            {
+                map[keysAndValues[i]] = keysAndValues[i + 1];
+            }
+        }
+
+        var writer = new PrometheusAnyValueWriter(40);
+
+        Assert.Equal(expectedValue, writer.ToLabelValueString("key", map));
+    }
+
+    [Fact]
+    public void ToLabelValueStringTruncatesArrayWhoseStructuralJsonExceedsMaximumLength()
+    {
+        var writer = new PrometheusAnyValueWriter(40);
+
+        var nestedArrays = new object[20];
+        for (var i = 0; i < nestedArrays.Length; i++)
+        {
+            nestedArrays[i] = Array.Empty<int>();
+        }
+
+        Assert.Equal("TRUNCATED", writer.ToLabelValueString("key", nestedArrays));
+    }
+
+    [Fact]
+    public void ToLabelValueStringTruncatesArrayContainingMapWithOversizedKey()
+    {
+        var writer = new PrometheusAnyValueWriter(40);
+
+        var map = new Dictionary<string, object?> { [new string('k', 1000)] = Array.Empty<int>() };
+
+        Assert.Equal("TRUNCATED", writer.ToLabelValueString("key", new object[] { map }));
+    }
+
+    [Theory]
+    [InlineData(38, """["0123456789012345678901234567890123"]""")]
+    [InlineData(37, "TRUNCATED")]
+    public void ToLabelValueStringTruncatesArrayOnlyWhenClosingTokenExceedsMaximumLength(int maxJsonLength, string expectedValue)
+    {
+        var writer = new PrometheusAnyValueWriter(maxJsonLength);
+
+        Assert.Equal(expectedValue, writer.ToLabelValueString("key", LabelValueBoundaryArrayCase));
+    }
+
+    [Theory]
+    [InlineData(33, """{"a":"0123456789012345678901234"}""")]
+    [InlineData(32, "TRUNCATED")]
+    public void ToLabelValueStringTruncatesMapOnlyWhenClosingTokenExceedsMaximumLength(int maxJsonLength, string expectedValue)
+    {
+        var writer = new PrometheusAnyValueWriter(maxJsonLength);
+
+        Assert.Equal(expectedValue, writer.ToLabelValueString("key", new Dictionary<string, object?> { ["a"] = "0123456789012345678901234" }));
+    }
+
+    [Fact]
+    public void ToLabelValueStringTruncatesMapWithOversizedStringValueBeforeCopyingIt()
+    {
+        var writer = new PrometheusAnyValueWriter(40);
+        var map = new Dictionary<string, object?> { ["a"] = new string('x', 4 * 1024 * 1024) };
+
+        AssertTruncatedWithoutBufferingValue(() => writer.ToLabelValueString("key", map));
+    }
+
+    [Fact]
+    public void ToLabelValueStringTruncatesMapWithOversizedByteArrayValueBeforeEncodingIt()
+    {
+        var writer = new PrometheusAnyValueWriter(40);
+        var map = new Dictionary<string, object?> { ["a"] = new byte[1024 * 1024] };
+
+        AssertTruncatedWithoutBufferingValue(() => writer.ToLabelValueString("key", map));
+
+        Assert.Equal("""{"a":"AQID"}""", new PrometheusAnyValueWriter(40).ToLabelValueString("key", new Dictionary<string, object?> { ["a"] = LabelValueByteArrayCase }));
+    }
+
+    [Theory]
+    [InlineData("+AAA")]
+    [InlineData("A+AA")]
+    [InlineData("AA+A")]
+    [InlineData("AAA+")]
+    [InlineData("++++")]
+    public void ToLabelValueStringTruncatesMapWithEscapedBase64BeforeEncodingIt(string base64Group)
+    {
+        var writer = new PrometheusAnyValueWriter(512 * 1024);
+        var group = Convert.FromBase64String(base64Group);
+        var bytes = new byte[192 * 1024];
+        for (var offset = 0; offset < bytes.Length; offset += group.Length)
+        {
+            group.CopyTo(bytes, offset);
+        }
+
+        var map = new Dictionary<string, object?> { ["a"] = bytes };
+
+        AssertTruncatedWithoutBufferingValue(() => writer.ToLabelValueString("key", map));
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("AQID")]
+    [InlineData("+A==")]
+    [InlineData("A+A=")]
+    [InlineData("AA+A")]
+    [InlineData("AAA+")]
+    [InlineData("++++")]
+    [InlineData("++A=")]
+    [InlineData("////")]
+    public void ToLabelValueStringPreservesEscapedBase64AtExactLimit(string base64)
+    {
+        var map = new Dictionary<string, object?> { ["a"] = Convert.FromBase64String(base64) };
+        using var stream = new MemoryStream();
+        using (var jsonWriter = new Utf8JsonWriter(stream))
+        {
+            jsonWriter.WriteStartObject();
+            jsonWriter.WriteString("a", base64);
+            jsonWriter.WriteEndObject();
+        }
+
+        var expected = Encoding.UTF8.GetString(stream.ToArray());
+        var length = stream.Length;
+
+        Assert.Equal(expected, new PrometheusAnyValueWriter(length).ToLabelValueString("key", map));
+        Assert.Equal("TRUNCATED", new PrometheusAnyValueWriter(length - 1).ToLabelValueString("key", map));
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("AQID")]
+    [InlineData("+A==")]
+    [InlineData("+/8=")]
+    public void ToLabelValueStringPreservesNestedJsonAtExactLimit(string base64)
+    {
+        // Include a numeric exponent and escaped quotes/backslashes so the preflight
+        // distinguishes plus signs in JSON strings from those in numbers.
+        object[] array = [Convert.FromBase64String(base64), 1e100, "\"\\+"];
+        var map = new Dictionary<string, object?> { ["a"] = array };
+        var arrayJson = new PrometheusAnyValueWriter(1024).ToLabelValueString("key", array);
+        using var stream = new MemoryStream();
+        using (var jsonWriter = new Utf8JsonWriter(stream))
+        {
+            jsonWriter.WriteStartObject();
+            jsonWriter.WritePropertyName("a");
+#if NET
+            jsonWriter.WriteRawValue(arrayJson);
+#else
+            using var document = JsonDocument.Parse(arrayJson);
+            document.RootElement.WriteTo(jsonWriter);
+#endif
+            jsonWriter.WriteEndObject();
+        }
+
+        var expected = Encoding.UTF8.GetString(stream.ToArray());
+
+        Assert.Equal(expected, new PrometheusAnyValueWriter(stream.Length).ToLabelValueString("key", map));
+        Assert.Equal("TRUNCATED", new PrometheusAnyValueWriter(stream.Length - 1).ToLabelValueString("key", map));
+    }
+
+    [Fact]
+    public void ToLabelValueStringTruncatesMapWithTooManyEntriesBeforeDeduplicatingThem()
+    {
+        var writer = new PrometheusAnyValueWriter(40);
+        var entries = new List<KeyValuePair<string, object?>>();
+
+        for (var i = 0; i < 100_000; i++)
+        {
+            entries.Add(new(i.ToString(CultureInfo.InvariantCulture), null));
+        }
+
+        AssertTruncatedWithoutBufferingValue(() => writer.ToLabelValueString("key", entries));
+    }
+
+    [Fact]
+    public void ToLabelValueStringTruncatesNestedMapWithTooManyEntries()
+    {
+        var writer = new PrometheusAnyValueWriter(40);
+        var entries = new List<KeyValuePair<string, object?>>();
+
+        for (var i = 0; i < 100_000; i++)
+        {
+            entries.Add(new(i.ToString(CultureInfo.InvariantCulture), null));
+        }
+
+        AssertTruncatedWithoutBufferingValue(() => writer.ToLabelValueString("key", new object[] { entries }));
+    }
+
+    [Fact]
+    public void ToLabelValueStringTruncatesStringWhoseEscapedFormExceedsMaximumLengthBeforeBufferingIt()
+    {
+        var writer = new PrometheusAnyValueWriter(512 * 1024);
+
+        // Each character is escaped to 6 bytes, so the escaped form is 3 MiB for a 512 KiB limit.
+        var map = new Dictionary<string, object?> { ["a"] = new string('\u00e9', 512 * 1024) };
+        var array = new[] { new string('\u00e9', 512 * 1024) };
+
+        AssertTruncatedWithoutBufferingValue(() => writer.ToLabelValueString("key", map));
+        AssertTruncatedWithoutBufferingValue(() => writer.ToLabelValueString("key", array));
+    }
+
+    [Fact]
+    public void ToLabelValueStringTruncatesNestedValuesWhoseJsonExceedsMaximumLength()
+    {
+        var writer = new PrometheusAnyValueWriter(40);
+
+        Assert.Equal(
+            """{"a":"TRUNCATED","b":1}""",
+            writer.ToLabelValueString("key", new Dictionary<string, object?> { ["a"] = LabelValueOversizedArrayCase, ["b"] = 1 }));
+    }
+
     [Fact]
     public void MapMetricTypeReturnsExpectedTypeName()
     {
@@ -2529,6 +2751,21 @@ public sealed partial class PrometheusSerializerTests
 
     private static Regex SdkVersion() => new("telemetry_sdk_version=\"[^\"]*\"", RegexOptions.Compiled);
 #endif
+
+    private static void AssertTruncatedWithoutBufferingValue(Func<string> action)
+    {
+        Assert.Equal("TRUNCATED", action());
+
+#if NET
+        var before = GC.GetAllocatedBytesForCurrentThread();
+
+        Assert.Equal("TRUNCATED", action());
+
+        var allocated = GC.GetAllocatedBytesForCurrentThread() - before;
+
+        Assert.True(allocated < 256 * 1024, $"{allocated} bytes were allocated.");
+#endif
+    }
 
     private static Dictionary<string, object?> CreateReferenceKeyedDictionary()
         => new(new ReferenceKeyComparer())

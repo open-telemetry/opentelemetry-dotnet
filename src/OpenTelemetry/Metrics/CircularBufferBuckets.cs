@@ -158,7 +158,7 @@ internal sealed class CircularBufferBuckets
     {
         Debug.Assert(level > 0, "The scale down level must be a positive integer.");
 
-        if (this.trait == null)
+        if (this.trait == null || this.end < this.Offset)
         {
             return;
         }
