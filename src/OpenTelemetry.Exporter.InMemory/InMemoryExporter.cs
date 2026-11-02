@@ -64,7 +64,7 @@ public class InMemoryExporter<T> : BaseExporter<T>
             // only added for the first of them. Once the batches have been
             // exported, the Metric exposes all of its metric points again, so
             // adding it for each batch would duplicate them.
-            if (typeof(T) == typeof(Metric) && ((Metric)(object)data).AggregatorStore.ExportWindowStart > 0)
+            if (data is Metric metric && metric.AggregatorStore.ExportWindowStart > 0)
             {
                 continue;
             }
