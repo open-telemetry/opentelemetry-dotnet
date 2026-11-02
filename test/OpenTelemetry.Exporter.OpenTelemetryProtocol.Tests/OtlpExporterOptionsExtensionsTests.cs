@@ -58,7 +58,7 @@ public class OtlpExporterOptionsExtensionsTests
     [InlineData("key1= value with spaces ,key2=another value", "key1=value with spaces,key2=another value")]
     [InlineData("=value1", "=value1")]
     [InlineData("key1=", "key1=")]
-    [InlineData("key%31=value%31", "key1=value1")]
+    [InlineData("key%31=value%31", "key1=value1")] // Keys are decoded too, as they always were (W3C Baggage only percent-encodes values)
     [InlineData("Authorization=Basic Zm9vOmJhcg==", "Authorization=Basic Zm9vOmJhcg==")]
     public void GetHeaders_ValidAndUrlEncodedHeaders_ReturnsCorrectHeaders(string inputOptionHeaders, string expectedNormalizedOptional)
         => VerifyHeaders(inputOptionHeaders, expectedNormalizedOptional);

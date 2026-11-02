@@ -531,6 +531,47 @@ public class GrpcStatusDeserializerTests
         Assert.Equal(TimeSpan.FromTicks(expectedTicks), expected.ToTimeSpan());
     }
 
+    [Theory]
+    [InlineData("")] // Encoded length is a multiple of 3 bytes, so there is no padding
+    [InlineData("a")] // One padding character
+    [InlineData("ab")] // Two padding characters
+    [InlineData("abc")]
+    public void TryGetGrpcRetryDelay_PaddedAndUnpaddedBase64_AreEquivalent(string message)
+    {
+        var status = new Google.Rpc.Status
+        {
+            Code = 8,
+            Message = message,
+            Details =
+            {
+                Any.Pack(new Google.Rpc.RetryInfo
+                {
+                    RetryDelay = new Duration { Seconds = 5 },
+                }),
+            },
+        };
+
+        var padded = Convert.ToBase64String(status.ToByteArray());
+        var unpadded = padded.TrimEnd('=');
+
+        Assert.Equal(TimeSpan.FromSeconds(5), GrpcStatusDeserializer.TryGetGrpcRetryDelay(padded));
+        Assert.Equal(TimeSpan.FromSeconds(5), GrpcStatusDeserializer.TryGetGrpcRetryDelay(unpadded));
+        Assert.Equal(GrpcStatusDeserializer.DeserializeStatus(padded)!.Value.Message, GrpcStatusDeserializer.DeserializeStatus(unpadded)!.Value.Message);
+    }
+
+    [Theory]
+    [InlineData("A")] // A single character cannot be Base64
+    [InlineData("AAAAA")]
+    [InlineData("AA=")] // Partial padding is malformed
+    [InlineData("AA=A")]
+    [InlineData("AAAA=")]
+    [InlineData("A$AA")]
+    public void TryGetGrpcRetryDelay_MalformedBase64_ReturnsNull(string grpcStatusDetailsBin)
+    {
+        Assert.Null(GrpcStatusDeserializer.TryGetGrpcRetryDelay(grpcStatusDetailsBin));
+        Assert.ThrowsAny<FormatException>(() => GrpcStatusDeserializer.DeserializeStatus(grpcStatusDetailsBin));
+    }
+
     private static byte[] EncodeLengthDelimitedField(int fieldNumber, byte[] value)
     {
         var encoded = new List<byte>();

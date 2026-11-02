@@ -34,6 +34,11 @@ Notes](../../RELEASENOTES.md).
   field was repeated, instead of the occurrences being merged.
   ([#8075](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8075))
 
+* Fixed the retry delay of a gRPC response being ignored when the
+  `grpc-status-details-bin` trailer was Base64-encoded without padding, as
+  emitted by gRPC-Go.
+  ([#8075](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8075))
+
 ## 1.21.0-rc.1
 
 Released 2026-Oct-28

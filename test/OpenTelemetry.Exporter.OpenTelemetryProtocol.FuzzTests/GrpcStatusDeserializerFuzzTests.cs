@@ -69,6 +69,24 @@ public class GrpcStatusDeserializerFuzzTests
         });
 
     [Property(MaxTest = MaxTests)]
+    public Property UnpaddedBase64ReadsTheSameStatusAsPaddedBase64() => Prop.ForAll(
+        Generators.StatusArbitrary(),
+        (status) =>
+        {
+            // gRPC implementations must accept padded and un-padded binary metadata (and gRPC-Go emits it un-padded).
+            var unpadded = Convert.ToBase64String(status.Data).TrimEnd('=');
+
+            var actual = GrpcStatusDeserializer.TryGetGrpcRetryDelay(unpadded);
+            var deserialized = GrpcStatusDeserializer.DeserializeStatus(unpadded);
+
+            return actual == status.ExpectedRetryDelay &&
+                   deserialized is { } value &&
+                   value.Code == status.Code &&
+                   value.Message == status.Message &&
+                   value.Details.Count == status.DetailCount;
+        });
+
+    [Property(MaxTest = MaxTests)]
     public Property ValidStatusRoundTripsCodeAndMessage() => Prop.ForAll(
         Generators.StatusArbitrary(),
         (status) =>

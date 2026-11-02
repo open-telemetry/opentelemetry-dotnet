@@ -14,6 +14,9 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.FuzzTests;
 /// <remarks>
 /// The specification defines the value as a list of <c>key=value</c> pairs in the W3C Baggage format,
 /// separated by commas, where each value is percent-encoded.
+/// <para/>
+/// These tests establish what the parser produces. They do not assert what a transport will deliver for the same strings:
+/// for example, gRPC restricts text metadata values to printable ASCII and may strip surrounding whitespace.
 /// </remarks>
 public class OtlpExporterOptionsHeadersFuzzTests
 {

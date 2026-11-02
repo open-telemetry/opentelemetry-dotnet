@@ -52,7 +52,16 @@ internal static class GrpcStatusDeserializer
         }
 
         var status = new Status();
-        byte[] data = Convert.FromBase64String(grpcStatusDetailsBin);
+
+        // Binary metadata is Base64-encoded and gRPC implementations must accept both padded and un-padded values
+        // (and gRPC-Go, for example, emits them un-padded), so restore any missing padding before decoding it.
+        var encoded = grpcStatusDetailsBin!.Trim();
+        if (encoded.IndexOf('=') < 0 && encoded.Length % 4 != 0)
+        {
+            encoded = encoded.PadRight(encoded.Length + (4 - (encoded.Length % 4)), '=');
+        }
+
+        byte[] data = Convert.FromBase64String(encoded);
         using (var stream = new MemoryStream(data))
         {
             while (stream.Position < stream.Length)
