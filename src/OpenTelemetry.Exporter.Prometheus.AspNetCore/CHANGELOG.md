@@ -46,8 +46,9 @@ Notes](../../RELEASENOTES.md).
 
 * Fixed a scrape response containing the same series (metric name and labels)
   more than once, which causes Prometheus to reject the whole response, such as
-  when metric or tag names are the same once escaped, or the scope information is
-  disabled. Duplicate series are now dropped, and a warning event is written.
+  when metric or tag names are the same once escaped, tag names become the same
+  when UTF-8 encoded, or the scope information is disabled. Duplicate series are
+  now dropped, and a warning event is written.
   A metric which has the name of a sample that is generated for another one
   (for example `_sum` of a histogram) is now dropped, and a warning event is
   written.

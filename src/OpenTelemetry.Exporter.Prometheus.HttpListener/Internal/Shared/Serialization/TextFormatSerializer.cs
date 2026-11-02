@@ -1543,6 +1543,28 @@ internal abstract class TextFormatSerializer
         _ => labelValue.ToString() ?? string.Empty,
     };
 
+    private static string ReplaceInvalidSurrogates(string value)
+    {
+        for (var i = 0; i < value.Length; i++)
+        {
+            if (!char.IsSurrogate(value[i]))
+            {
+                continue;
+            }
+
+            if (char.IsHighSurrogate(value[i]) && i + 1 < value.Length && char.IsLowSurrogate(value[i + 1]))
+            {
+                i++;
+                continue;
+            }
+
+            replacementCharacterWritten = true;
+            return Encoding.UTF8.GetString(Encoding.UTF8.GetBytes(value));
+        }
+
+        return value;
+    }
+
     private static string NormalizeLabelKey(string value)
     {
         // This is only ever called with an "otel_scope_"-prefixed key, so the value is never
@@ -2631,6 +2653,12 @@ internal abstract class TextFormatSerializer
 
     private string GetOutputLabelKey(string value)
     {
+        if (this.Escaping == EscapingScheme.AllowUtf8)
+        {
+            // Sorting and merging must use the same keys that the UTF-8 writer produces.
+            return string.IsNullOrEmpty(value) ? "_" : ReplaceInvalidSurrogates(value);
+        }
+
         // The dots and values schemes produce a reversible, legacy-valid ASCII label name. The
         // underscores scheme replaces discouraged characters and collapses consecutive ones.
         if (this.Escaping != EscapingScheme.Underscores)

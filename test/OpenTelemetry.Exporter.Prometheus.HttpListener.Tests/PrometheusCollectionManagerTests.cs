@@ -2496,6 +2496,93 @@ public sealed class PrometheusCollectionManagerTests
         Assert.Single(samples, s => s.StartsWith("empty_histogram_count", StringComparison.Ordinal));
     }
 
+    [Theory]
+    [InlineData(false, false)]
+    [InlineData(false, true)]
+    [InlineData(true, false)]
+    [InlineData(true, true)]
+    public async Task EnterCollectDropsPointsWithUtf8EquivalentLabelKeys(bool openMetricsRequested, bool mergeLabels)
+    {
+        using var meter = CreateMeter();
+
+#pragma warning disable CA2000 // Dispose objects before losing scope
+        var exporter = new PrometheusExporter(new PrometheusExporterOptions
+        {
+            ScopeInfoEnabled = false,
+            TargetInfoEnabled = false,
+            ScrapeResponseCacheDurationMilliseconds = 0,
+        });
+
+        var reader = new BaseExportingMetricReader(exporter)
+        {
+            TemporalityPreference = MetricReaderTemporalityPreference.Cumulative,
+        };
+#pragma warning restore CA2000 // Dispose objects before losing scope
+
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddReader(reader)
+            .Build();
+
+        var gauge = meter.CreateGauge<int>("utf8_gauge");
+        var histogram = meter.CreateHistogram<int>("utf8_histogram");
+
+        foreach (var key in new[] { "a\uD800", "a\uDC00" })
+        {
+            // The lone surrogate sorts before U+E000, but its replacement sorts after it.
+            // A valid surrogate pair must survive normalization unchanged.
+            KeyValuePair<string, object?>[] tags = mergeLabels
+                ? [new(key, "1"), new("a\uFFFD", "2"), new("a\uE000", "3"), new("a\uD800\uDC00", "4")]
+                : [new(key, "1"), new("a\uE000", "3"), new("a\uD800\uDC00", "4")];
+
+            gauge.Record(1, tags);
+            histogram.Record(1, tags);
+        }
+
+        var expectedValue = mergeLabels ? "1;2" : "1";
+        KeyValuePair<string, object?>[] equivalentTags =
+        [new("a\uFFFD", expectedValue), new("a\uE000", "3"), new("a\uD800\uDC00", "4")];
+
+        gauge.Record(2, equivalentTags);
+        histogram.Record(2, equivalentTags);
+
+        // A different value still identifies a distinct series.
+        KeyValuePair<string, object?>[] uniqueTags =
+        [new("a\uFFFD", "unique"), new("a\uE000", "3"), new("a\uD800\uDC00", "4")];
+
+        gauge.Record(3, uniqueTags);
+        histogram.Record(3, uniqueTags);
+
+        var protocol = new PrometheusProtocol(
+            openMetricsRequested ? PrometheusProtocol.OpenMetricsMediaType : PrometheusProtocol.PrometheusTextMediaType,
+            PrometheusProtocol.AllowUtf8Escaping,
+            openMetricsRequested ? PrometheusProtocol.OpenMetricsV1 : PrometheusProtocol.PrometheusV1,
+            isOpenMetrics: openMetricsRequested);
+
+        var response = await exporter.CollectionManager.EnterCollect(protocol, TestContext.Current.CancellationToken);
+
+        try
+        {
+            Assert.True(response.Succeeded);
+
+            var output = Encoding.UTF8.GetString(response.View.Array!, response.View.Offset, response.View.Count);
+
+            foreach (var sampleName in new[] { "utf8_gauge", "utf8_histogram_sum", "utf8_histogram_count" })
+            {
+                var samples = output.Split('\n').Where(line => line.StartsWith(sampleName + "{", StringComparison.Ordinal)).ToList();
+
+                Assert.Equal(2, samples.Count);
+                Assert.Single(samples, line => line.Contains("\"a\uFFFD\"=\"" + expectedValue + "\"", StringComparison.Ordinal));
+                Assert.Single(samples, line => line.Contains("\"a\uFFFD\"=\"unique\"", StringComparison.Ordinal));
+                Assert.All(samples, line => Assert.Contains("\"a\uD800\uDC00\"=\"4\"", line, StringComparison.Ordinal));
+            }
+        }
+        finally
+        {
+            exporter.CollectionManager.ExitCollect(response);
+        }
+    }
+
     [Fact]
     public async Task EnterCollectKeepsMetricsWithTheNameOfACounterSampleWhenCountersHaveNoTotalSuffix()
     {
