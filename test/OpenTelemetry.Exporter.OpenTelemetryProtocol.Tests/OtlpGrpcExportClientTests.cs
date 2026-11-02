@@ -287,7 +287,7 @@ public class OtlpGrpcExportClientTests
     [InlineData("identity, gzip, zstdx")]
     public void SendExportRequest_GrpcExport_ZstdCompression_Unimplemented_RetriesWithGzipAndThenUsesGzip(string? acceptEncoding)
     {
-        const int ZstdCompressionRejectedEventId = 45;
+        const int ZstdCompressionRejectedEventId = 46;
 
         var buffer = BuildGrpcFrame("grpc test payload for compression"u8.ToArray());
 
