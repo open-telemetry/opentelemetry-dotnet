@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Trace;
@@ -19,6 +20,13 @@ internal static class ProtobufOtlpLogSerializer
     [ThreadStatic]
     private static Dictionary<InstrumentationScope, List<LogRecord>>? scopeLogsList;
 
+    // Maps each distinct Logger instance seen in the batch to its scope's list.
+    // Logger instances are long-lived (one per ILogger category), so a reference
+    // lookup here resolves almost every record without hashing the three scope
+    // strings in InstrumentationScope.
+    [ThreadStatic]
+    private static Dictionary<Logger, List<LogRecord>>? loggerLogsList;
+
     [ThreadStatic]
     private static SerializationState? threadSerializationState;
 
@@ -33,6 +41,7 @@ internal static class ProtobufOtlpLogSerializer
     {
         logsListPool ??= [];
         scopeLogsList ??= [];
+        loggerLogsList ??= new(LoggerReferenceEqualityComparer.Instance);
 
         // Note: The grouped batch is held in thread-static state, so it has to be
         // released even when serialization fails. TryWriteResourceLogs rethrows
@@ -44,11 +53,16 @@ internal static class ProtobufOtlpLogSerializer
             foreach (var logRecord in logRecordBatch)
             {
                 var logger = logRecord.Logger;
-                var scope = new InstrumentationScope(logger.Name, logger.Version, logger.SchemaUrl);
-                if (!scopeLogsList.TryGetValue(scope, out var logRecords))
+                if (!loggerLogsList.TryGetValue(logger, out var logRecords))
                 {
-                    logRecords = logsListPool.Count > 0 ? logsListPool.Pop() : [];
-                    scopeLogsList[scope] = logRecords;
+                    var scope = new InstrumentationScope(logger.Name, logger.Version, logger.SchemaUrl);
+                    if (!scopeLogsList.TryGetValue(scope, out logRecords))
+                    {
+                        logRecords = logsListPool.Count > 0 ? logsListPool.Pop() : [];
+                        scopeLogsList[scope] = logRecords;
+                    }
+
+                    loggerLogsList[logger] = logRecords;
                 }
 
                 if (logRecord.Source == LogRecord.LogRecordSource.FromSharedPool)
@@ -129,6 +143,8 @@ internal static class ProtobufOtlpLogSerializer
 
     internal static void ReturnLogRecordListToPool()
     {
+        loggerLogsList?.Clear();
+
         if (scopeLogsList is { Count: > 0 })
         {
             foreach (var entry in scopeLogsList)
@@ -463,5 +479,20 @@ internal static class ProtobufOtlpLogSerializer
         public int? AttributeValueLengthLimit;
         public int AttributeCountLimit;
         public ProtobufOtlpTagWriter.OtlpTagWriterState TagWriterState;
+    }
+
+    private sealed class LoggerReferenceEqualityComparer : IEqualityComparer<Logger>
+    {
+        public static readonly LoggerReferenceEqualityComparer Instance = new();
+
+        private LoggerReferenceEqualityComparer()
+        {
+        }
+
+        public bool Equals(Logger? x, Logger? y)
+            => ReferenceEquals(x, y);
+
+        public int GetHashCode(Logger obj)
+            => RuntimeHelpers.GetHashCode(obj);
     }
 }
