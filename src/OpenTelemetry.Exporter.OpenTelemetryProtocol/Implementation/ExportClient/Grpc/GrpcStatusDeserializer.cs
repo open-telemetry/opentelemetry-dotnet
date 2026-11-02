@@ -17,11 +17,11 @@ internal static class GrpcStatusDeserializer
     private const int WIRETYPE_FIXED32 = 5;
 #pragma warning restore SA1310 // Field names should not contain underscore
 
-    internal static TimeSpan? TryGetGrpcRetryDelay(string? grpcStatusDetailsHeader)
+    internal static TimeSpan? TryGetGrpcRetryDelay(string? grpcStatusDetailsHeader, StatusCode? grpcStatus = null)
     {
         try
         {
-            var retryInfo = ExtractRetryInfo(grpcStatusDetailsHeader);
+            var retryInfo = ExtractRetryInfo(grpcStatusDetailsHeader, grpcStatus);
             if (retryInfo?.RetryDelay != null)
             {
                 var retryDelay = TimeSpan.FromSeconds(retryInfo.Value.RetryDelay.Value.Seconds) +
@@ -74,6 +74,7 @@ internal static class GrpcStatusDeserializer
                 {
                     case 1 when wireType == WIRETYPE_VARINT: // code
                         status.Code = DecodeInt32(stream);
+                        status.HasCode = true;
                         break;
                     case 2 when wireType == WIRETYPE_LENGTH_DELIMITED: // message
                         status.Message = DecodeString(stream);
@@ -93,11 +94,20 @@ internal static class GrpcStatusDeserializer
     }
 
     // Marked as internal for test.
-    internal static RetryInfo? ExtractRetryInfo(string? grpcStatusDetailsBin)
+    internal static RetryInfo? ExtractRetryInfo(string? grpcStatusDetailsBin, StatusCode? grpcStatus = null)
     {
         var status = DeserializeStatus(grpcStatusDetailsBin);
         if (status == null)
         {
+            return null;
+        }
+
+        // A status code in the details must not contradict the grpc-status of the response, and a consumer must verify that.
+        // Details which do contradict it cannot be trusted, so they are ignored. Only a code which is present on the wire is
+        // compared, so an explicit zero (OK) contradicts an error status, while an omitted code (the default value) does not.
+        if (grpcStatus is { } expected && status.Value.HasCode && status.Value.Code != (int)expected)
+        {
+            OpenTelemetryProtocolExporterEventSource.Log.GrpcStatusDetailsCodeMismatch((int)expected, status.Value.Code);
             return null;
         }
 
@@ -352,6 +362,8 @@ internal static class GrpcStatusDeserializer
         }
 
         public int Code { get; set; }
+
+        public bool HasCode { get; set; }
 
         public string? Message { get; set; }
 

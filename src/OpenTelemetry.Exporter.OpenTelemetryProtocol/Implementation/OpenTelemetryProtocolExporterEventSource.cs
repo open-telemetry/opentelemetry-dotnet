@@ -386,6 +386,13 @@ internal sealed class OpenTelemetryProtocolExporterEventSource : EventSource, IC
     internal void RetryDeadlineExceeded()
         => this.WriteEvent(43);
 
+    [Event(
+        44,
+        Message = "The gRPC status code {0} of the response is contradicted by the status code {1} in the gRPC status details. The status details will be ignored.",
+        Level = EventLevel.Warning)]
+    internal void GrpcStatusDetailsCodeMismatch(int grpcStatusCode, int detailsStatusCode)
+        => this.WriteEvent(44, grpcStatusCode, detailsStatusCode);
+
     private static string RedactEndpointUri(Uri endpoint)
     {
         var authority = endpoint.GetComponents(UriComponents.SchemeAndServer, UriFormat.UriEscaped);

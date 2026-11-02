@@ -288,6 +288,65 @@ public class GrpcStatusDeserializerTests
     }
 
     [Theory]
+    [InlineData(8, 8, true)]
+    [InlineData(14, 14, true)]
+    [InlineData(0, 8, true)]
+    [InlineData(3, 8, false)]
+    [InlineData(8, 14, false)]
+    [InlineData(-1, 8, false)]
+    [InlineData(int.MaxValue, 8, false)]
+    public void TryGetGrpcRetryDelay_StatusDetailsCode_MustNotContradictGrpcStatus(int detailsCode, int grpcStatus, bool expectDelay)
+    {
+        var status = new Google.Rpc.Status
+        {
+            Code = detailsCode,
+            Details =
+            {
+                Any.Pack(new Google.Rpc.RetryInfo
+                {
+                    RetryDelay = new Duration { Seconds = 5 },
+                }),
+            },
+        };
+
+        var grpcStatusDetailsBin = Convert.ToBase64String(status.ToByteArray());
+
+        var result = GrpcStatusDeserializer.TryGetGrpcRetryDelay(grpcStatusDetailsBin, (StatusCode)grpcStatus);
+
+        Assert.Equal(expectDelay ? TimeSpan.FromSeconds(5) : null, result);
+        Assert.Equal(TimeSpan.FromSeconds(5), GrpcStatusDeserializer.TryGetGrpcRetryDelay(grpcStatusDetailsBin));
+    }
+
+    [Theory]
+    [InlineData(new byte[0], 8, true)]
+    [InlineData(new byte[] { 0x08, 0x08 }, 8, true)]
+    [InlineData(new byte[] { 0x08, 0x03 }, 8, false)]
+    [InlineData(new byte[] { 0x08, 0x00 }, 8, false)]
+    [InlineData(new byte[] { 0x08, 0x00 }, 14, false)]
+    public void TryGetGrpcRetryDelay_StatusDetailsCodePresenceOnTheWire_IsHonored(byte[] statusCodeField, int grpcStatus, bool expectDelay)
+    {
+        // Google.Rpc.Status does not serialize a code of zero, so the status is encoded by hand to distinguish an explicit zero from an omitted code
+        var retryInfo = new Google.Rpc.RetryInfo
+        {
+            RetryDelay = new Duration { Seconds = 5 },
+        };
+
+        var detail = new List<byte>();
+        detail.AddRange(EncodeLengthDelimitedField(1, "type.googleapis.com/google.rpc.RetryInfo"u8.ToArray()));
+        detail.AddRange(EncodeLengthDelimitedField(2, retryInfo.ToByteArray()));
+
+        var status = new List<byte>([.. statusCodeField]);
+        status.AddRange(EncodeLengthDelimitedField(3, [.. detail]));
+
+        var grpcStatusDetailsBin = Convert.ToBase64String([.. status]);
+
+        var result = GrpcStatusDeserializer.TryGetGrpcRetryDelay(grpcStatusDetailsBin, (StatusCode)grpcStatus);
+
+        Assert.Equal(expectDelay ? TimeSpan.FromSeconds(5) : null, result);
+        Assert.Equal(TimeSpan.FromSeconds(5), GrpcStatusDeserializer.TryGetGrpcRetryDelay(grpcStatusDetailsBin));
+    }
+
+    [Theory]
     [InlineData(-1, 0)] // -1s
     [InlineData(0, -1_000_000)] // -1ms, which is also Timeout.InfiniteTimeSpan
     [InlineData(-5, -500_000_000)] // -5.5s
