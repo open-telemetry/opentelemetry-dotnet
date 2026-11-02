@@ -74,6 +74,7 @@ internal static class GrpcStatusDeserializer
                 {
                     case 1 when wireType == WIRETYPE_VARINT: // code
                         status.Code = DecodeInt32(stream);
+                        status.HasCode = true;
                         break;
                     case 2 when wireType == WIRETYPE_LENGTH_DELIMITED: // message
                         status.Message = DecodeString(stream);
@@ -102,9 +103,9 @@ internal static class GrpcStatusDeserializer
         }
 
         // A status code in the details must not contradict the grpc-status of the response, and a consumer must verify that.
-        // Details which do contradict it cannot be trusted, so they are ignored. A code of zero is the default value of
-        // the field, which cannot be told apart from an omitted code, so it is not treated as a contradiction.
-        if (grpcStatus is { } expected && status.Value.Code != 0 && status.Value.Code != (int)expected)
+        // Details which do contradict it cannot be trusted, so they are ignored. Only a code which is present on the wire is
+        // compared, so an explicit zero (OK) contradicts an error status, while an omitted code (the default value) does not.
+        if (grpcStatus is { } expected && status.Value.HasCode && status.Value.Code != (int)expected)
         {
             OpenTelemetryProtocolExporterEventSource.Log.GrpcStatusDetailsCodeMismatch((int)expected, status.Value.Code);
             return null;
@@ -361,6 +362,8 @@ internal static class GrpcStatusDeserializer
         }
 
         public int Code { get; set; }
+
+        public bool HasCode { get; set; }
 
         public string? Message { get; set; }
 

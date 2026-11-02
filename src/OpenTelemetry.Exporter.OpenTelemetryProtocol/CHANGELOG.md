@@ -42,7 +42,7 @@ Notes](../../RELEASENOTES.md).
 * The retry delay in the `grpc-status-details-bin` trailer of a gRPC response is
   now ignored if the status code in the details contradicts the `grpc-status`
   of the response.
-  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+  ([#8078](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8078))
 
 ## 1.21.0-rc.1
 
