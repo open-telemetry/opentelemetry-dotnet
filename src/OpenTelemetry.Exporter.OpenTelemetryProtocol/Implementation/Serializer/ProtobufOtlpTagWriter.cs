@@ -16,18 +16,19 @@ internal sealed class ProtobufOtlpTagWriter : TagWriter<ProtobufOtlpTagWriter.Ot
     private const int ReserveSizeForLength = 4;
 
     private readonly OtlpArrayTagWriter arrayTagWriter;
-    private readonly bool enableUtf8Spans;
 
-    internal ProtobufOtlpTagWriter(OtlpArrayTagWriter arrayTagWriter, bool enableUtf8Spans = false)
+    internal ProtobufOtlpTagWriter(OtlpArrayTagWriter arrayTagWriter)
         : base(arrayTagWriter)
     {
         this.arrayTagWriter = arrayTagWriter;
-        this.enableUtf8Spans = enableUtf8Spans;
     }
 
-    public static ProtobufOtlpTagWriter Instance { get; } = new(
-        new OtlpArrayTagWriter(),
-        ExperimentalOptions.IsUtf8SpansEnabled());
+    private ProtobufOtlpTagWriter()
+        : this(new OtlpArrayTagWriter())
+    {
+    }
+
+    public static ProtobufOtlpTagWriter Instance { get; } = new();
 
     /// <summary>
     /// Writes a tag as a length-delimited <c>KeyValue</c> message under the given field
@@ -51,24 +52,6 @@ internal sealed class ProtobufOtlpTagWriter : TagWriter<ProtobufOtlpTagWriter.Ot
         string key,
         object? value,
         int? tagValueMaxLength = null)
-        => Instance.WriteKeyValueInternal(ref state, fieldNumber, key, value, tagValueMaxLength);
-
-    /// <summary>
-    /// Writes a tag as a length-delimited <c>KeyValue</c> message under the given field
-    /// number with this writer, rather than with <see cref="Instance"/>.
-    /// </summary>
-    /// <param name="state">The writer state, whose write position is advanced.</param>
-    /// <param name="fieldNumber">The field number to write the <c>KeyValue</c> under.</param>
-    /// <param name="key">The attribute key.</param>
-    /// <param name="value">The attribute value.</param>
-    /// <param name="tagValueMaxLength">The maximum length to write a string value as, if any.</param>
-    /// <returns><see langword="true"/> if the key-value pair was successfully written; otherwise <see langword="false"/>.</returns>
-    internal bool WriteKeyValueInternal(
-        ref OtlpTagWriterState state,
-        int fieldNumber,
-        string key,
-        object? value,
-        int? tagValueMaxLength = null)
     {
         var startPosition = state.WritePosition;
 
@@ -77,7 +60,7 @@ internal sealed class ProtobufOtlpTagWriter : TagWriter<ProtobufOtlpTagWriter.Ot
         var lengthPosition = state.WritePosition;
         state.WritePosition += ProtobufSerializer.ReserveSizeForCompactLength;
 
-        if (!this.TryWriteTag(ref state, key, value, tagValueMaxLength))
+        if (!Instance.TryWriteTag(ref state, key, value, tagValueMaxLength))
         {
             RollBackTo(ref state, startPosition);
             return false;
@@ -151,11 +134,6 @@ internal sealed class ProtobufOtlpTagWriter : TagWriter<ProtobufOtlpTagWriter.Ot
     protected override bool TryWriteUtf8SpanFormattableTag(ref OtlpTagWriterState state, string key, IUtf8SpanFormattable value, int? tagValueMaxLength)
     {
         const int MaxUtf8BytesPerChar = 3;
-
-        if (!this.enableUtf8Spans)
-        {
-            return base.TryWriteUtf8SpanFormattableTag(ref state, key, value, tagValueMaxLength);
-        }
 
         var startPosition = state.WritePosition;
         state.WritePosition = ProtobufSerializer.WriteStringWithTag(state.Buffer, state.WritePosition, ProtobufOtlpCommonFieldNumberConstants.KeyValue_Key, key);

@@ -3,8 +3,6 @@
 
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
-using Microsoft.Extensions.Configuration;
-using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Serializer;
 using OpenTelemetry.Internal;
 using OtlpCommon = OpenTelemetry.Proto.Common.V1;
@@ -477,54 +475,12 @@ public class OtlpAttributeTests
 
 #if NET
     [Fact]
-    public void Utf8SpanFormattableUsesToStringByDefault()
-    {
-        var kvp = new KeyValuePair<string, object?>("key", new Utf8Bytes("formatted"u8.ToArray(), "toString"));
-        var state = new ProtobufOtlpTagWriter.OtlpTagWriterState { Buffer = new byte[1024] };
-
-        Assert.True(CreateWriter(enableUtf8Spans: false).TryWriteTag(ref state, kvp));
-
-        using var stream = new MemoryStream(state.Buffer, 0, state.WritePosition);
-        Assert.Equal("toString", OtlpCommon.KeyValue.Parser.ParseFrom(stream).Value.StringValue);
-    }
-
-    [Theory]
-    [InlineData(null, false)]
-    [InlineData("false", false)]
-    [InlineData("true", true)]
-    [InlineData("yes", false)]
-    public void Utf8SpansAreEnabledByExperimentalEnvVar(string? value, bool expected)
-    {
-        var configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?> { [ExperimentalOptions.Utf8SpansEnvVar] = value })
-            .Build();
-
-        Assert.Equal(expected, ExperimentalOptions.IsUtf8SpansEnabled(configuration));
-    }
-
-    [Fact]
-    public void Utf8SpansSettingIsReadDespiteAnInvalidUnrelatedExperimentalOption()
-    {
-        var configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?>
-            {
-                [ExperimentalOptions.OtlpRetryEnvVar] = "unsupported",
-                [ExperimentalOptions.Utf8SpansEnvVar] = "true",
-            })
-            .Build();
-
-        Assert.Throws<NotSupportedException>(() => new ExperimentalOptions(configuration));
-        Assert.True(ExperimentalOptions.IsUtf8SpansEnabled(configuration));
-    }
-
-    [Fact]
     public void Utf8SpanFormattableIsWrittenAsString()
     {
-        var writer = CreateWriter(enableUtf8Spans: true);
         var value = "{\"name\":\"caf\u00E9 \U0001F600\"}";
         var kvp = new KeyValuePair<string, object?>("key", new Utf8Value(value));
 
-        Assert.True(TryTransformTag(writer, kvp, out var attribute));
+        Assert.True(TryTransformTag(kvp, out var attribute));
         Assert.Equal(OtlpCommon.AnyValue.ValueOneofCase.StringValue, attribute.Value.ValueCase);
         Assert.Equal(value, attribute.Value.StringValue);
     }
@@ -546,16 +502,13 @@ public class OtlpAttributeTests
     }
 
     [Theory]
-    [InlineData(false, 4)]
-    [InlineData(true, 4)]
-    [InlineData(false, 5)]
-    [InlineData(true, 5)]
-    public void Utf8SpanFormattableIsTruncatedTheSameWithAndWithoutTheSetting(bool enableUtf8Spans, int tagValueMaxLength)
+    [InlineData(4)]
+    [InlineData(5)]
+    public void Utf8SpanFormattableIsTruncatedOnWholeCodePoints(int tagValueMaxLength)
     {
-        var writer = CreateWriter(enableUtf8Spans);
         var kvp = new KeyValuePair<string, object?>("key", new Utf8Value("a\u00E9\u20AC\U0001F600b"));
 
-        Assert.True(TryTransformTag(writer, kvp, out var attribute, tagValueMaxLength));
+        Assert.True(TryTransformTag(kvp, out var attribute, tagValueMaxLength));
         Assert.Equal(tagValueMaxLength == 4 ? "a\u00E9\u20AC" : "a\u00E9\u20AC\U0001F600", attribute.Value.StringValue);
     }
 
@@ -566,10 +519,9 @@ public class OtlpAttributeTests
     [InlineData(1, 10)]
     public void ByteCountOutsideTheTryFormatDestinationFallsBackToToString(int bytesPastDestination, int? tagValueMaxLength)
     {
-        var writer = CreateWriter(enableUtf8Spans: true);
         var kvp = new KeyValuePair<string, object?>("key", new Utf8ValueWithByteCountOutsideDestination(bytesPastDestination, "fallback"));
 
-        Assert.True(TryTransformTag(writer, kvp, out var attribute, tagValueMaxLength));
+        Assert.True(TryTransformTag(kvp, out var attribute, tagValueMaxLength));
         Assert.Equal("fallback", attribute.Value.StringValue);
     }
 
@@ -583,10 +535,9 @@ public class OtlpAttributeTests
     [InlineData(100, "a\u00E9\u20AC\U0001F600b")]
     public void Utf8SpanFormattableRespectsTagValueMaxLengthInChars(int tagValueMaxLength, string expected)
     {
-        var writer = CreateWriter(enableUtf8Spans: true);
         var kvp = new KeyValuePair<string, object?>("key", new Utf8Value("a\u00E9\u20AC\U0001F600b"));
 
-        Assert.True(TryTransformTag(writer, kvp, out var attribute, tagValueMaxLength));
+        Assert.True(TryTransformTag(kvp, out var attribute, tagValueMaxLength));
         Assert.Equal(expected, attribute.Value.StringValue);
     }
 
@@ -595,7 +546,6 @@ public class OtlpAttributeTests
     [InlineData(100)]
     public void Utf8SpanFormattableThatDoesNotFitThrowsSoTheBufferIsGrown(int? tagValueMaxLength)
     {
-        var writer = CreateWriter(enableUtf8Spans: true);
         var state = new ProtobufOtlpTagWriter.OtlpTagWriterState
         {
             Buffer = new byte[64],
@@ -604,31 +554,28 @@ public class OtlpAttributeTests
 
         var tag = new KeyValuePair<string, object?>("key", new Utf8Value(new string('v', 1024)));
 
-        Assert.Throws<ArgumentOutOfRangeException>(() => writer.TryWriteTag(ref state, tag, tagValueMaxLength));
+        Assert.Throws<ArgumentOutOfRangeException>(() => ProtobufOtlpTagWriter.Instance.TryWriteTag(ref state, tag, tagValueMaxLength));
     }
 
     [Fact]
     public void ExceptionInUtf8ToStringFallbackIsCaught()
     {
-        var writer = CreateWriter(enableUtf8Spans: true);
         var kvp = new KeyValuePair<string, object?>("key", new Utf8ValueThatDoesNotFitAndThrowsInToString());
-        Assert.False(TryTransformTag(writer, kvp, out _, tagValueMaxLength: 1));
+        Assert.False(TryTransformTag(kvp, out _, tagValueMaxLength: 1));
     }
 
     [Fact]
     public void NullUtf8ToStringFallbackIsDropped()
     {
-        var writer = CreateWriter(enableUtf8Spans: true);
         var kvp = new KeyValuePair<string, object?>("key", new Utf8ValueThatDoesNotFitAndReturnsNullFromToString());
-        Assert.False(TryTransformTag(writer, kvp, out _, tagValueMaxLength: 1));
+        Assert.False(TryTransformTag(kvp, out _, tagValueMaxLength: 1));
     }
 
     [Fact]
     public void ExceptionInUtf8TryFormatIsCaught()
     {
-        var writer = CreateWriter(enableUtf8Spans: true);
         var kvp = new KeyValuePair<string, object?>("key", new Utf8ValueThatThrows(typeof(InvalidOperationException)));
-        Assert.False(TryTransformTag(writer, kvp, out _));
+        Assert.False(TryTransformTag(kvp, out _));
     }
 
     [Theory]
@@ -637,11 +584,10 @@ public class OtlpAttributeTests
     [InlineData(typeof(ArgumentOutOfRangeException))]
     public void BufferFullExceptionInUtf8TryFormatThrowsSoTheBufferIsGrown(Type exceptionType)
     {
-        var writer = CreateWriter(enableUtf8Spans: true);
         var state = new ProtobufOtlpTagWriter.OtlpTagWriterState { Buffer = new byte[1024] };
         var tag = new KeyValuePair<string, object?>("key", new Utf8ValueThatThrows(exceptionType));
 
-        Assert.Throws(exceptionType, () => writer.TryWriteTag(ref state, tag));
+        Assert.Throws(exceptionType, () => ProtobufOtlpTagWriter.Instance.TryWriteTag(ref state, tag));
     }
 
     [Theory]
@@ -649,24 +595,22 @@ public class OtlpAttributeTests
     [InlineData(typeof(IndexOutOfRangeException))]
     public void BufferFullExceptionInUtf8TryFormatFallsBackToToStringWhenCapped(Type exceptionType)
     {
-        var writer = CreateWriter(enableUtf8Spans: true);
         var kvp = new KeyValuePair<string, object?>("key", new Utf8ValueThatThrows(exceptionType, "fallback"));
 
-        Assert.True(TryTransformTag(writer, kvp, out var attribute, tagValueMaxLength: 10));
+        Assert.True(TryTransformTag(kvp, out var attribute, tagValueMaxLength: 10));
         Assert.Equal("fallback", attribute.Value.StringValue);
     }
 
     [Fact]
     public void KvListThatThrowsAfterAFormattedEntryIsRolledBack()
     {
-        var writer = CreateWriter(enableUtf8Spans: true);
         var state = new ProtobufOtlpTagWriter.OtlpTagWriterState
         {
             Buffer = new byte[1024],
             WritePosition = 0,
         };
 
-        Assert.False(writer.WriteKeyValueInternal(ref state, ProtobufOtlpTraceFieldNumberConstants.Span_Attributes, "key", ThrowAfterFirstEntry()));
+        Assert.False(ProtobufOtlpTagWriter.WriteKeyValue(ref state, ProtobufOtlpTraceFieldNumberConstants.Span_Attributes, "key", ThrowAfterFirstEntry()));
 
         Assert.Equal(0, state.WritePosition);
 
@@ -682,14 +626,13 @@ public class OtlpAttributeTests
     [InlineData(10)]
     public void DroppedUtf8SpanFormattableIsRolledBack(int? tagValueMaxLength)
     {
-        var writer = CreateWriter(enableUtf8Spans: true);
         var state = new ProtobufOtlpTagWriter.OtlpTagWriterState
         {
             Buffer = new byte[1024],
             WritePosition = 0,
         };
 
-        Assert.False(writer.WriteKeyValueInternal(ref state, ProtobufOtlpTraceFieldNumberConstants.Span_Attributes, "key", new Utf8ValueThatFillsBufferAndThrows(), tagValueMaxLength));
+        Assert.False(ProtobufOtlpTagWriter.WriteKeyValue(ref state, ProtobufOtlpTraceFieldNumberConstants.Span_Attributes, "key", new Utf8ValueThatFillsBufferAndThrows(), tagValueMaxLength));
 
         Assert.Equal(0, state.WritePosition);
     }
@@ -697,12 +640,11 @@ public class OtlpAttributeTests
     [Fact]
     public void Utf8SpanFormattableToStringFallbackIsWrittenLikeAString()
     {
-        var writer = CreateWriter(enableUtf8Spans: true);
         var expected = new ProtobufOtlpTagWriter.OtlpTagWriterState { Buffer = new byte[1024] };
-        Assert.True(writer.WriteKeyValueInternal(ref expected, ProtobufOtlpTraceFieldNumberConstants.Span_Attributes, "key", "abcdefghij"));
+        Assert.True(ProtobufOtlpTagWriter.WriteKeyValue(ref expected, ProtobufOtlpTraceFieldNumberConstants.Span_Attributes, "key", "abcdefghij"));
 
         var actual = new ProtobufOtlpTagWriter.OtlpTagWriterState { Buffer = new byte[1024] };
-        Assert.True(writer.WriteKeyValueInternal(ref actual, ProtobufOtlpTraceFieldNumberConstants.Span_Attributes, "key", new Utf8ValueThatFillsBufferAndDoesNotFit("abcdefghijklmnop"), tagValueMaxLength: 10));
+        Assert.True(ProtobufOtlpTagWriter.WriteKeyValue(ref actual, ProtobufOtlpTraceFieldNumberConstants.Span_Attributes, "key", new Utf8ValueThatFillsBufferAndDoesNotFit("abcdefghijklmnop"), tagValueMaxLength: 10));
 
         Assert.Equal(expected.Buffer.AsSpan(0, expected.WritePosition).ToArray(), actual.Buffer.AsSpan(0, actual.WritePosition).ToArray());
     }
@@ -712,12 +654,11 @@ public class OtlpAttributeTests
     [InlineData(10)]
     public void InvalidUtf8FromTryFormatFallsBackToToString(int? tagValueMaxLength)
     {
-        var writer = CreateWriter(enableUtf8Spans: true);
         foreach (var invalid in new byte[][] { [(byte)'c', (byte)'a', (byte)'f', 0xE9], [(byte)'a', 0xE2, 0x82] })
         {
             var kvp = new KeyValuePair<string, object?>("key", new Utf8Bytes(invalid, "fallback"));
 
-            Assert.True(TryTransformTag(writer, kvp, out var attribute, tagValueMaxLength));
+            Assert.True(TryTransformTag(kvp, out var attribute, tagValueMaxLength));
             Assert.Equal("fallback", attribute.Value.StringValue);
         }
     }
@@ -727,10 +668,9 @@ public class OtlpAttributeTests
     [InlineData(10, 30)]
     public void DirtyLengthCoversTheWholeTryFormatDestination(int? tagValueMaxLength, int expectedDestinationLength)
     {
-        var writer = CreateWriter(enableUtf8Spans: true);
         var state = new ProtobufOtlpTagWriter.OtlpTagWriterState { Buffer = new byte[1024] };
 
-        Assert.True(writer.WriteKeyValueInternal(ref state, ProtobufOtlpTraceFieldNumberConstants.Span_Attributes, "key", new Utf8ValueThatUsesDestinationAsScratch("ok"), tagValueMaxLength));
+        Assert.True(ProtobufOtlpTagWriter.WriteKeyValue(ref state, ProtobufOtlpTraceFieldNumberConstants.Span_Attributes, "key", new Utf8ValueThatUsesDestinationAsScratch("ok"), tagValueMaxLength));
 
         var destinationStart = state.WritePosition - "ok".Length;
         Assert.Equal(Math.Min(destinationStart + expectedDestinationLength, state.Buffer.Length), state.DirtyLength);
@@ -740,10 +680,9 @@ public class OtlpAttributeTests
     [Fact]
     public void DirtyLengthCoversADroppedTag()
     {
-        var writer = CreateWriter(enableUtf8Spans: true);
         var state = new ProtobufOtlpTagWriter.OtlpTagWriterState { Buffer = new byte[1024] };
 
-        Assert.False(writer.WriteKeyValueInternal(ref state, ProtobufOtlpTraceFieldNumberConstants.Span_Attributes, "key", ThrowAfterLongEntry()));
+        Assert.False(ProtobufOtlpTagWriter.WriteKeyValue(ref state, ProtobufOtlpTraceFieldNumberConstants.Span_Attributes, "key", ThrowAfterLongEntry()));
 
         Assert.Equal(0, state.WritePosition);
         Assert.True(state.DirtyLength >= 100);
@@ -758,26 +697,17 @@ public class OtlpAttributeTests
     [Fact]
     public void Utf8SpanFormattableOverTheLengthLimitIsTruncatedWithoutGrowingTheBuffer()
     {
-        var writer = CreateWriter(enableUtf8Spans: true);
         var state = new ProtobufOtlpTagWriter.OtlpTagWriterState { Buffer = new byte[4096] };
         var tag = new KeyValuePair<string, object?>("key", new Utf8Value(new string('v', 1024 * 1024)));
 
-        Assert.True(writer.TryWriteTag(ref state, tag, tagValueMaxLength: 10));
+        Assert.True(ProtobufOtlpTagWriter.Instance.TryWriteTag(ref state, tag, tagValueMaxLength: 10));
 
         using var stream = new MemoryStream(state.Buffer, 0, state.WritePosition);
         Assert.Equal(new string('v', 10), OtlpCommon.KeyValue.Parser.ParseFrom(stream).Value.StringValue);
     }
 #endif
 
-#if NET
-    private static ProtobufOtlpTagWriter CreateWriter(bool enableUtf8Spans)
-        => new(new ProtobufOtlpTagWriter.OtlpArrayTagWriter(), enableUtf8Spans);
-
-#endif
     private static bool TryTransformTag(KeyValuePair<string, object?> tag, [NotNullWhen(true)] out OtlpCommon.KeyValue? attribute, int? tagValueMaxLength = null)
-        => TryTransformTag(ProtobufOtlpTagWriter.Instance, tag, out attribute, tagValueMaxLength);
-
-    private static bool TryTransformTag(ProtobufOtlpTagWriter writer, KeyValuePair<string, object?> tag, [NotNullWhen(true)] out OtlpCommon.KeyValue? attribute, int? tagValueMaxLength = null)
     {
         var otlpTagWriterState = new ProtobufOtlpTagWriter.OtlpTagWriterState
         {
@@ -785,7 +715,7 @@ public class OtlpAttributeTests
             WritePosition = 0,
         };
 
-        if (writer.TryWriteTag(ref otlpTagWriterState, tag, tagValueMaxLength))
+        if (ProtobufOtlpTagWriter.Instance.TryWriteTag(ref otlpTagWriterState, tag, tagValueMaxLength))
         {
             // Deserialize the ResourceSpans and validate the attributes.
             using var stream = new MemoryStream(otlpTagWriterState.Buffer, 0, otlpTagWriterState.WritePosition);
