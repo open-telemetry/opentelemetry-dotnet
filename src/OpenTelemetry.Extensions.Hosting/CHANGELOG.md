@@ -12,7 +12,7 @@ Notes](../../RELEASENOTES.md).
 
 * Updated the schema URL of resources created by the host environment resource
   detector to use OpenTelemetry Semantic Conventions version `1.45.0`.
-  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+  ([#8079](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8079))
 
 ## 1.21.0-rc.1
 
