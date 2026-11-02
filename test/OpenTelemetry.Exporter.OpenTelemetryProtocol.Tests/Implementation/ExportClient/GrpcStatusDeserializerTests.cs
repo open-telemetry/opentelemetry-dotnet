@@ -288,6 +288,36 @@ public class GrpcStatusDeserializerTests
     }
 
     [Theory]
+    [InlineData(8, 8, true)]
+    [InlineData(14, 14, true)]
+    [InlineData(0, 8, true)]
+    [InlineData(3, 8, false)]
+    [InlineData(8, 14, false)]
+    [InlineData(-1, 8, false)]
+    [InlineData(int.MaxValue, 8, false)]
+    public void TryGetGrpcRetryDelay_StatusDetailsCode_MustNotContradictGrpcStatus(int detailsCode, int grpcStatus, bool expectDelay)
+    {
+        var status = new Google.Rpc.Status
+        {
+            Code = detailsCode,
+            Details =
+            {
+                Any.Pack(new Google.Rpc.RetryInfo
+                {
+                    RetryDelay = new Duration { Seconds = 5 },
+                }),
+            },
+        };
+
+        var grpcStatusDetailsBin = Convert.ToBase64String(status.ToByteArray());
+
+        var result = GrpcStatusDeserializer.TryGetGrpcRetryDelay(grpcStatusDetailsBin, (StatusCode)grpcStatus);
+
+        Assert.Equal(expectDelay ? TimeSpan.FromSeconds(5) : null, result);
+        Assert.Equal(TimeSpan.FromSeconds(5), GrpcStatusDeserializer.TryGetGrpcRetryDelay(grpcStatusDetailsBin));
+    }
+
+    [Theory]
     [InlineData(-1, 0)] // -1s
     [InlineData(0, -1_000_000)] // -1ms, which is also Timeout.InfiniteTimeSpan
     [InlineData(-5, -500_000_000)] // -5.5s

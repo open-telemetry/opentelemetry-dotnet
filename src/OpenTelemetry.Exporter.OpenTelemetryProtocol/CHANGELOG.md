@@ -39,6 +39,11 @@ Notes](../../RELEASENOTES.md).
   emitted by gRPC-Go.
   ([#8075](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8075))
 
+* The retry delay in the `grpc-status-details-bin` trailer of a gRPC response is
+  now ignored if the status code in the details contradicts the `grpc-status`
+  of the response.
+  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+
 ## 1.21.0-rc.1
 
 Released 2026-Oct-28

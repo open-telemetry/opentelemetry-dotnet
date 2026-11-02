@@ -17,11 +17,11 @@ internal static class GrpcStatusDeserializer
     private const int WIRETYPE_FIXED32 = 5;
 #pragma warning restore SA1310 // Field names should not contain underscore
 
-    internal static TimeSpan? TryGetGrpcRetryDelay(string? grpcStatusDetailsHeader)
+    internal static TimeSpan? TryGetGrpcRetryDelay(string? grpcStatusDetailsHeader, StatusCode? grpcStatus = null)
     {
         try
         {
-            var retryInfo = ExtractRetryInfo(grpcStatusDetailsHeader);
+            var retryInfo = ExtractRetryInfo(grpcStatusDetailsHeader, grpcStatus);
             if (retryInfo?.RetryDelay != null)
             {
                 var retryDelay = TimeSpan.FromSeconds(retryInfo.Value.RetryDelay.Value.Seconds) +
@@ -93,11 +93,20 @@ internal static class GrpcStatusDeserializer
     }
 
     // Marked as internal for test.
-    internal static RetryInfo? ExtractRetryInfo(string? grpcStatusDetailsBin)
+    internal static RetryInfo? ExtractRetryInfo(string? grpcStatusDetailsBin, StatusCode? grpcStatus = null)
     {
         var status = DeserializeStatus(grpcStatusDetailsBin);
         if (status == null)
         {
+            return null;
+        }
+
+        // A status code in the details must not contradict the grpc-status of the response, and a consumer must verify that.
+        // Details which do contradict it cannot be trusted, so they are ignored. A code of zero is the default value of
+        // the field, which cannot be told apart from an omitted code, so it is not treated as a contradiction.
+        if (grpcStatus is { } expected && status.Value.Code != 0 && status.Value.Code != (int)expected)
+        {
+            OpenTelemetryProtocolExporterEventSource.Log.GrpcStatusDetailsCodeMismatch((int)expected, status.Value.Code);
             return null;
         }
 
