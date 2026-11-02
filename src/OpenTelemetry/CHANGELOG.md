@@ -27,6 +27,10 @@ Notes](../../RELEASENOTES.md).
   the Resource SDK specification.
   ([#8074](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8074))
 
+* Updated the schema URL of resources created by the SDK to use OpenTelemetry
+  Semantic Conventions version `1.45.0`.
+  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+
 ## 1.21.0-rc.1
 
 Released 2026-Oct-28
