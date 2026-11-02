@@ -590,7 +590,7 @@ used for logging:
 
 ### IUtf8SpanFormattable attribute values
 
-On .NET 8+, attribute values implementing `IUtf8SpanFormattable` that are not
+On .NET 10+, attribute values implementing `IUtf8SpanFormattable` that are not
 already handled as a built-in type are formatted directly into the export
 buffer with `TryFormat` instead of through `ToString()`, and exported as string
 attributes. Built-in types such as `Int128`, `DateOnly`, `TimeOnly`, `Version`
