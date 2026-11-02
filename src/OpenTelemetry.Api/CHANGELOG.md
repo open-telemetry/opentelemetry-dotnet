@@ -6,6 +6,10 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+## 1.21.0-rc.1
+
+Released 2026-Oct-28
+
 ## 1.20.1
 
 Released 2026-Oct-20

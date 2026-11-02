@@ -91,7 +91,7 @@ public class OtlpExporterOptions : IOtlpExporterOptions
     internal OtlpExporterOptions(
         OtlpExporterOptionsConfigurationType configurationType)
         : this(
-            configuration: new ConfigurationBuilder().AddEnvironmentVariables().Build(),
+            configuration: EnvironmentVariablesConfiguration.Create(),
             configurationType,
             defaultBatchOptions: new())
     {

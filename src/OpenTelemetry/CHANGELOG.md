@@ -6,6 +6,31 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Fixed an exception when downscaling empty exponential histogram buckets after
+  a reset.
+  ([#8064](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8064))
+
+* Fixed tracing callbacks continuing after provider shutdown or disposal on older
+  target frameworks.
+  ([#8065](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8065))
+
+* Fixed initialization failures when environment variable access is denied.
+  Configuration reloads retain the last successful values when access is denied.
+  ([#8070](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8070))
+
+* Fixed a source, meter or legacy activity name with a trailing line feed
+  matching a wildcard pattern which does not end in a wildcard.
+  ([#8074](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8074))
+
+* Fixed `OTEL_RESOURCE_ATTRIBUTES` values being decoded as form data, which
+  changed a `+` to a space. Values are now only percent-decoded, as defined by
+  the Resource SDK specification.
+  ([#8074](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8074))
+
+## 1.21.0-rc.1
+
+Released 2026-Oct-28
+
 * Fixed a race in the self-diagnostics sink dispatcher where disposing it
   while its pump thread was exiting could throw `ArgumentNullException` on
   .NET Framework.

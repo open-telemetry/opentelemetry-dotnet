@@ -388,10 +388,17 @@ internal sealed class OpenTelemetryProtocolExporterEventSource : EventSource, IC
 
     [Event(
         44,
+        Message = "The gRPC status code {0} of the response is contradicted by the status code {1} in the gRPC status details. The status details will be ignored.",
+        Level = EventLevel.Warning)]
+    internal void GrpcStatusDetailsCodeMismatch(int grpcStatusCode, int detailsStatusCode)
+        => this.WriteEvent(44, grpcStatusCode, detailsStatusCode);
+
+    [Event(
+        45,
         Message = "Zstandard compression is not supported on this platform. GZip compression will be used instead.",
         Level = EventLevel.Warning)]
     internal void ZstdCompressionNotSupported()
-        => this.WriteEvent(44);
+        => this.WriteEvent(45);
 
     [NonEvent]
     internal void ZstdCompressionRejected(Uri endpoint)
@@ -403,11 +410,11 @@ internal sealed class OpenTelemetryProtocolExporterEventSource : EventSource, IC
     }
 
     [Event(
-        45,
+        46,
         Message = "The request to endpoint '{0}' compressed with Zstandard was rejected. The request will be sent again compressed with GZip.",
         Level = EventLevel.Warning)]
     internal void ZstdCompressionRejected(string endpoint)
-        => this.WriteEvent(45, endpoint);
+        => this.WriteEvent(46, endpoint);
 
     private static string RedactEndpointUri(Uri endpoint)
     {
