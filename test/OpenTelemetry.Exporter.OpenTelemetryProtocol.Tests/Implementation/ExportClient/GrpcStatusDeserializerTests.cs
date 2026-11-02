@@ -419,6 +419,168 @@ public class GrpcStatusDeserializerTests
         Assert.Throws<InvalidDataException>(() => GrpcStatusDeserializer.DeserializeStatus(grpcStatusDetailsBin));
     }
 
+    [Theory]
+    [InlineData(1L << 32)]
+    [InlineData((1L << 32) + 3)]
+    [InlineData((1L << 33) + 3)]
+    [InlineData(long.MaxValue)]
+    public void DeserializeStatus_AnyValueLengthThatDoesNotFitInInt32_IsRejected(long declaredLength)
+    {
+        // The length of the value is that of the 3 bytes which follow it, plus a multiple of 2^32 which is truncated by a cast to int.
+        var any = new List<byte>();
+        any.AddRange(EncodeLengthDelimitedField(1, "type.googleapis.com/google.rpc.RetryInfo"u8.ToArray()));
+        any.Add(0x12);
+        any.AddRange(EncodeVarint(declaredLength));
+        any.AddRange([0x0A, 0x01, 0x08]);
+
+        var grpcStatusDetailsBin = Convert.ToBase64String(EncodeLengthDelimitedField(3, [.. any]));
+
+        Assert.ThrowsAny<Exception>(() => GrpcStatusDeserializer.DeserializeStatus(grpcStatusDetailsBin));
+        Assert.Null(GrpcStatusDeserializer.TryGetGrpcRetryDelay(grpcStatusDetailsBin));
+    }
+
+    [Theory]
+    [InlineData(1L << 32)]
+    [InlineData(1L << 33)]
+    [InlineData(1L << 40)]
+    public void DeserializeStatus_AnyTypeUrlLengthThatDoesNotFitInInt32_IsRejected(long lengthOverflow)
+    {
+        var typeUrl = "type.googleapis.com/google.rpc.RetryInfo"u8.ToArray();
+        var retryInfo = new Google.Rpc.RetryInfo { RetryDelay = new Duration { Seconds = 7 } }.ToByteArray();
+
+        var any = new List<byte> { 0x0A };
+        any.AddRange(EncodeVarint(lengthOverflow + typeUrl.Length));
+        any.AddRange(typeUrl);
+        any.AddRange(EncodeLengthDelimitedField(2, retryInfo));
+
+        var grpcStatusDetailsBin = Convert.ToBase64String(EncodeLengthDelimitedField(3, [.. any]));
+
+        Assert.ThrowsAny<Exception>(() => GrpcStatusDeserializer.DeserializeStatus(grpcStatusDetailsBin));
+        Assert.Null(GrpcStatusDeserializer.TryGetGrpcRetryDelay(grpcStatusDetailsBin));
+    }
+
+    [Theory]
+    [InlineData(new byte[] { 0x0A, 0x02, 0xAA, 0xBB })] // code (1) as length-delimited
+    [InlineData(new byte[] { 0x09, 1, 2, 3, 4, 5, 6, 7, 8 })] // code (1) as fixed64
+    [InlineData(new byte[] { 0x0D, 1, 2, 3, 4 })] // code (1) as fixed32
+    [InlineData(new byte[] { 0x10, 0x05 })] // message (2) as varint
+    [InlineData(new byte[] { 0x11, 1, 2, 3, 4, 5, 6, 7, 8 })] // message (2) as fixed64
+    [InlineData(new byte[] { 0x18, 0x0A })] // details (3) as varint
+    [InlineData(new byte[] { 0x19, 1, 2, 3, 4, 5, 6, 7, 8 })] // details (3) as fixed64
+    [InlineData(new byte[] { 0x1D, 1, 2, 3, 4 })] // details (3) as fixed32
+    public void DeserializeStatus_KnownFieldWithUnexpectedWireType_IsSkipped(byte[] unexpectedField)
+    {
+        var status = new Google.Rpc.Status
+        {
+            Code = 4,
+            Message = "Retry later",
+            Details =
+            {
+                Any.Pack(new Google.Rpc.RetryInfo { RetryDelay = new Duration { Seconds = 5 } }),
+            },
+        };
+
+        var grpcStatusDetailsBin = Convert.ToBase64String([.. unexpectedField, .. status.ToByteArray()]);
+
+        var deserializedStatus = GrpcStatusDeserializer.DeserializeStatus(grpcStatusDetailsBin);
+
+        Assert.NotNull(deserializedStatus);
+        Assert.Equal(4, deserializedStatus.Value.Code);
+        Assert.Equal("Retry later", deserializedStatus.Value.Message);
+        Assert.Single(deserializedStatus.Value.Details);
+        Assert.Equal(TimeSpan.FromSeconds(5), GrpcStatusDeserializer.TryGetGrpcRetryDelay(grpcStatusDetailsBin));
+    }
+
+    [Theory]
+    [InlineData(new byte[] { 0x0A, 0x01, 0xFF })] // seconds (1) as length-delimited
+    [InlineData(new byte[] { 0x11, 1, 2, 3, 4, 5, 6, 7, 8 })] // nanos (2) as fixed64
+    public void TryGetGrpcRetryDelay_DurationFieldWithUnexpectedWireType_IsSkipped(byte[] unexpectedField)
+    {
+        var duration = new List<byte>(unexpectedField);
+        duration.AddRange([0x08, 0x05]); // seconds = 5
+
+        var retryInfo = EncodeLengthDelimitedField(1, [.. duration]);
+
+        var any = new List<byte>();
+        any.AddRange(EncodeLengthDelimitedField(1, "type.googleapis.com/google.rpc.RetryInfo"u8.ToArray()));
+        any.AddRange(EncodeLengthDelimitedField(2, retryInfo));
+
+        var grpcStatusDetailsBin = Convert.ToBase64String(EncodeLengthDelimitedField(3, [.. any]));
+
+        Assert.Equal(TimeSpan.FromSeconds(5), GrpcStatusDeserializer.TryGetGrpcRetryDelay(grpcStatusDetailsBin));
+    }
+
+    [Theory]
+    [InlineData(new byte[] { 0x0A, 0x02, 0x08, 0x05, 0x0A, 0x00 }, 5 * TimeSpan.TicksPerSecond)] // seconds = 5, then an empty duration
+    [InlineData(new byte[] { 0x0A, 0x00, 0x0A, 0x02, 0x08, 0x05 }, 5 * TimeSpan.TicksPerSecond)] // an empty duration, then seconds = 5
+    [InlineData(new byte[] { 0x0A, 0x02, 0x08, 0x05, 0x0A, 0x02, 0x10, 0x64 }, (5 * TimeSpan.TicksPerSecond) + 1)] // seconds = 5, then nanos = 100
+    [InlineData(new byte[] { 0x0A, 0x02, 0x08, 0x05, 0x0A, 0x02, 0x08, 0x07 }, 7 * TimeSpan.TicksPerSecond)] // seconds = 5, then seconds = 7
+    public void TryGetGrpcRetryDelay_RepeatedRetryDelayFields_AreMerged(byte[] retryInfo, long expectedTicks)
+    {
+        // A repeated occurrence of a singular message field is merged into the previous one, as any other protobuf decoder would
+        var any = new List<byte>();
+        any.AddRange(EncodeLengthDelimitedField(1, "type.googleapis.com/google.rpc.RetryInfo"u8.ToArray()));
+        any.AddRange(EncodeLengthDelimitedField(2, [.. retryInfo]));
+
+        var grpcStatusDetailsBin = Convert.ToBase64String(EncodeLengthDelimitedField(3, [.. any]));
+
+        Assert.Equal(TimeSpan.FromTicks(expectedTicks), GrpcStatusDeserializer.TryGetGrpcRetryDelay(grpcStatusDetailsBin));
+
+        // Cross-check against the reference protobuf implementation
+        var expected = Google.Rpc.RetryInfo.Parser.ParseFrom([.. retryInfo]).RetryDelay;
+        Assert.Equal(TimeSpan.FromTicks(expectedTicks), expected.ToTimeSpan());
+    }
+
+    [Theory]
+    [InlineData("")] // Encoded length is a multiple of 3 bytes, so there is no padding
+    [InlineData("a")] // One padding character
+    [InlineData("ab")] // Two padding characters
+    [InlineData("abc")]
+    public void TryGetGrpcRetryDelay_PaddedAndUnpaddedBase64_AreEquivalent(string message)
+    {
+        var status = new Google.Rpc.Status
+        {
+            Code = 8,
+            Message = message,
+            Details =
+            {
+                Any.Pack(new Google.Rpc.RetryInfo
+                {
+                    RetryDelay = new Duration { Seconds = 5 },
+                }),
+            },
+        };
+
+        var padded = Convert.ToBase64String(status.ToByteArray());
+        var unpadded = padded.TrimEnd('=');
+
+        Assert.Equal(TimeSpan.FromSeconds(5), GrpcStatusDeserializer.TryGetGrpcRetryDelay(padded));
+        Assert.Equal(TimeSpan.FromSeconds(5), GrpcStatusDeserializer.TryGetGrpcRetryDelay(unpadded));
+        Assert.Equal(GrpcStatusDeserializer.DeserializeStatus(padded)!.Value.Message, GrpcStatusDeserializer.DeserializeStatus(unpadded)!.Value.Message);
+    }
+
+    [Theory]
+    [InlineData("A")] // A single character cannot be Base64
+    [InlineData("AAAAA")]
+    [InlineData("AA=")] // Partial padding is malformed
+    [InlineData("AA=A")]
+    [InlineData("AAAA=")]
+    [InlineData("A$AA")]
+    public void TryGetGrpcRetryDelay_MalformedBase64_ReturnsNull(string grpcStatusDetailsBin)
+    {
+        Assert.Null(GrpcStatusDeserializer.TryGetGrpcRetryDelay(grpcStatusDetailsBin));
+        Assert.ThrowsAny<FormatException>(() => GrpcStatusDeserializer.DeserializeStatus(grpcStatusDetailsBin));
+    }
+
+    private static byte[] EncodeLengthDelimitedField(int fieldNumber, byte[] value)
+    {
+        var encoded = new List<byte>();
+        encoded.AddRange(EncodeVarint((fieldNumber << 3) | 2));
+        encoded.AddRange(EncodeVarint(value.Length));
+        encoded.AddRange(value);
+        return [.. encoded];
+    }
+
     private static byte[] EncodeVarint(long value)
     {
         var encoded = new List<byte>();
