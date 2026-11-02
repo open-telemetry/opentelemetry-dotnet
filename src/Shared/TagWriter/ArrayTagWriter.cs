@@ -6,6 +6,8 @@ namespace OpenTelemetry.Internal;
 internal abstract class ArrayTagWriter<TArrayState>
     where TArrayState : notnull
 {
+    public virtual long MaxNestedObjectEntries => long.MaxValue;
+
     public abstract TArrayState BeginWriteArray();
 
     public abstract void WriteNullValue(ref TArrayState state);
