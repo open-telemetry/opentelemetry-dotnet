@@ -104,7 +104,7 @@ internal static class OtlpRetry
             return false;
         }
 
-        var throttleDelay = GrpcStatusDeserializer.TryGetGrpcRetryDelay(response.GrpcStatusDetailsHeader);
+        var throttleDelay = GrpcStatusDeserializer.TryGetGrpcRetryDelay(response.GrpcStatusDetailsHeader, response.Status.Value.StatusCode);
         return IsGrpcStatusCodeRetryable(response.Status.Value.StatusCode, throttleDelay.HasValue);
     }
 
@@ -140,7 +140,7 @@ internal static class OtlpRetry
                 return false;
             }
 
-            var throttleDelay = ClampThrottleDelay(GrpcStatusDeserializer.TryGetGrpcRetryDelay(response.GrpcStatusDetailsHeader));
+            var throttleDelay = ClampThrottleDelay(GrpcStatusDeserializer.TryGetGrpcRetryDelay(response.GrpcStatusDetailsHeader, response.Status.Value.StatusCode));
             var retryable = IsGrpcStatusCodeRetryable(response.Status.Value.StatusCode, throttleDelay.HasValue);
 
             if (!retryable)
