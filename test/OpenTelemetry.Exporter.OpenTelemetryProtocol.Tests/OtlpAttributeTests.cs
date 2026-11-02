@@ -11,6 +11,23 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests;
 
 public class OtlpAttributeTests
 {
+#if NET
+    public static TheoryData<object> BoundedUtf8SpanFormattableValues() =>
+    [
+        Half.MinValue,
+        DateOnly.MaxValue,
+        new System.Text.Rune(0x1F600),
+        nint.MinValue,
+        nuint.MaxValue,
+        System.Runtime.InteropServices.NFloat.MinValue,
+        TimeOnly.MaxValue,
+        Int128.MinValue,
+        UInt128.MaxValue,
+        System.Net.IPNetwork.Parse("ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff/128"),
+        new System.Numerics.Complex(double.MinValue, double.MinValue),
+    ];
+#endif
+
     [Fact]
     public void NullValueAttribute()
     {
@@ -483,6 +500,32 @@ public class OtlpAttributeTests
         Assert.True(TryTransformTag(kvp, out var attribute));
         Assert.Equal(OtlpCommon.AnyValue.ValueOneofCase.StringValue, attribute.Value.ValueCase);
         Assert.Equal(value, attribute.Value.StringValue);
+    }
+
+    [Theory]
+    [MemberData(nameof(BoundedUtf8SpanFormattableValues))]
+    public void BoundedUtf8SpanFormattableIsEncodedLikeAString(object value)
+    {
+        Assert.NotNull(value);
+
+        var formatted = ((IFormattable)value).ToString(null, CultureInfo.InvariantCulture);
+
+        var expected = new ProtobufOtlpTagWriter.OtlpTagWriterState { Buffer = new byte[1024] };
+        Assert.True(ProtobufOtlpTagWriter.WriteKeyValue(ref expected, ProtobufOtlpTraceFieldNumberConstants.Span_Attributes, "key", formatted));
+
+        var actual = new ProtobufOtlpTagWriter.OtlpTagWriterState { Buffer = new byte[1024] };
+        Assert.True(ProtobufOtlpTagWriter.WriteKeyValue(ref actual, ProtobufOtlpTraceFieldNumberConstants.Span_Attributes, "key", value));
+
+        Assert.Equal(expected.Buffer.AsSpan(0, expected.WritePosition).ToArray(), actual.Buffer.AsSpan(0, actual.WritePosition).ToArray());
+    }
+
+    [Fact]
+    public void BigIntegerLongerThanASingleByteLengthIsWrittenAsString()
+    {
+        var value = System.Numerics.BigInteger.Pow(10, 200);
+
+        Assert.True(TryTransformTag(new KeyValuePair<string, object?>("key", value), out var attribute));
+        Assert.Equal(value.ToString(CultureInfo.InvariantCulture), attribute.Value.StringValue);
     }
 
     [Theory]

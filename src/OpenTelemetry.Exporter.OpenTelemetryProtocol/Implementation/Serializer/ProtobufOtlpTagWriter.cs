@@ -4,6 +4,9 @@
 using System.Buffers;
 #if NET
 using System.Globalization;
+using System.Net;
+using System.Numerics;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.Unicode;
 #endif
@@ -135,20 +138,23 @@ internal sealed class ProtobufOtlpTagWriter : TagWriter<ProtobufOtlpTagWriter.Ot
     {
         const int MaxUtf8BytesPerChar = 3;
 
+        var useCompactLength = HasSingleByteUtf8Length(value);
+        var reserveSizeForLength = useCompactLength ? ProtobufSerializer.ReserveSizeForCompactLength : ReserveSizeForLength;
+
         var startPosition = state.WritePosition;
         state.WritePosition = ProtobufSerializer.WriteStringWithTag(state.Buffer, state.WritePosition, ProtobufOtlpCommonFieldNumberConstants.KeyValue_Key, key);
 
         state.WritePosition = ProtobufSerializer.WriteTag(state.Buffer, state.WritePosition, ProtobufOtlpCommonFieldNumberConstants.KeyValue_Value, ProtobufWireType.LEN);
         var anyValueLengthPosition = state.WritePosition;
-        state.WritePosition += ReserveSizeForLength;
+        state.WritePosition += reserveSizeForLength;
 
         state.WritePosition = ProtobufSerializer.WriteTag(state.Buffer, state.WritePosition, ProtobufOtlpCommonFieldNumberConstants.AnyValue_String_Value, ProtobufWireType.LEN);
         var stringLengthPosition = state.WritePosition;
-        state.WritePosition += ReserveSizeForLength;
+        state.WritePosition += reserveSizeForLength;
 
         if (tagValueMaxLength == 0)
         {
-            EndUtf8StringTag(ref state, anyValueLengthPosition, stringLengthPosition, 0);
+            EndUtf8StringTag(ref state, anyValueLengthPosition, stringLengthPosition, 0, useCompactLength);
             return true;
         }
 
@@ -203,7 +209,7 @@ internal sealed class ProtobufOtlpTagWriter : TagWriter<ProtobufOtlpTagWriter.Ot
         if (formatted && (uint)bytesWritten <= (uint)buffer.Length && Utf8.IsValid(buffer[..bytesWritten]))
         {
             var truncatedLength = TruncateUtf8String(buffer[..bytesWritten], tagValueMaxLength).Length;
-            EndUtf8StringTag(ref state, anyValueLengthPosition, stringLengthPosition, truncatedLength);
+            EndUtf8StringTag(ref state, anyValueLengthPosition, stringLengthPosition, truncatedLength, useCompactLength);
             return true;
         }
 
@@ -309,13 +315,33 @@ internal sealed class ProtobufOtlpTagWriter : TagWriter<ProtobufOtlpTagWriter.Ot
     }
 
 #if NET
-    private static void EndUtf8StringTag(ref OtlpTagWriterState state, int anyValueLengthPosition, int stringLengthPosition, int utf8Length)
+    private static void EndUtf8StringTag(ref OtlpTagWriterState state, int anyValueLengthPosition, int stringLengthPosition, int utf8Length, bool useCompactLength)
     {
         state.WritePosition += utf8Length;
+
+        if (useCompactLength)
+        {
+            state.WritePosition = ProtobufSerializer.WriteCompactLength(state.Buffer, stringLengthPosition, state.WritePosition);
+            state.WritePosition = ProtobufSerializer.WriteCompactLength(state.Buffer, anyValueLengthPosition, state.WritePosition);
+            return;
+        }
 
         ProtobufSerializer.WriteReservedLength(state.Buffer, stringLengthPosition, utf8Length);
         ProtobufSerializer.WriteReservedLength(state.Buffer, anyValueLengthPosition, state.WritePosition - (anyValueLengthPosition + ReserveSizeForLength));
     }
+
+    /// <summary>
+    /// Whether a value is a built-in type whose invariant-culture, default-format output is short
+    /// enough that both its string and <c>AnyValue</c> length prefixes always fit in one byte.
+    /// </summary>
+    /// <remarks>
+    /// Any other type keeps the four byte reservation, as its output length is unknown, or for
+    /// <see cref="BigInteger"/> unbounded, and widening a one byte prefix means moving the content.
+    /// </remarks>
+    /// <param name="value">The value being written.</param>
+    /// <returns><see langword="true"/> if one byte length prefixes always suffice.</returns>
+    private static bool HasSingleByteUtf8Length(IUtf8SpanFormattable value)
+        => value is Half or DateOnly or Rune or nint or nuint or NFloat or TimeOnly or Int128 or UInt128 or IPNetwork or Complex;
 
     /// <summary>
     /// Truncates UTF-8 text to at most <paramref name="maxLength"/> UTF-16 chars, on whole code
