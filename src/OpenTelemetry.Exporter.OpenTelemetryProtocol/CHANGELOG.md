@@ -44,7 +44,7 @@ Notes](../../RELEASENOTES.md).
   of the response.
   ([#8078](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8078))
 
-* Attribute values implementing `IUtf8SpanFormattable` (.NET 8+) that are not
+* Attribute values implementing `IUtf8SpanFormattable` (.NET 10+) that are not
   already handled as a built-in type are now formatted directly into the export
   buffer with `TryFormat` and exported as string attributes, instead of through
   `ToString()`.
