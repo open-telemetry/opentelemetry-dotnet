@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Metrics;
@@ -31,38 +30,41 @@ public class PeriodicExportingMetricReader : BaseExportingMetricReader
     /// Initializes a new instance of the <see cref="PeriodicExportingMetricReader"/> class.
     /// </summary>
     /// <param name="exporter">Exporter instance to export Metrics to.</param>
-    /// <param name="exportIntervalMilliseconds">The interval in milliseconds between two consecutive exports. The default value is 60000.</param>
-    /// <param name="exportTimeoutMilliseconds">How long the export can run before it is cancelled. The default value is 30000.</param>
-    [SuppressMessage("roslyn", "RS0027", Justification = "The parameters of the overload which limits the size of the exported batches cannot be optional, as calls using the defaults of both overloads would be ambiguous.")]
+    /// <param name="exportIntervalMilliseconds">The interval in milliseconds between two consecutive exports.</param>
+    /// <param name="exportTimeoutMilliseconds">How long the export can run before it is cancelled.</param>
+    // Retain this overload for binary compatibility with previously compiled callers.
     public PeriodicExportingMetricReader(
         BaseExporter<Metric> exporter,
-        int exportIntervalMilliseconds = DefaultExportIntervalMilliseconds,
-        int exportTimeoutMilliseconds = DefaultExportTimeoutMilliseconds)
+        int exportIntervalMilliseconds,
+        int exportTimeoutMilliseconds)
         : this(exporter, null, exportIntervalMilliseconds, exportTimeoutMilliseconds)
     {
     }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="PeriodicExportingMetricReader"/> class
-    /// which limits the number of metric points in each batch it exports.
+    /// which optionally limits the number of metric points in each batch it exports.
     /// </summary>
     /// <remarks>
-    /// The metric points of each collection are split into batches of at most
-    /// <paramref name="maxExportBatchSize"/> metric points, which may split up
+    /// When <paramref name="maxExportBatchSize"/> is set, the metric points of
+    /// each collection are split into batches of at most that many metric points, which may split up
     /// the metric points of a single metric into different batches. The batches
     /// are exported serially and <paramref name="exportTimeoutMilliseconds"/>
     /// applies to each export.
     /// </remarks>
     /// <param name="exporter">Exporter instance to export Metrics to.</param>
-    /// <param name="exportIntervalMilliseconds">The interval in milliseconds between two consecutive exports.</param>
-    /// <param name="exportTimeoutMilliseconds">How long each export can run before it is cancelled.</param>
-    /// <param name="maxExportBatchSize">The maximum number of metric points in a batch provided to a single export.</param>
+    /// <param name="exportIntervalMilliseconds">The interval in milliseconds between two consecutive exports. The default value is 60000.</param>
+    /// <param name="exportTimeoutMilliseconds">How long each export can run before it is cancelled. The default value is 30000.</param>
+    /// <param name="maxExportBatchSize">
+    /// The maximum number of metric points in a batch provided to a single export,
+    /// or <see langword="null"/> for no limit. The default value is <see langword="null"/>.
+    /// </param>
     public PeriodicExportingMetricReader(
         BaseExporter<Metric> exporter,
-        int exportIntervalMilliseconds,
-        int exportTimeoutMilliseconds,
-        int maxExportBatchSize)
-        : this(exporter, (int?)maxExportBatchSize, exportIntervalMilliseconds, exportTimeoutMilliseconds)
+        int exportIntervalMilliseconds = DefaultExportIntervalMilliseconds,
+        int exportTimeoutMilliseconds = DefaultExportTimeoutMilliseconds,
+        int? maxExportBatchSize = null)
+        : this(exporter, maxExportBatchSize, exportIntervalMilliseconds, exportTimeoutMilliseconds)
     {
     }
 

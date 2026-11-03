@@ -17,9 +17,11 @@ internal static class PeriodicExportingMetricReaderHelper
         var exportIntervalMilliseconds = options.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds ?? defaultExportIntervalMilliseconds;
         var exportTimeoutMilliseconds = options.PeriodicExportingMetricReaderOptions.ExportTimeoutMilliseconds ?? defaultExportTimeoutMilliseconds;
 
-        var metricReader = options.PeriodicExportingMetricReaderOptions.MaxExportBatchSize is { } maxExportBatchSize
-            ? new PeriodicExportingMetricReader(exporter, exportIntervalMilliseconds, exportTimeoutMilliseconds, maxExportBatchSize)
-            : new PeriodicExportingMetricReader(exporter, exportIntervalMilliseconds, exportTimeoutMilliseconds);
+        var metricReader = new PeriodicExportingMetricReader(
+            exporter,
+            exportIntervalMilliseconds,
+            exportTimeoutMilliseconds,
+            options.PeriodicExportingMetricReaderOptions.MaxExportBatchSize);
 
         metricReader.TemporalityPreference = options.TemporalityPreference;
         metricReader.DefaultHistogramAggregation = options.DefaultHistogramAggregation;
