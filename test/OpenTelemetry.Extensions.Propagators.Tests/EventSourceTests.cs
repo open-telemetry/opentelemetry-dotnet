@@ -12,4 +12,8 @@ public class EventSourceTests
     [Fact]
     public void EventSourceTests_OpenTelemetryPropagatorsEventSource() =>
         EventSourceTestHelper.ValidateEventSourceIds<OpenTelemetryPropagatorsEventSource>();
+
+    [Fact]
+    public void EventSourceTests_OpenTelemetryPropagatorsEventSource_WritesEvents() =>
+        EventSourceTestHelper.ExerciseEventSource<OpenTelemetryPropagatorsEventSource>();
 }

@@ -11,4 +11,8 @@ public class EventSourceTests
     [Fact]
     public void EventSourceTests_OpenTelemetrySdkEventSource() =>
         EventSourceTestHelper.ValidateEventSourceIds<OpenTelemetrySdkEventSource>();
+
+    [Fact]
+    public void EventSourceTests_OpenTelemetrySdkEventSource_WritesEvents() =>
+        EventSourceTestHelper.ExerciseEventSource<OpenTelemetrySdkEventSource>();
 }
