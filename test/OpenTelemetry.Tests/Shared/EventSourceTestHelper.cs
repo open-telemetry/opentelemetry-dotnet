@@ -3,6 +3,7 @@
 
 using System.Diagnostics;
 using System.Diagnostics.Tracing;
+using System.Globalization;
 using System.Reflection;
 
 namespace OpenTelemetry.Tests;
@@ -118,7 +119,8 @@ internal static class EventSourceTestHelper
 
     /// <summary>
     /// Invokes every method declared on the given <see cref="EventSource"/> with synthetic arguments
-    /// and verifies that each <c>[Event]</c> method writes an event with the expected ID and payload.
+    /// and verifies that each <c>[Event]</c> method writes an event with the expected ID, that the payload
+    /// contains the values that were passed in, and that the message template can be formatted.
     /// <para>
     /// Generic methods and methods with <see langword="ref struct"/> parameters (such as
     /// <see cref="ReadOnlySpan{T}"/>) cannot be invoked using reflection and are skipped.
@@ -185,12 +187,37 @@ internal static class EventSourceTestHelper
                 written is not null,
                 $"Invoking '{method.Name}' on '{eventSource.GetType().FullName}' did not write event {eventAttribute.EventId}.");
 
-            Assert.Equal(parameters.Length, written.Payload?.Count ?? 0);
+            var payload = written.Payload ?? [];
+
+            Assert.Equal(parameters.Length, payload.Count);
+
+            for (var i = 0; i < arguments.Length; i++)
+            {
+                // Only simple values are compared as the event source is free to transform
+                // anything else (e.g. redacting a Uri) before writing it to the payload.
+                if (arguments[i] is string or bool or int or long)
+                {
+                    Assert.True(
+                        Equals(arguments[i], payload[i]),
+                        $"Event {eventAttribute.EventId} payload item {i} does not match the value passed to '{method.Name}'.");
+                }
+            }
 
             if (eventAttribute.Message is not null)
             {
-                // Accessing Message formats the payload, which verifies the message template.
                 Assert.False(string.IsNullOrEmpty(written.Message), $"Event {eventAttribute.EventId} has an empty message.");
+
+                // EventWrittenEventArgs.Message is the unformatted template, so format it
+                // with the payload to verify that its placeholders are valid. The resulting
+                // text is intentionally not inspected.
+                try
+                {
+                    _ = string.Format(CultureInfo.InvariantCulture, written.Message!, [.. payload]);
+                }
+                catch (FormatException ex)
+                {
+                    Assert.Fail($"The message for event {eventAttribute.EventId} cannot be formatted with its payload: {ex.Message}");
+                }
             }
         }
 

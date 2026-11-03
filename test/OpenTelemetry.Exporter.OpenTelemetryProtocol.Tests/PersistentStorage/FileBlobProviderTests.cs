@@ -10,6 +10,7 @@ using OpenTelemetry.Tests;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests.PersistentStorage;
 
+[Collection(EventSourceCollectionDefinition.Name)]
 public class FileBlobProviderTests
 {
     [Fact]
