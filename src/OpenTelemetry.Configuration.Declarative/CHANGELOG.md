@@ -68,3 +68,11 @@ Notes](../../RELEASENOTES.md).
 
 * Add support for .NET 11.0.
   ([#6899](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6899))
+
+* A document with `tracer_provider` now turns tracing on from
+  `UseDeclarativeConfiguration()`, listening to every `ActivitySource` unless
+  `tracer_configurator/development` narrows it, with `simple` and `batch` span
+  processors and the `console` exporter. Unsupported stable `tracer_provider`
+  settings now fail the tracer provider build, and the file is read on every
+  registration path.
+  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))

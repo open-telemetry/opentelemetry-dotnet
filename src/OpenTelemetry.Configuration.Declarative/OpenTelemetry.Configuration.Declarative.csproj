@@ -25,6 +25,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\OpenTelemetry\OpenTelemetry.csproj" />
+    <ProjectReference Include="..\OpenTelemetry.Exporter.Console\OpenTelemetry.Exporter.Console.csproj" />
   </ItemGroup>
 
   <ItemGroup>

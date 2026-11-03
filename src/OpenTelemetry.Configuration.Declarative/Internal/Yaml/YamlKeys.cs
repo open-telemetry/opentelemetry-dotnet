@@ -19,4 +19,21 @@ internal static class YamlKeys
     internal const string Name = "name";
     internal const string Value = "value";
     internal const string Type = "type";
+    internal const string TracerProvider = "tracer_provider";
+    internal const string Processors = "processors";
+    internal const string Exporter = "exporter";
+    internal const string Simple = "simple";
+    internal const string Batch = "batch";
+    internal const string Console = "console";
+    internal const string ScheduleDelay = "schedule_delay";
+    internal const string ExportTimeout = "export_timeout";
+    internal const string MaxQueueSize = "max_queue_size";
+    internal const string MaxExportBatchSize = "max_export_batch_size";
+    internal const string IdGenerator = "id_generator";
+    internal const string Random = "random";
+    internal const string TracerConfiguratorDevelopment = "tracer_configurator/development";
+    internal const string DefaultConfig = "default_config";
+    internal const string Tracers = "tracers";
+    internal const string Config = "config";
+    internal const string Enabled = "enabled";
 }

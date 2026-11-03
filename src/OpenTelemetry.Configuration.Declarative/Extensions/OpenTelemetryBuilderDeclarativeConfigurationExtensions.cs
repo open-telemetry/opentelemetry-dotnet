@@ -43,7 +43,7 @@ public static class OpenTelemetryBuilderDeclarativeConfigurationExtensions
             return builder;
         }
 
-        RegisterDeclarativeConfiguration(builder.Services, new FilePath(filePath));
+        RegisterDeclarativeConfiguration(builder, new FilePath(filePath));
         return builder;
     }
 
@@ -65,7 +65,7 @@ public static class OpenTelemetryBuilderDeclarativeConfigurationExtensions
 
         var path = new FilePath(filePath);
         WarnIfConfigFileEnvVarDiffers(path);
-        RegisterDeclarativeConfiguration(builder.Services, path);
+        RegisterDeclarativeConfiguration(builder, path);
 
         return builder;
     }
@@ -73,10 +73,12 @@ public static class OpenTelemetryBuilderDeclarativeConfigurationExtensions
     /// <summary>
     /// Adds declarative configuration to services configured by an OpenTelemetry builder.
     /// </summary>
-    /// <param name="services">The services used to configure OpenTelemetry.</param>
+    /// <param name="builder">The OpenTelemetry builder.</param>
     /// <param name="filePath">The path to the declarative configuration file.</param>
-    internal static void RegisterDeclarativeConfiguration(IServiceCollection services, FilePath filePath)
+    internal static void RegisterDeclarativeConfiguration(IOpenTelemetryBuilder builder, FilePath filePath)
     {
+        var services = builder.Services;
+
         // Second call on the same IServiceCollection is a no-op (first file path wins).
         var existingMarker = services
             .Select(d => d.ImplementationInstance)
@@ -105,13 +107,7 @@ public static class OpenTelemetryBuilderDeclarativeConfigurationExtensions
         // Fast path: hosting API accessor exposes a live ConfigurationManager; mutate in-place and skip descriptor scan.
         if (configurationAccessor?.Configuration is IConfigurationBuilder accessorBuilder)
         {
-            accessorBuilder.AddOpenTelemetryDeclarativeConfiguration(
-                candidateAccessor,
-                removeSourceOnFailure: true);
-            services.TryAddSingleton(
-                DeclarativeConfigurationDocumentAccessorResolver.FindInConfiguration(accessorBuilder)
-                    ?? candidateAccessor);
-            CompleteDeclarativeConfigurationRegistration(services, filePath);
+            RegisterWithConfigurationBuilder(builder, filePath, accessorBuilder, candidateAccessor);
             return;
         }
 
@@ -121,15 +117,14 @@ public static class OpenTelemetryBuilderDeclarativeConfigurationExtensions
         // IConfiguration is a singleton instance that is also a live builder; mutate in-place.
         if (descriptor?.ImplementationInstance is IConfigurationBuilder instanceBuilder)
         {
-            instanceBuilder.AddOpenTelemetryDeclarativeConfiguration(
-                candidateAccessor,
-                removeSourceOnFailure: true);
-            services.TryAddSingleton(
-                DeclarativeConfigurationDocumentAccessorResolver.FindInConfiguration(instanceBuilder)
-                    ?? candidateAccessor);
-            CompleteDeclarativeConfigurationRegistration(services, filePath);
+            RegisterWithConfigurationBuilder(builder, filePath, instanceBuilder, candidateAccessor);
             return;
         }
+
+        // On the remaining paths the configuration is built later, so read the file now, before any
+        // service is changed. A document from configuration shared into this application is only
+        // found once the configuration is built; activation then follows this call's file.
+        var candidateTracing = ReadTracerProviderConfiguration(candidateAccessor);
 
         // Explicit singleton registration. Resolving IConfiguration first is what makes the scan
         // meaningful: the source below is only inserted while the configuration is being built, so
@@ -214,11 +209,58 @@ public static class OpenTelemetryBuilderDeclarativeConfigurationExtensions
             },
             lifetime));
 
-        CompleteDeclarativeConfigurationRegistration(services, filePath);
+        CompleteDeclarativeConfigurationRegistration(builder, filePath, candidateAccessor, candidateTracing);
     }
 
-    private static void CompleteDeclarativeConfigurationRegistration(IServiceCollection services, FilePath filePath)
+    private static void RegisterWithConfigurationBuilder(
+        IOpenTelemetryBuilder builder,
+        FilePath filePath,
+        IConfigurationBuilder configurationBuilder,
+        DeclarativeConfigurationDocumentAccessor candidateAccessor)
     {
+        configurationBuilder.AddOpenTelemetryDeclarativeConfiguration(
+            candidateAccessor,
+            removeSourceOnFailure: true);
+
+        var registeredAccessor = DeclarativeConfigurationDocumentAccessorResolver.FindInConfiguration(configurationBuilder)
+            ?? candidateAccessor;
+
+        TracerProviderSection? tracing;
+        try
+        {
+            tracing = ReadTracerProviderConfiguration(registeredAccessor);
+        }
+        catch
+        {
+            // As for a parse failure, leave no source behind, so that a later call can still register
+            // a valid file under first-source-wins.
+            var addedSource = configurationBuilder.Sources
+                .OfType<DeclarativeConfigurationSource>()
+                .FirstOrDefault(s => ReferenceEquals(s.Accessor, candidateAccessor));
+
+            if (addedSource != null)
+            {
+                configurationBuilder.Sources.Remove(addedSource);
+            }
+
+            throw;
+        }
+
+        builder.Services.TryAddSingleton(registeredAccessor);
+
+        CompleteDeclarativeConfigurationRegistration(builder, filePath, registeredAccessor, tracing);
+    }
+
+    private static TracerProviderSection? ReadTracerProviderConfiguration(DeclarativeConfigurationDocumentAccessor accessor) =>
+        TracerProviderConfigurationBinder.Bind(accessor.GetDocumentForPipeline().Properties);
+
+    private static void CompleteDeclarativeConfigurationRegistration(
+        IOpenTelemetryBuilder builder,
+        FilePath filePath,
+        DeclarativeConfigurationDocumentAccessor accessor,
+        TracerProviderSection? tracing)
+    {
+        var services = builder.Services;
         services.AddSingleton(new DeclarativeConfigurationRegistrationMarker(filePath));
 
         // Strict mode diagnostics run at the first provider build, against the final configuration.
@@ -230,6 +272,19 @@ public static class OpenTelemetryBuilderDeclarativeConfigurationExtensions
         services.ConfigureOpenTelemetryTracerProvider(b => b.ConfigureResource(AddDeclarativeResourceDetector));
         services.ConfigureOpenTelemetryMeterProvider(b => b.ConfigureResource(AddDeclarativeResourceDetector));
         services.ConfigureOpenTelemetryLoggerProvider(b => b.ConfigureResource(AddDeclarativeResourceDetector));
+
+        // Processors are added when the tracer provider is built, from the document selected for the
+        // service provider. Callbacks run in registration order, so processors added in code before
+        // this call run first.
+        services.TryAddSingleton<PluginComponentProviderRegistry>();
+        services.ConfigureOpenTelemetryTracerProvider(TracerProviderConfigurationApplier.Configure);
+
+        if (tracing is not null)
+        {
+            // WithTracing is idempotent, so it composes with the application's own call in either order.
+            var sources = TracerActivitySourcePatternResolver.Resolve(tracing.Configurator, accessor.FilePath.DisplayPath);
+            builder.WithTracing(b => b.AddSource([.. sources]));
+        }
     }
 
     private static void WarnIfConfigFileEnvVarDiffers(FilePath filePath)
