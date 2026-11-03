@@ -337,21 +337,18 @@ internal sealed class ProtobufOtlpTagWriter : TagWriter<ProtobufOtlpTagWriter.Ot
     /// <remarks>
     /// Only includes BCL types that don't have dedicated support in TagWriter (i.e. types that would be serialized as IUtf8SpanFormattable).
     /// </remarks>
-    private static bool IsTypeSingleByteUtf8Length(IUtf8SpanFormattable value) => value switch
-    {
-        Complex => true,
-        DateOnly => true,
-        Half => true,
-        Int128 => true,
-        IPNetwork => true,
-        nint => true,
-        NFloat => true,
-        nuint => true,
-        Rune => true,
-        TimeOnly => true,
-        UInt128 => true,
-        _ => false,
-    };
+    private static bool IsTypeSingleByteUtf8Length(IUtf8SpanFormattable value) => value is
+        Complex or
+        DateOnly or
+        Half or
+        Int128 or
+        IPNetwork or
+        nint or
+        NFloat or
+        nuint or
+        Rune or
+        TimeOnly or
+        UInt128;
 
     /// <summary>
     /// Truncates UTF-8 text to at most <paramref name="maxLength"/> UTF-16 chars, on whole code
