@@ -138,7 +138,7 @@ internal sealed class ProtobufOtlpTagWriter : TagWriter<ProtobufOtlpTagWriter.Ot
     {
         const int MaxUtf8BytesPerChar = 3;
 
-        var useCompactLength = HasSingleByteUtf8Length(value);
+        var useCompactLength = IsTypeSingleByteUtf8Length(value);
         var reserveSizeForLength = useCompactLength ? ProtobufSerializer.ReserveSizeForCompactLength : ReserveSizeForLength;
 
         var startPosition = state.WritePosition;
@@ -335,12 +335,9 @@ internal sealed class ProtobufOtlpTagWriter : TagWriter<ProtobufOtlpTagWriter.Ot
     /// enough that both its string and <c>AnyValue</c> length prefixes always fit in one byte.
     /// </summary>
     /// <remarks>
-    /// Any other type keeps the four byte reservation, as its output length is unknown, or for
-    /// <see cref="BigInteger"/> unbounded, and widening a one byte prefix means moving the content.
+    /// Only includes BCL types that don't have dedicated support in TagWriter (i.e types that would be serialized as IUtf8SpanFormattable)
     /// </remarks>
-    /// <param name="value">The value being written.</param>
-    /// <returns><see langword="true"/> if one byte length prefixes always suffice.</returns>
-    private static bool HasSingleByteUtf8Length(IUtf8SpanFormattable value)
+    private static bool IsTypeSingleByteUtf8Length(IUtf8SpanFormattable value)
         => value is Half or DateOnly or Rune or nint or nuint or NFloat or TimeOnly or Int128 or UInt128 or IPNetwork or Complex;
 
     /// <summary>
