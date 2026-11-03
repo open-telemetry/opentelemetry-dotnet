@@ -335,7 +335,7 @@ internal sealed class ProtobufOtlpTagWriter : TagWriter<ProtobufOtlpTagWriter.Ot
     /// enough that both its string and <c>AnyValue</c> length prefixes always fit in one byte.
     /// </summary>
     /// <remarks>
-    /// Only includes BCL types that don't have dedicated support in TagWriter (i.e types that would be serialized as IUtf8SpanFormattable)
+    /// Only includes BCL types that don't have dedicated support in TagWriter (i.e. types that would be serialized as IUtf8SpanFormattable).
     /// </remarks>
     private static bool IsTypeSingleByteUtf8Length(IUtf8SpanFormattable value)
         => value is Half or DateOnly or Rune or nint or nuint or NFloat or TimeOnly or Int128 or UInt128 or IPNetwork or Complex;

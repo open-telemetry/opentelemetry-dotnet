@@ -33,8 +33,9 @@ internal static class OtlpExporterOptionsExtensions
         var headers = new THeaders();
         if (!string.IsNullOrEmpty(optionHeaders))
         {
-            // According to the specification, URL-encoded headers must be supported.
-            optionHeaders = Uri.UnescapeDataString(optionHeaders);
+            // According to the specification, percent-encoded headers must be supported. As the list is in the
+            // W3C Baggage format, the keys and values are only decoded after the list has been split into pairs,
+            // so that an encoded ',' or '=' is part of a key or value and does not separate the headers.
             var headersSpan = optionHeaders.AsSpan();
 
             while (!headersSpan.IsEmpty)
@@ -58,8 +59,9 @@ internal static class OtlpExporterOptionsExtensions
                     throw new ArgumentException("Headers provided in an invalid format.");
                 }
 
-                var key = pair.Slice(0, equalIndex).Trim().ToString();
-                var value = pair.Slice(equalIndex + 1).Trim().ToString();
+                // Whitespace is trimmed before decoding, so that encoded whitespace is preserved.
+                var key = Uri.UnescapeDataString(pair.Slice(0, equalIndex).Trim().ToString());
+                var value = Uri.UnescapeDataString(pair.Slice(equalIndex + 1).Trim().ToString());
                 addHeader(headers, key, value);
             }
         }

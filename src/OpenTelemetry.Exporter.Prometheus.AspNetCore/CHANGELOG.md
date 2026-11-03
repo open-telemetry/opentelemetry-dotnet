@@ -44,6 +44,16 @@ Notes](../../RELEASENOTES.md).
 * Add support for .NET 11.0.
   ([#6899](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6899))
 
+* Fixed a scrape response containing the same series (metric name and labels)
+  more than once, which causes Prometheus to reject the whole response, such as
+  when metric or tag names are the same once escaped, tag names become the same
+  when UTF-8 encoded, or the scope information is disabled. Duplicate series are
+  now dropped, and a warning event is written.
+  A metric which has the name of a sample that is generated for another one
+  (for example `_sum` of a histogram) is now dropped, and a warning event is
+  written.
+  ([#8076](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8076))
+
 * An `OutOfMemoryException` thrown while converting an attribute value to a
   string is no longer swallowed and the attribute dropped; it now propagates.
   ([#7929](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7929))

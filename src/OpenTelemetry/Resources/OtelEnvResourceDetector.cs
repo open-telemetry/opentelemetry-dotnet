@@ -1,7 +1,6 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-using System.Net;
 using Microsoft.Extensions.Configuration;
 
 namespace OpenTelemetry.Resources;
@@ -45,7 +44,8 @@ internal sealed class OtelEnvResourceDetector : IResourceDetector
                 continue;
             }
 
-            var value = WebUtility.UrlDecode(keyValuePair[1].Trim());
+            // Values are percent-encoded, which unlike URL (form) encoding does not turn '+' into a space.
+            var value = Uri.UnescapeDataString(keyValuePair[1].Trim());
             attributes.Add(new KeyValuePair<string, object>(keyValuePair[0].Trim(), value));
         }
 
