@@ -599,7 +599,7 @@ public sealed class DeclarativeResourceDetectorTests
                 - name: service.name
                   value: "svc"
             """,
-            "https://opentelemetry.io/schemas/1.44.0");
+            "https://opentelemetry.io/schemas/1.45.0");
 
         Assert.Null(resource.SchemaUrl);
         Assert.Contains(resource.Attributes, a => a.Key == "service.name" && (string)a.Value == "svc");

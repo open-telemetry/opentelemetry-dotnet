@@ -27,6 +27,10 @@ Notes](../../RELEASENOTES.md).
   the Resource SDK specification.
   ([#8074](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8074))
 
+* Updated the schema URL of resources created by the SDK to use OpenTelemetry
+  Semantic Conventions version `1.45.0`.
+  ([#8079](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8079))
+
 * Added `Sampler.Shutdown` and the overridable `Sampler.OnShutdown` to allow
   samplers to release resources, as described in the
   [specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk.md#shutdown-1).

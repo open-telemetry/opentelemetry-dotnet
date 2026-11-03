@@ -10,6 +10,10 @@ Notes](../../RELEASENOTES.md).
   values cannot be read.
   ([#8070](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8070))
 
+* Updated the schema URL of resources created by the host environment resource
+  detector to use OpenTelemetry Semantic Conventions version `1.45.0`.
+  ([#8079](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8079))
+
 ## 1.21.0-rc.1
 
 Released 2026-Oct-28
