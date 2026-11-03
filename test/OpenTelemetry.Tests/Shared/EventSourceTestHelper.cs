@@ -159,7 +159,7 @@ internal static class EventSourceTestHelper
 
             for (var i = 0; i < parameters.Length; i++)
             {
-                arguments[i] = CreateArgument(parameters[i].ParameterType);
+                arguments[i] = CreateArgument(parameters[i].ParameterType, i);
             }
 
             var eventAttribute = method.GetCustomAttribute<EventAttribute>();
@@ -236,16 +236,39 @@ internal static class EventSourceTestHelper
             type.CustomAttributes.Any(a => a.AttributeType.FullName == "System.Runtime.CompilerServices.IsByRefLikeAttribute");
     }
 
-    private static object? CreateArgument(Type type)
+    /// <summary>
+    /// Creates a synthetic argument for the parameter at the given position. Simple values
+    /// are distinct per position and non-default so that a method which forwards its
+    /// arguments to the payload in the wrong order, duplicates one, or writes a constant
+    /// instead is detected when the payload is compared with the arguments.
+    /// </summary>
+    private static object? CreateArgument(Type type, int position)
     {
         if (type.IsByRef)
         {
             type = type.GetElementType()!;
         }
 
+        type = Nullable.GetUnderlyingType(type) ?? type;
+
         if (type == typeof(string))
         {
-            return "test";
+            return $"argument{position}";
+        }
+
+        if (type == typeof(bool))
+        {
+            return true;
+        }
+
+        if (type == typeof(int))
+        {
+            return position + 1;
+        }
+
+        if (type == typeof(long))
+        {
+            return (position + 1) * 1000L;
         }
 
         if (type == typeof(Uri))

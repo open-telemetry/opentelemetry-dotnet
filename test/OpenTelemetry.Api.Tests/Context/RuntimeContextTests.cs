@@ -1,8 +1,11 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using OpenTelemetry.Tests;
+
 namespace OpenTelemetry.Context.Tests;
 
+[Collection(RuntimeContextCollectionDefinition.Name)]
 public sealed class RuntimeContextTests : IDisposable
 {
     public RuntimeContextTests()
