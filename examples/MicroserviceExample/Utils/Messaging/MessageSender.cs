@@ -42,7 +42,7 @@ public sealed class MessageSender : IDisposable
 
             // Start an activity with a name following the semantic convention of the OpenTelemetry messaging specification.
             // https://github.com/open-telemetry/semantic-conventions/blob/main/docs/messaging/messaging-spans.md#span-name
-            var activityName = $"{RabbitMqHelper.TestQueueName} send";
+            var activityName = $"{RabbitMqHelper.SendOperationName} {RabbitMqHelper.TestQueueName}";
 
             using var activity = ActivitySource.StartActivity(activityName, ActivityKind.Producer);
             var props = new BasicProperties();
@@ -66,7 +66,7 @@ public sealed class MessageSender : IDisposable
             Propagator.Inject(new PropagationContext(contextToInject, Baggage.Current), props, this.InjectTraceContextIntoBasicProperties);
 
             // The OpenTelemetry messaging specification defines a number of attributes. These attributes are added here.
-            RabbitMqHelper.AddMessagingTags(activity);
+            RabbitMqHelper.AddMessagingTags(activity, RabbitMqHelper.SendOperationName);
             var body = $"Published message: DateTime.Now = {DateTime.Now}.";
 
             await this.channel.BasicPublishAsync(

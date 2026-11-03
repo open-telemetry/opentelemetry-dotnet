@@ -173,7 +173,7 @@ public class OtlpRetryTests
         const double TimeoutMilliseconds = 250;
 
         var exportClient = new AlwaysThrottledExportClient(
-            GrpcRetryTestCase.GetThrottleDelayString(new Google.Protobuf.WellKnownTypes.Duration()));
+            GrpcRetryTestCase.GetThrottleDelayString(new Google.Protobuf.WellKnownTypes.Duration(), StatusCode.ResourceExhausted));
 
         using var handler = new OtlpExporterRetryTransmissionHandler(exportClient, TimeoutMilliseconds);
 

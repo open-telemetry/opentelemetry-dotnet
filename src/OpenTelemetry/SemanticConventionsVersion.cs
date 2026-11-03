@@ -5,5 +5,5 @@ namespace OpenTelemetry;
 
 internal static class SemanticConventionsVersion
 {
-    internal static readonly Version Current = new(1, 44, 0);
+    internal static readonly Version Current = new(1, 45, 0);
 }

@@ -27,6 +27,10 @@ Notes](../../RELEASENOTES.md).
   the Resource SDK specification.
   ([#8074](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8074))
 
+* Updated the schema URL of resources created by the SDK to use OpenTelemetry
+  Semantic Conventions version `1.45.0`.
+  ([#8079](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8079))
+
 * Non-finite histogram measurements (`NaN`, `+Inf`, `-Inf`) are now dropped
   rather than recorded, so they can no longer permanently corrupt the sum,
   min, and max of a cumulative histogram stream. This aligns the explicit-bucket
