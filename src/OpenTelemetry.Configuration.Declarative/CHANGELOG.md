@@ -75,4 +75,4 @@ Notes](../../RELEASENOTES.md).
   processors and the `console` exporter. Unsupported stable `tracer_provider`
   settings now fail the tracer provider build, and the file is read on every
   registration path.
-  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+  ([#8080](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8080))
