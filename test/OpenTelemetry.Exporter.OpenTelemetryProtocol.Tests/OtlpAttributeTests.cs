@@ -12,11 +12,12 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests;
 public class OtlpAttributeTests
 {
 #if NET
-    public static TheoryData<object> BoundedUtf8SpanFormattableValues() =>
+
+    public static TheoryData<IFormattable> BoundedUtf8SpanFormattableValues() =>
     [
         Half.MinValue,
         DateOnly.MaxValue,
-        new System.Text.Rune(0x1F600),
+        new System.Text.Rune(0x1F600), // 4-byte UTF-8 sequence (U+1F600)
         nint.MinValue,
         nuint.MaxValue,
         System.Runtime.InteropServices.NFloat.MinValue,
@@ -504,19 +505,25 @@ public class OtlpAttributeTests
 
     [Theory]
     [MemberData(nameof(BoundedUtf8SpanFormattableValues))]
-    public void BoundedUtf8SpanFormattableIsEncodedLikeAString(object value)
+    public void BoundedUtf8SpanFormattableIsWrittenWithSingleByteLengthPrefixes(IFormattable value)
     {
         Assert.NotNull(value);
 
-        var formatted = ((IFormattable)value).ToString(null, CultureInfo.InvariantCulture);
+        var utf8 = System.Text.Encoding.UTF8.GetBytes(value.ToString(null, CultureInfo.InvariantCulture));
+        Assert.InRange(utf8.Length + 2, 0, 127);
 
-        var expected = new ProtobufOtlpTagWriter.OtlpTagWriterState { Buffer = new byte[1024] };
-        Assert.True(ProtobufOtlpTagWriter.WriteKeyValue(ref expected, ProtobufOtlpTraceFieldNumberConstants.Span_Attributes, "key", formatted));
+        byte[] expected =
+        [
+            0x0A, 3, (byte)'k', (byte)'e', (byte)'y', // KeyValue.key
+            0x12, (byte)(utf8.Length + 2), // KeyValue.value (AnyValue)
+            0x0A, (byte)utf8.Length, // AnyValue.string_value
+            .. utf8,
+        ];
 
-        var actual = new ProtobufOtlpTagWriter.OtlpTagWriterState { Buffer = new byte[1024] };
-        Assert.True(ProtobufOtlpTagWriter.WriteKeyValue(ref actual, ProtobufOtlpTraceFieldNumberConstants.Span_Attributes, "key", value));
+        var state = new ProtobufOtlpTagWriter.OtlpTagWriterState { Buffer = new byte[1024] };
+        Assert.True(ProtobufOtlpTagWriter.Instance.TryWriteTag(ref state, "key", value));
 
-        Assert.Equal(expected.Buffer.AsSpan(0, expected.WritePosition).ToArray(), actual.Buffer.AsSpan(0, actual.WritePosition).ToArray());
+        Assert.Equal(expected, state.Buffer.AsSpan(0, state.WritePosition).ToArray());
     }
 
     [Fact]
