@@ -187,9 +187,9 @@ internal static class EventSourceTestHelper
                 written is not null,
                 $"Invoking '{method.Name}' on '{eventSource.GetType().FullName}' did not write event {eventAttribute.EventId}.");
 
-            var payload = written.Payload ?? [];
+            var payload = written.Payload?.ToArray() ?? [];
 
-            Assert.Equal(parameters.Length, payload.Count);
+            Assert.Equal(parameters.Length, payload.Length);
 
             for (var i = 0; i < arguments.Length; i++)
             {
@@ -212,7 +212,7 @@ internal static class EventSourceTestHelper
                 // text is intentionally not inspected.
                 try
                 {
-                    _ = string.Format(CultureInfo.InvariantCulture, written.Message!, [.. payload]);
+                    _ = string.Format(CultureInfo.InvariantCulture, written.Message!, payload);
                 }
                 catch (FormatException ex)
                 {
