@@ -71,6 +71,12 @@ public sealed class DeclarativeTracerProviderTests
     // and the reported line and column numbers can be read straight from the YAML below.
     public static IEnumerable<TheoryDataRow<string, string>> InvalidSections =>
     [
+        // tracer_provider section shape
+        Invalid(
+            "tracer_provider not a mapping",
+            "tracer_provider: []",
+            "'tracer_provider' (line 2, column 18) must be a mapping."),
+
         // processors list
         Invalid(
             "processors missing",
@@ -144,6 +150,16 @@ public sealed class DeclarativeTracerProviderTests
                     exporter: {console: , otlp_http: }
             """,
             "'tracer_provider.processors[0].batch.exporter'"),
+        Invalid(
+            "exporter properties not a mapping",
+            """
+            tracer_provider:
+              processors:
+                - simple:
+                    exporter:
+                      console: not-a-mapping
+            """,
+            "'tracer_provider.processors[0].simple.exporter.console'"),
 
         // batch processor settings
         Invalid(
@@ -235,6 +251,16 @@ public sealed class DeclarativeTracerProviderTests
                     config: {}
             """,
             "'tracer_provider.tracer_configurator/development.tracers[0].name' (line 8, column 15) must not be empty or whitespace."),
+        Invalid(
+            "tracer entry not a mapping",
+            """
+            tracer_provider:
+              processors: [{simple: {exporter: {console: }}}]
+              tracer_configurator/development:
+                tracers:
+                  - not-a-mapping
+            """,
+            "'tracer_provider.tracer_configurator/development.tracers[0]'"),
         Invalid(
             "tracer without name",
             """
@@ -473,6 +499,28 @@ public sealed class DeclarativeTracerProviderTests
     }
 
     [Fact]
+    public void ConfiguratorWithoutTracers_DefaultDisabled_ListensToNoSources()
+    {
+        // Omitting tracers is valid and means no per-tracer overrides; with default_config.enabled
+        // false that leaves the provider listening to nothing from the document.
+        var tracerProvider = SimpleMemoryProcessor + """
+
+              tracer_configurator/development:
+                default_config:
+                  enabled: false
+            """;
+
+        Assert.Empty(Bind(tracerProvider).Configurator!.Tracers);
+
+        var exported = new List<Activity>();
+        using var provider = BuildWithMemoryExporter(tracerProvider, exported);
+
+        StartAndStop(NewSourceName());
+
+        Assert.Empty(exported);
+    }
+
+    [Fact]
     public void DefaultDisabled_ListensOnlyToEnabledEntries()
     {
         var exported = new List<Activity>();
@@ -681,6 +729,26 @@ public sealed class DeclarativeTracerProviderTests
             processors,
             p => Assert.IsType<BatchActivityExportProcessor>(p),
             p => Assert.IsType<SimpleActivityExportProcessor>(p));
+    }
+
+    [Fact]
+    public void CreateProcessors_WithoutDocumentAccessor_ReturnsEmpty()
+    {
+        using var provider = new ServiceCollection().BuildServiceProvider();
+
+        Assert.Empty(TracerProviderConfigurationApplier.CreateProcessors(provider));
+    }
+
+    [Fact]
+    public void GetEffectiveBatchSettings_NonBatchEntry_Throws()
+    {
+        var entry = Assert.Single(Bind(SimpleProcessor("console")).Processors);
+
+        var exception = Assert.Throws<ArgumentException>(
+            () => TracerProviderConfigurationApplier.GetEffectiveBatchSettings(new FilePath("otel.yaml"), entry));
+
+        Assert.Equal("entry", exception.ParamName);
+        Assert.Contains("not a batch processor", exception.Message, StringComparison.Ordinal);
     }
 
     [Fact]
