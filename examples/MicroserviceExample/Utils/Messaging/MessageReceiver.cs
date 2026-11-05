@@ -51,7 +51,7 @@ public sealed class MessageReceiver : IDisposable
 
         // Start an activity with a name following the semantic convention of the OpenTelemetry messaging specification.
         // https://github.com/open-telemetry/semantic-conventions/blob/main/docs/messaging/messaging-spans.md#span-name
-        var activityName = $"{ea.RoutingKey} receive";
+        var activityName = $"{RabbitMqHelper.ProcessOperationName} {ea.RoutingKey}";
 
         using var activity = ActivitySource.StartActivity(activityName, ActivityKind.Consumer, parentContext.ActivityContext);
         try
@@ -63,7 +63,7 @@ public sealed class MessageReceiver : IDisposable
             activity?.SetTag("message", message);
 
             // The OpenTelemetry messaging specification defines a number of attributes. These attributes are added here.
-            RabbitMqHelper.AddMessagingTags(activity);
+            RabbitMqHelper.AddMessagingTags(activity, RabbitMqHelper.ProcessOperationName);
 
             // Simulate some work
             await Task.Delay(1_000).ConfigureAwait(false);

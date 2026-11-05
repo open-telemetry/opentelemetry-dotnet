@@ -34,7 +34,8 @@ public class ProtobufOtlpTraceSerializerTests
                     0,
                     sdkLimits,
                     null,
-                    batch);
+                    batch,
+                    out _);
 
                 return writePos >= 0 && writePos <= buffer.Length;
             }
@@ -68,7 +69,8 @@ public class ProtobufOtlpTraceSerializerTests
                     0,
                     sdkLimits,
                     resource,
-                    batch);
+                    batch,
+                    out _);
 
                 return writePos >= 0;
             }
@@ -100,7 +102,8 @@ public class ProtobufOtlpTraceSerializerTests
                     0,
                     sdkLimits,
                     null,
-                    batch);
+                    batch,
+                    out _);
 
                 return writePos >= 0;
             }
@@ -127,7 +130,8 @@ public class ProtobufOtlpTraceSerializerTests
                     0,
                     sdkLimits,
                     null,
-                    batch);
+                    batch,
+                    out _);
 
                 // Buffer should either stay same size or grow
                 return buffer.Length >= initialLength && writePos >= 0;
@@ -167,7 +171,8 @@ public class ProtobufOtlpTraceSerializerTests
                     0,
                     sdkLimits,
                     resource,
-                    batch);
+                    batch,
+                    out _);
 
                 if (writePos <= 0)
                 {
@@ -211,7 +216,8 @@ public class ProtobufOtlpTraceSerializerTests
                     0,
                     sdkLimits,
                     resource,
-                    batch);
+                    batch,
+                    out _);
 
                 // Serialize again with same input
                 var writePos2 = ProtobufOtlpTraceSerializer.WriteTraceData(
@@ -219,7 +225,8 @@ public class ProtobufOtlpTraceSerializerTests
                     0,
                     sdkLimits,
                     resource,
-                    batch);
+                    batch,
+                    out _);
 
                 // Positions should match
                 if (writePos1 != writePos2)
@@ -269,7 +276,8 @@ public class ProtobufOtlpTraceSerializerTests
                     0,
                     sdkLimits,
                     null,
-                    batch);
+                    batch,
+                    out _);
 
                 return writePos >= 0 && writePos <= buffer.Length;
             }
@@ -302,7 +310,8 @@ public class ProtobufOtlpTraceSerializerTests
                     0,
                     sdkLimits,
                     null,
-                    batch);
+                    batch,
+                    out _);
 
                 return writePos >= 0 && writePos <= buffer.Length;
             }
@@ -341,7 +350,8 @@ public class ProtobufOtlpTraceSerializerTests
                     0,
                     sdkLimits,
                     resource,
-                    batch);
+                    batch,
+                    out _);
 
                 if (writePos <= 0)
                 {
@@ -378,8 +388,8 @@ public class ProtobufOtlpTraceSerializerTests
                 var buffer2 = new byte[10 * 1024 * 1024];
                 var batch = new Batch<Activity>(activities, activities.Length);
 
-                var pos1 = ProtobufOtlpTraceSerializer.WriteTraceData(ref buffer1, 0, sdkLimits, null, batch);
-                var pos2 = ProtobufOtlpTraceSerializer.WriteTraceData(ref buffer2, 0, sdkLimits, null, batch);
+                var pos1 = ProtobufOtlpTraceSerializer.WriteTraceData(ref buffer1, 0, sdkLimits, null, batch, out _);
+                var pos2 = ProtobufOtlpTraceSerializer.WriteTraceData(ref buffer2, 0, sdkLimits, null, batch, out _);
 
                 if (pos1 != pos2)
                 {
@@ -435,7 +445,8 @@ public class ProtobufOtlpTraceSerializerTests
                     0,
                     sdkLimits,
                     null,
-                    batch);
+                    batch,
+                    out _);
 
                 return writePos >= 0 && writePos <= buffer.Length;
             }
@@ -478,7 +489,8 @@ public class ProtobufOtlpTraceSerializerTests
                     0,
                     sdkLimits,
                     null,
-                    batch);
+                    batch,
+                    out _);
 
                 return writePos >= 0 && writePos <= buffer.Length;
             }
@@ -517,7 +529,8 @@ public class ProtobufOtlpTraceSerializerTests
                     0,
                     sdkLimits,
                     resource,
-                    batch);
+                    batch,
+                    out _);
 
                 if (writePos <= 0)
                 {
