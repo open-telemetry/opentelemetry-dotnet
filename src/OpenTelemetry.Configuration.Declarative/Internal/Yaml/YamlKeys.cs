@@ -14,7 +14,6 @@ internal static class YamlKeys
     internal const string Attributes = "attributes";
     internal const string AttributesList = "attributes_list";
     internal const string SchemaUrl = "schema_url";
-    internal const string InstrumentationDevelopment = "instrumentation/development";
     internal const string Distribution = "distribution";
     internal const string Name = "name";
     internal const string Value = "value";
@@ -31,9 +30,19 @@ internal static class YamlKeys
     internal const string MaxExportBatchSize = "max_export_batch_size";
     internal const string IdGenerator = "id_generator";
     internal const string Random = "random";
-    internal const string TracerConfiguratorDevelopment = "tracer_configurator/development";
     internal const string DefaultConfig = "default_config";
     internal const string Tracers = "tracers";
     internal const string Config = "config";
     internal const string Enabled = "enabled";
+
+    /// <summary>
+    /// Key names the schema marks as under development (with the <c>/development</c> suffix).
+    /// When a key becomes stable the schema drops the suffix: move its constant to <see cref="YamlKeys"/>
+    /// under the stable name, and the compiler reports every use that needs updating.
+    /// </summary>
+    internal static class Development
+    {
+        internal const string Instrumentation = "instrumentation/development";
+        internal const string TracerConfigurator = "tracer_configurator/development";
+    }
 }

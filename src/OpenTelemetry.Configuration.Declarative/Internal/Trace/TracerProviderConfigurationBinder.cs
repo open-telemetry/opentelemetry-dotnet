@@ -96,7 +96,7 @@ internal static class TracerProviderConfigurationBinder
         // the user's value is what conflicts with the default batch size, so blame that key.
         if (maxExportBatchSize.Value > maxQueueSize.Value)
         {
-            if (maxExportBatchSize.IsSet)
+            if (maxExportBatchSize.IsSpecified)
             {
                 throw BindingHelpers.CreateException(
                     YamlPath.Child(processor.Path, YamlKeys.MaxExportBatchSize),
@@ -119,13 +119,13 @@ internal static class TracerProviderConfigurationBinder
 
     private static TracerConfiguratorSection? BindTracerConfigurator(ConfigProperties tracerProvider)
     {
-        if (!tracerProvider.TryGetValue(YamlKeys.TracerConfiguratorDevelopment, out var value))
+        if (!tracerProvider.TryGetValue(YamlKeys.Development.TracerConfigurator, out var value))
         {
             return null;
         }
 
-        var path = YamlPath.Child(YamlKeys.TracerProvider, YamlKeys.TracerConfiguratorDevelopment);
-        var configurator = BindingHelpers.AsRequiredMapping(tracerProvider, YamlKeys.TracerConfiguratorDevelopment, value, path);
+        var path = YamlPath.Child(YamlKeys.TracerProvider, YamlKeys.Development.TracerConfigurator);
+        var configurator = BindingHelpers.AsRequiredMapping(tracerProvider, YamlKeys.Development.TracerConfigurator, value, path);
 
         return new(
             BindDefaultEnabled(configurator, path),

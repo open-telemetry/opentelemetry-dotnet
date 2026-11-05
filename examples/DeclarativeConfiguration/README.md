@@ -41,5 +41,5 @@ the project copies `otel-config.yaml`.
 
 Remove the `tracer_configurator/development` block from the file. Every
 `ActivitySource` is then listened to, which is the specification's default. On
-.NET 9 and later that includes the runtime's own sources, such as HTTP client
+.NET 10 and later that includes the runtime's own sources, such as HTTP client
 spans.

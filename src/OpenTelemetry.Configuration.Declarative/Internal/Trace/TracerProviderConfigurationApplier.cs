@@ -3,7 +3,6 @@
 
 using System.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
-using OpenTelemetry.Exporter;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Trace;
 
@@ -84,7 +83,7 @@ internal static class TracerProviderConfigurationApplier
         {
             foreach (var entry in configuration.Processors)
             {
-                processors.Add(CreateProcessor(accessor.FilePath, entry, registry));
+                processors.Add(CreateProcessor(serviceProvider, accessor.FilePath, entry, registry));
             }
         }
         catch
@@ -159,7 +158,8 @@ internal static class TracerProviderConfigurationApplier
         {
             if (entry.Exporter is { } exporter)
             {
-                if (exporter.Name != YamlKeys.Console && !registry.Contains<BaseExporter<Activity>>(exporter.Name))
+                if (BuiltInComponentProviders.FindSpanExporter(exporter.Name) is null
+                    && !registry.Contains<BaseExporter<Activity>>(exporter.Name))
                 {
                     unsupported.Add((exporter.Position, $"{YamlPath.Describe(exporter.Path, exporter.Position)} is a span exporter"));
                 }
@@ -185,6 +185,7 @@ internal static class TracerProviderConfigurationApplier
     }
 
     private static BaseProcessor<Activity> CreateProcessor(
+        IServiceProvider serviceProvider,
         FilePath filePath,
         SpanProcessorEntry entry,
         PluginComponentProviderRegistry registry)
@@ -196,7 +197,7 @@ internal static class TracerProviderConfigurationApplier
 
         // The processor owns the exporter; it is disposed here only if the processor is not created.
 #pragma warning disable CA2000 // Dispose objects before losing scope
-        var exporter = CreateExporter(exporterConfiguration, registry);
+        var exporter = CreateExporter(serviceProvider, exporterConfiguration, registry);
 #pragma warning restore CA2000
         try
         {
@@ -222,11 +223,11 @@ internal static class TracerProviderConfigurationApplier
     }
 
     private static BaseExporter<Activity> CreateExporter(
+        IServiceProvider serviceProvider,
         ComponentConfiguration exporter,
         PluginComponentProviderRegistry registry) =>
-            // The built-in console exporter uses fresh options, unaffected by DI options configuration.
-            exporter.Name == YamlKeys.Console
-                ? new ConsoleActivityExporter(new ConsoleExporterOptions())
+            BuiltInComponentProviders.FindSpanExporter(exporter.Name) is { } builtIn
+                ? builtIn.Create(exporter.Properties, serviceProvider)
                 : registry.Create<BaseExporter<Activity>>(exporter.Name, exporter.Properties);
 
     private static void CleanUp(IDisposable component, Action cleanup)

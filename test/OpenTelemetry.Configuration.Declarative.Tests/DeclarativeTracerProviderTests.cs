@@ -732,6 +732,39 @@ public sealed class DeclarativeTracerProviderTests
     }
 
     [Fact]
+    public void ConsoleExporter_IsCreatedByBuiltInProvider()
+    {
+        var provider = Assert.IsType<ConsoleSpanExporterProvider>(BuiltInComponentProviders.FindSpanExporter("console"));
+
+        Assert.Same(ConsoleSpanExporterProvider.Instance, provider);
+        Assert.Null(BuiltInComponentProviders.FindSpanExporter("otlp_http"));
+
+        using var services = new ServiceCollection().BuildServiceProvider();
+        using var exporter = provider.Create(ConfigProperties.Empty, services);
+
+        Assert.IsType<ConsoleActivityExporter>(exporter);
+    }
+
+    [Fact]
+    public void ConsoleExporter_RegisteredProviderDoesNotReplaceBuiltIn()
+    {
+        var sourceName = NewSourceName();
+        var exported = new List<Activity>();
+
+        using var yamlFile = CreateDocument(SimpleProcessor("console"));
+
+        using var services = Build(
+            RegistrationPath.ServiceCollection,
+            yamlFile.Path,
+            s => s.AddPluginComponentProvider("console", new MemoryExporterProvider(exported)));
+        _ = services.Provider.GetRequiredService<TracerProvider>();
+
+        StartAndStop(sourceName);
+
+        Assert.Empty(exported);
+    }
+
+    [Fact]
     public void CreateProcessors_WithoutDocumentAccessor_ReturnsEmpty()
     {
         using var provider = new ServiceCollection().BuildServiceProvider();

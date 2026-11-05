@@ -8,5 +8,5 @@ namespace OpenTelemetry.Configuration.Declarative;
 /// </summary>
 /// <param name="Value">The value the user supplied, or the default when none was supplied.</param>
 /// <param name="Position">The position of the value in the document, which may be unknown.</param>
-/// <param name="IsSet">Whether the user supplied the value rather than it taking the default.</param>
-internal readonly record struct IntegerSetting(int Value, ConfigValuePosition Position, bool IsSet);
+/// <param name="IsSpecified">Whether the user supplied the value rather than it taking the default.</param>
+internal readonly record struct IntegerSetting(int Value, ConfigValuePosition Position, bool IsSpecified);

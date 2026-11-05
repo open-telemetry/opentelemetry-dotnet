@@ -17,7 +17,7 @@ internal static class SupportManifest
     internal const string ResourceAttributesList = $"{YamlKeys.Resource}.{YamlKeys.AttributesList}";
     internal const string ResourceSchemaUrl = $"{YamlKeys.Resource}.{YamlKeys.SchemaUrl}";
     internal const string TracerProviderProcessors = $"{YamlKeys.TracerProvider}.{YamlKeys.Processors}";
-    internal const string TracerProviderConfigurator = $"{YamlKeys.TracerProvider}.{YamlKeys.TracerConfiguratorDevelopment}";
+    internal const string TracerProviderConfigurator = $"{YamlKeys.TracerProvider}.{YamlKeys.Development.TracerConfigurator}";
     internal const string TracerProviderRandomIdGenerator = $"{YamlKeys.TracerProvider}.{YamlKeys.IdGenerator}.{YamlKeys.Random}";
 
     internal const string TracerProviderPrefix = $"{YamlKeys.TracerProvider}.";
@@ -47,7 +47,7 @@ internal static class SupportManifest
         TracerProviderRandomIdGenerator,
 
         // Delegated: exposed through DeclarativeConfigurationDocument.Properties, and not interpreted by the SDK.
-        YamlKeys.InstrumentationDevelopment,
+        YamlKeys.Development.Instrumentation,
         YamlKeys.Distribution,
     ];
 

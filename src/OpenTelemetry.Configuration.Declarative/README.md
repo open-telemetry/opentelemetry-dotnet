@@ -223,7 +223,7 @@ both configure the same tracer provider.
 
 ### What is applied
 
-- **Sources.** Every `ActivitySource` is listened to by default. On .NET 9 and
+- **Sources.** Every `ActivitySource` is listened to by default. On .NET 10 and
   later this includes the runtime's own sources, such as HTTP client spans and
   the experimental `Experimental.System.Net.*` connection sources. To listen
   only to selected sources, set `default_config.enabled` to `false` and enable

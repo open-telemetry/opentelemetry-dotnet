@@ -8,7 +8,7 @@ tracer_provider:
     - simple:
         exporter:
           console:
-  # Remove this block to listen to every source, including the runtime's.
+  # Remove this block to listen to every source, including the .NET runtime's.
   tracer_configurator/development:
     default_config:
       enabled: false

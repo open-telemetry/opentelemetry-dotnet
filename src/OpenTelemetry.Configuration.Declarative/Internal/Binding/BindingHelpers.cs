@@ -1,8 +1,6 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-using System.Globalization;
-
 namespace OpenTelemetry.Configuration.Declarative;
 
 /// <summary>
@@ -61,12 +59,12 @@ internal static class BindingHelpers
     /// <exception cref="DeclarativeConfigurationException">The value is not a non-empty sequence.</exception>
     internal static IReadOnlyList<ConfigValue> AsRequiredNonEmptySequence(ConfigProperties parent, string key, ConfigValue value, string path, string itemDescription)
     {
-        if (value.Kind != ConfigValueKind.Sequence || value.AsSequence().Count == 0)
+        if (value.Kind == ConfigValueKind.Sequence && value.AsSequence() is { Count: > 0 } items)
         {
-            throw CreateException(path, PositionOfValueOrKey(parent, key, value), $"must be a list of at least one {itemDescription}.");
+            return items;
         }
 
-        return value.AsSequence();
+        throw CreateException(path, PositionOfValueOrKey(parent, key, value), $"must be a list of at least one {itemDescription}.");
     }
 
     /// <summary>
@@ -128,7 +126,7 @@ internal static class BindingHelpers
     }
 
     /// <summary>
-    /// Reads an integer property. An absent or null value takes the default; <see cref="IntegerSetting.IsSet"/> records whether the user supplied one.
+    /// Reads an integer property. An absent or null value takes the default; <see cref="IntegerSetting.IsSpecified"/> records whether the user supplied one.
     /// </summary>
     /// <param name="properties">The mapping that may hold the property.</param>
     /// <param name="parentPath">The document path of the mapping.</param>
@@ -146,10 +144,10 @@ internal static class BindingHelpers
 
         return result.Outcome switch
         {
-            ConfigValueOutcome.Absent or ConfigValueOutcome.PresentNull => new(defaultValue, result.Position, IsSet: false),
-            ConfigValueOutcome.Present when result.Value >= minimumValue => new(result.Value, result.Position, IsSet: true),
+            ConfigValueOutcome.Absent or ConfigValueOutcome.PresentNull => new(defaultValue, result.Position, IsSpecified: false),
+            ConfigValueOutcome.Present when result.Value >= minimumValue => new(result.Value, result.Position, IsSpecified: true),
             ConfigValueOutcome.Present => throw CreateException(path, result.Position, $"must be {range}."),
-            _ => throw CreateException(path, result.Position, $"must be {range} no larger than {int.MaxValue.ToString(CultureInfo.InvariantCulture)}."),
+            _ => throw CreateException(path, result.Position, FormattableString.Invariant($"must be {range} no larger than {int.MaxValue}.")),
         };
     }
 }
