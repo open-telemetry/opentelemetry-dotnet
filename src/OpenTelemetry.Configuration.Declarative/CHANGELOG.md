@@ -73,6 +73,5 @@ Notes](../../RELEASENOTES.md).
   `UseDeclarativeConfiguration()`, listening to every `ActivitySource` unless
   `tracer_configurator/development` narrows it, with `simple` and `batch` span
   processors and the `console` exporter. Unsupported stable `tracer_provider`
-  settings now fail the tracer provider build, and invalid `tracer_provider`
-  settings fail when `UseDeclarativeConfiguration()` is called.
+  settings now fail the tracer provider build.
   ([#8080](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8080))
