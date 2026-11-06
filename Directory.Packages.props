@@ -117,7 +117,7 @@
     <PackageVersion Include="MSTest.Analyzers" Version="4.5.2" />
     <PackageVersion Include="MSTest.TestAdapter" Version="4.5.2" />
     <PackageVersion Include="MSTest.TestFramework" Version="4.5.2" />
-    <PackageVersion Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.20.1" />
+    <PackageVersion Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.20.2" />
     <PackageVersion Include="OpenTelemetry.Instrumentation.GrpcNetClient" Version="1.20.1-beta.1" />
     <PackageVersion Include="OpenTelemetry.Instrumentation.Http" Version="1.20.2" />
     <PackageVersion Include="OpenTelemetry.Instrumentation.Runtime" Version="1.20.1" />
