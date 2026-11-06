@@ -28,7 +28,7 @@ internal sealed class DeclarativeConfigurationProvider(DeclarativeConfigurationD
             return;
         }
 
-        var document = accessor.GetDocumentForProvider(); // may throw; propagates as-is
+        var document = accessor.GetDocumentForPipeline(); // may throw; propagates as-is
 
         this.Data = document.FlatKeys;
         this.loaded = true;
