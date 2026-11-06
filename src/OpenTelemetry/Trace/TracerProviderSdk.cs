@@ -26,6 +26,8 @@ internal sealed class TracerProviderSdk : TracerProvider
     internal int ShutdownCount;
     internal bool Disposed;
 
+    private const int GracePeriodMilliseconds = 5_000;
+
     private readonly ActivityListener listener;
     private readonly Action<Activity> getRequestedDataAction;
     private readonly bool supportLegacyActivity;
@@ -419,10 +421,13 @@ internal sealed class TracerProviderSdk : TracerProvider
                 this.DetachTracingBridge();
 #endif
 
+                // The processor and the sampler share the grace period, rather than each being given the whole of it
+                var gracePeriodStartedAt = Stopwatch.GetTimestamp();
+
                 if (this.Processor != null)
                 {
                     // Wait for up to 5 seconds grace period
-                    this.Processor.Shutdown(5_000);
+                    this.Processor.Shutdown(GracePeriodMilliseconds);
                     this.Processor.Dispose();
                     this.Processor = null;
                 }
@@ -433,7 +438,7 @@ internal sealed class TracerProviderSdk : TracerProvider
                 this.listener?.Dispose();
 
                 // Shutdown the sampler last, as the listener calls it for anything that is created until the listener is disposed
-                this.ShutdownSampler(this.Sampler, 5_000);
+                this.ShutdownSampler(this.Sampler, Stopwatch.Remaining(GracePeriodMilliseconds, gracePeriodStartedAt));
                 (this.Sampler as IDisposable)?.Dispose();
 
                 this.OwnedServiceProvider?.Dispose();

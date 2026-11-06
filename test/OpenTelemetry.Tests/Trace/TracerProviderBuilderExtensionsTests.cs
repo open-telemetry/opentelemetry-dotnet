@@ -1199,6 +1199,9 @@ public class TracerProviderBuilderExtensionsTests
         {
             activityDuringProcessorShutdown = activitySource.StartActivity("during shutdown");
             activityDuringProcessorShutdown?.Dispose();
+
+            // Time spent shutting down the processors is not available to the sampler
+            Thread.Sleep(300);
         });
 
         var tracerProvider = Sdk.CreateTracerProviderBuilder()
@@ -1215,6 +1218,7 @@ public class TracerProviderBuilderExtensionsTests
         Assert.Equal(1, sampler.ShouldSampleCalls);
         Assert.False(sampler.ShouldSampleAfterShutdown);
         Assert.Equal(1, sampler.ShutdownCalls);
+        Assert.InRange(sampler.ShutdownTimeout, 0, 4_800);
         Assert.True(sampler.ShutdownBeforeDispose);
         Assert.True(sampler.Disposed);
     }
