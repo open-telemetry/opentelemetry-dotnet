@@ -87,6 +87,7 @@ public sealed class OtlpLogExporter : BaseExporter<LogRecord>
         byte[]? buffer = null;
         var serializationSucceeded = false;
         var writePosition = 0;
+        var dirtyLength = 0;
 
         try
         {
@@ -101,6 +102,7 @@ public sealed class OtlpLogExporter : BaseExporter<LogRecord>
                     this.experimentalOptions,
                     this.Resource,
                     logRecordBatch,
+                    out dirtyLength,
                     this.maxRequestSizeBytes + this.startWritePosition);
                 serializationSucceeded = true;
             }
@@ -159,7 +161,7 @@ public sealed class OtlpLogExporter : BaseExporter<LogRecord>
             {
                 if (serializationSucceeded)
                 {
-                    this.serializationBuffer.Return(buffer, writePosition);
+                    this.serializationBuffer.Return(buffer, writePosition, dirtyLength);
                 }
                 else
                 {

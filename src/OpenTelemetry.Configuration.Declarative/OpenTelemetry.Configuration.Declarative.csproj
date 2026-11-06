@@ -25,6 +25,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\OpenTelemetry\OpenTelemetry.csproj" />
+    <!-- TODO: Remove this reference once exporters ship their own component providers. See https://github.com/open-telemetry/opentelemetry-dotnet/issues/7824 -->
+    <ProjectReference Include="..\OpenTelemetry.Exporter.Console\OpenTelemetry.Exporter.Console.csproj" />
   </ItemGroup>
 
   <ItemGroup>

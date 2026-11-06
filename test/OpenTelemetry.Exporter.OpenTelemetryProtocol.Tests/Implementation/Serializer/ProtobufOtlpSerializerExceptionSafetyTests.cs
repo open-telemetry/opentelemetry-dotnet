@@ -49,6 +49,7 @@ public class ProtobufOtlpSerializerExceptionSafetyTests(MaxSizeSerializationBuff
                 new SdkLimitOptions(),
                 Resource.Empty,
                 batchA,
+                out _,
                 MaxSizeSerializationBufferFixture.MaxBufferSize));
 
             // The next export on the same thread must serialize only its own batch.
@@ -59,7 +60,8 @@ public class ProtobufOtlpSerializerExceptionSafetyTests(MaxSizeSerializationBuff
                 0,
                 new SdkLimitOptions(),
                 Resource.Empty,
-                batchB);
+                batchB,
+                out _);
 
             using var stream = new MemoryStream(buffer, 0, writePosition);
             var tracesData = OtlpTrace.TracesData.Parser.ParseFrom(stream);
@@ -102,6 +104,7 @@ public class ProtobufOtlpSerializerExceptionSafetyTests(MaxSizeSerializationBuff
                 new ExperimentalOptions(),
                 Resource.Empty,
                 batchA,
+                out _,
                 MaxSizeSerializationBufferFixture.MaxBufferSize));
 
             AssertOnlySecondBatchIsSerialized(logRecords[1], "LoggerB");
@@ -156,6 +159,7 @@ public class ProtobufOtlpSerializerExceptionSafetyTests(MaxSizeSerializationBuff
                 new ExperimentalOptions(),
                 Resource.Empty,
                 new Batch<LogRecord>([a1], 1),
+                out _,
                 MaxSizeSerializationBufferFixture.MaxBufferSize));
 
             AssertScopes(SerializeLogs(a3), ("LoggerA", ["a3"]));
@@ -179,6 +183,7 @@ public class ProtobufOtlpSerializerExceptionSafetyTests(MaxSizeSerializationBuff
                 new ExperimentalOptions(),
                 Resource.Empty,
                 new Batch<LogRecord>([a1, b1, a2], 3),
+                out _,
                 MaxSizeSerializationBufferFixture.MaxBufferSize));
 
             AssertScopes(SerializeLogs(b1, a1, a2, a3), ("LoggerB", ["b1"]), ("LoggerA", ["a1", "a2", "a3"]));
@@ -215,6 +220,7 @@ public class ProtobufOtlpSerializerExceptionSafetyTests(MaxSizeSerializationBuff
                 failingBuffer.Length,
                 Resource.Empty,
                 batch,
+                out _,
                 MaxSizeSerializationBufferFixture.MaxBufferSize));
 
             var buffer = new byte[8 * 1024];
@@ -222,7 +228,8 @@ public class ProtobufOtlpSerializerExceptionSafetyTests(MaxSizeSerializationBuff
                 ref buffer,
                 0,
                 Resource.Empty,
-                batch);
+                batch,
+                out _);
 
             using var stream = new MemoryStream(buffer, 0, writePosition);
             var request = OtlpCollectorMetrics.ExportMetricsServiceRequest.Parser.ParseFrom(stream);
@@ -261,6 +268,7 @@ public class ProtobufOtlpSerializerExceptionSafetyTests(MaxSizeSerializationBuff
                     new ExperimentalOptions(),
                     Resource.Empty,
                     batch,
+                    out _,
                     MaxSizeSerializationBufferFixture.MaxBufferSize));
 
                 Assert.Equal(referenceCountBefore, logRecord.PoolReferenceCount);
@@ -304,7 +312,8 @@ public class ProtobufOtlpSerializerExceptionSafetyTests(MaxSizeSerializationBuff
                     new SdkLimitOptions(),
                     new ExperimentalOptions(),
                     Resource.Empty,
-                    batchA));
+                    batchA,
+                    out _));
 
                 Assert.Equal(referenceCountBefore, logRecord.PoolReferenceCount);
 
@@ -373,7 +382,8 @@ public class ProtobufOtlpSerializerExceptionSafetyTests(MaxSizeSerializationBuff
             new SdkLimitOptions(),
             new ExperimentalOptions(),
             Resource.Empty,
-            batch);
+            batch,
+            out _);
 
         using var stream = new MemoryStream(buffer, 0, writePosition);
         return OtlpLogs.LogsData.Parser.ParseFrom(stream);
@@ -406,7 +416,8 @@ public class ProtobufOtlpSerializerExceptionSafetyTests(MaxSizeSerializationBuff
             new SdkLimitOptions(),
             new ExperimentalOptions(),
             Resource.Empty,
-            batch);
+            batch,
+            out _);
 
         using var stream = new MemoryStream(buffer, 0, writePosition);
         var logsData = OtlpLogs.LogsData.Parser.ParseFrom(stream);
@@ -452,7 +463,8 @@ public class ProtobufOtlpSerializerExceptionSafetyTests(MaxSizeSerializationBuff
                 new SdkLimitOptions(),
                 new ExperimentalOptions(),
                 Resource.Empty,
-                batch));
+                batch,
+                out _));
 
             return bufferReference;
         }

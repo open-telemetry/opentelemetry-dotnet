@@ -1016,7 +1016,7 @@ public sealed class OtlpTraceExporterTests : IDisposable
             var buffer = ProtobufSerializer.RentBuffer(50);
             try
             {
-                var writePosition = ProtobufOtlpTraceSerializer.WriteTraceData(ref buffer, 0, sdkOptions, ResourceBuilder.CreateEmpty().Build(), batch);
+                var writePosition = ProtobufOtlpTraceSerializer.WriteTraceData(ref buffer, 0, sdkOptions, ResourceBuilder.CreateEmpty().Build(), batch, out _);
                 using var stream = new MemoryStream(buffer, 0, writePosition);
                 var tracesData = OtlpTrace.TracesData.Parser.ParseFrom(stream);
                 var request = new OtlpCollector.ExportTraceServiceRequest();
@@ -1391,7 +1391,7 @@ public sealed class OtlpTraceExporterTests : IDisposable
             System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
         var serializationBuffer = Assert.IsType<SerializationBuffer>(serializationBufferField?.GetValue(exporter));
         var retainedBuffer = ProtobufSerializer.RentBuffer(2 * 1024 * 1024);
-        serializationBuffer.Return(retainedBuffer, retainedBuffer.Length);
+        serializationBuffer.Return(retainedBuffer, retainedBuffer.Length, retainedBuffer.Length);
 #endif
 
         Assert.False(exporter.Shutdown());
@@ -1400,7 +1400,7 @@ public sealed class OtlpTraceExporterTests : IDisposable
 #if NETFRAMEWORK
         var nextBuffer = serializationBuffer.Rent();
         Assert.NotSame(retainedBuffer, nextBuffer);
-        serializationBuffer.Return(nextBuffer, nextBuffer.Length);
+        serializationBuffer.Return(nextBuffer, nextBuffer.Length, nextBuffer.Length);
         serializationBuffer.Release();
 #endif
     }
@@ -1610,7 +1610,8 @@ public sealed class OtlpTraceExporterTests : IDisposable
     private static OtlpTrace.Span? ToOtlpSpan(SdkLimitOptions sdkOptions, Activity activity)
     {
         var buffer = new byte[4096];
-        var writePosition = ProtobufOtlpTraceSerializer.WriteSpan(buffer, 0, sdkOptions, activity);
+        var dirtyLength = 0;
+        var writePosition = ProtobufOtlpTraceSerializer.WriteSpan(buffer, 0, sdkOptions, activity, ref dirtyLength);
         using var stream = new MemoryStream(buffer, 0, writePosition);
         var scopeSpans = OtlpTrace.ScopeSpans.Parser.ParseFrom(stream);
         return scopeSpans.Spans.FirstOrDefault();
@@ -1633,7 +1634,7 @@ public sealed class OtlpTraceExporterTests : IDisposable
         var buffer = ProtobufSerializer.RentBuffer(4096);
         try
         {
-            var writePosition = ProtobufOtlpTraceSerializer.WriteTraceData(ref buffer, 0, sdkOptions, resource, batch);
+            var writePosition = ProtobufOtlpTraceSerializer.WriteTraceData(ref buffer, 0, sdkOptions, resource, batch, out _);
             using var stream = new MemoryStream(buffer, 0, writePosition);
             var tracesData = OtlpTrace.TracesData.Parser.ParseFrom(stream);
             var request = new OtlpCollector.ExportTraceServiceRequest();
