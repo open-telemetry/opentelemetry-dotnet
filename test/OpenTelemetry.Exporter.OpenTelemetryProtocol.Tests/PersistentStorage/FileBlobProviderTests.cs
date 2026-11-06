@@ -1003,14 +1003,6 @@ public class FileBlobProviderTests
         Assert.False(blob.TryRead(out var data));
         Assert.Null(data);
     }
-
-    [UnsupportedOSPlatform("windows")]
-    private static void CreateDirectory(string path, UnixFileMode mode)
-    {
-        // The mode is set after the directory is created, as the mode it is created with is restricted by the umask
-        Directory.CreateDirectory(path);
-        File.SetUnixFileMode(path, mode);
-    }
 #endif
 
     [Fact]
@@ -1081,12 +1073,12 @@ public class FileBlobProviderTests
         Assert.Equal<byte>([4, 5, 6], provider.Created);
         Assert.Null(provider.LeasePeriod);
 
-        Assert.True(provider.TryCreateBlob(array, 200, out blob));
+        Assert.True(provider.TryCreateBlob(array, 200, out _));
         Assert.NotNull(provider.Created);
         Assert.Equal<byte>([1, 2, 3], provider.Created);
         Assert.Equal(200, provider.LeasePeriod);
 
-        Assert.True(provider.TryCreateBlob(array, out blob));
+        Assert.True(provider.TryCreateBlob(array, out _));
         Assert.NotNull(provider.Created);
         Assert.Equal<byte>([1, 2, 3], provider.Created);
         Assert.Null(provider.LeasePeriod);
@@ -1130,6 +1122,16 @@ public class FileBlobProviderTests
 
         Assert.Empty(provider.GetBlobs());
     }
+
+#if NET
+    [UnsupportedOSPlatform("windows")]
+    private static void CreateDirectory(string path, UnixFileMode mode)
+    {
+        // The mode is set after the directory is created, as the mode it is created with is restricted by the umask
+        Directory.CreateDirectory(path);
+        File.SetUnixFileMode(path, mode);
+    }
+#endif
 
     private sealed class StubBlob : PersistentBlob
     {
