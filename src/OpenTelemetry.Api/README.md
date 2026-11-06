@@ -512,6 +512,8 @@ var parentContext = propagator.Extract(
     EnvironmentVariableCarrier.CurrentProcess,
     EnvironmentVariableCarrier.Get);
 
+Baggage.Current = parentContext.Baggage;
+
 using var activity = activitySource.StartActivity(
     "RunChildProcess",
     ActivityKind.Internal,
