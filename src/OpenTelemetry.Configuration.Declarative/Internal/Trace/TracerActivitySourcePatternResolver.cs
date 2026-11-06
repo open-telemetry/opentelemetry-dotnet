@@ -74,8 +74,7 @@ internal static class TracerActivitySourcePatternResolver
             string? reason = null;
             if (defaultEnabled)
             {
-                reason = $"'{YamlKeys.DefaultConfig}.{YamlKeys.Enabled}' is true "
-                    + "and source subscriptions are additive";
+                reason = $"'{YamlKeys.DefaultConfig}.{YamlKeys.Enabled}' is true and source subscriptions are additive";
             }
             else
             {
@@ -83,8 +82,7 @@ internal static class TracerActivitySourcePatternResolver
                 {
                     if (entries[j].Enabled && MayMatchSameSource(entry.Name, entries[j].Name))
                     {
-                        reason = $"the later entry '{entries[j].Path}' (name '{entries[j].Name}') "
-                            + "may enable matching tracers";
+                        reason = $"the later entry '{entries[j].Path}' (name '{entries[j].Name}') may enable matching tracers";
                         break;
                     }
                 }
