@@ -1,6 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
@@ -446,5 +447,165 @@ public class ConsoleMetricExporterTests
 
         // Assert
         Assert.Equal(ExportResult.Success, actual);
+    }
+
+    [Fact]
+    public void Export_MeterWithVersionSchemaUrlAndTags_WritesInstrumentationScope()
+    {
+        // Arrange
+        var meterName = Utils.GetCurrentMethodName();
+        using var meter = new Meter(new MeterOptions(meterName)
+        {
+            Version = "1.2.3",
+            TelemetrySchemaUrl = "https://opentelemetry.io/schemas/1.40.0",
+            Tags =
+            [
+                new KeyValuePair<string, object?>("meter.string", "value"),
+                new KeyValuePair<string, object?>("meter.number", 42),
+            ],
+        });
+
+        var counter = meter.CreateCounter<long>("test-counter");
+
+        var metrics = new List<Metric>();
+
+        using var meterProvider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meterName)
+            .AddInMemoryExporter(metrics)
+            .Build();
+
+        counter.Add(100);
+        meterProvider!.ForceFlush();
+
+        Assert.Single(metrics);
+
+        // Act
+        using var capture = new TraceOutputCapture();
+        using var exporter = new ConsoleMetricExporter(new ConsoleExporterOptions { Targets = ConsoleExporterOutputTargets.Debug });
+        var actual = exporter.Export(new Batch<Metric>([.. metrics], metrics.Count));
+
+        // Assert
+        Assert.Equal(ExportResult.Success, actual);
+
+        var scope = capture.Lines.SkipWhile((p) => p != "Instrumentation scope (Meter):").Take(7).ToArray();
+        Assert.Equal(
+            [
+                "Instrumentation scope (Meter):",
+                $"\tName: {meterName}",
+                "\tVersion: 1.2.3",
+                "\tSchema URL: https://opentelemetry.io/schemas/1.40.0",
+                "\tTags:",
+            ],
+            scope.Take(5));
+
+        // The order the tags of a Meter are enumerated in is not defined
+        Assert.Equal(
+            [
+                "\t\tmeter.number: 42",
+                "\t\tmeter.string: value",
+            ],
+            scope.Skip(5).OrderBy((p) => p, StringComparer.Ordinal));
+    }
+
+    [Fact]
+    public void Export_ExponentialHistogramWithZeroValue_WritesZeroBucket()
+    {
+        // Arrange
+        var meterName = Utils.GetCurrentMethodName();
+        using var meter = new Meter(meterName);
+        var histogram = meter.CreateHistogram<double>("test-exponential-histogram");
+
+        var metrics = new List<Metric>();
+
+        using var meterProvider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meterName)
+            .AddView("test-exponential-histogram", new Base2ExponentialBucketHistogramConfiguration())
+            .AddInMemoryExporter(metrics)
+            .Build();
+
+        histogram.Record(0);
+        histogram.Record(0);
+        histogram.Record(10.5);
+        meterProvider!.ForceFlush();
+
+        Assert.Single(metrics);
+
+        // Act
+        using var capture = new TraceOutputCapture();
+        using var exporter = new ConsoleMetricExporter(new ConsoleExporterOptions { Targets = ConsoleExporterOutputTargets.Debug });
+        var actual = exporter.Export(new Batch<Metric>([.. metrics], metrics.Count));
+
+        // Assert
+        Assert.Equal(ExportResult.Success, actual);
+
+        var point = Assert.Single(capture.Lines, (p) => p.Contains("Value: Sum:", StringComparison.Ordinal));
+        Assert.Contains("Sum: 10.5 Count: 3 ", point, StringComparison.Ordinal);
+        Assert.Contains($"Zero Bucket:2{Environment.NewLine}", point, StringComparison.Ordinal);
+        Assert.Contains("]:1", point, StringComparison.Ordinal);
+    }
+
+    [Theory]
+    [InlineData(false, false)]
+    [InlineData(false, true)]
+    [InlineData(true, false)]
+    [InlineData(true, true)]
+    public void Export_WithExemplars_WritesExemplars(bool useDouble, bool withTraceContext)
+    {
+        // Arrange
+        var meterName = Utils.GetCurrentMethodName();
+        using var meter = new Meter(meterName);
+
+        var metrics = new List<Metric>();
+
+        using var meterProvider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meterName)
+            .SetExemplarFilter(ExemplarFilterType.AlwaysOn)
+            .AddView("test-counter", new MetricStreamConfiguration { TagKeys = ["included"] })
+            .AddInMemoryExporter(metrics)
+            .Build();
+
+        using var activity = withTraceContext ? new Activity("test") : null;
+        activity?.Start();
+
+        var includedTag = new KeyValuePair<string, object?>("included", "a");
+        var excludedTag = new KeyValuePair<string, object?>("excluded", "b");
+
+        if (useDouble)
+        {
+            meter.CreateCounter<double>("test-counter").Add(5, includedTag, excludedTag);
+        }
+        else
+        {
+            meter.CreateCounter<long>("test-counter").Add(5, includedTag, excludedTag);
+        }
+
+        meterProvider!.ForceFlush();
+
+        Assert.Single(metrics);
+
+        // Act
+        using var capture = new TraceOutputCapture();
+        using var exporter = new ConsoleMetricExporter(new ConsoleExporterOptions { Targets = ConsoleExporterOutputTargets.Debug });
+        var actual = exporter.Export(new Batch<Metric>([.. metrics], metrics.Count));
+
+        // Assert
+        Assert.Equal(ExportResult.Success, actual);
+
+        var point = Assert.Single(capture.Lines, (p) => p.Contains("Value: 5", StringComparison.Ordinal));
+        Assert.Contains("included: a", point, StringComparison.Ordinal);
+        Assert.Contains($"{Environment.NewLine}Exemplars{Environment.NewLine}Timestamp: ", point, StringComparison.Ordinal);
+
+        var exemplar = point.Substring(point.IndexOf("Exemplars", StringComparison.Ordinal));
+        Assert.Contains(" Value: 5", exemplar, StringComparison.Ordinal);
+        Assert.Contains(" Filtered Tags: excluded: b ", exemplar, StringComparison.Ordinal);
+
+        if (activity is not null)
+        {
+            Assert.Contains($" TraceId: {activity.TraceId.ToHexString()} SpanId: {activity.SpanId.ToHexString()}", exemplar, StringComparison.Ordinal);
+        }
+        else
+        {
+            Assert.DoesNotContain("TraceId", exemplar, StringComparison.Ordinal);
+        }
     }
 }
