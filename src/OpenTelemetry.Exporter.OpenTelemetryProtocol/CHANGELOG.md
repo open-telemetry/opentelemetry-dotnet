@@ -44,6 +44,21 @@ Notes](../../RELEASENOTES.md).
   of the response.
   ([#8078](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8078))
 
+* Attribute values implementing `IUtf8SpanFormattable` (.NET 10+) that are not
+  already handled as a built-in type are now formatted directly into the export
+  buffer with `TryFormat` and exported as string attributes, instead of through
+  `ToString()`.
+  ([#7929](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7929))
+
+* An `OutOfMemoryException` thrown while converting an attribute value to a
+  string is no longer swallowed and the attribute dropped; it now propagates.
+  ([#7929](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7929))
+
+* Fixed string attribute values truncated by an attribute value length limit
+  ending in half of a surrogate pair. The truncated value now ends before the
+  pair instead.
+  ([#7929](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7929))
+
 * Hardened the experimental disk retry feature.
   * **Breaking:** When running on .NET on non-Windows platforms, creating the
     exporter now throws an `UnauthorizedAccessException` if the retry

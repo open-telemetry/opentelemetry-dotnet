@@ -11,6 +11,8 @@ public static class RabbitMqHelper
 {
     public const string DefaultExchangeName = "";
     public const string TestQueueName = "TestQueue";
+    public const string SendOperationName = "send";
+    public const string ProcessOperationName = "process";
 
     private static readonly ConnectionFactory ConnectionFactory = new()
     {
@@ -49,15 +51,16 @@ public static class RabbitMqHelper
         await channel.BasicConsumeAsync(queue: TestQueueName, autoAck: true, consumer: consumer).ConfigureAwait(false);
     }
 
-    public static void AddMessagingTags(Activity? activity)
+    public static void AddMessagingTags(Activity? activity, string operationName)
     {
         // These tags are added demonstrating the semantic conventions of the OpenTelemetry messaging specification
         // See:
-        //   * https://github.com/open-telemetry/semantic-conventions/blob/main/docs/messaging/messaging-spans.md#messaging-attributes
+        //   * https://github.com/open-telemetry/semantic-conventions/blob/main/docs/messaging/messaging-spans.md#messaging-spans
         //   * https://github.com/open-telemetry/semantic-conventions/blob/main/docs/messaging/rabbitmq.md
-        activity?.SetTag("messaging.system", "rabbitmq");
-        activity?.SetTag("messaging.destination_kind", "queue");
-        activity?.SetTag("messaging.destination", DefaultExchangeName);
-        activity?.SetTag("messaging.rabbitmq.routing_key", TestQueueName);
+        activity?.SetTag("messaging.system.name", "rabbitmq");
+        activity?.SetTag("messaging.operation.name", operationName);
+        activity?.SetTag("messaging.operation.type", operationName);
+        activity?.SetTag("messaging.destination.name", TestQueueName);
+        activity?.SetTag("rabbitmq.destination.routing_key", TestQueueName);
     }
 }

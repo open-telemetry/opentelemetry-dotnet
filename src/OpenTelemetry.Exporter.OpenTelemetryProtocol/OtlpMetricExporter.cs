@@ -91,6 +91,7 @@ public class OtlpMetricExporter : BaseExporter<Metric>
         byte[]? buffer = null;
         var serializationSucceeded = false;
         var writePosition = 0;
+        var dirtyLength = 0;
 
         try
         {
@@ -103,6 +104,7 @@ public class OtlpMetricExporter : BaseExporter<Metric>
                     this.startWritePosition,
                     this.Resource,
                     metrics,
+                    out dirtyLength,
                     this.maxRequestSizeBytes + this.startWritePosition);
                 serializationSucceeded = true;
             }
@@ -161,7 +163,7 @@ public class OtlpMetricExporter : BaseExporter<Metric>
             {
                 if (serializationSucceeded)
                 {
-                    this.serializationBuffer.Return(buffer, writePosition);
+                    this.serializationBuffer.Return(buffer, writePosition, dirtyLength);
                 }
                 else
                 {

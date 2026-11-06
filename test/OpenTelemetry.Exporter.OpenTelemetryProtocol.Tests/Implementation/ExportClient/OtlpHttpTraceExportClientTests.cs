@@ -198,7 +198,7 @@ public sealed class OtlpHttpTraceExportClientTests : IDisposable
         var buffer = ProtobufSerializer.RentBuffer(4096);
         try
         {
-            var writePosition = ProtobufOtlpTraceSerializer.WriteTraceData(ref buffer, 0, sdkOptions, resource, batch);
+            var writePosition = ProtobufOtlpTraceSerializer.WriteTraceData(ref buffer, 0, sdkOptions, resource, batch, out _);
             return (buffer, writePosition);
         }
         catch
