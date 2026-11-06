@@ -525,7 +525,9 @@ public class ConsoleMetricExporterTests
 
         histogram.Record(0);
         histogram.Record(0);
-        histogram.Record(10.5);
+
+        // Whole numbers are used as the exporter formats the sum using the current culture on .NET Framework
+        histogram.Record(10);
         meterProvider!.ForceFlush();
 
         Assert.Single(metrics);
@@ -539,7 +541,7 @@ public class ConsoleMetricExporterTests
         Assert.Equal(ExportResult.Success, actual);
 
         var point = Assert.Single(capture.Lines, (p) => p.Contains("Value: Sum:", StringComparison.Ordinal));
-        Assert.Contains("Sum: 10.5 Count: 3 ", point, StringComparison.Ordinal);
+        Assert.Contains("Sum: 10 Count: 3 ", point, StringComparison.Ordinal);
         Assert.Contains($"Zero Bucket:2{Environment.NewLine}", point, StringComparison.Ordinal);
         Assert.Contains("]:1", point, StringComparison.Ordinal);
     }

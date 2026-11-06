@@ -139,7 +139,7 @@ public class ConsoleExporterMetricsExtensionsTests
                 metricReaderOptions = metricReader;
 
                 exporter.Targets = ConsoleExporterOutputTargets.Debug;
-                metricReader.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds = 3_600_000;
+                metricReader.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds = Timeout.Infinite;
             })
             .Build();
 
@@ -172,7 +172,13 @@ public class ConsoleExporterMetricsExtensionsTests
                 services.Configure<ConsoleExporterOptions>((options) => options.Targets = ConsoleExporterOutputTargets.Console);
                 services.Configure<ConsoleExporterOptions>("custom-name", (options) => options.Targets = ConsoleExporterOutputTargets.Debug);
             })
-            .AddConsoleExporter("custom-name", (exporter, metricReader) => exporterOptions = exporter)
+            .AddConsoleExporter("custom-name", (exporter, metricReader) =>
+            {
+                exporterOptions = exporter;
+
+                // Only collect on demand so that the output is always written by ForceFlush() on this thread
+                metricReader.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds = Timeout.Infinite;
+            })
             .Build();
 
         // Act
@@ -196,7 +202,13 @@ public class ConsoleExporterMetricsExtensionsTests
         using var capture = new TraceOutputCapture();
         using var meterProvider = Sdk.CreateMeterProviderBuilder()
             .AddMeter(meterName)
-            .ConfigureServices((services) => services.Configure<ConsoleExporterOptions>("custom-name", (options) => options.Targets = ConsoleExporterOutputTargets.Debug))
+            .ConfigureServices((services) =>
+            {
+                services.Configure<ConsoleExporterOptions>("custom-name", (options) => options.Targets = ConsoleExporterOutputTargets.Debug);
+
+                // Only collect on demand so that the output is always written by ForceFlush() on this thread
+                services.Configure<MetricReaderOptions>("custom-name", (options) => options.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds = Timeout.Infinite);
+            })
             .AddConsoleExporter("custom-name", (Action<ConsoleExporterOptions, MetricReaderOptions>?)null)
             .Build();
 
