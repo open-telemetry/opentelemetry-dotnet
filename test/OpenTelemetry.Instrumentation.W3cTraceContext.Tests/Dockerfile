@@ -5,7 +5,7 @@
 ARG BUILD_SDK_VERSION=11.0
 ARG TEST_SDK_VERSION=11.0
 
-FROM mcr.microsoft.com/dotnet/sdk:10.0.403-azurelinux3.0@sha256:f0414bcafb2751af8dcc7f72f6055eb456ca9931074b2eb837c6c9d166360fb5 AS dotnet-sdk-10.0
+FROM mcr.microsoft.com/dotnet/sdk:10.0.403-azurelinux3.0@sha256:ffd76bb46785445d2d029809009d35b522619b97df88c0abaa05d549db697b43 AS dotnet-sdk-10.0
 FROM mcr.microsoft.com/dotnet/sdk:11.0.100-azurelinux4.0@sha256:TODO AS dotnet-sdk-11.0
 
 FROM dotnet-sdk-${BUILD_SDK_VERSION} AS build

@@ -26,7 +26,7 @@ public class BatchExportLogRecordProcessorOptions : BatchExportProcessorOptions<
     /// Initializes a new instance of the <see cref="BatchExportLogRecordProcessorOptions"/> class.
     /// </summary>
     public BatchExportLogRecordProcessorOptions()
-        : this(new ConfigurationBuilder().AddEnvironmentVariables().Build())
+        : this(EnvironmentVariablesConfiguration.Create())
     {
     }
 

@@ -68,7 +68,8 @@ internal static class WildcardHelper
             "|",
             from p in patterns select "(?:" + ConvertToRegexPattern(p) + ')');
 
-        var pattern = "^(?:" + convertedPattern + ")$";
+        // The anchor at the end is '\z' rather than '$', which would also match a name that has a line feed after the end of the pattern.
+        var pattern = "^(?:" + convertedPattern + ")\\z";
 
         // RegexOptions.NonBacktracking is not used as it has a fixed automata-size limit that many
         // source patterns can exceed and it retains a much larger automaton per Regex instance

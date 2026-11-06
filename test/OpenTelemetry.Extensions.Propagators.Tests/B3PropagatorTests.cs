@@ -467,6 +467,122 @@ public class B3PropagatorTests
         Assert.Equal(default, result);
     }
 
+    [Fact]
+    public void ExtractReturnsExistingValidContextUnchanged()
+    {
+        var existing = new PropagationContext(new ActivityContext(TraceId, SpanId, ActivityTraceFlags.None), default);
+        var headers = new Dictionary<string, string>
+        {
+            [B3Propagator.XB3TraceId] = "00000000000000000000000000000001",
+            [B3Propagator.XB3SpanId] = "0000000000000001",
+            [B3Propagator.XB3Combined] = "00000000000000000000000000000001-0000000000000001",
+        };
+
+        Assert.Equal(existing, this.b3propagator.Extract(existing, headers, Getter));
+        Assert.Equal(existing, this.b3PropagatorSingleHeader.Extract(existing, headers, Getter));
+    }
+
+    [Fact]
+    public void ExtractWithNullCarrierReturnsContext()
+    {
+        Assert.Equal(default, this.b3propagator.Extract<IDictionary<string, string>?>(default, null, Getter!));
+        Assert.Equal(default, this.b3PropagatorSingleHeader.Extract<IDictionary<string, string>?>(default, null, Getter!));
+    }
+
+    [Fact]
+    public void ExtractWithNullGetterReturnsContext()
+    {
+        var headers = new Dictionary<string, string>
+        {
+            [B3Propagator.XB3TraceId] = TraceIdBase16,
+            [B3Propagator.XB3SpanId] = SpanIdBase16,
+        };
+
+        Assert.Equal(default, this.b3propagator.Extract(default, headers, null!));
+        Assert.Equal(default, this.b3PropagatorSingleHeader.Extract(default, headers, null!));
+    }
+
+    [Fact]
+    public void ExtractWhenGetterThrowsReturnsContext()
+    {
+        var headers = new Dictionary<string, string>();
+
+        Assert.Equal(default, this.b3propagator.Extract(default, headers, ThrowingGetter));
+        Assert.Equal(default, this.b3PropagatorSingleHeader.Extract(default, headers, ThrowingGetter));
+
+        static IEnumerable<string>? ThrowingGetter(IDictionary<string, string> carrier, string key)
+            => throw new InvalidOperationException("Getter failed.");
+    }
+
+    [Fact]
+    public void ExtractSingleHeaderWhenGetterReturnsNullReturnsContext()
+    {
+        var headers = new Dictionary<string, string>();
+
+        Assert.Equal(default, this.b3PropagatorSingleHeader.Extract(default, headers, NullGetter));
+
+        static IEnumerable<string>? NullGetter(IDictionary<string, string> carrier, string key)
+            => null;
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("   ")]
+    public void ExtractSingleHeaderWithEmptyOrWhitespaceHeaderReturnsContext(string header)
+    {
+        var headers = new Dictionary<string, string> { [B3Propagator.XB3Combined] = header };
+
+        Assert.Equal(default, this.b3PropagatorSingleHeader.Extract(default, headers, Getter));
+    }
+
+    [Fact]
+    public void ParseSingleHeaderWithEmptySpanIdReturnsDefault()
+    {
+        var headers = new Dictionary<string, string>
+        {
+            [B3Propagator.XB3Combined] = $"{TraceIdBase16}--1",
+        };
+
+        Assert.Equal(default, this.b3PropagatorSingleHeader.Extract(default, headers, Getter));
+    }
+
+    [Fact]
+    public void InjectWithInvalidContextDoesNothing()
+    {
+        var carrier = new Dictionary<string, string>();
+
+        this.b3propagator.Inject(default, carrier, Setter);
+        this.b3PropagatorSingleHeader.Inject(default, carrier, Setter);
+
+        Assert.Empty(carrier);
+    }
+
+    [Fact]
+    public void InjectWithNullCarrierDoesNothing()
+    {
+        var context = new PropagationContext(new ActivityContext(TraceId, SpanId, TraceOptions), default);
+        var calls = 0;
+
+        void CountingSetter(IDictionary<string, string>? carrier, string key, string value) => calls++;
+
+        this.b3propagator.Inject<IDictionary<string, string>?>(context, null, CountingSetter);
+        this.b3PropagatorSingleHeader.Inject<IDictionary<string, string>?>(context, null, CountingSetter);
+
+        Assert.Equal(0, calls);
+    }
+
+    [Fact]
+    public void InjectWithNullSetterDoesNothing()
+    {
+        var context = new PropagationContext(new ActivityContext(TraceId, SpanId, TraceOptions), default);
+        var carrier = new Dictionary<string, string>();
+
+        this.b3propagator.Inject(context, carrier, null!);
+        this.b3PropagatorSingleHeader.Inject(context, carrier, null!);
+
+        Assert.Empty(carrier);
+    }
+
     private static IEnumerable<string> AsPlainEnumerable(string? value)
     {
         if (value != null)
