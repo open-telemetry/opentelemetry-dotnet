@@ -106,4 +106,16 @@ public class EventSourceTests
             Assert.Equal(expectedEndpoint, Assert.IsType<string>(message.Payload[0]));
         });
     }
+
+    [Fact]
+    public void EventSourceTests_OpenTelemetryProtocolExporterEventSource_WritesEvents() =>
+        EventSourceTestHelper.ExerciseEventSource<OpenTelemetryProtocolExporterEventSource>();
+
+    [Fact]
+    public void EventSourceTests_PersistentStorageAbstractionsEventSource_WritesEvents() =>
+        EventSourceTestHelper.ExerciseEventSource<PersistentStorageAbstractionsEventSource>();
+
+    [Fact]
+    public void EventSourceTests_PersistentStorageEventSource_WritesEvents() =>
+        EventSourceTestHelper.ExerciseEventSource<PersistentStorageEventSource>();
 }
