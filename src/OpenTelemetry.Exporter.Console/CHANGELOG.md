@@ -6,6 +6,10 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* An `OutOfMemoryException` thrown while converting an attribute value to a
+  string is no longer swallowed and the attribute dropped; it now propagates.
+  ([#7929](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7929))
+
 * Added support for batching the metric points exported by the periodic
   exporting metric reader. Set
   `PeriodicExportingMetricReaderOptions.MaxExportBatchSize` to limit the

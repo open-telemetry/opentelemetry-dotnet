@@ -366,7 +366,7 @@ public sealed class OtlpArrayTagWriterTests : IDisposable
             var buffer = ProtobufSerializer.RentBuffer(4096);
             try
             {
-                var writePosition = ProtobufOtlpTraceSerializer.WriteTraceData(ref buffer, 0, sdkOptions, ResourceBuilder.CreateEmpty().Build(), batch);
+                var writePosition = ProtobufOtlpTraceSerializer.WriteTraceData(ref buffer, 0, sdkOptions, ResourceBuilder.CreateEmpty().Build(), batch, out _);
                 using var stream = new MemoryStream(buffer, 0, writePosition);
                 var tracesData = OtlpTrace.TracesData.Parser.ParseFrom(stream);
                 var request = new OtlpCollector.ExportTraceServiceRequest();
@@ -397,7 +397,8 @@ public sealed class OtlpArrayTagWriterTests : IDisposable
     private static OtlpTrace.Span? ToOtlpSpan(SdkLimitOptions sdkOptions, Activity activity)
     {
         var buffer = new byte[4096];
-        var writePosition = ProtobufOtlpTraceSerializer.WriteSpan(buffer, 0, sdkOptions, activity);
+        var dirtyLength = 0;
+        var writePosition = ProtobufOtlpTraceSerializer.WriteSpan(buffer, 0, sdkOptions, activity, ref dirtyLength);
         using var stream = new MemoryStream(buffer, 0, writePosition);
         var scopeSpans = OtlpTrace.ScopeSpans.Parser.ParseFrom(stream);
         return scopeSpans.Spans.FirstOrDefault();
@@ -406,7 +407,8 @@ public sealed class OtlpArrayTagWriterTests : IDisposable
     private static OtlpTrace.Span? ToOtlpSpanWithExtendedBuffer(SdkLimitOptions sdkOptions, Activity activity)
     {
         var buffer = new byte[4194304];
-        var writePosition = ProtobufOtlpTraceSerializer.WriteSpan(buffer, 0, sdkOptions, activity);
+        var dirtyLength = 0;
+        var writePosition = ProtobufOtlpTraceSerializer.WriteSpan(buffer, 0, sdkOptions, activity, ref dirtyLength);
         using var stream = new MemoryStream(buffer, 0, writePosition);
         var scopeSpans = OtlpTrace.ScopeSpans.Parser.ParseFrom(stream);
         return scopeSpans.Spans.FirstOrDefault();
