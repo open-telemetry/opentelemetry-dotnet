@@ -15,8 +15,10 @@ namespace OpenTelemetry;
 /// </remarks>
 public readonly struct Baggage : IEquatable<Baggage>
 {
-    private static readonly RuntimeContextSlot<BaggageHolder> RuntimeContextSlot = RuntimeContext.RegisterSlot<BaggageHolder>("otel.baggage");
+    private static readonly RuntimeContextSlot<BaggageHolder?> RuntimeContextSlot = RuntimeContext.RegisterSlot<BaggageHolder?>("otel.baggage");
+
     private static readonly Dictionary<string, string> EmptyBaggage = [];
+    private static readonly bool UseSafeFlow = !IsUnsafeLegacyFlowEnabled();
 
     private readonly Dictionary<string, string> baggage;
 
@@ -56,11 +58,35 @@ public readonly struct Baggage : IEquatable<Baggage>
     /// // the 'newKey1' change is lost.
     /// Baggage.Current = newBaggage;
     /// </code>
+    /// <para/>
+    /// By default, updates affect only the current execution context and contexts
+    /// subsequently forked from it. Changes made in an awaited asynchronous method
+    /// do not flow back to its caller.
+    /// <para/>
+    /// Setting the <c>OpenTelemetry.Baggage.AllowUnsafeLegacyFlow</c> AppContext
+    /// switch to <c>true</c> before the first use of <see cref="Baggage"/> restores
+    /// legacy sharing of updates across inherited contexts. An unset or
+    /// <c>false</c> switch keeps the isolated behavior.
+    /// Legacy sharing is insecure for independent operations because their baggage
+    /// can overwrite each other's. The setting is read once and is intended only
+    /// as a temporary migration aid.
     /// </remarks>
     public static Baggage Current
     {
         get => RuntimeContextSlot.Get()?.Baggage ?? default;
-        set => EnsureBaggageHolder().Baggage = value;
+        set
+        {
+            if (UseSafeFlow)
+            {
+                // Inherited contexts share the holder reference. Publish a replacement
+                // instead of mutating it so existing contexts keep their own baggage.
+                RuntimeContextSlot.Set(value.Count == 0 ? null : new BaggageHolder { Baggage = value });
+            }
+            else
+            {
+                EnsureBaggageHolder().Baggage = value;
+            }
+        }
     }
 
     /// <summary>
@@ -147,6 +173,11 @@ public readonly struct Baggage : IEquatable<Baggage>
     [SuppressMessage("roslyn", "RS0026", Justification = "TODO: fix APIs that violate the backcompt requirement - multiple overloads with optional parameters: https://github.com/dotnet/roslyn/blob/main/docs/Adding%20Optional%20Parameters%20in%20Public%20API.md.")]
     public static Baggage SetBaggage(string name, string? value, Baggage baggage = default)
     {
+        if (UseSafeFlow)
+        {
+            return Current = (baggage == default ? Current : baggage).SetBaggage(name, value);
+        }
+
         var baggageHolder = EnsureBaggageHolder();
         lock (baggageHolder)
         {
@@ -166,6 +197,11 @@ public readonly struct Baggage : IEquatable<Baggage>
     [SuppressMessage("roslyn", "RS0026", Justification = "TODO: fix APIs that violate the backcompt requirement - multiple overloads with optional parameters: https://github.com/dotnet/roslyn/blob/main/docs/Adding%20Optional%20Parameters%20in%20Public%20API.md.")]
     public static Baggage SetBaggage(IEnumerable<KeyValuePair<string, string?>> baggageItems, Baggage baggage = default)
     {
+        if (UseSafeFlow)
+        {
+            return Current = (baggage == default ? Current : baggage).SetBaggage(baggageItems);
+        }
+
         var baggageHolder = EnsureBaggageHolder();
         lock (baggageHolder)
         {
@@ -184,6 +220,11 @@ public readonly struct Baggage : IEquatable<Baggage>
     /// <remarks>Note: The <see cref="Baggage"/> returned will be set as the new <see cref="Current"/> instance.</remarks>
     public static Baggage RemoveBaggage(string name, Baggage baggage = default)
     {
+        if (UseSafeFlow)
+        {
+            return Current = (baggage == default ? Current : baggage).RemoveBaggage(name);
+        }
+
         var baggageHolder = EnsureBaggageHolder();
         lock (baggageHolder)
         {
@@ -201,6 +242,11 @@ public readonly struct Baggage : IEquatable<Baggage>
     /// <remarks>Note: The <see cref="Baggage"/> returned will be set as the new <see cref="Current"/> instance.</remarks>
     public static Baggage ClearBaggage(Baggage baggage = default)
     {
+        if (UseSafeFlow)
+        {
+            return Current = default;
+        }
+
         var baggageHolder = EnsureBaggageHolder();
         lock (baggageHolder)
         {
@@ -422,6 +468,9 @@ public readonly struct Baggage : IEquatable<Baggage>
 
         return hash;
     }
+
+    private static bool IsUnsafeLegacyFlowEnabled()
+        => AppContext.TryGetSwitch("OpenTelemetry.Baggage.AllowUnsafeLegacyFlow", out var enabled) && enabled;
 
     private static BaggageHolder EnsureBaggageHolder()
     {
