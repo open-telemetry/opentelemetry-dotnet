@@ -54,6 +54,8 @@ public class ExplicitBucketHistogramConfiguration : HistogramConfiguration
 
     internal double[]? CopiedBoundaries { get; private set; }
 
+    internal override AggregationKind? ImpliedAggregationKind => Metrics.AggregationKind.Histogram;
+
     internal static void ThrowIfBoundaryCountExceedsLimit(int boundaryCount, string? paramName)
     {
         if (boundaryCount > MaxBoundaryCount)
