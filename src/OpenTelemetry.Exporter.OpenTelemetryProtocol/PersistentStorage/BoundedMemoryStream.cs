@@ -18,6 +18,21 @@ internal sealed class BoundedMemoryStream : MemoryStream
         this.maxLength = maxLength;
     }
 
+    public override int Capacity
+    {
+        get => base.Capacity;
+
+        // The stream grows by doubling its capacity, which could otherwise exceed the maximum length. A capacity
+        // that is larger than the maximum is never needed as the length of the stream is limited to the maximum.
+        set => base.Capacity = (int)Math.Min(value, this.maxLength);
+    }
+
+    public override void SetLength(long value)
+    {
+        this.EnsureWithinMaximum(value);
+        base.SetLength(value);
+    }
+
     public override void Write(byte[] buffer, int offset, int count)
     {
         this.EnsureCapacity(count);
@@ -36,9 +51,11 @@ internal sealed class BoundedMemoryStream : MemoryStream
         base.WriteByte(value);
     }
 
-    private void EnsureCapacity(int count)
+    private void EnsureCapacity(int count) => this.EnsureWithinMaximum(this.Position + count);
+
+    private void EnsureWithinMaximum(long length)
     {
-        if (this.Position + count > this.maxLength)
+        if (length > this.maxLength)
         {
             throw new IOException($"The data exceeds the maximum length of {this.maxLength} bytes.");
         }

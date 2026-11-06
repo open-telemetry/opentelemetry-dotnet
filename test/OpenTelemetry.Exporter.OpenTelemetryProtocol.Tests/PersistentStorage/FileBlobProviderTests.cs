@@ -601,6 +601,38 @@ public class FileBlobProviderTests
     }
 
     [Fact]
+    public void BoundedMemoryStream_SetLengthOrCapacityBeyondTheMaximumLength_Throws()
+    {
+        using var stream = new BoundedMemoryStream(4);
+
+        // Neither can be used to allocate more memory than the stream is allowed to hold
+        Assert.Throws<IOException>(() => stream.SetLength(5));
+        Assert.Equal(0, stream.Length);
+
+        stream.Capacity = 1024;
+
+        Assert.Equal(4, stream.Capacity);
+
+        stream.SetLength(4);
+
+        Assert.Equal(4, stream.Length);
+    }
+
+    [Fact]
+    public void BoundedMemoryStream_GrowthDoesNotExceedTheMaximumLength()
+    {
+        // The stream doubles its capacity as it grows, from a minimum of 256 bytes
+        using var stream = new BoundedMemoryStream(300);
+
+        stream.Write(new byte[200], 0, 200);
+        stream.Write(new byte[100], 0, 100);
+
+        Assert.Equal(300, stream.Length);
+        Assert.Equal(300, stream.Capacity);
+        Assert.Throws<IOException>(() => stream.WriteByte(0));
+    }
+
+    [Fact]
     public void TryGetBlob_DirectoryReplacedByDirectoryWritableByOtherUsers_DoesNotReturnForeignBlobs()
     {
         if (OperatingSystem.IsWindows())
