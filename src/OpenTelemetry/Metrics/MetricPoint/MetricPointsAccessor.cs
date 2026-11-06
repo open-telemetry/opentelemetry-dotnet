@@ -11,12 +11,14 @@ public readonly struct MetricPointsAccessor
 {
     private readonly MetricPoint[] metricsPoints;
     private readonly int[] metricPointsToProcess;
+    private readonly int startIndex;
     private readonly int targetCount;
 
-    internal MetricPointsAccessor(MetricPoint[] metricsPoints, int[] metricPointsToProcess, int targetCount)
+    internal MetricPointsAccessor(MetricPoint[] metricsPoints, int[] metricPointsToProcess, int startIndex, int targetCount)
     {
         this.metricsPoints = metricsPoints;
         this.metricPointsToProcess = metricPointsToProcess;
+        this.startIndex = startIndex;
         this.targetCount = targetCount;
     }
 
@@ -25,7 +27,7 @@ public readonly struct MetricPointsAccessor
     /// </summary>
     /// <returns><see cref="Enumerator"/>.</returns>
     public Enumerator GetEnumerator()
-        => new(this.metricsPoints, this.metricPointsToProcess, this.targetCount);
+        => new(this.metricsPoints, this.metricPointsToProcess, this.startIndex, this.targetCount);
 
 #pragma warning disable CA1034 // Nested types should not be visible - already part of public API
     /// <summary>
@@ -39,12 +41,12 @@ public readonly struct MetricPointsAccessor
         private readonly int targetCount;
         private int index;
 
-        internal Enumerator(MetricPoint[] metricsPoints, int[] metricPointsToProcess, int targetCount)
+        internal Enumerator(MetricPoint[] metricsPoints, int[] metricPointsToProcess, int startIndex, int targetCount)
         {
             this.metricsPoints = metricsPoints;
             this.metricPointsToProcess = metricPointsToProcess;
             this.targetCount = targetCount;
-            this.index = -1;
+            this.index = startIndex - 1;
         }
 
         /// <summary>
