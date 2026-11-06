@@ -14,7 +14,7 @@ internal sealed class ExceptionProcessor : BaseProcessor<Activity>
 {
     private const string ExceptionPointersKey = "otel.exception_pointers";
 
-    private readonly Func<IntPtr> fnGetExceptionPointers;
+    private readonly Func<nint> fnGetExceptionPointers;
 
     public ExceptionProcessor()
     {
@@ -26,39 +26,39 @@ internal sealed class ExceptionProcessor : BaseProcessor<Activity>
         var flags = BindingFlags.Static | BindingFlags.Public;
         var method = typeof(Marshal).GetMethod("GetExceptionPointers", flags, null, Type.EmptyTypes, null)
             ?? throw new InvalidOperationException("Marshal.GetExceptionPointers method could not be resolved reflectively.");
-        var lambda = Expression.Lambda<Func<IntPtr>>(Expression.Call(method));
+        var lambda = Expression.Lambda<Func<nint>>(Expression.Call(method));
         this.fnGetExceptionPointers = lambda.Compile();
 #endif
         this.fnGetExceptionPointers(); // attempt to access pointers to test for platform support
     }
 
     /// <inheritdoc />
-    public override void OnStart(Activity activity)
+    public override void OnStart(Activity data)
     {
         var pointers = this.fnGetExceptionPointers();
 
-        if (pointers != IntPtr.Zero)
+        if (pointers != 0)
         {
-            activity.SetTag(ExceptionPointersKey, pointers);
+            data.SetTag(ExceptionPointersKey, pointers);
         }
     }
 
     /// <inheritdoc />
-    public override void OnEnd(Activity activity)
+    public override void OnEnd(Activity data)
     {
-        var snapshot = activity.GetTagValue(ExceptionPointersKey) as IntPtr?;
+        var snapshot = data.GetTagValue(ExceptionPointersKey) as nint?;
 
         if (snapshot != null)
         {
-            activity.SetTag(ExceptionPointersKey, null);
+            data.SetTag(ExceptionPointersKey, null);
         }
 
         var pointers = this.fnGetExceptionPointers();
 
-        if (pointers != IntPtr.Zero && snapshot != pointers)
+        if (pointers != 0 && snapshot != pointers)
         {
 #pragma warning disable CS0618 // Type or member is obsolete
-            activity.SetStatus(Status.Error);
+            data.SetStatus(Status.Error);
 #pragma warning restore CS0618 // Type or member is obsolete
         }
     }

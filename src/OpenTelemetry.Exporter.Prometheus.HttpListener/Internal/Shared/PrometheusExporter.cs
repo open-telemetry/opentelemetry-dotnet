@@ -88,8 +88,8 @@ internal sealed class PrometheusExporter : BaseExporter<Metric>, IPullMetricExpo
     }
 
     /// <inheritdoc/>
-    public override ExportResult Export(in Batch<Metric> metrics)
-        => this.OnExport!(in metrics);
+    public override ExportResult Export(in Batch<Metric> batch)
+        => this.OnExport!(in batch);
 
     /// <inheritdoc/>
     protected override void Dispose(bool disposing)

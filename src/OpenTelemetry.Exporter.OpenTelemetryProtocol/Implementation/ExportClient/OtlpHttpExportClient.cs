@@ -38,7 +38,7 @@ internal sealed class OtlpHttpExportClient : OtlpExportClient
             }
 #endif
 
-            using var httpResponse = this.SendHttpRequest(httpRequest, cancellationToken);
+            using var httpResponse = this.SendHttpRequest(httpRequest, deadlineUtc, cancellationToken);
 
             if (this.IsResponseTooLarge(httpResponse, out var responseTooLarge))
             {

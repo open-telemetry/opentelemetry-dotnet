@@ -149,7 +149,6 @@ public sealed class DeclarativeConfigurationEventSourceTests
 
         Assert.Empty(ReadConfiguration(yaml));
 
-        Assert.Single(listener.Messages, e => e.EventId == 2);
         var notSet = Assert.Single(listener.Messages, e => e.EventId == 15);
         Assert.Equal(environmentVariable, notSet.Payload![0]);
         Assert.DoesNotContain(listener.Messages, e => e.EventId == 16);
@@ -637,7 +636,7 @@ public sealed class DeclarativeConfigurationEventSourceTests
 
         Assert.Throws<DeclarativeConfigurationException>(() => ReadConfiguration(yaml));
 
-        Assert.DoesNotContain(listener.CurrentMessages, e => e.EventId is 2 or 42);
+        Assert.DoesNotContain(listener.CurrentMessages, e => e.EventId == 42);
     }
 
     [Fact]

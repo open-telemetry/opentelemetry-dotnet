@@ -748,7 +748,7 @@ public sealed class TracerProviderSdkTests : IDisposable
         activity.Stop();
 
         Assert.False(activity.IsAllDataRequested);
-        Assert.Equal(ActivityTraceFlags.None, activity.ActivityTraceFlags);
+        Assert.Equal(ActivityTraceFlags.RandomTraceId, activity.ActivityTraceFlags);
         Assert.False(activity.Recorded);
         Assert.False(startCalled);
         Assert.False(endCalled);
@@ -1117,11 +1117,12 @@ public sealed class TracerProviderSdkTests : IDisposable
 
         Assert.True(activity.IsAllDataRequested);
         Assert.True(activity.ActivityTraceFlags.HasFlag(ActivityTraceFlags.Recorded));
+        Assert.True(activity.ActivityTraceFlags.HasFlag(ActivityTraceFlags.RandomTraceId));
 
         // Validating ActivityTraceFlags is not enough as it does not get reflected on
         // Id, If the Id is accessed before the sampler runs.
         // https://github.com/open-telemetry/opentelemetry-dotnet/issues/2700
-        Assert.EndsWith("-01", activity.Id, StringComparison.Ordinal);
+        Assert.EndsWith("-03", activity.Id, StringComparison.Ordinal);
 
         activity.Stop();
     }
@@ -1144,7 +1145,7 @@ public sealed class TracerProviderSdkTests : IDisposable
         // Validating ActivityTraceFlags is not enough as it does not get reflected on
         // Id, If the Id is accessed before the sampler runs.
         // https://github.com/open-telemetry/opentelemetry-dotnet/issues/2700
-        Assert.EndsWith("-00", activity.Id, StringComparison.Ordinal);
+        Assert.EndsWith("-02", activity.Id, StringComparison.Ordinal);
 
         activity.Stop();
     }
@@ -1172,7 +1173,7 @@ public sealed class TracerProviderSdkTests : IDisposable
         // Validating ActivityTraceFlags is not enough as it does not get reflected on
         // Id, If the Id is accessed before the sampler runs.
         // https://github.com/open-telemetry/opentelemetry-dotnet/issues/2700
-        Assert.EndsWith(hasRecordedFlag ? "-01" : "-00", activity.Id, StringComparison.Ordinal);
+        Assert.EndsWith(hasRecordedFlag ? "-03" : "-02", activity.Id, StringComparison.Ordinal);
 
         activity.Stop();
     }
@@ -1486,10 +1487,10 @@ public sealed class TracerProviderSdkTests : IDisposable
     [InlineData(false)]
     public void TracerProviderSdkBuildsWithSDKResource(bool useConfigure)
     {
-        using var tracerProvider = useConfigure ?
-            Sdk.CreateTracerProviderBuilder().SetResourceBuilder(
-                ResourceBuilder.CreateDefault().AddTelemetrySdk()).Build() :
-            Sdk.CreateTracerProviderBuilder().ConfigureResource(r => r.AddTelemetrySdk()).Build();
+        using var tracerProvider = useConfigure
+            ? Sdk.CreateTracerProviderBuilder().SetResourceBuilder(
+                ResourceBuilder.CreateDefault().AddTelemetrySdk()).Build()
+            : Sdk.CreateTracerProviderBuilder().ConfigureResource(r => r.AddTelemetrySdk()).Build();
         var resource = tracerProvider.GetResource();
         var attributes = resource.Attributes;
 
@@ -1600,6 +1601,26 @@ public sealed class TracerProviderSdkTests : IDisposable
 
         Assert.Contains(nonLegacyActivity.OperationName, onStartProcessedActivities); // Processor.OnStart is called since we added a legacy OperationName
         Assert.Contains(nonLegacyActivity.OperationName, onStopProcessedActivities);  // Processor.OnEnd is called since we added a legacy OperationName
+    }
+
+    [Fact]
+    public void LegacySourceMatchesLaterPatternWithoutTimingOut()
+    {
+        var prefix = Utils.GetCurrentMethodName();
+        var exportedItems = new List<Activity>();
+
+        using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+            .AddLegacySource(prefix + "*a*a*a*a*a*a*a*b")
+            .AddLegacySource(prefix + "*x")
+            .SetSampler(new AlwaysOnSampler())
+            .AddInMemoryExporter(exportedItems)
+            .Build();
+
+        using var activity = new Activity(prefix + new string('a', 1000) + "x");
+        activity.Start();
+        activity.Stop();
+
+        Assert.Same(activity, Assert.Single(exportedItems));
     }
 
     [Fact]

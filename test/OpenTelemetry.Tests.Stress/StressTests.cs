@@ -69,11 +69,13 @@ public abstract class StressTests<T> : IDisposable
                 description: "The average CPU cycles for each `Run()` invocation, based on a small sliding window of few hundreds of milliseconds.");
         }
 
-        using var meterProvider = options.PrometheusInternalMetricsPort != 0 ? Sdk.CreateMeterProviderBuilder()
-            .AddMeter(meter.Name)
-            .AddRuntimeInstrumentation()
-            .AddPrometheusHttpListener(o => o.Port = options.PrometheusInternalMetricsPort)
-            .Build() : null;
+        using var meterProvider = options.PrometheusInternalMetricsPort != 0
+            ? Sdk.CreateMeterProviderBuilder()
+                .AddMeter(meter.Name)
+                .AddRuntimeInstrumentation()
+                .AddPrometheusHttpListener(o => o.Port = options.PrometheusInternalMetricsPort)
+                .Build()
+            : null;
 
         var statistics = new MeasurementData[options.Concurrency];
         var watchForTotal = Stopwatch.StartNew();

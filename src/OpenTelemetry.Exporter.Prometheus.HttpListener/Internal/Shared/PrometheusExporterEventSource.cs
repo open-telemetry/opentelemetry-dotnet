@@ -111,4 +111,29 @@ internal sealed class PrometheusExporterEventSource : EventSource, IConfiguratio
     [Event(12, Message = "Failed to collect metrics for a scrape request; the scrape endpoint may be under heavy load.", Level = EventLevel.Error)]
     public void CollectFailed()
         => this.WriteEvent(12);
+
+    [Event(13, Message = "Unsupported attribute type '{0}' for '{1}'. Attribute will not be exported.", Level = EventLevel.Warning)]
+    public void UnsupportedAttributeType(string type, string key)
+        => this.WriteEvent(13, type, key);
+
+    [Event(
+        14,
+        Message = "Metrics scrape response abandoned because it made no write progress while another scrape was waiting.",
+        Level = EventLevel.Warning)]
+    public void ScrapeAbandoned()
+        => this.WriteEvent(14);
+
+    [Event(
+        15,
+        Message = "Dropped {0} series from the scrape response, such as those of metric '{1}', because they have the same name and labels as a series that was already written. This can be caused by metric or tag names that are the same once escaped, or by metrics of different meters when scope information is disabled.",
+        Level = EventLevel.Warning)]
+    public void DuplicateSeriesDropped(int count, string firstMetricName)
+        => this.WriteEvent(15, count, firstMetricName);
+
+    [Event(
+        16,
+        Message = "Dropping metric family '{0}' because its name is that of a sample which is written for metric family '{1}'.",
+        Level = EventLevel.Warning)]
+    public void ConflictingSampleName(string metricName, string generatedFor)
+        => this.WriteEvent(16, metricName, generatedFor);
 }

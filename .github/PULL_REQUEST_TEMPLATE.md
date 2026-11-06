@@ -11,7 +11,7 @@ Please provide a brief description of the changes here.
 * [ ] Tests added/updated
 * [ ] `CHANGELOG.md` file(s) updated for non-trivial changes
 * [ ] Changes in public API reviewed (if applicable)
-* [ ] [AI usage][gen-ai] disclosure:
+* [AI usage][gen-ai] disclosure:
   * [ ] No AI used
   * [ ] AI-assisted
   * [ ] Bulk AI-generated

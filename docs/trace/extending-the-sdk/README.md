@@ -264,14 +264,14 @@ Custom processors can be implemented to cover more scenarios:
 ```csharp
 class MyProcessor : BaseProcessor<Activity>
 {
-    public override void OnStart(Activity activity)
+    public override void OnStart(Activity data)
     {
-        Console.WriteLine($"OnStart: {activity.DisplayName}");
+        Console.WriteLine($"OnStart: {data.DisplayName}");
     }
 
-    public override void OnEnd(Activity activity)
+    public override void OnEnd(Activity data)
     {
-        Console.WriteLine($"OnEnd: {activity.DisplayName}");
+        Console.WriteLine($"OnEnd: {data.DisplayName}");
     }
 }
 ```

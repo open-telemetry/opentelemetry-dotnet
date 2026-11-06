@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly">
 
   <PropertyGroup>
-    <TargetFrameworks>net10.0</TargetFrameworks>
+    <TargetFrameworks>net11.0;net10.0</TargetFrameworks>
     <Description>Blazor WebAssembly application used to validate that the OpenTelemetry SDK works end-to-end under the browser WASM runtime.</Description>
     <NoWarn>$(NoWarn);CA1515</NoWarn>
     <!--

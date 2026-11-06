@@ -25,6 +25,17 @@ public class WildcardHelperTests
     }
 
     [Fact]
+    public void GetWildcardRegex_MatchesLaterPatternWithoutTimingOut()
+    {
+        var regex = WildcardHelper.GetWildcardRegex(["*a*a*a*a*a*a*a*b", "*x"]);
+        var input = new string('a', 1000) + "x";
+
+        // A timeout in the first alternative must not prevent the matching
+        // alternative from being considered. No elapsed-time assertion is needed.
+        Assert.True(WildcardHelper.IsMatch(regex, input));
+    }
+
+    [Fact]
     public void GetWildcardRegex_HandlesLargeNumberOfPatterns()
     {
         var patterns = Enumerable.Range(0, 300).Select(i => $"Some.Namespace.Source.{i}.*").ToArray();
@@ -67,6 +78,29 @@ public class WildcardHelperTests
     [InlineData(new[] { "a.?" }, "a.", false)]
     [InlineData(new[] { "a.?.*" }, "a.b.c", true)]
     [InlineData(new[] { "a.?.*" }, "a.bc.c", false)]
+    [InlineData(new[] { "a*b*c" }, "a.b.b.c.c", true)]
+    [InlineData(new[] { "a*b*c" }, "A.B.C", true)]
+    [InlineData(new[] { "a*b*c" }, "a.b.c.d", false)]
+    [InlineData(new[] { "a*b*c" }, "a.c.b", false)]
+    [InlineData(new[] { "a*b*b" }, "ab", false)]
+    [InlineData(new[] { "a*b*b" }, "abb", true)]
+    [InlineData(new[] { "*ab*ab*" }, "aab.aab", true)]
+    [InlineData(new[] { "*ab*ab*" }, "aab.aa", false)]
+    [InlineData(new[] { "*a?c*c" }, "abcc", true)]
+    [InlineData(new[] { "*a?c*c" }, "abc", false)]
+    [InlineData(new[] { "a***b**c" }, "a.b.c", true)]
+    [InlineData(new[] { "a***b**c" }, "a.c", false)]
+    [InlineData(new[] { "**" }, "", true)]
+    [InlineData(new[] { "*?*" }, "", false)]
+    [InlineData(new[] { "a*b*c", "a*d" }, "a.b.d", true)]
+    [InlineData(new[] { "a*b*c", "a*d" }, "a.b.e", false)]
+    [InlineData(new[] { "a*b?c" }, "a\nb\nc", false)]
+    [InlineData(new[] { "a*b*" }, "a.b\n\n", false)]
+    [InlineData(new[] { "a*b*" }, "a.b\n", false)]
+    [InlineData(new[] { "a*\nb*c" }, "a.x\nb.c", true)]
+    [InlineData(new[] { "*\n*\n*" }, "a\nb\nc", true)]
+    [InlineData(new[] { "a*b*c" }, "a\rb\rc", true)]
+    [InlineData(new[] { "*a[0].*b(c)*" }, "x.a[0].y.b(c).z", true)]
     public void WildcardRegex_ShouldMatch(string[] patterns, string matchWith, bool isMatch)
     {
         var regex = WildcardHelper.GetWildcardRegex(patterns);
@@ -74,6 +108,38 @@ public class WildcardHelperTests
         var result = regex.IsMatch(matchWith);
 
         Assert.True(result == isMatch);
+    }
+
+    [Theory]
+    [InlineData("foo", "foo", "foo\n")]
+    [InlineData("*foo", "foo", "foo\n")]
+    [InlineData("f?o", "foo", "foo\n")]
+    [InlineData("foo*bar", "foobar", "foobar\n")]
+    public void GetWildcardRegex_DoesNotMatchNameWithAdditionalTrailingLineFeed(string pattern, string name, string nameWithLineFeed)
+    {
+        var regex = WildcardHelper.GetWildcardRegex([pattern]);
+
+        Assert.True(WildcardHelper.IsMatch(regex, name));
+        Assert.False(WildcardHelper.IsMatch(regex, nameWithLineFeed));
+    }
+
+    [Theory]
+    [InlineData("foo*", "foo", true)]
+    [InlineData("foo*", "foobar", true)]
+    [InlineData("foo*", "FOO.bar", true)]
+    [InlineData("foo*", "f", false)]
+    [InlineData("foo*", "bar.foo", false)]
+    [InlineData("*", "anything", true)]
+    public void GetWildcardRegex_AgreesWithTheWildcardPrefixForTheSamePattern(string pattern, string matchWith, bool expected)
+    {
+        // The prefix is used instead of the regular expression when there is only one pattern which is a prefix,
+        // so the two must give the same answer, which is whether the name starts with the prefix.
+        // Whether they agree for names that contain line feeds is not defined.
+        Assert.True(WildcardHelper.TryGetWildcardPrefix(pattern, out _));
+
+        var regex = WildcardHelper.GetWildcardRegex([pattern]);
+
+        Assert.Equal(expected, WildcardHelper.IsMatch(regex, matchWith));
     }
 
     [Fact]

@@ -33,10 +33,9 @@ internal static class ProtobufOtlpResourceSerializer
         return writePosition + cached.Length;
     }
 
-    private static byte[] SerializeResourceToBytes(Resource resource)
+    internal static byte[] SerializeResourceToBytes(Resource resource, ArrayPool<byte> pool, int maxBufferSize)
     {
-        var pool = ArrayPool<byte>.Shared;
-        var buffer = pool.Rent(InitialBufferSize);
+        var buffer = pool.Rent(Math.Min(InitialBufferSize, maxBufferSize));
 
         try
         {
@@ -45,12 +44,27 @@ internal static class ProtobufOtlpResourceSerializer
                 try
                 {
                     var length = WriteResourceCore(buffer, 0, resource);
+                    if (length > maxBufferSize)
+                    {
+                        throw new InvalidOperationException("The serialized resource exceeds the maximum buffer size.");
+                    }
+
                     return buffer.AsSpan(0, length).ToArray();
                 }
                 catch (Exception ex) when (ex is IndexOutOfRangeException or ArgumentException)
                 {
-                    ProtobufSerializer.ReturnBuffer(pool, buffer);
-                    buffer = pool.Rent(buffer.Length * 2);
+                    if (buffer.Length >= maxBufferSize)
+                    {
+                        // A buffer-full exception would make the outer serializer
+                        // grow its buffer and repeat this failed serialization.
+                        throw new InvalidOperationException(
+                            "The serialized resource exceeds the maximum buffer size.",
+                            ex);
+                    }
+
+                    var smallerBuffer = buffer;
+                    buffer = pool.Rent((int)Math.Min((long)buffer.Length * 2, maxBufferSize));
+                    ProtobufSerializer.ReturnBuffer(pool, smallerBuffer);
                 }
             }
         }
@@ -59,6 +73,9 @@ internal static class ProtobufOtlpResourceSerializer
             ProtobufSerializer.ReturnBuffer(pool, buffer);
         }
     }
+
+    private static byte[] SerializeResourceToBytes(Resource resource) =>
+        SerializeResourceToBytes(resource, ArrayPool<byte>.Shared, ProtobufSerializer.MaxBufferSize);
 
     private static int WriteResourceCore(byte[] buffer, int writePosition, Resource resource)
     {

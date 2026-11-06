@@ -7,11 +7,11 @@ using OpenTelemetry.Logs;
 
 internal sealed class MyRedactionProcessor : BaseProcessor<LogRecord>
 {
-    public override void OnEnd(LogRecord logRecord)
+    public override void OnEnd(LogRecord data)
     {
-        if (logRecord.Attributes != null)
+        if (data.Attributes != null)
         {
-            logRecord.Attributes = new MyClassWithRedactionEnumerator(logRecord.Attributes);
+            data.Attributes = new MyClassWithRedactionEnumerator(data.Attributes);
         }
     }
 

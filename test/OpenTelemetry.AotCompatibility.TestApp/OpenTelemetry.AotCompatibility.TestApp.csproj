@@ -8,6 +8,11 @@
     <SelfContained>true</SelfContained>
   </PropertyGroup>
 
+  <!-- HACK Workaround for https://github.com/dotnet/sdk/issues/56618 -->
+  <PropertyGroup>
+    <UseOptimizedPublish>false</UseOptimizedPublish>
+  </PropertyGroup>
+
   <ItemGroup>
     <TrimmerRootAssembly Include="OpenTelemetry.Api.ProviderBuilderExtensions" />
     <TrimmerRootAssembly Include="OpenTelemetry.Api" />

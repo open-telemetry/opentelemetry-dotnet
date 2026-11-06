@@ -29,7 +29,9 @@ public abstract class BatchExportProcessor<T> : BaseExportProcessor<T>
     // Number of OnEnd calls currently in-flight (past the shutdown check).
     // OnShutdown waits for this to reach zero so those items finish enqueueing
     // before teardown, keeping the processed vs. already_shutdown counting race-free.
-    private int activeOnEndCount;
+    // It is striped per processor because every OnEnd on every thread touches it,
+    // and a single shared counter would serialize all of them on one cache line.
+    private readonly StripedCounter activeOnEndCount = new();
     private int isShutdown;
     private bool disposed;
 
@@ -89,37 +91,41 @@ public abstract class BatchExportProcessor<T> : BaseExportProcessor<T>
     /// Marks the beginning of an <see cref="BaseProcessor{T}.OnEnd(T)"/> call which may enqueue data.
     /// </summary>
     /// <remarks>
-    /// When this returns <see langword="true"/> the caller MUST invoke <see
-    /// cref="ExitOnEnd"/> once it is done enqueueing. When it returns <see
-    /// langword="false"/> the processor has already been shut down and the
-    /// caller MUST NOT enqueue.
+    /// When this returns a non-negative value the caller MUST invoke <see
+    /// cref="ExitOnEnd"/> with that value once it is done enqueueing. When it
+    /// returns a negative value the processor has already been shut down and
+    /// the caller MUST NOT enqueue.
     /// </remarks>
-    /// <returns><see langword="true"/> if the caller may proceed to enqueue data.</returns>
+    /// <returns>
+    /// The token to pass to <see cref="ExitOnEnd"/> if the caller may proceed
+    /// to enqueue data; otherwise a negative value.
+    /// </returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal bool TryEnterOnEnd()
+    internal int TryEnterOnEnd()
     {
         if (this.IsShutdown)
         {
-            return false;
+            return -1;
         }
 
-        Interlocked.Increment(ref this.activeOnEndCount);
+        var token = this.activeOnEndCount.Enter();
 
         if (this.IsShutdown)
         {
-            Interlocked.Decrement(ref this.activeOnEndCount);
-            return false;
+            this.activeOnEndCount.Exit(token);
+            return -1;
         }
 
-        return true;
+        return token;
     }
 
     /// <summary>
     /// Marks the end of an <see cref="BaseProcessor{T}.OnEnd(T)"/> call started by <see cref="TryEnterOnEnd"/>.
     /// </summary>
+    /// <param name="token">The value returned by <see cref="TryEnterOnEnd"/>.</param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal void ExitOnEnd()
-        => Interlocked.Decrement(ref this.activeOnEndCount);
+    internal void ExitOnEnd(int token)
+        => this.activeOnEndCount.Exit(token);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal bool TryExport(T data)
@@ -250,7 +256,7 @@ public abstract class BatchExportProcessor<T> : BaseExportProcessor<T>
     /// <returns>The remaining timeout available for the rest of the shutdown sequence.</returns>
     private int WaitForActiveOnEndCalls(int timeoutMilliseconds)
     {
-        if (Volatile.Read(ref this.activeOnEndCount) == 0)
+        if (this.activeOnEndCount.IsZero())
         {
             return timeoutMilliseconds;
         }
@@ -259,7 +265,7 @@ public abstract class BatchExportProcessor<T> : BaseExportProcessor<T>
 
         if (timeoutMilliseconds == Timeout.Infinite)
         {
-            while (Volatile.Read(ref this.activeOnEndCount) != 0)
+            while (!this.activeOnEndCount.IsZero())
             {
                 spinner.SpinOnce();
             }
@@ -271,7 +277,7 @@ public abstract class BatchExportProcessor<T> : BaseExportProcessor<T>
         int remainingMilliseconds;
 
         while ((remainingMilliseconds = Stopwatch.Remaining(timeoutMilliseconds, startedAt)) > 0
-            && Volatile.Read(ref this.activeOnEndCount) != 0)
+            && !this.activeOnEndCount.IsZero())
         {
             spinner.SpinOnce();
         }

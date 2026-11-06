@@ -70,9 +70,10 @@ internal sealed class DeclarativeConfigurationDocumentAccessor
         FilePath filePath,
         Func<FilePath, DeclarativeConfigurationDocument> readDocument)
     {
+        DeclarativeConfigurationDocument document;
         try
         {
-            return readDocument(filePath);
+            document = readDocument(filePath);
         }
         catch (DeclarativeConfigurationException ex)
         {
@@ -85,6 +86,20 @@ internal sealed class DeclarativeConfigurationDocumentAccessor
             throw new DeclarativeConfigurationException(
                 $"Failed to load declarative configuration from '{filePath.DisplayPath}': {ex.Message}", ex);
         }
+
+        foreach (var (path, stability, position) in document.UnappliedProperties)
+        {
+            if (stability == SchemaStability.Stable)
+            {
+                OpenTelemetryDeclarativeConfigurationEventSource.Log.ConfiguredPropertyNotApplied(filePath.DisplayPath, path, position.Line, position.Column);
+            }
+            else
+            {
+                OpenTelemetryDeclarativeConfigurationEventSource.Log.DevelopmentPropertyNotApplied(filePath.DisplayPath, path, position.Line, position.Column);
+            }
+        }
+
+        return document;
     }
 
     private DeclarativeConfigurationDocument GetDocument(bool triggeredByProvider)

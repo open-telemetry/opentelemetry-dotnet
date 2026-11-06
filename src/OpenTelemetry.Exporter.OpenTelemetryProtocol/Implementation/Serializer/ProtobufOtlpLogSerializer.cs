@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Trace;
@@ -19,6 +20,13 @@ internal static class ProtobufOtlpLogSerializer
     [ThreadStatic]
     private static Dictionary<InstrumentationScope, List<LogRecord>>? scopeLogsList;
 
+    // Maps each distinct Logger instance seen in the batch to its scope's list.
+    // Logger instances are long-lived (one per ILogger category), so a reference
+    // lookup here resolves almost every record without hashing the three scope
+    // strings in InstrumentationScope.
+    [ThreadStatic]
+    private static Dictionary<Logger, List<LogRecord>>? loggerLogsList;
+
     [ThreadStatic]
     private static SerializationState? threadSerializationState;
 
@@ -29,10 +37,13 @@ internal static class ProtobufOtlpLogSerializer
         ExperimentalOptions experimentalOptions,
         Resources.Resource? resource,
         in Batch<LogRecord> logRecordBatch,
+        out int dirtyLength,
         int maxBufferSize = ProtobufSerializer.MaxBufferSize)
     {
+        dirtyLength = 0;
         logsListPool ??= [];
         scopeLogsList ??= [];
+        loggerLogsList ??= new(LoggerReferenceEqualityComparer.Instance);
 
         // Note: The grouped batch is held in thread-static state, so it has to be
         // released even when serialization fails. TryWriteResourceLogs rethrows
@@ -44,11 +55,16 @@ internal static class ProtobufOtlpLogSerializer
             foreach (var logRecord in logRecordBatch)
             {
                 var logger = logRecord.Logger;
-                var scope = new InstrumentationScope(logger.Name, logger.Version, logger.SchemaUrl);
-                if (!scopeLogsList.TryGetValue(scope, out var logRecords))
+                if (!loggerLogsList.TryGetValue(logger, out var logRecords))
                 {
-                    logRecords = logsListPool.Count > 0 ? logsListPool.Pop() : [];
-                    scopeLogsList[scope] = logRecords;
+                    var scope = new InstrumentationScope(logger.Name, logger.Version, logger.SchemaUrl);
+                    if (!scopeLogsList.TryGetValue(scope, out logRecords))
+                    {
+                        logRecords = logsListPool.Count > 0 ? logsListPool.Pop() : [];
+                        scopeLogsList[scope] = logRecords;
+                    }
+
+                    loggerLogsList[logger] = logRecords;
                 }
 
                 if (logRecord.Source == LogRecord.LogRecordSource.FromSharedPool)
@@ -70,6 +86,7 @@ internal static class ProtobufOtlpLogSerializer
                 experimentalOptions,
                 resource,
                 scopeLogsList,
+                ref dirtyLength,
                 maxBufferSize);
         }
         finally
@@ -91,6 +108,7 @@ internal static class ProtobufOtlpLogSerializer
         ExperimentalOptions experimentalOptions,
         Resources.Resource? resource,
         Dictionary<InstrumentationScope, List<LogRecord>> scopeLogs,
+        ref int dirtyLength,
         int maxBufferSize = ProtobufSerializer.MaxBufferSize)
     {
         while (true)
@@ -103,7 +121,7 @@ internal static class ProtobufOtlpLogSerializer
                 var logsDataLengthPosition = writePosition;
                 writePosition += ReserveSizeForLength;
 
-                writePosition = WriteResourceLogs(buffer, writePosition, sdkLimitOptions, experimentalOptions, resource, scopeLogs);
+                writePosition = WriteResourceLogs(buffer, writePosition, sdkLimitOptions, experimentalOptions, resource, scopeLogs, ref dirtyLength);
 
                 ProtobufSerializer.WriteReservedLength(buffer, logsDataLengthPosition, writePosition - (logsDataLengthPosition + ReserveSizeForLength));
 
@@ -114,6 +132,7 @@ internal static class ProtobufOtlpLogSerializer
             {
                 // Reset write position and attempt to increase the buffer size
                 writePosition = entryWritePosition;
+                dirtyLength = 0;
 
                 if (!ProtobufSerializer.IncreaseBufferSize(ref buffer, OtlpSignalType.Logs, maxBufferSize))
                 {
@@ -129,6 +148,8 @@ internal static class ProtobufOtlpLogSerializer
 
     internal static void ReturnLogRecordListToPool()
     {
+        loggerLogsList?.Clear();
+
         if (scopeLogsList is { Count: > 0 })
         {
             foreach (var entry in scopeLogsList)
@@ -153,10 +174,10 @@ internal static class ProtobufOtlpLogSerializer
         }
     }
 
-    internal static int WriteResourceLogs(byte[] buffer, int writePosition, SdkLimitOptions sdkLimitOptions, ExperimentalOptions experimentalOptions, Resources.Resource? resource, Dictionary<InstrumentationScope, List<LogRecord>> scopeLogs)
+    internal static int WriteResourceLogs(byte[] buffer, int writePosition, SdkLimitOptions sdkLimitOptions, ExperimentalOptions experimentalOptions, Resources.Resource? resource, Dictionary<InstrumentationScope, List<LogRecord>> scopeLogs, ref int dirtyLength)
     {
         writePosition = ProtobufOtlpResourceSerializer.WriteResource(buffer, writePosition, resource);
-        writePosition = WriteScopeLogs(buffer, writePosition, sdkLimitOptions, experimentalOptions, scopeLogs);
+        writePosition = WriteScopeLogs(buffer, writePosition, sdkLimitOptions, experimentalOptions, scopeLogs, ref dirtyLength);
 
         if (resource?.SchemaUrl is { Length: > 0 } schemaUrl)
         {
@@ -166,7 +187,7 @@ internal static class ProtobufOtlpLogSerializer
         return writePosition;
     }
 
-    internal static int WriteScopeLogs(byte[] buffer, int writePosition, SdkLimitOptions sdkLimitOptions, ExperimentalOptions experimentalOptions, Dictionary<InstrumentationScope, List<LogRecord>> scopeLogs)
+    internal static int WriteScopeLogs(byte[] buffer, int writePosition, SdkLimitOptions sdkLimitOptions, ExperimentalOptions experimentalOptions, Dictionary<InstrumentationScope, List<LogRecord>> scopeLogs, ref int dirtyLength)
     {
         if (scopeLogs != null)
         {
@@ -176,7 +197,7 @@ internal static class ProtobufOtlpLogSerializer
                 var resourceLogsScopeLogsLengthPosition = writePosition;
                 writePosition += ReserveSizeForLength;
 
-                writePosition = WriteScopeLog(buffer, writePosition, sdkLimitOptions, experimentalOptions, entry.Key, entry.Value);
+                writePosition = WriteScopeLog(buffer, writePosition, sdkLimitOptions, experimentalOptions, entry.Key, entry.Value, ref dirtyLength);
                 ProtobufSerializer.WriteReservedLength(buffer, resourceLogsScopeLogsLengthPosition, writePosition - (resourceLogsScopeLogsLengthPosition + ReserveSizeForLength));
             }
         }
@@ -184,7 +205,7 @@ internal static class ProtobufOtlpLogSerializer
         return writePosition;
     }
 
-    internal static int WriteScopeLog(byte[] buffer, int writePosition, SdkLimitOptions sdkLimitOptions, ExperimentalOptions experimentalOptions, in InstrumentationScope scope, List<LogRecord> logRecords)
+    internal static int WriteScopeLog(byte[] buffer, int writePosition, SdkLimitOptions sdkLimitOptions, ExperimentalOptions experimentalOptions, in InstrumentationScope scope, List<LogRecord> logRecords, ref int dirtyLength)
     {
         writePosition = ProtobufSerializer.WriteTag(buffer, writePosition, ProtobufOtlpLogFieldNumberConstants.ScopeLogs_Scope, ProtobufWireType.LEN);
 
@@ -202,7 +223,7 @@ internal static class ProtobufOtlpLogSerializer
 
         for (var i = 0; i < logRecords.Count; i++)
         {
-            writePosition = WriteLogRecord(buffer, writePosition, sdkLimitOptions, experimentalOptions, logRecords[i]);
+            writePosition = WriteLogRecord(buffer, writePosition, sdkLimitOptions, experimentalOptions, logRecords[i], ref dirtyLength);
         }
 
         if (scope.SchemaUrl is { Length: > 0 })
@@ -213,7 +234,7 @@ internal static class ProtobufOtlpLogSerializer
         return writePosition;
     }
 
-    internal static int WriteLogRecord(byte[] buffer, int writePosition, SdkLimitOptions sdkLimitOptions, ExperimentalOptions experimentalOptions, LogRecord logRecord)
+    internal static int WriteLogRecord(byte[] buffer, int writePosition, SdkLimitOptions sdkLimitOptions, ExperimentalOptions experimentalOptions, LogRecord logRecord, ref int dirtyLength)
     {
         var state = threadSerializationState ??= new();
 
@@ -223,6 +244,7 @@ internal static class ProtobufOtlpLogSerializer
         {
             Buffer = buffer,
             WritePosition = writePosition,
+            DirtyLength = dirtyLength,
             TagCount = 0,
             DroppedTagCount = 0,
         };
@@ -234,7 +256,8 @@ internal static class ProtobufOtlpLogSerializer
         otlpTagWriterState.WritePosition += ReserveSizeForLength;
 
         var timeUnixNano = logRecord.Timestamp == DateTime.MinValue ? 0 : (ulong)logRecord.Timestamp.ToUnixTimeNanoseconds();
-        var observedTimeUnixNano = logRecord.ObservedTimestamp == logRecord.Timestamp ? timeUnixNano
+        var observedTimeUnixNano = logRecord.ObservedTimestamp == logRecord.Timestamp
+            ? timeUnixNano
             : (ulong)logRecord.ObservedTimestamp.ToUnixTimeNanoseconds();
         otlpTagWriterState.WritePosition = ProtobufSerializer.WriteFixed64WithTag(otlpTagWriterState.Buffer, otlpTagWriterState.WritePosition, ProtobufOtlpLogFieldNumberConstants.LogRecord_Time_Unix_Nano, timeUnixNano);
         otlpTagWriterState.WritePosition = ProtobufSerializer.WriteFixed64WithTag(otlpTagWriterState.Buffer, otlpTagWriterState.WritePosition, ProtobufOtlpLogFieldNumberConstants.LogRecord_Observed_Time_Unix_Nano, observedTimeUnixNano);
@@ -305,7 +328,7 @@ internal static class ProtobufOtlpLogSerializer
                 }
             }
 
-            // Supports setting Body directly on LogRecord for the Logs Bridge API.
+            // Supports setting Body directly on LogRecord for the Logs API.
             if (!isLogRecordBodySet && logRecord.Body != null)
             {
                 // If {OriginalFormat} is not present in the attributes,
@@ -342,6 +365,7 @@ internal static class ProtobufOtlpLogSerializer
 
         ProtobufSerializer.WriteReservedLength(otlpTagWriterState.Buffer, logRecordLengthPosition, otlpTagWriterState.WritePosition - (logRecordLengthPosition + ReserveSizeForLength));
 
+        dirtyLength = otlpTagWriterState.DirtyLength;
         return otlpTagWriterState.WritePosition;
 
         static void ProcessScope(LogRecordScope scope, SerializationState state)
@@ -462,5 +486,20 @@ internal static class ProtobufOtlpLogSerializer
         public int? AttributeValueLengthLimit;
         public int AttributeCountLimit;
         public ProtobufOtlpTagWriter.OtlpTagWriterState TagWriterState;
+    }
+
+    private sealed class LoggerReferenceEqualityComparer : IEqualityComparer<Logger>
+    {
+        public static readonly LoggerReferenceEqualityComparer Instance = new();
+
+        private LoggerReferenceEqualityComparer()
+        {
+        }
+
+        public bool Equals(Logger? x, Logger? y)
+            => ReferenceEquals(x, y);
+
+        public int GetHashCode(Logger obj)
+            => RuntimeHelpers.GetHashCode(obj);
     }
 }

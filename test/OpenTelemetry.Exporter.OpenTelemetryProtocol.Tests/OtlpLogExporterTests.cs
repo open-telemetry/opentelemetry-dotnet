@@ -544,9 +544,9 @@ public class OtlpLogExporterTests
     }
 
     [Fact]
-    public void CheckToOtlpLogRecordTimestamps_BridgeApi_UnsetTimestamp()
+    public void CheckToOtlpLogRecordTimestamps_LogsApi_UnsetTimestamp()
     {
-        // When the Bridge API caller leaves Timestamp as DateTime.MinValue
+        // When the Logs API caller leaves Timestamp as DateTime.MinValue
         // (not set), the serializer must write:
         //   time_unix_nano         = 0   (unknown/missing per OTLP spec)
         //   observed_time_unix_nano >= the time of observation (MUST be set per OTLP spec)
@@ -555,13 +555,13 @@ public class OtlpLogExporterTests
             .AddInMemoryExporter(logRecords)
             .Build();
 
-        var bridgeLogger = loggerProvider.GetLogger("OtlpLogExporterTests");
+        var logger = loggerProvider.GetLogger("OtlpLogExporterTests");
 
         // Capture a lower-bound for the observation timestamp before emitting.
         var beforeEmitUtc = DateTime.UtcNow;
 
         // Emit with default LogRecordData -- Timestamp stays DateTime.MinValue.
-        bridgeLogger.EmitLog(new LogRecordData());
+        logger.EmitLog(new LogRecordData());
 
         Assert.Single(logRecords);
         Assert.Equal(DateTime.MinValue, logRecords[0].Timestamp);
@@ -581,18 +581,18 @@ public class OtlpLogExporterTests
     }
 
     [Fact]
-    public void CheckToOtlpLogRecordTimestamps_BridgeApi_DefaultData()
+    public void CheckToOtlpLogRecordTimestamps_LogsApi_DefaultData()
     {
         var logRecords = new List<LogRecord>();
         using var loggerProvider = Sdk.CreateLoggerProviderBuilder()
             .AddInMemoryExporter(logRecords)
             .Build();
 
-        var bridgeLogger = loggerProvider.GetLogger("OtlpLogExporterTests");
+        var logger = loggerProvider.GetLogger("OtlpLogExporterTests");
 
         var beforeEmitUtc = DateTime.UtcNow;
 
-        bridgeLogger.EmitLog(default);
+        logger.EmitLog(default);
 
         Assert.Single(logRecords);
         Assert.Equal(DateTime.MinValue, logRecords[0].Timestamp);
@@ -610,21 +610,21 @@ public class OtlpLogExporterTests
     }
 
     [Fact]
-    public void CheckToOtlpLogRecordTimestamps_BridgeApi_TimestampSetObservedTimestampUnset()
+    public void CheckToOtlpLogRecordTimestamps_LogsApi_TimestampSetObservedTimestampUnset()
     {
         var logRecords = new List<LogRecord>();
         using var loggerProvider = Sdk.CreateLoggerProviderBuilder()
             .AddInMemoryExporter(logRecords)
             .Build();
 
-        var bridgeLogger = loggerProvider.GetLogger("OtlpLogExporterTests");
+        var logger = loggerProvider.GetLogger("OtlpLogExporterTests");
         var timestamp = new DateTime(2020, 1, 2, 3, 4, 5, DateTimeKind.Utc);
         LogRecordData data = default;
         data.Timestamp = timestamp;
 
         var beforeEmitUtc = DateTime.UtcNow;
 
-        bridgeLogger.EmitLog(data);
+        logger.EmitLog(data);
 
         Assert.Single(logRecords);
         Assert.Equal(timestamp, logRecords[0].Timestamp);
@@ -849,7 +849,7 @@ public class OtlpLogExporterTests
     [Theory]
     [InlineData(true)]
     [InlineData(false)]
-    public void LogRecordBodyIsExportedWhenUsingBridgeApi(bool isBodySet)
+    public void LogRecordBodyIsExportedWhenUsingLogsApi(bool isBodySet)
     {
         LogRecordAttributeList attributes = default;
         attributes.Add("name", "tomato");
@@ -948,8 +948,8 @@ public class OtlpLogExporterTests
             .AddInMemoryExporter(logRecords)
             .Build();
 
-        var bridgeLogger = loggerProvider.GetLogger("OtlpLogExporterTests");
-        bridgeLogger.EmitLog(new LogRecordData(), attributes);
+        var logger = loggerProvider.GetLogger("OtlpLogExporterTests");
+        logger.EmitLog(new LogRecordData(), attributes);
 
         Assert.Single(logRecords);
 
@@ -1055,6 +1055,34 @@ public class OtlpLogExporterTests
 
         // Assert.
         Assert.True(testExportClient.SendExportRequestCalled);
+    }
+
+    [Fact]
+    public void Export_ProcessorTimeoutShorterThanExporterTimeout_LimitsExportDeadline()
+    {
+        // Arrange
+        var testExportClient = new TestExportClient();
+        var exporterOptions = new OtlpExporterOptions();
+        using var transmissionHandler = new OtlpExporterTransmissionHandler(testExportClient, exporterOptions.TimeoutMilliseconds);
+#pragma warning disable CA2000 // Dispose objects before losing scope
+        using var processor = new BatchLogRecordExportProcessor(
+            new OtlpLogExporter(
+                exporterOptions,
+                new SdkLimitOptions(),
+                new ExperimentalOptions(),
+                transmissionHandler),
+            exporterTimeoutMilliseconds: 500);
+#pragma warning restore CA2000 // Dispose objects before losing scope
+
+        // Act
+        var before = DateTime.UtcNow;
+        processor.OnEnd(new LogRecord());
+        Assert.True(processor.ForceFlush());
+        var after = DateTime.UtcNow;
+
+        // Assert
+        Assert.True(testExportClient.SendExportRequestCalled);
+        Assert.InRange(testExportClient.LastDeadlineUtc, before.AddMilliseconds(500), after.AddMilliseconds(500));
     }
 
     [Fact]
@@ -1955,7 +1983,7 @@ public class OtlpLogExporterTests
     [Theory]
     [InlineData("my_instrumentation_scope_name", "my_instrumentation_scope_name")]
     [InlineData(null, "")]
-    public void LogRecordLoggerNameIsExportedWhenUsingBridgeApi(string? loggerName, string expectedScopeName)
+    public void LogRecordLoggerNameIsExportedWhenUsingLogsApi(string? loggerName, string expectedScopeName)
     {
         var logRecords = new List<LogRecord>();
 
@@ -1985,7 +2013,7 @@ public class OtlpLogExporterTests
     [InlineData(null, "")]
     [InlineData("", "")]
 #pragma warning disable CA1054 // Change the type of parameter from 'string' to 'System.Uri'
-    public void LogRecordLoggerSchemaUrlIsExportedWhenUsingBridgeApi(string? schemaUrl, string expectedSchemaUrl)
+    public void LogRecordLoggerSchemaUrlIsExportedWhenUsingLogsApi(string? schemaUrl, string expectedSchemaUrl)
 #pragma warning restore CA1054 // Change the type of parameter from 'string' to 'System.Uri'
     {
         var logRecords = new List<LogRecord>();
@@ -2083,7 +2111,7 @@ public class OtlpLogExporterTests
     [InlineData(null, "")]
     [InlineData("", "")]
     [InlineData("   ", "   ")]
-    public void LogRecordLoggerVersionIsExportedWhenUsingBridgeApi(string? version, string expectedVersion)
+    public void LogRecordLoggerVersionIsExportedWhenUsingLogsApi(string? version, string expectedVersion)
     {
         var logRecords = new List<LogRecord>();
 
@@ -2148,7 +2176,7 @@ public class OtlpLogExporterTests
     [Theory]
     [InlineData(true)]
     [InlineData(false)]
-    public void LogRecordEventNameIsExportedWhenUsingBridgeApi(bool emitEventName)
+    public void LogRecordEventNameIsExportedWhenUsingLogsApi(bool emitEventName)
     {
         LogRecordAttributeList attributes = default;
         attributes.Add("name", "tomato");
@@ -2214,7 +2242,7 @@ public class OtlpLogExporterTests
         var buffer = ProtobufSerializer.RentBuffer(50);
         try
         {
-            var writePosition = ProtobufOtlpLogSerializer.WriteLogsData(ref buffer, 0, DefaultSdkLimitOptions, new(), ResourceBuilder.CreateEmpty().Build(), batch);
+            var writePosition = ProtobufOtlpLogSerializer.WriteLogsData(ref buffer, 0, DefaultSdkLimitOptions, new(), ResourceBuilder.CreateEmpty().Build(), batch, out _);
             using var stream = new MemoryStream(buffer, 0, writePosition);
             var logsData = OtlpLogs.LogsData.Parser.ParseFrom(stream);
             var request = new OtlpCollector.ExportLogsServiceRequest();
@@ -2379,7 +2407,7 @@ public class OtlpLogExporterTests
         var buffer = ProtobufSerializer.RentBuffer(4096);
         try
         {
-            var writePosition = ProtobufOtlpLogSerializer.WriteLogsData(ref buffer, 0, sdkOptions, experimentalOptions, resource, batch);
+            var writePosition = ProtobufOtlpLogSerializer.WriteLogsData(ref buffer, 0, sdkOptions, experimentalOptions, resource, batch, out _);
             using var stream = new MemoryStream(buffer, 0, writePosition);
             var logsData = OtlpLogs.LogsData.Parser.ParseFrom(stream);
             var request = new OtlpCollector.ExportLogsServiceRequest();
@@ -2395,7 +2423,8 @@ public class OtlpLogExporterTests
     private static OtlpLogs.LogRecord? ToOtlpLogs(SdkLimitOptions sdkOptions, ExperimentalOptions experimentalOptions, LogRecord logRecord)
     {
         var buffer = new byte[4096];
-        var writePosition = ProtobufOtlpLogSerializer.WriteLogRecord(buffer, 0, sdkOptions, experimentalOptions, logRecord);
+        var dirtyLength = 0;
+        var writePosition = ProtobufOtlpLogSerializer.WriteLogRecord(buffer, 0, sdkOptions, experimentalOptions, logRecord, ref dirtyLength);
         using var stream = new MemoryStream(buffer, 0, writePosition);
         var scopeLogs = OtlpLogs.ScopeLogs.Parser.ParseFrom(stream);
         return scopeLogs.LogRecords.FirstOrDefault();

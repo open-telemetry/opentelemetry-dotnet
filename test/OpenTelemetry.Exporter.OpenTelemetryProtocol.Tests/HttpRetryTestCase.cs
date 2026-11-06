@@ -79,7 +79,7 @@ public class HttpRetryTestCase
                 new(statusCode: null, expectedNextRetryDelayMilliseconds: 2250),
                 new(statusCode: null, expectedNextRetryDelayMilliseconds: 3375),
                 new(statusCode: null, expectedNextRetryDelayMilliseconds: 5000),
-                new(statusCode: null, expectedNextRetryDelayMilliseconds: 5000)
+                new(statusCode: null, expectedNextRetryDelayMilliseconds: 5000),
             ],
             expectedRetryAttempts: 5),
         new HttpRetryTestCase(
@@ -89,13 +89,13 @@ public class HttpRetryTestCase
                 new(statusCode: HttpStatusCode.ServiceUnavailable, expectedNextRetryDelayMilliseconds: 2250),
                 new(statusCode: HttpStatusCode.ServiceUnavailable, expectedNextRetryDelayMilliseconds: 3375),
                 new(statusCode: HttpStatusCode.BadRequest, expectedSuccess: false),
-                new(statusCode: HttpStatusCode.ServiceUnavailable, expectedNextRetryDelayMilliseconds: 5000)
+                new(statusCode: HttpStatusCode.ServiceUnavailable, expectedNextRetryDelayMilliseconds: 5000),
             ],
             expectedRetryAttempts: 4),
         new HttpRetryTestCase(
             "Expired deadline",
             [
-                new(statusCode: HttpStatusCode.ServiceUnavailable, isDeadlineExceeded: true, expectedSuccess: false)
+                new(statusCode: HttpStatusCode.ServiceUnavailable, isDeadlineExceeded: true, expectedSuccess: false),
             ]),
     ];
 

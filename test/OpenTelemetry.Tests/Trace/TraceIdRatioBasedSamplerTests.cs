@@ -42,7 +42,7 @@ public class TraceIdRatioBasedSamplerTests
                 0,
                 0,
                 0,
-                0
+                0,
             ]);
         Assert.Equal(
             SamplingDecision.Drop,
@@ -68,7 +68,7 @@ public class TraceIdRatioBasedSamplerTests
                 0,
                 0,
                 0,
-                0
+                0,
             ]);
         Assert.Equal(
             SamplingDecision.RecordAndSample,

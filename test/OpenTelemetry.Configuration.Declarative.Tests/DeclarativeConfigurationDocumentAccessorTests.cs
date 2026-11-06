@@ -17,6 +17,8 @@ public sealed class DeclarativeConfigurationDocumentAccessorTests
     private const int DocumentAccessorNotAvailableEventId = 28;
     private const int DifferentSourceAlreadyRegisteredEventId = 29;
     private const int MultipleConfigurationDocumentsReachableEventId = 30;
+    private const int ConfiguredPropertyNotAppliedEventId = 44;
+    private const int DevelopmentPropertyNotAppliedEventId = 45;
 
     [Fact]
     public void GetDocument_BeforeAnyLoad_ParsesAndReturnsDocument()
@@ -745,6 +747,215 @@ public sealed class DeclarativeConfigurationDocumentAccessorTests
         Assert.DoesNotContain(listener.Messages, e => e.EventId == DocumentParsedOnDemandEventId);
     }
 
+    [Fact]
+    public void GetDocument_StableUnappliedProperty_ReportsAnErrorWithItsLocation()
+    {
+        using var yamlFile = DeclarativeYamlTestFile.CreateYamlFile("""
+            file_format: "1.2"
+            tracer_provider:
+              sampler:
+                always_on:
+            """);
+        var filePath = new FilePath(yamlFile.Path);
+        var accessor = new DeclarativeConfigurationDocumentAccessor(filePath);
+
+        using var listener = CreateVerboseListener();
+        _ = accessor.GetDocument();
+
+        var error = Assert.Single(listener.Messages, e => e.EventId is ConfiguredPropertyNotAppliedEventId or DevelopmentPropertyNotAppliedEventId);
+        Assert.Equal(ConfiguredPropertyNotAppliedEventId, error.EventId);
+        Assert.Equal(EventLevel.Error, error.Level);
+        Assert.Equal([filePath.DisplayPath, "tracer_provider", 2L, 1L], error.Payload!);
+    }
+
+    [Fact]
+    public void GetDocument_DevelopmentUnappliedProperty_ReportsAWarning()
+    {
+        using var yamlFile = DeclarativeYamlTestFile.CreateYamlFile("""
+            file_format: "1.2"
+            resource:
+              detection/development:
+                detectors:
+                  - host:
+            """);
+        var accessor = new DeclarativeConfigurationDocumentAccessor(new FilePath(yamlFile.Path));
+
+        using var listener = CreateVerboseListener();
+        _ = accessor.GetDocument();
+
+        var warning = Assert.Single(listener.Messages, e => e.EventId is ConfiguredPropertyNotAppliedEventId or DevelopmentPropertyNotAppliedEventId);
+        Assert.Equal(DevelopmentPropertyNotAppliedEventId, warning.EventId);
+        Assert.Equal(EventLevel.Warning, warning.Level);
+        Assert.Equal("resource.detection/development", warning.Payload![1]);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void GetDocument_NodeSharedAcrossStabilities_ReportsAnErrorAndAWarningOnce(bool experimentalFirst)
+    {
+        var yaml = experimentalFirst
+            ? """
+            file_format: "1.2"
+            resource:
+              detection/development: &shared {}
+            attribute_limits: *shared
+            """
+            : """
+            file_format: "1.2"
+            attribute_limits: &shared {}
+            resource:
+              detection/development: *shared
+            """;
+
+        using var yamlFile = DeclarativeYamlTestFile.CreateYamlFile(yaml);
+        var filePath = new FilePath(yamlFile.Path);
+        var accessor = new DeclarativeConfigurationDocumentAccessor(filePath);
+
+        using var listener = CreateVerboseListener();
+        _ = accessor.GetDocument();
+        _ = accessor.GetDocument();
+
+        var error = Assert.Single(listener.CurrentMessages, e => e.EventId == ConfiguredPropertyNotAppliedEventId);
+        Assert.Equal(EventLevel.Error, error.Level);
+        Assert.Equal([filePath.DisplayPath, "attribute_limits", experimentalFirst ? 4L : 2L, 1L], error.Payload!);
+
+        var warning = Assert.Single(listener.CurrentMessages, e => e.EventId == DevelopmentPropertyNotAppliedEventId);
+        Assert.Equal(EventLevel.Warning, warning.Level);
+        Assert.Equal([filePath.DisplayPath, "resource.detection/development", experimentalFirst ? 3L : 4L, 3L], warning.Payload!);
+    }
+
+    [Fact]
+    public void GetDocument_SdkConfigExample_ReportsEachUnappliedSectionAsAnError()
+    {
+        using var yamlFile = DeclarativeYamlTestFile.CreateYamlFile(ReadSchemaFixture("examples/otel-sdk-config.yaml"));
+        var filePath = new FilePath(yamlFile.Path);
+        var accessor = new DeclarativeConfigurationDocumentAccessor(filePath);
+
+        using var listener = CreateVerboseListener();
+        _ = accessor.GetDocument();
+
+        var events = listener.Messages.Where(e => e.EventId is ConfiguredPropertyNotAppliedEventId or DevelopmentPropertyNotAppliedEventId).ToList();
+        Assert.All(events, e => Assert.Equal(EventLevel.Error, e.Level));
+        Assert.Equal(
+            ["log_level", "attribute_limits", "propagator", "tracer_provider", "meter_provider", "logger_provider"],
+            events.Select(e => (string)e.Payload![1]!));
+        Assert.All(events, e => Assert.Equal(filePath.DisplayPath, e.Payload![0]));
+        Assert.All(events, e => Assert.Equal(1L, e.Payload![3]));
+    }
+
+    [Fact]
+    public void GetDocument_CalledTwice_ReportsFindingsOnce()
+    {
+        using var yamlFile = DeclarativeYamlTestFile.CreateYamlFile("""
+            file_format: "1.2"
+            propagator:
+            """);
+        var accessor = new DeclarativeConfigurationDocumentAccessor(new FilePath(yamlFile.Path));
+
+        using var listener = CreateVerboseListener();
+        _ = accessor.GetDocument();
+        _ = accessor.GetDocument();
+
+        Assert.Single(listener.Messages, e => e.EventId == ConfiguredPropertyNotAppliedEventId);
+    }
+
+    [Fact]
+    public void GetDocument_EmptyFile_ReportsNoFindings()
+    {
+        using var yamlFile = DeclarativeYamlTestFile.CreateYamlFile(string.Empty);
+        var accessor = new DeclarativeConfigurationDocumentAccessor(new FilePath(yamlFile.Path));
+
+        using var listener = CreateVerboseListener();
+        var document = accessor.GetDocument();
+
+        Assert.Empty(document.UnappliedProperties);
+        Assert.DoesNotContain(listener.Messages, e => e.EventId is ConfiguredPropertyNotAppliedEventId or DevelopmentPropertyNotAppliedEventId);
+    }
+
+    [Fact]
+    public void GetDocument_ReadFails_ReportsNoFindings()
+    {
+        using var yamlFile = DeclarativeYamlTestFile.CreateYamlFile("""
+            file_format: "1.2"
+            tracer_provider: [
+            """);
+        var accessor = new DeclarativeConfigurationDocumentAccessor(new FilePath(yamlFile.Path));
+
+        using var listener = CreateVerboseListener();
+        Assert.Throws<DeclarativeConfigurationException>(() => accessor.GetDocument());
+
+        Assert.DoesNotContain(listener.Messages, e => e.EventId is ConfiguredPropertyNotAppliedEventId or DevelopmentPropertyNotAppliedEventId);
+    }
+
+    [Fact]
+    public void AddOpenTelemetryDeclarativeConfiguration_UnappliedProperty_ReportsTheFinding()
+    {
+        using var yamlFile = DeclarativeYamlTestFile.CreateYamlFile("""
+            file_format: "1.2"
+            tracer_provider:
+            """);
+
+        using var listener = CreateVerboseListener();
+        _ = new ConfigurationBuilder().AddOpenTelemetryDeclarativeConfiguration(yamlFile.Path).Build();
+
+        Assert.Single(listener.Messages, e => e.EventId == ConfiguredPropertyNotAppliedEventId);
+    }
+
+    [Fact]
+    public void AddOpenTelemetryDeclarativeConfiguration_ResourceAttributes_ReportsNoFindings()
+    {
+        using var yamlFile = DeclarativeYamlTestFile.CreateYamlFile("""
+            file_format: "1.2"
+            resource:
+              attributes:
+                - name: service.name
+                  value: test
+            """);
+
+        using var listener = CreateVerboseListener();
+        _ = new ConfigurationBuilder().AddOpenTelemetryDeclarativeConfiguration(yamlFile.Path).Build();
+
+        Assert.DoesNotContain(listener.Messages, e => e.EventId is ConfiguredPropertyNotAppliedEventId or DevelopmentPropertyNotAppliedEventId);
+    }
+
+    [Fact]
+    public async Task GetDocument_ConcurrentCallers_ReportFindingsOnce()
+    {
+        var filePath = new FilePath(Guid.NewGuid().ToString("N") + ".yaml");
+        var document = new DeclarativeConfigurationDocument(
+            new DeclarativeConfiguration("1.2"),
+            new(new Dictionary<string, string?>()),
+            ConfigProperties.Empty,
+            unappliedProperties: [new("tracer_provider", SchemaStability.Stable, new(2, 1))]);
+        using var start = new ManualResetEventSlim();
+        var accessor = new DeclarativeConfigurationDocumentAccessor(
+            filePath,
+            _ =>
+            {
+                start.Wait();
+                return document;
+            });
+
+        using var listener = new UnappliedPropertyListener(filePath.DisplayPath);
+        var callers = Enumerable.Range(0, 8)
+            .Select(i => Task.Run(() => i % 2 == 0 ? accessor.GetDocument() : accessor.GetDocumentForProvider()))
+            .ToArray();
+        start.Set();
+        await Task.WhenAll(callers);
+        _ = accessor.GetDocument();
+
+        Assert.Equal(1, listener.Count);
+    }
+
+    private static string ReadSchemaFixture(string relativePath)
+    {
+        using var stream = typeof(DeclarativeConfigurationDocumentAccessorTests).Assembly.GetManifestResourceStream("Schema/v1.2.0/" + relativePath);
+        Assert.NotNull(stream);
+        using var reader = new StreamReader(stream);
+        return reader.ReadToEnd();
+    }
+
     private static TestEventListener CreateVerboseListener()
     {
         var listener = new TestEventListener();
@@ -796,6 +1007,30 @@ public sealed class DeclarativeConfigurationDocumentAccessorTests
             this.inner.GetReloadToken();
 
         public IConfigurationSection GetSection(string key) => this.inner.GetSection(key);
+    }
+
+    // Counts events from every thread; the shared test listener sees only the test thread.
+    private sealed class UnappliedPropertyListener : EventListener
+    {
+        private readonly string filePath;
+        private int count;
+
+        public UnappliedPropertyListener(string filePath)
+        {
+            this.filePath = filePath;
+            this.EnableEvents(OpenTelemetryDeclarativeConfigurationEventSource.Log, EventLevel.Verbose);
+        }
+
+        public int Count => Volatile.Read(ref this.count);
+
+        protected override void OnEventWritten(EventWrittenEventArgs eventData)
+        {
+            if (eventData.EventId == ConfiguredPropertyNotAppliedEventId
+                && string.Equals(eventData.Payload?[0] as string, this.filePath, StringComparison.Ordinal))
+            {
+                Interlocked.Increment(ref this.count);
+            }
+        }
     }
 
     private sealed class ConcurrentEventListener : EventListener

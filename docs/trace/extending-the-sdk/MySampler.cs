@@ -5,9 +5,9 @@ using OpenTelemetry.Trace;
 
 internal sealed class MySampler : Sampler
 {
-    public override SamplingResult ShouldSample(in SamplingParameters param)
+    public override SamplingResult ShouldSample(in SamplingParameters samplingParameters)
     {
-        Console.WriteLine($"MySampler.ShouldSample({param.Name})");
+        Console.WriteLine($"MySampler.ShouldSample({samplingParameters.Name})");
         return new SamplingResult(SamplingDecision.RecordAndSample);
     }
 }

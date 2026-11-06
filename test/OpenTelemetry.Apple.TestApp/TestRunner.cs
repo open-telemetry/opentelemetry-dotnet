@@ -67,7 +67,7 @@ internal static class TestRunner
                 [
                     .. args,
                     "--results-directory", resultsDirectory,
-                    "--report-trx"
+                    "--report-trx",
                 ]).ConfigureAwait(false);
 
             builder.AddMSTest(() => [typeof(TestRunner).Assembly]);
@@ -271,7 +271,11 @@ internal static class TestRunner
             // output streamed by 'xcrun simctl launch --console-pty'.
             var message = outcome + ": " + (id is not null ? $"{id.Namespace}.{id.TypeName}.{id.MethodName}" : node.DisplayName);
 
+#if NET11_0_OR_GREATER
+            await Console.Out.WriteLineAsync(message, cancellationToken).ConfigureAwait(false);
+#else
             await Console.Out.WriteLineAsync(message).ConfigureAwait(false);
+#endif
         }
     }
 }

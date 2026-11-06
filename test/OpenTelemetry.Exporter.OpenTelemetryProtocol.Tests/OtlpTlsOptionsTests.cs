@@ -6,6 +6,7 @@
 using System.Net.Security;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
+using OpenTelemetry.Tests;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests;
 
@@ -55,59 +56,43 @@ public class OtlpTlsOptionsTests
     public void OtlpSecureHttpClientFactory_CreatesClient_WithCaCertificateOnly() =>
         SkipTestIfCryptoNotSupported(() =>
         {
-            var tempCertFile = Path.GetTempFileName();
-            try
+            using var directory = new TemporaryDirectory();
+            var tempCertFile = Path.Combine(directory.Path, "ca.pem");
+
+            using var cert = CreateSelfSignedCertificate();
+            File.WriteAllText(tempCertFile, cert.ExportCertificatePem());
+
+            var options = new OtlpTlsOptions
             {
-                using var cert = CreateSelfSignedCertificate();
-                File.WriteAllText(tempCertFile, cert.ExportCertificatePem());
+                CaCertificatePath = tempCertFile,
+                EnableCertificateChainValidation = false,
+            };
 
-                var options = new OtlpTlsOptions
-                {
-                    CaCertificatePath = tempCertFile,
-                    EnableCertificateChainValidation = false,
-                };
+            using var client = OpenTelemetryProtocol.Implementation.OtlpSecureHttpClientFactory.CreateSecureHttpClient(options);
 
-                using var client = OpenTelemetryProtocol.Implementation.OtlpSecureHttpClientFactory.CreateSecureHttpClient(options);
-
-                Assert.NotNull(client);
-            }
-            finally
-            {
-                if (File.Exists(tempCertFile))
-                {
-                    File.Delete(tempCertFile);
-                }
-            }
+            Assert.NotNull(client);
         });
 
     [Fact]
     public void OtlpSecureHttpClientFactory_CreatesClient_WithMtlsClientCertificate() =>
         SkipTestIfCryptoNotSupported(() =>
         {
-            var tempCertFile = Path.GetTempFileName();
-            try
+            using var directory = new TemporaryDirectory();
+            var tempCertFile = Path.Combine(directory.Path, "client.pfx");
+
+            using var cert = CreateSelfSignedCertificate();
+            var certBytes = cert.Export(X509ContentType.Pfx);
+            File.WriteAllBytes(tempCertFile, certBytes);
+
+            var options = new OtlpMtlsOptions
             {
-                using var cert = CreateSelfSignedCertificate();
-                var certBytes = cert.Export(X509ContentType.Pfx);
-                File.WriteAllBytes(tempCertFile, certBytes);
+                ClientCertificatePath = tempCertFile,
+                EnableCertificateChainValidation = false,
+            };
 
-                var options = new OtlpMtlsOptions
-                {
-                    ClientCertificatePath = tempCertFile,
-                    EnableCertificateChainValidation = false,
-                };
+            using var client = OpenTelemetryProtocol.Implementation.OtlpSecureHttpClientFactory.CreateSecureHttpClient(options);
 
-                using var client = OpenTelemetryProtocol.Implementation.OtlpSecureHttpClientFactory.CreateSecureHttpClient(options);
-
-                Assert.NotNull(client);
-            }
-            finally
-            {
-                if (File.Exists(tempCertFile))
-                {
-                    File.Delete(tempCertFile);
-                }
-            }
+            Assert.NotNull(client);
         });
 
     [Fact]
@@ -175,13 +160,8 @@ public class OtlpTlsOptionsTests
         var cert = req.CreateSelfSigned(
             DateTimeOffset.UtcNow.AddDays(-1),
             DateTimeOffset.UtcNow.AddDays(30));
-#if NET9_0_OR_GREATER
+
         return X509CertificateLoader.LoadPkcs12(cert.Export(X509ContentType.Pfx), null, X509KeyStorageFlags.Exportable);
-#else
-#pragma warning disable SYSLIB0057
-        return new X509Certificate2(cert.Export(X509ContentType.Pfx), (string?)null, X509KeyStorageFlags.Exportable);
-#pragma warning restore SYSLIB0057
-#endif
     }
 
     private static X509Certificate2 CreateCertificateAuthority()
@@ -203,13 +183,7 @@ public class OtlpTlsOptionsTests
             DateTimeOffset.UtcNow.AddDays(-1),
             DateTimeOffset.UtcNow.AddYears(1));
 
-#if NET9_0_OR_GREATER
         return X509CertificateLoader.LoadPkcs12(cert.Export(X509ContentType.Pfx), null, X509KeyStorageFlags.Exportable);
-#else
-#pragma warning disable SYSLIB0057
-        return new X509Certificate2(cert.Export(X509ContentType.Pfx), (string?)null, X509KeyStorageFlags.Exportable);
-#pragma warning restore SYSLIB0057
-#endif
     }
 
     private static X509Certificate2 CreateServerCertificate(X509Certificate2 issuer)
@@ -240,13 +214,7 @@ public class OtlpTlsOptionsTests
             DateTimeOffset.UtcNow.AddDays(30),
             serialNumber);
 
-#if NET9_0_OR_GREATER
         return X509CertificateLoader.LoadPkcs12(cert.Export(X509ContentType.Pfx), null, X509KeyStorageFlags.Exportable);
-#else
-#pragma warning disable SYSLIB0057
-        return new X509Certificate2(cert.Export(X509ContentType.Pfx), (string?)null, X509KeyStorageFlags.Exportable);
-#pragma warning restore SYSLIB0057
-#endif
     }
 
     /// <summary>

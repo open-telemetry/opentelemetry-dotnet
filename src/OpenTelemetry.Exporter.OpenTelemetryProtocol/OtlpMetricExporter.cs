@@ -75,15 +75,23 @@ public class OtlpMetricExporter : BaseExporter<Metric>
 
     /// <inheritdoc />
 #pragma warning disable CA1725 // Parameter names should match base declaration
+#pragma warning disable SA1315 // Parameters should match inherited names
     public override ExportResult Export(in Batch<Metric> metrics)
+#pragma warning restore SA1315 // Parameters should match inherited names
 #pragma warning restore CA1725 // Parameter names should match base declaration
     {
         // Prevents the exporter's gRPC and HTTP operations from being instrumented.
         using var scope = SuppressInstrumentationScope.Begin();
 
+        // The exporter's own timeout starts before the batch is serialized (and the
+        // caller's deadline before Export was called), so that the time taken to
+        // serialize it counts towards the time the export is allowed to take.
+        var deadlineUtc = this.transmissionHandler.GetDeadlineUtc(this.ExportDeadlineUtc);
+
         byte[]? buffer = null;
         var serializationSucceeded = false;
         var writePosition = 0;
+        var dirtyLength = 0;
 
         try
         {
@@ -96,6 +104,7 @@ public class OtlpMetricExporter : BaseExporter<Metric>
                     this.startWritePosition,
                     this.Resource,
                     metrics,
+                    out dirtyLength,
                     this.maxRequestSizeBytes + this.startWritePosition);
                 serializationSucceeded = true;
             }
@@ -138,7 +147,7 @@ public class OtlpMetricExporter : BaseExporter<Metric>
                 BinaryPrimitives.WriteUInt32BigEndian(data, (uint)dataLength);
             }
 
-            if (!this.transmissionHandler.TrySubmitRequest(buffer, writePosition))
+            if (!this.transmissionHandler.TrySubmitRequest(buffer, writePosition, deadlineUtc))
             {
                 return ExportResult.Failure;
             }
@@ -154,7 +163,7 @@ public class OtlpMetricExporter : BaseExporter<Metric>
             {
                 if (serializationSucceeded)
                 {
-                    this.serializationBuffer.Return(buffer, writePosition);
+                    this.serializationBuffer.Return(buffer, writePosition, dirtyLength);
                 }
                 else
                 {

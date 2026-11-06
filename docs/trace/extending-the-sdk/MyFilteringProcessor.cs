@@ -23,12 +23,12 @@ internal sealed class MyFilteringProcessor : BaseProcessor<Activity>
         this.filter = filter ?? throw new ArgumentNullException(nameof(filter));
     }
 
-    public override void OnEnd(Activity activity)
+    public override void OnEnd(Activity data)
     {
         // Bypass export if the Filter returns false.
-        if (!this.filter(activity))
+        if (!this.filter(data))
         {
-            activity.ActivityTraceFlags &= ~ActivityTraceFlags.Recorded;
+            data.ActivityTraceFlags &= ~ActivityTraceFlags.Recorded;
         }
     }
 }

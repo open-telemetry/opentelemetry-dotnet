@@ -72,8 +72,7 @@ internal sealed class YamlDocumentTrackingParser(IParser innerParser) : IParser
     /// <param name="key">The resolved key node.</param>
     /// <returns>The key's source position.</returns>
     internal ConfigValuePosition GetKeyPosition(YamlMappingNode mapping, int index, YamlNode key) =>
-        this.aliasKeyPositions is not null
-        && this.aliasKeyPositions.TryGetValue((new(mapping.Start.Line, mapping.Start.Column), index), out var position)
+        this.aliasKeyPositions is not null && this.aliasKeyPositions.TryGetValue((new(mapping.Start.Line, mapping.Start.Column), index), out var position)
             ? position
             : new(key.Start.Line, key.Start.Column);
 

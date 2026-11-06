@@ -47,17 +47,17 @@ internal sealed class TestConsoleExporter
     /// </summary>
     internal sealed class MyProcessor : BaseProcessor<Activity>
     {
-        public override void OnStart(Activity activity)
+        public override void OnStart(Activity data)
         {
-            if (activity.IsAllDataRequested)
+            if (data.IsAllDataRequested)
             {
-                if (activity.Kind == ActivityKind.Server)
+                if (data.Kind == ActivityKind.Server)
                 {
-                    activity.SetTag("customServerTag", "Custom Tag Value for server");
+                    data.SetTag("customServerTag", "Custom Tag Value for server");
                 }
-                else if (activity.Kind == ActivityKind.Client)
+                else if (data.Kind == ActivityKind.Client)
                 {
-                    activity.SetTag("customClientTag", "Custom Tag Value for Client");
+                    data.SetTag("customClientTag", "Custom Tag Value for Client");
                 }
             }
         }

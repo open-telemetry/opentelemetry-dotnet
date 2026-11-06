@@ -58,11 +58,42 @@ public class OtlpExporterOptionsExtensionsTests
     [InlineData("key1= value with spaces ,key2=another value", "key1=value with spaces,key2=another value")]
     [InlineData("=value1", "=value1")]
     [InlineData("key1=", "key1=")]
-    [InlineData("key1=value1%2Ckey2=value2", "key1=value1,key2=value2")]
-    [InlineData("key1=value1%2Ckey2=value2%2Ckey3=value3", "key1=value1,key2=value2,key3=value3")]
+    [InlineData("key%31=value%31", "key1=value1")] // Keys are decoded too, as they always were (W3C Baggage only percent-encodes values)
     [InlineData("Authorization=Basic Zm9vOmJhcg==", "Authorization=Basic Zm9vOmJhcg==")]
     public void GetHeaders_ValidAndUrlEncodedHeaders_ReturnsCorrectHeaders(string inputOptionHeaders, string expectedNormalizedOptional)
         => VerifyHeaders(inputOptionHeaders, expectedNormalizedOptional);
+
+    [Theory]
+    [InlineData("key1=value1%2Ckey2=value2", "key1", "value1,key2=value2", 1)]
+    [InlineData("key1=a%2Cb%2Cc,key2=value2", "key1", "a,b,c", 2)]
+    [InlineData("Authorization=Basic%20abc%2Cdef", "Authorization", "Basic abc,def", 1)]
+    [InlineData("key1=a%3Db", "key1", "a=b", 1)]
+    public void GetHeaders_PercentEncodedSeparatorsInValue_AreDataAndNotSeparators(
+        string inputOptionHeaders,
+        string key,
+        string expectedValue,
+        int expectedHeaderCount)
+    {
+        var options = new OtlpExporterOptions { Headers = inputOptionHeaders };
+
+        var headers = options.GetHeaders<Dictionary<string, string>>((d, k, v) => d.Add(k, v));
+
+        Assert.Equal(expectedValue, headers[key]);
+        Assert.Equal(options.StandardHeaders.Length + expectedHeaderCount, headers.Count);
+    }
+
+    [Theory]
+    [InlineData("key1=%20value1%20", "key1", " value1 ")]
+    [InlineData("key1 = %20value1%20 ,key2=value2", "key1", " value1 ")]
+    [InlineData("key1=%09tabbed", "key1", "\ttabbed")]
+    public void GetHeaders_PercentEncodedWhitespaceInValue_IsPreserved(string inputOptionHeaders, string key, string expectedValue)
+    {
+        var options = new OtlpExporterOptions { Headers = inputOptionHeaders };
+
+        var headers = options.GetHeaders<Dictionary<string, string>>((d, k, v) => d.Add(k, v));
+
+        Assert.Equal(expectedValue, headers[key]);
+    }
 
     [Theory]
 #pragma warning disable CS0618 // Suppressing gRPC obsolete warning
@@ -306,16 +337,9 @@ public class OtlpExporterOptionsExtensionsTests
             };
         }
 
-        var configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(
-            new Dictionary<string, string?>
-            {
-                [ExperimentalOptions.OtlpRetryEnvVar] = "disk",
-                [ExperimentalOptions.OtlpDiskRetryDirectoryPathEnvVar] = Path.GetTempPath(),
-            })
-            .Build();
+        using var retryRoot = new TemporaryDirectory();
 
-        using var transmissionHandler = exporterOptions.GetExportTransmissionHandler(new ExperimentalOptions(configuration), OtlpSignalType.Traces);
+        using var transmissionHandler = exporterOptions.GetExportTransmissionHandler(CreateDiskRetryExperimentalOptions(retryRoot.Path), OtlpSignalType.Traces);
         AssertTransmissionHandler(transmissionHandler, exportClientType, expectedTimeoutMilliseconds, "disk");
     }
 
@@ -336,39 +360,20 @@ public class OtlpExporterOptionsExtensionsTests
     [InlineData("Metrics", "metrics")]
     public void GetTransmissionHandler_DiskRetry_UsesSignalSpecificStorageDirectory(string signalTypeName, string expectedDirectoryName)
     {
-        var retryRootPath = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
+        using var retryRoot = new TemporaryDirectory();
 
-        try
+        var exporterOptions = new OtlpExporterOptions();
+        var signalType = signalTypeName switch
         {
-            var exporterOptions = new OtlpExporterOptions();
-            var signalType = signalTypeName switch
-            {
-                "Logs" => OtlpSignalType.Logs,
-                "Metrics" => OtlpSignalType.Metrics,
-                "Traces" => OtlpSignalType.Traces,
-                _ => throw new ArgumentOutOfRangeException(nameof(signalTypeName)),
-            };
+            "Logs" => OtlpSignalType.Logs,
+            "Metrics" => OtlpSignalType.Metrics,
+            "Traces" => OtlpSignalType.Traces,
+            _ => throw new ArgumentOutOfRangeException(nameof(signalTypeName)),
+        };
 
-            var configuration = new ConfigurationBuilder()
-                .AddInMemoryCollection(
-                new Dictionary<string, string?>
-                {
-                    [ExperimentalOptions.OtlpRetryEnvVar] = "disk",
-                    [ExperimentalOptions.OtlpDiskRetryDirectoryPathEnvVar] = retryRootPath,
-                })
-                .Build();
+        using var transmissionHandler = exporterOptions.GetExportTransmissionHandler(CreateDiskRetryExperimentalOptions(retryRoot.Path), signalType);
 
-            using var transmissionHandler = exporterOptions.GetExportTransmissionHandler(new ExperimentalOptions(configuration), signalType);
-
-            Assert.Equal(Path.Combine(retryRootPath, expectedDirectoryName), Path.GetDirectoryName(GetStorageDirectoryPath(transmissionHandler)));
-        }
-        finally
-        {
-            if (Directory.Exists(retryRootPath))
-            {
-                Directory.Delete(retryRootPath, recursive: true);
-            }
-        }
+        Assert.Equal(Path.Combine(retryRoot.Path, expectedDirectoryName), Path.GetDirectoryName(GetStorageDirectoryPath(transmissionHandler)));
     }
 
     [Theory]
@@ -399,48 +404,38 @@ public class OtlpExporterOptionsExtensionsTests
     [Fact]
     public void GetTransmissionHandler_DiskRetry_DoesNotRetryRequestsStoredForAnotherDestination()
     {
-        var retryRootPath = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
+        using var retryRoot = new TemporaryDirectory();
 
-        try
+        var experimentalOptions = CreateDiskRetryExperimentalOptions(retryRoot.Path);
+
+        using var firstHttpHandler = new UnavailableHttpMessageHandler();
+        using var secondHttpHandler = new TestHttpMessageHandler();
+
+        var firstOptions = new OtlpExporterOptions
         {
-            var experimentalOptions = CreateDiskRetryExperimentalOptions(retryRootPath);
+            Protocol = OtlpExportProtocol.HttpProtobuf,
+            Endpoint = new Uri("http://collector-a:4318/v1/traces"),
+            HttpClientFactory = () => new HttpClient(firstHttpHandler, disposeHandler: false),
+        };
 
-            using var firstHttpHandler = new UnavailableHttpMessageHandler();
-            using var secondHttpHandler = new TestHttpMessageHandler();
-
-            var firstOptions = new OtlpExporterOptions
-            {
-                Protocol = OtlpExportProtocol.HttpProtobuf,
-                Endpoint = new Uri("http://collector-a:4318/v1/traces"),
-                HttpClientFactory = () => new HttpClient(firstHttpHandler, disposeHandler: false),
-            };
-
-            var secondOptions = new OtlpExporterOptions
-            {
-                Protocol = OtlpExportProtocol.HttpProtobuf,
-                Endpoint = new Uri("http://collector-b:4318/v1/traces"),
-                HttpClientFactory = () => new HttpClient(secondHttpHandler, disposeHandler: false),
-            };
-
-            using var firstHandler = Assert.IsType<OtlpExporterPersistentStorageTransmissionHandler>(firstOptions.GetExportTransmissionHandler(experimentalOptions, OtlpSignalType.Traces));
-            using var secondHandler = Assert.IsType<OtlpExporterPersistentStorageTransmissionHandler>(secondOptions.GetExportTransmissionHandler(experimentalOptions, OtlpSignalType.Traces));
-
-            Assert.True(firstHandler.TrySubmitRequest([1, 2, 3], 3));
-            Assert.Equal(1, firstHttpHandler.RequestCount);
-
-            Assert.True(secondHandler.InitiateAndWaitForRetryProcess(10_000));
-            Assert.Null(secondHttpHandler.HttpRequestMessage);
-
-            Assert.True(firstHandler.InitiateAndWaitForRetryProcess(10_000));
-            Assert.Equal(2, firstHttpHandler.RequestCount);
-        }
-        finally
+        var secondOptions = new OtlpExporterOptions
         {
-            if (Directory.Exists(retryRootPath))
-            {
-                Directory.Delete(retryRootPath, recursive: true);
-            }
-        }
+            Protocol = OtlpExportProtocol.HttpProtobuf,
+            Endpoint = new Uri("http://collector-b:4318/v1/traces"),
+            HttpClientFactory = () => new HttpClient(secondHttpHandler, disposeHandler: false),
+        };
+
+        using var firstHandler = Assert.IsType<OtlpExporterPersistentStorageTransmissionHandler>(firstOptions.GetExportTransmissionHandler(experimentalOptions, OtlpSignalType.Traces));
+        using var secondHandler = Assert.IsType<OtlpExporterPersistentStorageTransmissionHandler>(secondOptions.GetExportTransmissionHandler(experimentalOptions, OtlpSignalType.Traces));
+
+        Assert.True(firstHandler.TrySubmitRequest([1, 2, 3], 3));
+        Assert.Equal(1, firstHttpHandler.RequestCount);
+
+        Assert.True(secondHandler.InitiateAndWaitForRetryProcess(10_000));
+        Assert.Null(secondHttpHandler.HttpRequestMessage);
+
+        Assert.True(firstHandler.InitiateAndWaitForRetryProcess(10_000));
+        Assert.Equal(2, firstHttpHandler.RequestCount);
     }
 
     [Theory]
@@ -448,32 +443,14 @@ public class OtlpExporterOptionsExtensionsTests
     [InlineData(int.MaxValue)] // Invalid/Unknown signal type
     public void GetTransmissionHandler_DiskRetry_UnsupportedSignalType_ThrowsNotSupportedException(int signalTypeValue)
     {
-        var retryRootPath = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
+        using var retryRoot = new TemporaryDirectory();
 
-        try
-        {
-            var exporterOptions = new OtlpExporterOptions();
-            var signalType = (OtlpSignalType)signalTypeValue;
+        var exporterOptions = new OtlpExporterOptions();
+        var signalType = (OtlpSignalType)signalTypeValue;
+        var experimentalOptions = CreateDiskRetryExperimentalOptions(retryRoot.Path);
 
-            var configuration = new ConfigurationBuilder()
-                .AddInMemoryCollection(
-                new Dictionary<string, string?>
-                {
-                    [ExperimentalOptions.OtlpRetryEnvVar] = "disk",
-                    [ExperimentalOptions.OtlpDiskRetryDirectoryPathEnvVar] = retryRootPath,
-                })
-                .Build();
-
-            Assert.Throws<NotSupportedException>(
-                () => exporterOptions.GetExportTransmissionHandler(new ExperimentalOptions(configuration), signalType));
-        }
-        finally
-        {
-            if (Directory.Exists(retryRootPath))
-            {
-                Directory.Delete(retryRootPath, recursive: true);
-            }
-        }
+        Assert.Throws<NotSupportedException>(
+            () => exporterOptions.GetExportTransmissionHandler(experimentalOptions, signalType));
     }
 
     private static ExperimentalOptions CreateDiskRetryExperimentalOptions(string retryRootPath)
@@ -502,30 +479,20 @@ public class OtlpExporterOptionsExtensionsTests
 
     private static void AssertStorageDirectories(OtlpExporterOptions firstOptions, OtlpExporterOptions secondOptions, bool expectSameDirectory)
     {
-        var retryRootPath = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
+        using var retryRoot = new TemporaryDirectory();
 
-        try
+        var experimentalOptions = CreateDiskRetryExperimentalOptions(retryRoot.Path);
+
+        using var firstHandler = firstOptions.GetExportTransmissionHandler(experimentalOptions, OtlpSignalType.Traces);
+        using var secondHandler = secondOptions.GetExportTransmissionHandler(experimentalOptions, OtlpSignalType.Traces);
+
+        if (expectSameDirectory)
         {
-            var experimentalOptions = CreateDiskRetryExperimentalOptions(retryRootPath);
-
-            using var firstHandler = firstOptions.GetExportTransmissionHandler(experimentalOptions, OtlpSignalType.Traces);
-            using var secondHandler = secondOptions.GetExportTransmissionHandler(experimentalOptions, OtlpSignalType.Traces);
-
-            if (expectSameDirectory)
-            {
-                Assert.Equal(GetStorageDirectoryPath(firstHandler), GetStorageDirectoryPath(secondHandler));
-            }
-            else
-            {
-                Assert.NotEqual(GetStorageDirectoryPath(firstHandler), GetStorageDirectoryPath(secondHandler));
-            }
+            Assert.Equal(GetStorageDirectoryPath(firstHandler), GetStorageDirectoryPath(secondHandler));
         }
-        finally
+        else
         {
-            if (Directory.Exists(retryRootPath))
-            {
-                Directory.Delete(retryRootPath, recursive: true);
-            }
+            Assert.NotEqual(GetStorageDirectoryPath(firstHandler), GetStorageDirectoryPath(secondHandler));
         }
     }
 

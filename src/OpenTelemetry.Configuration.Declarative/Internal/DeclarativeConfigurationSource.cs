@@ -9,6 +9,7 @@ namespace OpenTelemetry.Configuration.Declarative;
 /// An <see cref="IConfigurationSource"/> that creates <see cref="DeclarativeConfigurationProvider"/> instances
 /// backed by a shared <see cref="DeclarativeConfigurationDocumentAccessor"/>.
 /// </summary>
+/// <param name="accessor">The shared <see cref="DeclarativeConfigurationDocumentAccessor"/> to read the configuration document from.</param>
 internal sealed class DeclarativeConfigurationSource(DeclarativeConfigurationDocumentAccessor accessor) : IConfigurationSource
 {
     internal FilePath FilePath => this.Accessor.FilePath;

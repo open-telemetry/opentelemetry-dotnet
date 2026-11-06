@@ -3,7 +3,7 @@
 
 using System.Globalization;
 
-#if NET8_0_OR_GREATER
+#if NET
 using SupportedVersions = System.Collections.Immutable.ImmutableHashSet<System.Version>;
 #else
 using SupportedVersions = System.Collections.Generic.HashSet<System.Version>;
@@ -66,8 +66,14 @@ internal static class PrometheusHeadersParser
 
                 if (parameter.StartsWith("q=".AsSpan(), StringComparison.OrdinalIgnoreCase))
                 {
+#if NET
+                    var qualityValue = parameter.Slice(2);
+#else
+                    var qualityValue = parameter.Slice(2).ToString();
+#endif
+
                     if (double.TryParse(
-                        parameter.Slice(2).ToString(),
+                        qualityValue,
                         NumberStyles.AllowDecimalPoint,
                         CultureInfo.InvariantCulture,
                         out var parsedQuality) &&
@@ -155,7 +161,11 @@ internal static class PrometheusHeadersParser
     {
         var trimmed = TrimQuotes(value);
 
+#if NET
+        return Version.TryParse(trimmed, out var version) && supportedVersions.Contains(version)
+#else
         return Version.TryParse(trimmed.ToString(), out var version) && supportedVersions.Contains(version)
+#endif
             ? version
             : null;
     }
@@ -205,7 +215,7 @@ internal static class PrometheusHeadersParser
     }
 
     private static ReadOnlySpan<char> TrimQuotes(ReadOnlySpan<char> value) =>
-        value.Length >= 2 &&
-        value[0] == '"' &&
-        value[value.Length - 1] == '"' ? value.Slice(1, value.Length - 2) : value;
+        value.Length >= 2 && value[0] == '"' && value[value.Length - 1] == '"'
+            ? value.Slice(1, value.Length - 2)
+            : value;
 }

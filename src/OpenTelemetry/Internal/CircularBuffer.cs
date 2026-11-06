@@ -14,8 +14,12 @@ internal sealed class CircularBuffer<T>
     where T : class
 {
     private readonly T?[] trait;
-    private long head;
-    private long tail;
+
+    // The head is written by every producer and the tail by the single consumer.
+    // They are kept on separate cache lines so that a consumer advancing the tail
+    // does not invalidate the line the producers are competing for, and vice versa.
+    private PaddedLong head;
+    private PaddedLong tail;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="CircularBuffer{T}"/> class.
@@ -41,20 +45,20 @@ internal sealed class CircularBuffer<T>
     {
         get
         {
-            var tailSnapshot = Volatile.Read(ref this.tail);
-            return (int)(Volatile.Read(ref this.head) - tailSnapshot);
+            var tailSnapshot = Volatile.Read(ref this.tail.Value);
+            return (int)(Volatile.Read(ref this.head.Value) - tailSnapshot);
         }
     }
 
     /// <summary>
     /// Gets the number of items added to the <see cref="CircularBuffer{T}"/>.
     /// </summary>
-    public long AddedCount => Volatile.Read(ref this.head);
+    public long AddedCount => Volatile.Read(ref this.head.Value);
 
     /// <summary>
     /// Gets the number of items removed from the <see cref="CircularBuffer{T}"/>.
     /// </summary>
-    public long RemovedCount => Volatile.Read(ref this.tail);
+    public long RemovedCount => Volatile.Read(ref this.tail.Value);
 
     /// <summary>
     /// Adds the specified item to the buffer.
@@ -103,8 +107,8 @@ internal sealed class CircularBuffer<T>
 
         while (true)
         {
-            var tailSnapshot = Volatile.Read(ref this.tail);
-            var headSnapshot = Volatile.Read(ref this.head);
+            var tailSnapshot = Volatile.Read(ref this.tail.Value);
+            var headSnapshot = Volatile.Read(ref this.head.Value);
 
             if (headSnapshot - tailSnapshot >= this.Capacity)
             {
@@ -112,7 +116,7 @@ internal sealed class CircularBuffer<T>
                 return false; // buffer is full
             }
 
-            if (Interlocked.CompareExchange(ref this.head, headSnapshot + 1, headSnapshot) != headSnapshot)
+            if (Interlocked.CompareExchange(ref this.head.Value, headSnapshot + 1, headSnapshot) != headSnapshot)
             {
                 if (maxSpinCount > 0 && spinCountDown-- == 0)
                 {
@@ -130,7 +134,7 @@ internal sealed class CircularBuffer<T>
             // never higher. While the reader is idle the tail cannot move and the
             // count is exact, which is what BatchExportProcessor relies on to
             // detect the add that brings the queue up to the export batch size.
-            count = headSnapshot + 1 - Volatile.Read(ref this.tail);
+            count = headSnapshot + 1 - Volatile.Read(ref this.tail.Value);
             return true;
         }
     }
@@ -146,7 +150,7 @@ internal sealed class CircularBuffer<T>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public T Read()
     {
-        var tail = Volatile.Read(ref this.tail);
+        var tail = Volatile.Read(ref this.tail.Value);
         var index = (int)(tail % this.Capacity);
         while (true)
         {
@@ -157,7 +161,7 @@ internal sealed class CircularBuffer<T>
                 continue;
             }
 
-            Volatile.Write(ref this.tail, tail + 1);
+            Volatile.Write(ref this.tail.Value, tail + 1);
             return previous;
         }
     }

@@ -12,6 +12,13 @@
     <_TestFrameworkArgument>--framework $(TargetFramework)</_TestFrameworkArgument>
   </PropertyGroup>
 
+  <!--
+    HACK Workaround for https://github.com/dotnet/runtime/issues/134491
+  -->
+  <PropertyGroup Condition="'$(TargetFramework)' == '' AND '$(OS)' != 'Windows_NT' AND '$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture)' == 'Arm64'">
+    <_TestMaxParallelTestModulesArgument>--max-parallel-test-modules 1</_TestMaxParallelTestModulesArgument>
+  </PropertyGroup>
+
   <PropertyGroup Condition="'$(TestFilter)' != ''">
     <!--
       Ignoring exit code 8 stops dotnet test failing if a filter does not match any tests.
@@ -71,8 +78,15 @@
       The per-module results directory layout then puts each target framework's
       reports in their own '<project>/<tfm>_<runtime>' subdirectory, so the
       frameworks of one project do not overwrite each other's files either.
+
+      Artifact post-processing (merging the per-framework coverage and report
+      files into one) is disabled with the 'no-artifact-post-processing' option:
+      the merge step re-launches the test application without the 'diagnostic'
+      option but with 'diagnostic-output-directory', which Microsoft.Testing.Platform
+      2.5.2 rejects (exit code 5), failing the build after every test has passed.
+      The per-framework files are what the CI coverage and report uploads consume.
     -->
-    <Exec Command="&quot;$(_DotNetHostPath)&quot; test --project &quot;%(_SupportedTestProjects.Identity)&quot; $(_TestFrameworkArgument) --configuration $(Configuration) --no-build --no-restore --results-directory &quot;$(TestResultsDirectory)&quot; --results-directory-layout per-module --diagnostic --diagnostic-output-directory &quot;$(_TestDiagnosticsDirectory)&quot; --hangdump --hangdump-timeout 10m --hangdump-type full --report-github --report-github-summary-include-passed false --report-xunit-junit --report-xunit-junit-filename &quot;junit-%(_SupportedTestProjects.Filename).xml&quot; --coverage --coverage-output-format cobertura --coverage-output &quot;Cobertura-%(_SupportedTestProjects.Filename).xml&quot; $(_TestFilterArgument)"
+    <Exec Command="&quot;$(_DotNetHostPath)&quot; test --project &quot;%(_SupportedTestProjects.Identity)&quot; $(_TestFrameworkArgument) $(_TestMaxParallelTestModulesArgument) --configuration $(Configuration) --no-build --no-restore --results-directory &quot;$(TestResultsDirectory)&quot; --results-directory-layout per-module --diagnostic --diagnostic-output-directory &quot;$(_TestDiagnosticsDirectory)&quot; --hangdump --hangdump-timeout 10m --hangdump-type full --report-github --report-github-summary-include-passed false --report-xunit-junit --report-xunit-junit-filename &quot;junit-%(_SupportedTestProjects.Filename).xml&quot; --coverage --coverage-output-format cobertura --coverage-output &quot;Cobertura-%(_SupportedTestProjects.Filename).xml&quot; --no-artifact-post-processing $(_TestFilterArgument)"
       ContinueOnError="ErrorAndStop"
       Condition="'@(_SupportedTestProjects)' != ''" />
   </Target>

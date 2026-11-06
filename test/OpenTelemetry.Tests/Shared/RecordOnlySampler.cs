@@ -7,7 +7,7 @@ namespace OpenTelemetry.Tests;
 
 internal sealed class RecordOnlySampler : TestSampler
 {
-    public override SamplingResult ShouldSample(in SamplingParameters param)
+    public override SamplingResult ShouldSample(in SamplingParameters samplingParameters)
     {
         return new SamplingResult(SamplingDecision.RecordOnly);
     }

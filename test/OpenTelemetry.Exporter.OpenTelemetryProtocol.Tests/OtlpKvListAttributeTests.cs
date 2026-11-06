@@ -211,15 +211,17 @@ public sealed class OtlpKvListAttributeTests : IDisposable
         Assert.Equal("prod", values[1].Value.StringValue);
     }
 
-    [Fact]
-    public void StringDictionaryWithNullValueAsKvList()
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void StringKeyValuePairsWithNullValueAsKvList(bool asArray)
     {
         var dict = new Dictionary<string, string?>
         {
             ["present"] = "value",
             ["missing"] = null,
         };
-        var kvp = new KeyValuePair<string, object?>("key", dict);
+        var kvp = new KeyValuePair<string, object?>("key", asArray ? dict.ToArray() : dict);
 
         Assert.True(TryTransformTag(kvp, out var attribute));
         Assert.Equal(OtlpCommon.AnyValue.ValueOneofCase.KvlistValue, attribute.Value.ValueCase);
@@ -400,7 +402,8 @@ public sealed class OtlpKvListAttributeTests : IDisposable
         {
             try
             {
-                writePosition = ProtobufOtlpTraceSerializer.WriteSpan(buffer, 0, new SdkLimitOptions(), activity);
+                var dirtyLength = 0;
+                writePosition = ProtobufOtlpTraceSerializer.WriteSpan(buffer, 0, new SdkLimitOptions(), activity, ref dirtyLength);
                 break;
             }
             catch (Exception ex) when (ex is IndexOutOfRangeException or ArgumentException)
@@ -447,7 +450,8 @@ public sealed class OtlpKvListAttributeTests : IDisposable
 
         var buffer = new byte[1_000_000];
 
-        var writePosition = ProtobufOtlpTraceSerializer.WriteSpan(buffer, 0, new SdkLimitOptions(), activity);
+        var dirtyLength = 0;
+        var writePosition = ProtobufOtlpTraceSerializer.WriteSpan(buffer, 0, new SdkLimitOptions(), activity, ref dirtyLength);
 
         using var stream = new MemoryStream(buffer, 0, writePosition);
         var scopeSpans = OtlpTrace.ScopeSpans.Parser.ParseFrom(stream);

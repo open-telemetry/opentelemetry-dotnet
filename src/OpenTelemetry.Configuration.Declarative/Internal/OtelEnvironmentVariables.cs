@@ -22,6 +22,11 @@ internal static class OtelEnvironmentVariables
     internal const string ResourceAttributes = "OTEL_RESOURCE_ATTRIBUTES";
 
     /// <summary>
+    /// The <c>service.name</c> resource attribute.
+    /// </summary>
+    internal const string ServiceName = "OTEL_SERVICE_NAME";
+
+    /// <summary>
     /// Path to the declarative configuration YAML file.
     /// </summary>
     internal const string ConfigFile = "OTEL_CONFIG_FILE";

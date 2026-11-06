@@ -1,7 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-#if !NET9_0_OR_GREATER
+#if !NET
 namespace OpenTelemetry;
 
 // Note: .NET 9 added the System.Threading.Lock class. The goal here is when

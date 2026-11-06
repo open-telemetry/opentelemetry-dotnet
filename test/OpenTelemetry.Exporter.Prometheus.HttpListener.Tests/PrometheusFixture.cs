@@ -11,7 +11,7 @@ public class PrometheusFixture : XunitContainerFixture<IContainer>
 {
     private const string DockerInternalHost = "host.docker.internal";
 
-    private readonly HashSet<string> temporaryFiles = [];
+    private readonly TemporaryDirectory temporaryDirectory = new();
 
     public IList<string> ScrapeProtocols { get; } = [];
 
@@ -21,17 +21,7 @@ public class PrometheusFixture : XunitContainerFixture<IContainer>
 
     public override ValueTask DisposeAsync()
     {
-        foreach (var path in this.temporaryFiles)
-        {
-            try
-            {
-                File.Delete(path);
-            }
-            catch (Exception)
-            {
-                // Ignore
-            }
-        }
+        this.temporaryDirectory.Dispose();
 
         GC.SuppressFinalize(this);
 
@@ -45,14 +35,10 @@ public class PrometheusFixture : XunitContainerFixture<IContainer>
             throw new InvalidOperationException($"No scrape target port configured.");
         }
 
-        var prometheusConfigurationPath = Path.GetTempFileName();
-        this.temporaryFiles.Add(prometheusConfigurationPath);
-
+        var prometheusConfigurationPath = Path.Combine(this.temporaryDirectory.Path, "prometheus.yml");
         File.WriteAllText(prometheusConfigurationPath, CreatePrometheusConfiguration(this.ScrapeProtocols));
 
-        var serviceDiscoveryTargetsPath = Path.GetTempFileName();
-        this.temporaryFiles.Add(serviceDiscoveryTargetsPath);
-
+        var serviceDiscoveryTargetsPath = Path.Combine(this.temporaryDirectory.Path, "targets.json");
         File.WriteAllText(serviceDiscoveryTargetsPath, CreateServiceDiscoveryConfiguration(targetPort));
 
 #if NET

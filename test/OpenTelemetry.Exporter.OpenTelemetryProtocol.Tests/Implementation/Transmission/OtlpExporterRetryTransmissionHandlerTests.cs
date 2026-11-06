@@ -11,6 +11,7 @@ using Google.Protobuf;
 using Google.Protobuf.WellKnownTypes;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient.Grpc;
+using OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests;
 using OpenTelemetry.Tests;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Transmission.Tests;
@@ -43,8 +44,8 @@ public class OtlpExporterRetryTransmissionHandlerTests
         // can run seconds late on a busy machine.
         Assert.True(httpHandler.RetryCanceled, "The stalled retry must be canceled at the original export deadline.");
 
-        var deadlineEvent = Assert.Single(listener.Messages, e => e.EventName == "RetryDeadlineExceeded");
-        Assert.Equal(EventLevel.Warning, deadlineEvent.Level);
+        var timedOutEvent = Assert.Single(listener.Messages, e => e.EventName == "RequestTimedOut");
+        Assert.Equal(EventLevel.Warning, timedOutEvent.Level);
         Assert.DoesNotContain(listener.Messages, e => e.EventId == 12);
     }
 
@@ -63,6 +64,23 @@ public class OtlpExporterRetryTransmissionHandlerTests
         Assert.True(result);
         Assert.Equal(2, httpHandler.SendCount);
         Assert.False(httpHandler.RetryCanceled);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void TrySubmitRequest_NoDeadline_DoesNotRetry(bool useGrpc)
+    {
+        // Nothing would bound the retries of a request which has no deadline
+        using var httpHandler = new RetriedRequestHttpMessageHandler(useGrpc, stallRetry: false);
+        using var httpClient = new HttpClient(httpHandler, disposeHandler: false) { Timeout = Timeout.InfiniteTimeSpan };
+        var exportClient = CreateExportClient(useGrpc, httpClient);
+        using var transmissionHandler = new OtlpExporterRetryTransmissionHandler(exportClient, httpClient.Timeout.TotalMilliseconds);
+
+        var result = transmissionHandler.TrySubmitRequest([0, 0, 0, 0, 0], 5);
+
+        Assert.False(result);
+        Assert.Equal(1, httpHandler.SendCount);
     }
 
     [Fact]
@@ -136,6 +154,42 @@ public class OtlpExporterRetryTransmissionHandlerTests
 
         Assert.False(actual);
         Assert.True(exportClient.SendCount >= 2, $"Expected at least 2 send attempts, but got {exportClient.SendCount}.");
+    }
+
+    [Theory]
+    [InlineData(10_000, Timeout.Infinite, 10_000)]
+    [InlineData(10_000, 500, 500)]
+    [InlineData(10_000, 10_000, 10_000)]
+    [InlineData(10_000, 30_000, 10_000)]
+    [InlineData(Timeout.Infinite, Timeout.Infinite, Timeout.Infinite)]
+    [InlineData(Timeout.Infinite, 500, 500)]
+    public void GetDeadlineUtc_IsTheEarlierOfTheDeadlines(int exporterTimeoutMilliseconds, int callerTimeoutMilliseconds, int expectedTimeoutMilliseconds)
+    {
+        var exportClient = new TestExportClient();
+        using var transmissionHandler = new OtlpExporterRetryTransmissionHandler(exportClient, exporterTimeoutMilliseconds);
+
+        var before = DateTime.UtcNow;
+        var callerDeadlineUtc = callerTimeoutMilliseconds == Timeout.Infinite
+            ? DateTime.MaxValue
+            : before.AddMilliseconds(callerTimeoutMilliseconds);
+
+        var deadlineUtc = transmissionHandler.GetDeadlineUtc(callerDeadlineUtc);
+        var after = DateTime.UtcNow;
+
+        if (expectedTimeoutMilliseconds == Timeout.Infinite)
+        {
+            Assert.Equal(DateTime.MaxValue, deadlineUtc);
+        }
+        else
+        {
+            Assert.InRange(
+                deadlineUtc,
+                before.AddMilliseconds(expectedTimeoutMilliseconds),
+                after.AddMilliseconds(expectedTimeoutMilliseconds));
+        }
+
+        Assert.True(transmissionHandler.TrySubmitRequest([1, 2, 3], 3, deadlineUtc));
+        Assert.Equal(deadlineUtc, exportClient.LastDeadlineUtc);
     }
 
     private static IExportClient CreateExportClient(bool useGrpc, HttpClient httpClient)

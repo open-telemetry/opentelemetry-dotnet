@@ -98,10 +98,9 @@
       "ignoreUnstable": false
     },
     {
-      "matchDepNames": ["xunit"],
-      "description": ["Disable major version updates for xunit"],
-      "matchUpdateTypes": ["major"],
-      "enabled": false
+      "matchDepNames": ["StyleCop.Analyzers"],
+      "description": ["Allow prerelease versions of StyleCop.Analyzers"],
+      "ignoreUnstable": false
     }
   ],
   "schedule": ["* 8-17 * * 3"],

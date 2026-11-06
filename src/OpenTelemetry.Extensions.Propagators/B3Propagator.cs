@@ -39,7 +39,7 @@ public sealed class B3Propagator : TextMapPropagator
 
     private static readonly HashSet<string> AllFields = [XB3TraceId, XB3SpanId, XB3ParentSpanId, XB3Sampled, XB3Flags];
 
-    private static readonly HashSet<string> SampledValues = new(StringComparer.Ordinal) { SampledValue, LegacySampledValue };
+    private static readonly HashSet<string> SampledValues = [with(StringComparer.Ordinal), SampledValue, LegacySampledValue];
 
     private readonly bool singleHeader;
 
@@ -236,10 +236,10 @@ public sealed class B3Propagator : TextMapPropagator
             return header is not { Length: > 0 } || string.IsNullOrWhiteSpace(header)
                 ? context
                 : !TryExtractSingleHeaderContext(header, out var traceId, out var spanId, out var traceOptions)
-                ? context
-                : new PropagationContext(
-                    new ActivityContext(traceId, spanId, traceOptions, isRemote: true),
-                    context.Baggage);
+                    ? context
+                    : new PropagationContext(
+                        new ActivityContext(traceId, spanId, traceOptions, isRemote: true),
+                        context.Baggage);
         }
         catch (Exception e)
         {

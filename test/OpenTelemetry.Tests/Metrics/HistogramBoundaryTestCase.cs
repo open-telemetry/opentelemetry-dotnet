@@ -6,12 +6,12 @@ namespace OpenTelemetry.Metrics.Tests;
 #pragma warning disable CA1819 // Properties should not return arrays
 #pragma warning disable CA1515 // Consider making public types internal
 public class HistogramBoundaryTestCase(
-#pragma warning restore CA1515 // Consider making public types internal
     string testName,
     double[] inputBoundaries,
     double[] inputValues,
     long[] expectedBucketCounts,
     double[] expectedBucketBounds)
+#pragma warning restore CA1515 // Consider making public types internal
 {
     public double[] InputBoundaries { get; } = inputBoundaries;
 

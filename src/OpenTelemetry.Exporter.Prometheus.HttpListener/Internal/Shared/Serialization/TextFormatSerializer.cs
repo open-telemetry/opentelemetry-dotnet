@@ -3,13 +3,11 @@
 
 #if NET
 using System.Buffers.Text;
-#if NET9_0_OR_GREATER
 using System.Collections.Frozen;
-#else
 using System.Collections.Immutable;
 #endif
-#endif
 using System.Buffers;
+using System.Collections;
 using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.CompilerServices;
@@ -67,12 +65,7 @@ internal abstract class TextFormatSerializer
 #if NET
     private static readonly SearchValues<char> UnicodeVerbatimChars = SearchValues.Create(BuildAsciiVerbatimChars(escapeQuotationMarks: false));
     private static readonly SearchValues<char> LabelValueVerbatimChars = SearchValues.Create(BuildAsciiVerbatimChars(escapeQuotationMarks: true));
-#endif
-
-#if NET9_0_OR_GREATER
     private static readonly FrozenSet<string> ReservedScopeLabelNames = FrozenSet.Create(["otel_scope_name", "otel_scope_schema_url", "otel_scope_version"]);
-#elif NET
-    private static readonly ImmutableHashSet<string> ReservedScopeLabelNames = ["otel_scope_name", "otel_scope_schema_url", "otel_scope_version"];
 #else
     private static readonly HashSet<string> ReservedScopeLabelNames = ["otel_scope_name", "otel_scope_schema_url", "otel_scope_version"];
     private static readonly long UnixEpochTicks = new DateTimeOffset(1970, 1, 1, 0, 0, 0, TimeSpan.Zero).Ticks;
@@ -92,6 +85,11 @@ internal abstract class TextFormatSerializer
 #endif
 
     private static readonly string[] ReservedExemplarLabelNames = ["trace_id", "span_id"];
+
+    private static readonly string[] HistogramSampleSuffixes = ["_bucket", "_sum", "_count"];
+
+    [ThreadStatic]
+    private static bool replacementCharacterWritten;
 
     private string[]? reservedExemplarOutputKeys;
 
@@ -209,6 +207,14 @@ internal abstract class TextFormatSerializer
 
                 var seriesEnd = cursor;
 
+                // A series which has already been written is not written again, as the response would not be valid.
+                if (options.Series is { } registry && !registry.TryAdd(buffer, seriesStart, seriesEnd - seriesStart))
+                {
+                    registry.RecordDropped(metric.Name);
+                    cursor = seriesStart;
+                    continue;
+                }
+
                 buffer[cursor++] = unchecked((byte)' ');
 
                 if (isLongValue)
@@ -254,6 +260,14 @@ internal abstract class TextFormatSerializer
                 try
                 {
                     var serializedTags = new ReadOnlySpan<byte>(serializedTagsBuffer, 0, serializedTagsLength);
+
+                    // The labels identify the series of the point, which is that of all of its buckets, sum and count.
+                    if (options.Series is { } histogramRegistry && !histogramRegistry.TryAdd(serializedTagsBuffer, 0, serializedTagsLength))
+                    {
+                        histogramRegistry.RecordDropped(metric.Name);
+                        continue;
+                    }
+
                     var hasNegativeBucketBounds = false;
                     var previousBound = double.NegativeInfinity;
 
@@ -393,6 +407,23 @@ internal abstract class TextFormatSerializer
     {
         if (double.IsFinite(value))
         {
+            // Whole numbers below 1e15 format to the same digits as the equivalent integer
+            // (the shortest round-trip form only switches to exponent notation at 1e15),
+            // and formatting an integer is several times cheaper than the shortest
+            // round-trip search. Sums of integer-valued histograms and double counters
+            // incremented by whole amounts take this path. Negative zero must keep its
+            // sign, so it is left to the general path.
+            const double MaxIntegralDoubleFastPath = 1e15;
+
+            if (value > -MaxIntegralDoubleFastPath && value < MaxIntegralDoubleFastPath)
+            {
+                var integral = (long)value;
+                if (integral == value && (integral != 0 || BitConverter.DoubleToInt64Bits(value) >= 0))
+                {
+                    return WriteLong(buffer, cursor, integral);
+                }
+            }
+
             // The shortest round-trippable representation is used, which is what the reference
             // Prometheus client libraries emit (Go's strconv.FormatFloat with a precision of -1).
             // Formatting with 17 significant digits also round-trips, but pads shorter values out
@@ -533,7 +564,7 @@ internal abstract class TextFormatSerializer
 #endif
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal static int WriteLabelValue(byte[] buffer, int cursor, object? value)
+    internal static int WriteLabelValue(byte[] buffer, int cursor, object? value, string key = "")
     {
         switch (value)
         {
@@ -597,6 +628,17 @@ internal abstract class TextFormatSerializer
             case Guid guidValue:
                 return WriteSpanFormattableLabelValue(buffer, cursor, guidValue, stackalloc char[36]);
 #endif
+
+            // See https://github.com/open-telemetry/opentelemetry-specification/blob/v1.60.0/specification/common/README.md#byte-arrays;
+            // byte arrays are Base64-encoded rather than falling through to the array handling below.
+            // The exact type check is needed because the runtime also allows a sbyte[] to match byte[].
+            case byte[] byteArrayValue when byteArrayValue.GetType() == typeof(byte[]):
+                return WriteLabelValue(buffer, cursor, Convert.ToBase64String(byteArrayValue));
+
+            // Arrays and maps are JSON-encoded, per
+            // https://github.com/open-telemetry/opentelemetry-specification/blob/v1.60.0/specification/common/README.md#anyvalue-representation-for-non-otlp-protocols.
+            case Array or IEnumerable<KeyValuePair<string, object?>> or IEnumerable<KeyValuePair<string, string?>> or IDictionary:
+                return WriteLabelValue(buffer, cursor, PrometheusAnyValueWriter.Instance.ToLabelValueString(key, value));
 
             case IFormattable formattableValue:
                 return WriteLabelValue(buffer, cursor, formattableValue.ToString(null, CultureInfo.InvariantCulture) ?? string.Empty);
@@ -769,6 +811,12 @@ internal abstract class TextFormatSerializer
         return cursor;
     }
 
+    // The replacement character is written for each surrogate that is not part of a pair, so different values can be
+    // written as the same label value. Whether it was written is remembered for the current thread, from when it is reset.
+    internal static void ResetReplacementCharacterWritten() => replacementCharacterWritten = false;
+
+    internal static bool WasReplacementCharacterWritten() => replacementCharacterWritten;
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal int WriteExemplar(byte[] buffer, int cursor, in Exemplar exemplar, bool isLongValue)
     {
@@ -819,6 +867,55 @@ internal abstract class TextFormatSerializer
         return cursor;
     }
 
+    // The suffixes of the names of the samples which are written for a metric in addition to the name of the metric.
+    internal virtual string[] GetGeneratedSampleSuffixes(PrometheusMetric metric)
+        => metric.Type == PrometheusType.Histogram ? HistogramSampleSuffixes : [];
+
+    // Whether any of the keys of the tags are the same as another once they are escaped, or are not
+    // written as they are those of the labels of the metric, so that the series of different points can be the same.
+    internal bool HasCollidingTagKeys(TagKeyTracker tracker, Metric metric)
+    {
+        // Values of different types (such as 1 and "1"), or different arrays, can be written as the same label value.
+        if (tracker.HasAmbiguousValues)
+        {
+            return true;
+        }
+
+        // The keys are almost always unchanged by escaping, in which case none of them can be the same as another.
+        var anyChanged = false;
+        var reservedKeys = metric.MetricType.IsHistogram() ? ReservedHistogramLabelNames : null;
+
+        foreach (var key in tracker.Keys)
+        {
+            var outputKey = this.GetOutputLabelKey(key, tracker.OutputKeys);
+
+            if (reservedKeys is not null && Array.IndexOf(reservedKeys, outputKey) >= 0)
+            {
+                return true;
+            }
+
+            anyChanged |= !string.Equals(outputKey, key, StringComparison.Ordinal);
+        }
+
+        if (!anyChanged || tracker.Keys.Count < 2)
+        {
+            return false;
+        }
+
+        var outputKeys = tracker.ScratchOutputKeys;
+        outputKeys.Clear();
+
+        foreach (var key in tracker.Keys)
+        {
+            if (!outputKeys.Add(this.GetOutputLabelKey(key, tracker.OutputKeys)))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal int WriteTags(
         byte[] buffer,
@@ -856,6 +953,10 @@ internal abstract class TextFormatSerializer
         var resourceConstantLabels = options.ResourceConstantLabels;
         var hasResourceConstantLabels = resourceConstantLabels is { Count: > 0 };
 
+        // The labels are written ordered by their names when the series that are the same are being dropped.
+        var tagKeys = options.TagKeys;
+        var sortLabels = options.Series is not null;
+
         try
         {
             if (writeEnclosingBraces)
@@ -878,7 +979,7 @@ internal abstract class TextFormatSerializer
                 WriteScopeLabels();
             }
 
-            if (TryWritePointTags())
+            if (!sortLabels && TryWritePointTags())
             {
                 if (writeEnclosingBraces)
                 {
@@ -906,8 +1007,11 @@ internal abstract class TextFormatSerializer
                 }
             }
 
+            var slowTagIndex = 0;
+
             foreach (var tag in tags)
             {
+                tagKeys?.Observe(slowTagIndex++, tag.Key, tag.Value);
                 this.AddLabel(tag.Key, tag.Value, ref labels, reservedOutputKeys);
             }
 
@@ -919,7 +1023,7 @@ internal abstract class TextFormatSerializer
                 }
             }
 
-            return WriteLabels(buffer, cursor, labels, writeEnclosingBraces, quotedNameBytes, quotedNameSuffix);
+            return WriteLabels(buffer, cursor, labels, writeEnclosingBraces, quotedNameBytes, quotedNameSuffix, sortLabels: sortLabels);
         }
         finally
         {
@@ -945,10 +1049,17 @@ internal abstract class TextFormatSerializer
 
         bool TryWritePointTags()
         {
+            var tagIndex = 0;
+
             foreach (var tag in tags)
             {
+                tagKeys?.Observe(tagIndex++, tag.Key, tag.Value);
+
                 if (!TryWriteLabel(tag.Key, tag.Value))
                 {
+                    // The key is the same as that of another tag of the point once it is written, so the values
+                    // are merged into one label, which can be the same as the value of a tag of a different point.
+                    tagKeys?.ObserveRepeatedKey();
                     return false;
                 }
             }
@@ -1027,7 +1138,7 @@ internal abstract class TextFormatSerializer
 
             writtenKeyRanges[writtenKeyRangeCount++] = (keyStart, writtenKey.Length);
 
-            cursor = WriteSanitizedLabel(buffer, cursor, value);
+            cursor = WriteSanitizedLabel(buffer, cursor, value, key);
             wroteLabel = true;
 
             return true;
@@ -1410,7 +1521,7 @@ internal abstract class TextFormatSerializer
         in MetricPoint metricPoint,
         ReadOnlySpan<byte> serializedTags);
 
-    private static string GetLabelValueString(object? labelValue) => labelValue switch
+    private static string GetLabelValueString(string key, object? labelValue) => labelValue switch
     {
         null => string.Empty,
         string stringValue => stringValue,
@@ -1426,9 +1537,33 @@ internal abstract class TextFormatSerializer
         float floatValue => GetCanonicalLabelValueString(floatValue),
         double doubleValue => GetCanonicalLabelValueString(doubleValue),
         decimal decimalValue => decimalValue.ToString(CultureInfo.InvariantCulture),
+        byte[] byteArrayValue when byteArrayValue.GetType() == typeof(byte[]) => Convert.ToBase64String(byteArrayValue),
+        Array or IEnumerable<KeyValuePair<string, object?>> or IEnumerable<KeyValuePair<string, string?>> or IDictionary => PrometheusAnyValueWriter.Instance.ToLabelValueString(key, labelValue),
         IFormattable formattableValue => formattableValue.ToString(null, CultureInfo.InvariantCulture) ?? string.Empty,
         _ => labelValue.ToString() ?? string.Empty,
     };
+
+    private static string ReplaceInvalidSurrogates(string value)
+    {
+        for (var i = 0; i < value.Length; i++)
+        {
+            if (!char.IsSurrogate(value[i]))
+            {
+                continue;
+            }
+
+            if (char.IsHighSurrogate(value[i]) && i + 1 < value.Length && char.IsLowSurrogate(value[i + 1]))
+            {
+                i++;
+                continue;
+            }
+
+            replacementCharacterWritten = true;
+            return Encoding.UTF8.GetString(Encoding.UTF8.GetBytes(value));
+        }
+
+        return value;
+    }
 
     private static string NormalizeLabelKey(string value)
     {
@@ -1493,19 +1628,23 @@ internal abstract class TextFormatSerializer
 
     private static List<LabelData> CreateScopeLabelData(Metric metric)
     {
+        const string OTelScopeNameKey = "otel_scope_name";
+        const string OTelScopeVersionKey = "otel_scope_version";
+        const string OTelScopeSchemaUrlKey = "otel_scope_schema_url";
+
         var scopeLabels = new List<LabelData>(3)
         {
-            new("otel_scope_name", "otel_scope_name", GetLabelValueString(metric.MeterName)),
+            new(OTelScopeNameKey, OTelScopeNameKey, GetLabelValueString(OTelScopeNameKey, metric.MeterName)),
         };
 
         if (!string.IsNullOrEmpty(metric.MeterVersion))
         {
-            scopeLabels.Add(new("otel_scope_version", "otel_scope_version", GetLabelValueString(metric.MeterVersion)));
+            scopeLabels.Add(new(OTelScopeVersionKey, OTelScopeVersionKey, GetLabelValueString(OTelScopeVersionKey, metric.MeterVersion)));
         }
 
         if (!string.IsNullOrEmpty(metric.MeterSchemaUrl))
         {
-            scopeLabels.Add(new("otel_scope_schema_url", "otel_scope_schema_url", GetLabelValueString(metric.MeterSchemaUrl)));
+            scopeLabels.Add(new(OTelScopeSchemaUrlKey, OTelScopeSchemaUrlKey, GetLabelValueString(OTelScopeSchemaUrlKey, metric.MeterSchemaUrl)));
         }
 
         if (metric.MeterTags == null)
@@ -1522,7 +1661,7 @@ internal abstract class TextFormatSerializer
                 continue;
             }
 
-            scopeLabels.Add(new(tag.Key, labelKey, GetLabelValueString(tag.Value)));
+            scopeLabels.Add(new(tag.Key, labelKey, GetLabelValueString(tag.Key, tag.Value)));
         }
 
         return scopeLabels;
@@ -1697,12 +1836,14 @@ internal abstract class TextFormatSerializer
             }
 
             charsConsumed = 1;
+            replacementCharacterWritten = true;
             return UnicodeReplacementCharacter;
         }
 
         if (char.IsLowSurrogate(character))
         {
             charsConsumed = 1;
+            replacementCharacterWritten = true;
             return UnicodeReplacementCharacter;
         }
 
@@ -1728,18 +1869,19 @@ internal abstract class TextFormatSerializer
             return WriteUnicodeNoEscape(buffer, cursor, char.ConvertToUtf32(current, value[index]));
         }
 
+        replacementCharacterWritten = true;
         return WriteUnicodeNoEscape(buffer, cursor, 0xFFFD);
     }
 #endif
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static int WriteSanitizedLabel(byte[] buffer, int cursor, object? labelValue)
+    private static int WriteSanitizedLabel(byte[] buffer, int cursor, object? labelValue, string key = "")
     {
         buffer[cursor++] = unchecked((byte)'=');
         buffer[cursor++] = unchecked((byte)'"');
 
         // In Prometheus, a label with an empty label value is considered equivalent to a label that does not exist.
-        cursor = WriteLabelValue(buffer, cursor, labelValue);
+        cursor = WriteLabelValue(buffer, cursor, labelValue, key);
         buffer[cursor++] = unchecked((byte)'"');
 
         return cursor;
@@ -1758,7 +1900,7 @@ internal abstract class TextFormatSerializer
         }
 
         labels ??= [];
-        labels.Add(new LabelData(originalKey, outputKey, GetLabelValueString(value)));
+        labels.Add(new LabelData(originalKey, outputKey, GetLabelValueString(originalKey, value)));
     }
 
     private static bool IsValidLabelKey(string value)
@@ -1920,6 +2062,24 @@ internal abstract class TextFormatSerializer
         return true;
     }
 
+    // A stable insertion sort (so labels with the same name are still merged in the order that they were in), as there are few labels.
+    private static void SortByOutputKey(List<LabelData> labels)
+    {
+        for (var i = 1; i < labels.Count; i++)
+        {
+            var label = labels[i];
+            var j = i - 1;
+
+            while (j >= 0 && string.CompareOrdinal(labels[j].OutputKey, label.OutputKey) > 0)
+            {
+                labels[j + 1] = labels[j];
+                j--;
+            }
+
+            labels[j + 1] = label;
+        }
+    }
+
     private static int WriteLabels(
         byte[] buffer,
         int cursor,
@@ -1927,8 +2087,16 @@ internal abstract class TextFormatSerializer
         bool writeEnclosingBraces,
         ReadOnlySpan<byte> quotedNameBytes,
         string? quotedNameSuffix,
-        int? maxLabelSetCharacters = null)
+        int? maxLabelSetCharacters = null,
+        bool sortLabels = false)
     {
+        // When series are compared, the labels are written in order so that the same series is always written the same,
+        // and without those that have no value, as they are the same as labels that do not exist.
+        if (sortLabels && labels is List<LabelData> { Count: > 1 } sortable)
+        {
+            SortByOutputKey(sortable);
+        }
+
         if (writeEnclosingBraces)
         {
             buffer[cursor++] = unchecked((byte)'{');
@@ -1952,6 +2120,11 @@ internal abstract class TextFormatSerializer
             for (var i = 0; i < labels.Count; i++)
             {
                 var label = labels[i];
+
+                if (sortLabels && label.Value.Length == 0)
+                {
+                    continue;
+                }
 
                 if (WriteLabel(buffer, ref cursor, label.OutputKey, label.Value, maxLabelSetCharacters, ref labelSetCharacters))
                 {
@@ -1990,6 +2163,11 @@ internal abstract class TextFormatSerializer
             foreach (var key in orderedOutputKeys)
             {
                 var value = GetMergedLabelValue(groupedLabels[key]);
+
+                if (sortLabels && value.Length == 0)
+                {
+                    continue;
+                }
 
                 if (WriteLabel(buffer, ref cursor, key, value, maxLabelSetCharacters, ref labelSetCharacters))
                 {
@@ -2061,7 +2239,7 @@ internal abstract class TextFormatSerializer
         // The key is already the final output key; it is written verbatim, or
         // quoted when the allow-utf-8 scheme produced a non-legacy label name.
         cursor = WriteLabelName(buffer, cursor, key);
-        cursor = WriteSanitizedLabel(buffer, cursor, value);
+        cursor = WriteSanitizedLabel(buffer, cursor, value, key);
         buffer[cursor++] = unchecked((byte)',');
 
         return true;
@@ -2461,8 +2639,26 @@ internal abstract class TextFormatSerializer
     // the negotiated scheme reverses it correctly; for example "otel_scope_dot_name" would
     // otherwise be incorrectly decoded under the dots scheme into "otel_scope.name", losing
     // the required "otel_scope_" prefix. The underscores scheme leaves the key unchanged.
+    // The output keys of a response are remembered, as most of the keys that are escaped are for the tags of every metric.
+    private string GetOutputLabelKey(string value, Dictionary<string, string> cache)
+    {
+        if (!cache.TryGetValue(value, out var outputKey))
+        {
+            outputKey = this.GetOutputLabelKey(value);
+            cache[value] = outputKey;
+        }
+
+        return outputKey;
+    }
+
     private string GetOutputLabelKey(string value)
     {
+        if (this.Escaping == EscapingScheme.AllowUtf8)
+        {
+            // Sorting and merging must use the same keys that the UTF-8 writer produces.
+            return string.IsNullOrEmpty(value) ? "_" : ReplaceInvalidSurrogates(value);
+        }
+
         // The dots and values schemes produce a reversible, legacy-valid ASCII label name. The
         // underscores scheme replaces discouraged characters and collapses consecutive ones.
         if (this.Escaping != EscapingScheme.Underscores)

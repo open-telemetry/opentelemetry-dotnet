@@ -566,7 +566,7 @@ internal sealed class MeterProviderSdk : MeterProvider
             }
             else
             {
-                (names ??= new(StringComparer.OrdinalIgnoreCase)).Add(source);
+                (names ??= [with(StringComparer.OrdinalIgnoreCase)]).Add(source);
             }
         }
 

@@ -6,6 +6,51 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* `OTEL_DIAGNOSTICS.json` now uses the `SelfDiagnosticsOptions` pipeline,
+  adding configuration warnings and a redacted environment snapshot to each
+  file's preamble. `Verbose` and `LogAlways` also log loaded assemblies.
+  File-open failures are reported on standard error.
+  ([#7997](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7997))
+
+* **Breaking Change** `OTEL_DIAGNOSTICS.json` now writes rolling
+  `otel-dotnet-*.log` files in the standard entry format instead of a circular
+  `{executable}.{pid}.log` file. `FileSize` is split evenly across two
+  retained files, so total disk usage stays close to the configured limit.
+  `FormatMessage` is now ignored; messages are always formatted.
+  Provider-configured sinks, including those enabled through environment
+  variables, override the JSON configuration with a warning event. Writes are
+  asynchronous and may drop entries when the bounded queue fills.
+  ([#7997](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7997))
+
+* Fixed an exception when downscaling empty exponential histogram buckets after
+  a reset.
+  ([#8064](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8064))
+
+* Fixed tracing callbacks continuing after provider shutdown or disposal on older
+  target frameworks.
+  ([#8065](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8065))
+
+* Fixed initialization failures when environment variable access is denied.
+  Configuration reloads retain the last successful values when access is denied.
+  ([#8070](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8070))
+
+* Fixed a source, meter or legacy activity name with a trailing line feed
+  matching a wildcard pattern which does not end in a wildcard.
+  ([#8074](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8074))
+
+* Fixed `OTEL_RESOURCE_ATTRIBUTES` values being decoded as form data, which
+  changed a `+` to a space. Values are now only percent-decoded, as defined by
+  the Resource SDK specification.
+  ([#8074](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8074))
+
+* Updated the schema URL of resources created by the SDK to use OpenTelemetry
+  Semantic Conventions version `1.45.0`.
+  ([#8079](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8079))
+
+## 1.21.0-rc.1
+
+Released 2026-Oct-28
+
 * Fixed a race in the self-diagnostics sink dispatcher where disposing it
   while its pump thread was exiting could throw `ArgumentNullException` on
   .NET Framework.
@@ -14,6 +59,48 @@ Notes](../../RELEASENOTES.md).
 * `SelfDiagnosticsOptions` is now automatically bound from the
   `OpenTelemetry:SelfDiagnostics` configuration section, when present.
   ([#8008](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8008))
+
+* Fixed a race where collecting a metric with delta temporality concurrently
+  with the creation of a new `MetricPoint` could reclaim the `MetricPoint`
+  while it was being created, losing the measurement.
+  ([#8019](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8019))
+
+* Fixed a race where collecting a metric with delta temporality could export
+  the same series twice in a single collection.
+  ([#8019](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8019))
+
+* Fixed wildcard matching timeouts that could prevent configured source, meter,
+  legacy activity, or metric view patterns from matching.
+  ([#8014](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8014))
+
+* The timeout passed to `MetricReader.Collect()` (for example by
+  `MeterProvider.ForceFlush()`), the `ExportTimeoutMilliseconds` of
+  `PeriodicExportingMetricReader` and the `ExporterTimeoutMilliseconds` of
+  `BatchExportProcessor<T>` are now made available to the exporter instead of
+  being ignored once the export has started, so that the OTLP exporter can
+  cancel an export which runs past the timeout. The `ExportTimeoutMilliseconds`
+  of `PeriodicExportingMetricReader` now also limits exports which are not
+  started by the reader itself, such as those of `MeterProvider.ForceFlush()`.
+  ([#7996](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7996))
+
+* Fixed a race where collecting a cumulative metric concurrently with the
+  creation of a new `MetricPoint` could export a `MetricPoint` that was not yet
+  fully initialized, could case a `NullReferenceException` when enumerating `Tags`.
+  ([#8018](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8018))
+
+* **Breaking Change** Dropped support for `net8.0` and `net9.0`.
+  ([#6899](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6899))
+
+* Add support for .NET 11.0.
+  ([#6899](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6899))
+
+* Added support for enabling `ActivitySource`s from configuration using the
+  `Microsoft.Extensions.Diagnostics` tracing APIs introduced in .NET 11 (for
+  example, `services.AddTracing(b => b.AddConfiguration(section))`).
+  Activities from sources enabled this way are processed by the OpenTelemetry
+  `TracerProvider` registered through `AddOpenTelemetry().WithTracing()`.
+  Not supported when targeting `net10.0`.
+  ([#6899](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6899))
 
 ## 1.20.1
 
@@ -91,22 +178,6 @@ Released 2026-Oct-20
 * Fixed replaced log attributes being exported together with their original
   values when buffering or updating `LogRecord.State`.
   ([#7987](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7987))
-
-* `OTEL_DIAGNOSTICS.json` now uses the `SelfDiagnosticsOptions` pipeline,
-  adding configuration warnings and a redacted environment snapshot to each
-  file's preamble. `Verbose` and `LogAlways` also log loaded assemblies.
-  File-open failures are reported on standard error.
-  ([#7997](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7997))
-
-* **Breaking Change** `OTEL_DIAGNOSTICS.json` now writes rolling
-  `otel-dotnet-*.log` files in the standard entry format instead of a circular
-  `{executable}.{pid}.log` file. `FileSize` is split evenly across two
-  retained files, so total disk usage stays close to the configured limit.
-  `FormatMessage` is now ignored; messages are always formatted.
-  Provider-configured sinks, including those enabled through environment
-  variables, override the JSON configuration with a warning event. Writes are
-  asynchronous and may drop entries when the bounded queue fills.
-  ([#7997](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7997))
 
 ## 1.20.0
 

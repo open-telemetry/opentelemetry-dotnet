@@ -82,4 +82,58 @@ public sealed class MetricPointTests : IDisposable
         Assert.Equal(copy.SnapshotBucketCounts, histogramBuckets.SnapshotBucketCounts);
         Assert.Equal(copy.SnapshotSum, histogramBuckets.SnapshotSum);
     }
+
+    [Fact]
+    public void PublishedMetricPointIsNotInitializedBeforeItIsFullyWritten()
+    {
+        // A collect treats a MetricPoint as valid as soon as IsInitialized is true, so it must not
+        // become true before the rest of the MetricPoint (such as its Tags) has been written.
+        const int Count = 100_000;
+
+        var bounds = new HistogramExplicitBounds(this.bounds);
+        var tags = new KeyValuePair<string, object?>[] { new("key", "value") };
+        var metricPoints = new MetricPoint[Count];
+
+        var current = -1;
+        var torn = 0;
+
+        var reader = new Thread(() =>
+        {
+            int index;
+
+            while ((index = Volatile.Read(ref current)) < Count)
+            {
+                if (index >= 0)
+                {
+                    ref var metricPoint = ref metricPoints[index];
+
+                    if (metricPoint.IsInitialized && metricPoint.Tags.KeyAndValues is null)
+                    {
+                        torn++;
+                    }
+                }
+            }
+        });
+
+        reader.Start();
+
+        for (var i = 0; i < Count; i++)
+        {
+            Volatile.Write(ref current, i);
+
+            MetricPoint.Publish(
+                ref metricPoints[i],
+                this.metric.AggregatorStore,
+                AggregationType.HistogramWithBuckets,
+                tags,
+                bounds,
+                Metric.DefaultExponentialHistogramMaxBuckets,
+                Metric.DefaultExponentialHistogramMaxScale);
+        }
+
+        Volatile.Write(ref current, Count);
+        reader.Join();
+
+        Assert.Equal(0, torn);
+    }
 }

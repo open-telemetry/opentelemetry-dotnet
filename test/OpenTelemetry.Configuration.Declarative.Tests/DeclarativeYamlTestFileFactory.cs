@@ -2,22 +2,15 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Text;
+using OpenTelemetry.Tests;
 
 namespace OpenTelemetry.Configuration.Declarative.Tests;
 
 internal sealed class DeclarativeYamlTestFileFactory : IDisposable
 {
-    public DeclarativeYamlTestFileFactory()
-    {
-#if NET
-        this.TempDirectory = Directory.CreateTempSubdirectory("otel-decl-cfg-").FullName;
-#else
-        this.TempDirectory = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
-        Directory.CreateDirectory(this.TempDirectory);
-#endif
-    }
+    private readonly TemporaryDirectory directory = new();
 
-    public string TempDirectory { get; }
+    public string TempDirectory => this.directory.Path;
 
     public string CreateYamlFile(string yaml)
     {
@@ -67,7 +60,7 @@ internal sealed class DeclarativeYamlTestFileFactory : IDisposable
         return this.CreateYamlFile(builder.ToString());
     }
 
-    public void Dispose() => Directory.Delete(this.TempDirectory, recursive: true);
+    public void Dispose() => this.directory.Dispose();
 
     private static string EscapeYaml(string value) => value
 #if NET

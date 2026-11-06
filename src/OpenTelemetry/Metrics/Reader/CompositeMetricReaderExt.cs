@@ -6,9 +6,9 @@ using System.Diagnostics.Metrics;
 
 namespace OpenTelemetry.Metrics;
 
-/// <summary>
+/// <content>
 /// CompositeMetricReader that deals with adding metrics and recording measurements.
-/// </summary>
+/// </content>
 internal sealed partial class CompositeMetricReader
 {
     internal override List<Metric> AddMetricWithNoViews(Instrument instrument)

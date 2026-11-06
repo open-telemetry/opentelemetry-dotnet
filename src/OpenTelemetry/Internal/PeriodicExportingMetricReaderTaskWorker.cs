@@ -124,7 +124,7 @@ internal sealed class PeriodicExportingMetricReaderTaskWorker : PeriodicExportin
                     triggeredTask = await Task.WhenAny(
                         exportTriggerTask,
                         Task.Delay(timeout, waitAndDelayCts.Token)).ConfigureAwait(false);
-#if NET8_0_OR_GREATER
+#if NET
                     await waitAndDelayCts.CancelAsync().ConfigureAwait(false);
 #else
                     waitAndDelayCts.Cancel();
