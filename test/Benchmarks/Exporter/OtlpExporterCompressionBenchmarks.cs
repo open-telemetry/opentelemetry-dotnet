@@ -31,7 +31,11 @@ public class OtlpExporterCompressionBenchmarks
     private Activity? activity;
     private CircularBuffer<Activity>? activityBatch;
 
+#if NET11_0_OR_GREATER
+    [Params(OtlpExportCompression.None, OtlpExportCompression.GZip, OtlpExportCompression.Zstd)]
+#else
     [Params(OtlpExportCompression.None, OtlpExportCompression.GZip)]
+#endif
     public OtlpExportCompression Compression { get; set; }
 
     [GlobalSetup]

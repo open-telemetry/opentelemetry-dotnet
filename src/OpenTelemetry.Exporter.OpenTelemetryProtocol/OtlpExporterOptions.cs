@@ -335,6 +335,10 @@ public class OtlpExporterOptions : IOtlpExporterOptions
                 result = OtlpExportCompression.GZip;
                 return true;
 
+            case "ZSTD":
+                result = OtlpExportCompression.Zstd;
+                return true;
+
             default:
                 result = default;
                 return false;
