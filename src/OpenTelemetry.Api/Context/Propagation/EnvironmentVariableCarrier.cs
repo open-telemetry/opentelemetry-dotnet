@@ -11,7 +11,6 @@ using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Context.Propagation;
 
-#if EXPOSE_EXPERIMENTAL_FEATURES
 /// <summary>
 /// A class containing helper methods for using environment variables as context propagation carriers.
 /// </summary>
@@ -23,12 +22,7 @@ namespace OpenTelemetry.Context.Propagation;
 /// a key would otherwise start with a digit, and replacing an empty
 /// key with a single underscore.
 /// </remarks>
-[System.Diagnostics.CodeAnalysis.Experimental(DiagnosticDefinitions.EnvironmentVariableContextPropagationExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
-public
-#else
-internal
-#endif
-static class EnvironmentVariableCarrier
+public static class EnvironmentVariableCarrier
 {
 #if NET
     private static readonly SearchValues<char> NormalizedChars = SearchValues.Create("ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_");
