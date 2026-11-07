@@ -113,12 +113,15 @@ If this affects you, either:
 
 * Add `await Task.Yield();` after the `catch` block, before the activity
   ends. The rest of the method then runs outside that catch block.
-* Use [Option 1](#option-1---set-activity-status-manually) for this code
-  path instead of `SetErrorStatusOnException`.
+* Turn off `SetErrorStatusOnException` and set the status yourself, as in
+  [Option 1](#option-1---set-activity-status-manually). The feature applies to
+  the whole `TracerProvider`, so Option 1 on one code path is not enough
+  while it is on.
 
-Calling `activity.SetStatus(ActivityStatusCode.Ok)` in the `catch` block does
-not help, because the feature replaces the status with `Error` when the
-activity ends.
+Setting the status to `Ok` in the `catch` block, with
+`activity.SetStatus(ActivityStatusCode.Ok)` or the older
+`activity.SetStatus(Status.Ok)`, does not help, because the feature replaces
+the status with `Error` when the activity ends.
 
 ### Option 3 - Set Activity Status with Error description
 
