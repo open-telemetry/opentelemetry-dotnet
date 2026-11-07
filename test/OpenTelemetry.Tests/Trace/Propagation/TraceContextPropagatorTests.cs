@@ -282,6 +282,66 @@ public class TraceContextPropagatorTests
         Assert.False(context.ActivityContext.IsValid());
     }
 
+    [Theory]
+    [InlineData(3, 32)]
+    [InlineData(36, 16)]
+    public void Extract_ValidatesEveryIdCharacter(int start, int length)
+    {
+        var propagator = new TraceContextPropagator();
+        var headers = new Dictionary<string, string>();
+        var traceparent = $"00-{TraceId}-{SpanId}-01".ToCharArray();
+
+        for (var offset = 0; offset < length; offset++)
+        {
+            var index = start + offset;
+            var original = traceparent[index];
+
+            // Exercise ASCII and non-ASCII characters at every position, including vector boundaries.
+            foreach (var character in "0123456789abcdefABCDEFgG/:@\u0000\u007f\u0080\uff10\uff46")
+            {
+                traceparent[index] = character;
+                headers[TraceParent] = new string(traceparent);
+
+                var context = propagator.Extract(default, headers, Getter);
+                var expectedValid = character is (>= '0' and <= '9') or (>= 'a' and <= 'f');
+
+                Assert.Equal(expectedValid, context.ActivityContext.IsValid());
+                if (expectedValid)
+                {
+                    Assert.Equal(new string(traceparent, 3, 32), context.ActivityContext.TraceId.ToHexString());
+                    Assert.Equal(new string(traceparent, 36, 16), context.ActivityContext.SpanId.ToHexString());
+                }
+            }
+
+            traceparent[index] = original;
+        }
+    }
+
+    [Theory]
+    [InlineData(3, 32)]
+    [InlineData(36, 16)]
+    public void Extract_AcceptsIdWithSingleNonzeroNibble(int start, int length)
+    {
+        var propagator = new TraceContextPropagator();
+        var headers = new Dictionary<string, string>();
+        var traceparent = $"00-{TraceId}-{SpanId}-01".ToCharArray();
+        Array.Fill(traceparent, '0', start, length);
+
+        for (var offset = 0; offset < length; offset++)
+        {
+            traceparent[start + offset] = '1';
+            headers[TraceParent] = new string(traceparent);
+
+            var context = propagator.Extract(default, headers, Getter);
+
+            Assert.True(context.ActivityContext.IsValid(), $"Rejected nonzero nibble at position {start + offset}.");
+            Assert.Equal(new string(traceparent, 3, 32), context.ActivityContext.TraceId.ToHexString());
+            Assert.Equal(new string(traceparent, 36, 16), context.ActivityContext.SpanId.ToHexString());
+
+            traceparent[start + offset] = '0';
+        }
+    }
+
     [Fact]
     public void TracestateToStringEmpty()
     {
