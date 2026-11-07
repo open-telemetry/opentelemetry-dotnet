@@ -325,7 +325,7 @@ public class TraceContextPropagatorTests
         var propagator = new TraceContextPropagator();
         var headers = new Dictionary<string, string>();
         var traceparent = $"00-{TraceId}-{SpanId}-01".ToCharArray();
-        Array.Fill(traceparent, '0', start, length);
+        traceparent.AsSpan(start, length).Fill('0');
 
         for (var offset = 0; offset < length; offset++)
         {
