@@ -22,19 +22,20 @@ internal static class PrometheusHeadersParser
 
         var value = contentType.AsSpan();
 
-        const int SupportedProtocols = 4;
-        var preferences = new List<(PrometheusProtocol Protocol, double Quality)>(SupportedProtocols);
+        var preferredProtocol = PrometheusProtocol.Fallback;
+        var preferredQuality = 0.0;
 
         SupportedVersions supportedVersions;
 
         while (value.Length > 0)
         {
             var headerValue = TrimWhitespace(SplitNext(ref value, ','));
-            var mediaType = TrimWhitespace(SplitNext(ref headerValue, ';')).ToString();
+            var requestedMediaType = TrimWhitespace(SplitNext(ref headerValue, ';'));
+            string mediaType;
 
             bool isOpenMetrics;
 
-            if (string.Equals(mediaType, PrometheusProtocol.PrometheusTextMediaType, StringComparison.OrdinalIgnoreCase))
+            if (requestedMediaType.Equals(PrometheusProtocol.PrometheusTextMediaType.AsSpan(), StringComparison.OrdinalIgnoreCase))
             {
                 isOpenMetrics = false;
                 mediaType = PrometheusProtocol.PrometheusTextMediaType;
@@ -42,7 +43,7 @@ internal static class PrometheusHeadersParser
             }
             else
             {
-                if (!string.Equals(mediaType, PrometheusProtocol.OpenMetricsMediaType, StringComparison.OrdinalIgnoreCase))
+                if (!requestedMediaType.Equals(PrometheusProtocol.OpenMetricsMediaType.AsSpan(), StringComparison.OrdinalIgnoreCase))
                 {
                     // Unsupported media type
                     continue;
@@ -146,15 +147,16 @@ internal static class PrometheusHeadersParser
 
             protocol.Validate();
 
-            preferences.Add((protocol, quality));
+            // Strict comparison preserves the first supported protocol when quality factors tie.
+            if (quality > preferredQuality)
+            {
+                preferredProtocol = protocol;
+                preferredQuality = quality;
+            }
         }
 
         // Use the first supported protocol that was parsed that has the highest quality factor
-        return preferences
-            .OrderByDescending((p) => p.Quality)
-            .Select((p) => p.Protocol)
-            .DefaultIfEmpty(PrometheusProtocol.Fallback)
-            .FirstOrDefault();
+        return preferredProtocol;
     }
 
     private static Version? GetVersion(ReadOnlySpan<char> value, SupportedVersions supportedVersions)
@@ -170,13 +172,14 @@ internal static class PrometheusHeadersParser
             : null;
     }
 
-    private static string? GetEscaping(ReadOnlySpan<char> value)
+    private static string? GetEscaping(ReadOnlySpan<char> value) => TrimQuotes(value) switch
     {
-        var trimmed = TrimQuotes(value);
-        var escaping = trimmed.ToString();
-
-        return PrometheusProtocol.SupportedEscapingSchemes.Contains(escaping) ? escaping : null;
-    }
+        PrometheusProtocol.AllowUtf8Escaping => PrometheusProtocol.AllowUtf8Escaping,
+        PrometheusProtocol.DotsEscaping => PrometheusProtocol.DotsEscaping,
+        PrometheusProtocol.UnderscoresEscaping => PrometheusProtocol.UnderscoresEscaping,
+        PrometheusProtocol.ValuesEscaping => PrometheusProtocol.ValuesEscaping,
+        _ => null,
+    };
 
     private static ReadOnlySpan<char> SplitNext(ref ReadOnlySpan<char> span, char character)
     {
