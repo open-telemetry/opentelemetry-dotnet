@@ -109,7 +109,9 @@ internal sealed class PeriodicExportingMetricReaderTaskWorker : PeriodicExportin
 
         try
         {
-            while (!cancellationToken.IsCancellationRequested)
+            // The loop only ends once the final collection of a shutdown has been made, even if
+            // the shutdown was requested before the worker started, as the thread worker does.
+            while (true)
             {
                 var elapsedMilliseconds = Stopwatch.GetElapsedTime(startedAt).Ticks / TimeSpan.TicksPerMillisecond;
                 var timeout = this.ExportIntervalMilliseconds - (int)(elapsedMilliseconds % this.ExportIntervalMilliseconds);
@@ -138,7 +140,7 @@ internal sealed class PeriodicExportingMetricReaderTaskWorker : PeriodicExportin
                 if (cancellationToken.IsCancellationRequested)
                 {
                     OpenTelemetrySdkEventSource.Log.MetricReaderEvent("PeriodicExportingMetricReader calling MetricReader.Collect because Shutdown was triggered.");
-                    this.MetricReader.Collect(this.ExportTimeoutMilliseconds);
+                    this.MetricReader.Collect(this.CollectTimeoutMilliseconds);
                     break;
                 }
 
@@ -154,7 +156,7 @@ internal sealed class PeriodicExportingMetricReaderTaskWorker : PeriodicExportin
                     OpenTelemetrySdkEventSource.Log.MetricReaderEvent("PeriodicExportingMetricReader calling MetricReader.Collect because the export interval has elapsed.");
                 }
 
-                this.MetricReader.Collect(this.ExportTimeoutMilliseconds);
+                this.MetricReader.Collect(this.CollectTimeoutMilliseconds);
             }
         }
         catch (Exception ex)

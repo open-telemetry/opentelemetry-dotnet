@@ -85,6 +85,12 @@ public sealed class ParentBasedSampler : Sampler
     /// <inheritdoc />
     public override SamplingResult ShouldSample(in SamplingParameters samplingParameters)
     {
+        if (this.IsShutdown)
+        {
+            // Do not delegate to samplers which are being, or have been, shut down
+            return new SamplingResult(SamplingDecision.Drop);
+        }
+
         var parentContext = samplingParameters.ParentContext;
         if (parentContext.TraceId == default)
         {
@@ -104,5 +110,39 @@ public sealed class ParentBasedSampler : Sampler
         return parentContext.IsRemote
             ? this.remoteParentNotSampled.ShouldSample(samplingParameters)
             : this.localParentNotSampled.ShouldSample(samplingParameters);
+    }
+
+    /// <inheritdoc />
+    protected override bool OnShutdown(int timeoutMilliseconds)
+    {
+        Sampler[] samplers =
+        [
+            this.rootSampler,
+            this.remoteParentSampled,
+            this.remoteParentNotSampled,
+            this.localParentSampled,
+            this.localParentNotSampled,
+        ];
+
+        var result = true;
+        var initialTimeoutMilliseconds = timeoutMilliseconds;
+        long? timestamp = timeoutMilliseconds == Timeout.Infinite ? null : Stopwatch.GetTimestamp();
+
+        // The same instance can be used for more than one role, or be shared with other samplers,
+        // so some of these may already have been shut down, which ShutdownShared does not treat as a failure.
+        foreach (var sampler in samplers)
+        {
+            var currentTimeoutMilliseconds = timeoutMilliseconds;
+
+            if (timestamp is { } startedAt)
+            {
+                currentTimeoutMilliseconds = Stopwatch.Remaining(initialTimeoutMilliseconds, startedAt);
+            }
+
+            // Notify all the samplers, even if we run overtime
+            result = ShutdownShared(sampler, currentTimeoutMilliseconds) && result;
+        }
+
+        return result;
     }
 }

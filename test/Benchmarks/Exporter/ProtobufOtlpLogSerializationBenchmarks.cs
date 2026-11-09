@@ -62,6 +62,6 @@ public class ProtobufOtlpLogSerializationBenchmarks
     {
         var buffer = this.buffer;
         var batch = new Batch<LogRecord>(this.logRecords, this.logRecords.Length);
-        return ProtobufOtlpLogSerializer.WriteLogsData(ref buffer, 0, this.sdkLimitOptions, this.experimentalOptions, this.resource, batch);
+        return ProtobufOtlpLogSerializer.WriteLogsData(ref buffer, 0, this.sdkLimitOptions, this.experimentalOptions, this.resource, batch, out _);
     }
 }

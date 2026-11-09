@@ -1,8 +1,11 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using OpenTelemetry.Tests;
+
 namespace OpenTelemetry.Context.Tests;
 
+[Collection(RuntimeContextCollectionDefinition.Name)]
 public sealed class RuntimeContextTests : IDisposable
 {
     public RuntimeContextTests()
@@ -131,6 +134,157 @@ public sealed class RuntimeContextTests : IDisposable
         Assert.Throws<InvalidCastException>(() => slotValueAccessor.Value = new object());
     }
 
+    [Fact]
+    public void ContextSlotTypeDefaultsToAsyncLocal()
+    {
+        Assert.Equal(typeof(AsyncLocalRuntimeContextSlot<>), RuntimeContext.ContextSlotType);
+    }
+
+    [Fact]
+    public void ContextSlotTypeRejectsInvalidValues()
+    {
+        Assert.Throws<ArgumentNullException>(() => RuntimeContext.ContextSlotType = null!);
+        Assert.Throws<NotSupportedException>(() => RuntimeContext.ContextSlotType = typeof(List<>));
+        Assert.Equal(typeof(AsyncLocalRuntimeContextSlot<>), RuntimeContext.ContextSlotType);
+    }
+
+    [Fact]
+    public void ThreadLocalSlotRoundTripsValues()
+    {
+        RunWithContextSlotType(
+            typeof(ThreadLocalRuntimeContextSlot<>),
+            () =>
+            {
+                var slot = RuntimeContext.RegisterSlot<int>("threadlocal_valuetype");
+                Assert.IsType<ThreadLocalRuntimeContextSlot<int>>(slot);
+                Assert.Equal("threadlocal_valuetype", slot.Name);
+
+                var accessor = Assert.IsAssignableFrom<IRuntimeContextSlotValueAccessor>(slot);
+
+                Assert.Equal(0, slot.Get());
+
+                slot.Set(100);
+                Assert.Equal(100, slot.Get());
+                Assert.Equal(100, accessor.Value);
+
+                accessor.Value = 200;
+                Assert.Equal(200, slot.Get());
+
+                accessor.Value = null;
+                Assert.Equal(0, slot.Get());
+                Assert.Equal(0, accessor.Value);
+
+                Assert.Throws<InvalidCastException>(() => accessor.Value = false);
+
+                // The value is local to the thread that set it.
+                slot.Set(300);
+                var otherThreadValue = -1;
+                var thread = new Thread(() => otherThreadValue = slot.Get());
+                thread.Start();
+                thread.Join();
+                Assert.Equal(0, otherThreadValue);
+                Assert.Equal(300, slot.Get());
+
+                // Disposing more than once is safe.
+                slot.Dispose();
+                slot.Dispose();
+            });
+    }
+
+    [Fact]
+    public void ThreadLocalSlotRoundTripsReferenceValues()
+    {
+        RunWithContextSlotType(
+            typeof(ThreadLocalRuntimeContextSlot<>),
+            () =>
+            {
+                var slot = RuntimeContext.RegisterSlot<RuntimeContextTests>("threadlocal_referencetype");
+                var accessor = Assert.IsAssignableFrom<IRuntimeContextSlotValueAccessor>(slot);
+
+                Assert.Null(slot.Get());
+                Assert.Null(accessor.Value);
+
+                accessor.Value = this;
+                Assert.Same(this, slot.Get());
+
+                accessor.Value = null;
+                Assert.Null(slot.Get());
+
+                Assert.Throws<InvalidCastException>(() => accessor.Value = new object());
+            });
+    }
+
+    [Fact]
+    public void ValueAccessorsByNameGetAndSetSlotValues()
+    {
+        RuntimeContext.RegisterSlot<int>("named_slot");
+
+        Assert.Equal(0, RuntimeContext.GetValue<int>("named_slot"));
+        Assert.Equal(0, RuntimeContext.GetValue("named_slot"));
+
+        RuntimeContext.SetValue("named_slot", 5);
+        Assert.Equal(5, RuntimeContext.GetValue<int>("named_slot"));
+        Assert.Equal(5, RuntimeContext.GetValue("named_slot"));
+
+        RuntimeContext.SetValue<int>("named_slot", 6);
+        Assert.Equal(6, RuntimeContext.GetValue<int>("named_slot"));
+
+        RuntimeContext.SetValue("named_slot", (object?)7);
+        Assert.Equal(7, RuntimeContext.GetValue("named_slot"));
+    }
+
+    [Fact]
+    public void ValueAccessorsByNameValidateTheSlotName()
+    {
+        Assert.Throws<ArgumentException>(() => RuntimeContext.GetValue("missing"));
+        Assert.Throws<ArgumentException>(() => RuntimeContext.SetValue("missing", 1));
+        Assert.Throws<ArgumentException>(() => RuntimeContext.GetValue<int>("missing"));
+        Assert.Throws<ArgumentException>(() => RuntimeContext.SetValue<int>("missing", 1));
+
+        Assert.Throws<ArgumentException>(() => RuntimeContext.GetValue(string.Empty));
+        Assert.Throws<ArgumentException>(() => RuntimeContext.SetValue(string.Empty, 1));
+        Assert.ThrowsAny<ArgumentException>(() => RuntimeContext.GetValue(null!));
+        Assert.ThrowsAny<ArgumentException>(() => RuntimeContext.SetValue(null!, 1));
+    }
+
+#if NETFRAMEWORK
+    [Fact]
+    public void RemotingSlotRoundTripsValues()
+    {
+        RunWithContextSlotType(
+            typeof(RemotingRuntimeContextSlot<>),
+            () =>
+            {
+                var valueSlot = RuntimeContext.RegisterSlot<int>("remoting_valuetype");
+                Assert.IsType<RemotingRuntimeContextSlot<int>>(valueSlot);
+
+                var valueAccessor = Assert.IsAssignableFrom<IRuntimeContextSlotValueAccessor>(valueSlot);
+
+                Assert.Equal(0, valueSlot.Get());
+
+                valueSlot.Set(100);
+                Assert.Equal(100, valueSlot.Get());
+                Assert.Equal(100, valueAccessor.Value);
+
+                valueAccessor.Value = null;
+                Assert.Equal(0, valueSlot.Get());
+
+                Assert.Throws<InvalidCastException>(() => valueAccessor.Value = false);
+
+                var referenceSlot = RuntimeContext.RegisterSlot<RuntimeContextTests>("remoting_referencetype");
+                var referenceAccessor = Assert.IsAssignableFrom<IRuntimeContextSlotValueAccessor>(referenceSlot);
+
+                Assert.Null(referenceSlot.Get());
+
+                referenceAccessor.Value = this;
+                Assert.Same(this, referenceSlot.Get());
+
+                referenceAccessor.Value = null;
+                Assert.Null(referenceSlot.Get());
+            });
+    }
+#endif
+
 #if NETFRAMEWORK
     [Fact]
     public void NetFrameworkGetSlotInAnotherAppDomain()
@@ -163,6 +317,24 @@ public sealed class RuntimeContextTests : IDisposable
     {
         RuntimeContext.Clear();
         GC.SuppressFinalize(this);
+    }
+
+    private static void RunWithContextSlotType(Type slotType, Action action)
+    {
+        // Baggage registers its slot in a static initializer, so make sure that has
+        // happened with the default slot type before the slot type is changed.
+        _ = Baggage.Current;
+
+        var original = RuntimeContext.ContextSlotType;
+        try
+        {
+            RuntimeContext.ContextSlotType = slotType;
+            action();
+        }
+        finally
+        {
+            RuntimeContext.ContextSlotType = original;
+        }
     }
 
 #if NETFRAMEWORK

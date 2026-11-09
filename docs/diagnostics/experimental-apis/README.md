@@ -33,12 +33,6 @@ Description: ExemplarReservoir Support
 
 Details: [OTEL1004](./OTEL1004.md)
 
-### OTEL1005
-
-Description: Environment variable context propagation
-
-Details: [OTEL1005](./OTEL1005.md)
-
 ## Inactive
 
 Experimental APIs which have been released stable or removed:
@@ -66,3 +60,11 @@ Description: MetricStreamConfiguration CardinalityLimit Support
 Details: [OTEL1003](https://github.com/open-telemetry/opentelemetry-dotnet/blob/9f41eadf03f3dcc5e76c686b61fb39849f046312/docs/diagnostics/experimental-apis/OTEL1003.md)
 
 Released stable: `1.10.0`
+
+### OTEL1005
+
+Description: Environment variable context propagation
+
+Details: [OTEL1005](https://github.com/open-telemetry/opentelemetry-dotnet/blob/bb95d8b6bf4c1b313a4f49414ba490c234c16d4e/docs/diagnostics/experimental-apis/OTEL1005.md)
+
+Released stable: `1.21.0`
