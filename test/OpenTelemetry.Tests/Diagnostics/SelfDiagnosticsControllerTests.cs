@@ -14,6 +14,7 @@ using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Tests.Diagnostics;
 
+[Collection(EnvVarsCollectionDefinition.Name)]
 public sealed class SelfDiagnosticsControllerTests : IDisposable
 {
     private readonly List<TemporaryDirectory> directories = [];
@@ -24,6 +25,311 @@ public sealed class SelfDiagnosticsControllerTests : IDisposable
         {
             directory.Dispose();
         }
+    }
+
+    [Fact]
+    public void LegacyConfiguration_ActivatesImmediatelyAndWritesSdkEventsAndPreamble()
+    {
+        var directory = this.CreateDirectory();
+        using var controller = new SelfDiagnosticsController();
+        using var source = this.CreateLegacySource(controller, directory);
+
+        Assert.NotNull(controller.Logger);
+        OpenTelemetrySdkEventSource.Log.ObservableInstrumentCallbackException("legacy JSON reached the shared pipeline");
+
+        AssertLogsContain(
+            directory,
+            "legacy JSON reached the shared pipeline",
+            "The legacy configuration did not capture the SDK event.");
+        controller.Dispose();
+
+        var file = Assert.Single(Directory.GetFiles(directory, "otel-dotnet-*.log"));
+        var text = File.ReadAllText(file);
+
+        Assert.Contains("=== end preamble ===", text, StringComparison.Ordinal);
+        Assert.Contains("Self-diagnostics was enabled by the legacy OTEL_DIAGNOSTICS.json", text, StringComparison.Ordinal);
+        Assert.Contains(source.ConfigFilePath!, text, StringComparison.Ordinal);
+        Assert.Contains("LogLevel 'Warning' was applied as MinimumLevel Warning", text, StringComparison.Ordinal);
+        Assert.Contains("[Warning]", text, StringComparison.Ordinal);
+        Assert.Contains("EventName: ObservableInstrumentCallbackException", text, StringComparison.Ordinal);
+    }
+
+    [Theory]
+    [InlineData(LogLevel.Warning)]
+    [InlineData(LogLevel.None)]
+    public void ProviderWithoutSink_DoesNotDisplaceLegacyConfiguration(LogLevel minimumLevel)
+    {
+        var directory = this.CreateDirectory();
+        using var controller = new SelfDiagnosticsController();
+        using var source = this.CreateLegacySource(controller, directory);
+        using var provider = controller.Register(Monitor(new SelfDiagnosticsOptions { MinimumLevel = minimumLevel }));
+
+        ControllerTestEventSource.Log.Warn("captured after provider registration");
+
+        AssertLogsContain(
+            directory,
+            "captured after provider registration",
+            "A provider without a sink displaced the legacy configuration.");
+    }
+
+    [Fact]
+    public void ProviderWithSink_RegisteredFirst_ReportsIgnoredFileWithoutCreatingLegacyLog()
+    {
+        var legacyDirectory = this.CreateDirectory();
+        var providerDirectory = this.CreateDirectory();
+        var configFilePath = Path.Combine(this.CreateDirectory(), SelfDiagnosticsConfigParser.ConfigFileName);
+        var ignoredPaths = new List<string>();
+
+        WriteLegacyConfiguration(configFilePath, legacyDirectory);
+
+        using var controller = new SelfDiagnosticsController(ignoredPaths.Add);
+        using var provider = controller.Register(Monitor(FileOptions(providerDirectory)));
+        using var source = new SelfDiagnosticsLegacyConfigSource(
+            new SelfDiagnosticsConfigParser(() => configFilePath), Timeout.InfiniteTimeSpan, controller.SetLegacyConfiguration);
+
+        AssertLogsContain(
+            providerDirectory,
+            "=== end preamble ===",
+            "The provider file sink did not open.");
+        Assert.Equal(configFilePath, Assert.Single(ignoredPaths));
+        Assert.Empty(Directory.GetFiles(legacyDirectory));
+    }
+
+    [Fact]
+    public void ProviderWithSink_TakesOverFromActiveLegacyConfiguration()
+    {
+        var legacyDirectory = this.CreateDirectory();
+        var providerDirectory = this.CreateDirectory();
+        var ignoredPaths = new List<string>();
+
+        using var controller = new SelfDiagnosticsController(ignoredPaths.Add);
+        using var source = this.CreateLegacySource(controller, legacyDirectory);
+
+        AssertLogsContain(
+            legacyDirectory,
+            "=== end preamble ===",
+            "The legacy file sink did not write its preamble.");
+
+        using var provider = controller.Register(Monitor(FileOptions(providerDirectory)));
+        ControllerTestEventSource.Log.Warn("after provider takeover");
+
+        AssertLogsContain(
+            providerDirectory,
+            "after provider takeover",
+            "The provider did not take ownership from the legacy configuration.");
+        Assert.DoesNotContain("after provider takeover", ReadLogs(legacyDirectory), StringComparison.Ordinal);
+        Assert.Equal(source.ConfigFilePath, Assert.Single(ignoredPaths));
+    }
+
+    [Theory]
+    [InlineData("Warning")]
+    [InlineData("Error")]
+    [InlineData("Critical")]
+    public void LegacyConfiguration_CapturesLogAlwaysEventsAtRestrictiveLevels(string level)
+    {
+        var directory = this.CreateDirectory();
+        var configFilePath = Path.Combine(this.CreateDirectory(), SelfDiagnosticsConfigParser.ConfigFileName);
+        WriteLegacyConfiguration(configFilePath, directory, level);
+
+        using var controller = new SelfDiagnosticsController();
+        using var source = new SelfDiagnosticsLegacyConfigSource(
+            new SelfDiagnosticsConfigParser(() => configFilePath), Timeout.InfiniteTimeSpan, controller.SetLegacyConfiguration);
+
+        ControllerTestEventSource.Log.Always("log always under legacy");
+        ControllerTestEventSource.Log.Critical("critical marker under legacy");
+
+        AssertLogsContain(
+            directory,
+            "critical marker under legacy",
+            "The legacy configuration did not capture the Critical marker.");
+        controller.Dispose();
+
+        Assert.Contains("log always under legacy", ReadLogs(directory), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void NoneLevelProviderWithSink_TakesOverFromActiveLegacyConfiguration_WithoutOutput()
+    {
+        var legacyDirectory = this.CreateDirectory();
+        var providerDirectory = this.CreateDirectory();
+        var ignoredPaths = new List<string>();
+
+        using var controller = new SelfDiagnosticsController(ignoredPaths.Add);
+        using var source = this.CreateLegacySource(controller, legacyDirectory);
+
+        AssertLogsContain(
+            legacyDirectory,
+            "=== end preamble ===",
+            "The legacy file sink did not write its preamble.");
+
+        var options = FileOptions(providerDirectory);
+        options.MinimumLevel = LogLevel.None;
+        using var provider = controller.Register(Monitor(options));
+
+        Assert.False(controller.Logger!.IsEnabled(LogLevel.Critical), "The provider should not be enabled for Critical level after setting it to None.");
+        ControllerTestEventSource.Log.Always("after none takeover");
+        ControllerTestEventSource.Log.Critical("after none takeover");
+
+        // Disposal joins the pump, so any sink the takeover created has been opened by now.
+        controller.Dispose();
+
+        Assert.Empty(Directory.GetFiles(providerDirectory));
+        Assert.DoesNotContain("after none takeover", ReadLogs(legacyDirectory), StringComparison.Ordinal);
+        Assert.Equal(source.ConfigFilePath, Assert.Single(ignoredPaths));
+    }
+
+    [Fact]
+    public void NoneLevelProviderWithSink_ReEnablingAfterLegacyTakeover_RecreatesItsSink()
+    {
+        var legacyDirectory = this.CreateDirectory();
+        var providerDirectory = this.CreateDirectory();
+
+        using var controller = new SelfDiagnosticsController();
+        using var source = this.CreateLegacySource(controller, legacyDirectory);
+
+        var disabled = FileOptions(providerDirectory);
+        disabled.MinimumLevel = LogLevel.None;
+        var monitor = Monitor(disabled);
+        using var provider = controller.Register(monitor);
+
+        ControllerTestEventSource.Log.Critical("while provider is disabled");
+
+        monitor.Set(FileOptions(providerDirectory));
+        ControllerTestEventSource.Log.Critical("after provider re-enabled");
+
+        AssertLogsContain(
+            providerDirectory,
+            "after provider re-enabled",
+            "Re-enabling the provider level did not recreate its file sink.");
+        controller.Dispose();
+
+        var text = ReadLogs(providerDirectory) + ReadLogs(legacyDirectory);
+        Assert.Single(Directory.GetFiles(providerDirectory));
+        Assert.DoesNotContain("while provider is disabled", text, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void LegacyUpdatesWhileIgnored_AreAppliedWhenProviderDisablesItsSink()
+    {
+        var legacyDirectory = this.CreateDirectory();
+        var updatedDirectory = this.CreateDirectory();
+        var providerDirectory = this.CreateDirectory();
+        using var controller = new SelfDiagnosticsController();
+        var monitor = Monitor(FileOptions(providerDirectory));
+        using var provider = controller.Register(monitor);
+        using var source = this.CreateLegacySource(controller, legacyDirectory);
+
+        WriteLegacyConfiguration(source.ConfigFilePath!, updatedDirectory, "Error");
+        Assert.True(source.Refresh());
+        Assert.Empty(Directory.GetFiles(legacyDirectory));
+        Assert.Empty(Directory.GetFiles(updatedDirectory));
+
+        monitor.Set(new SelfDiagnosticsOptions());
+        ControllerTestEventSource.Log.Warn("legacy warning should be filtered");
+        OpenTelemetrySdkEventSource.Log.TracerProviderException("legacy error after handover", "test exception");
+
+        AssertLogsContain(
+            updatedDirectory,
+            "legacy error after handover",
+            "Disabling the provider sink did not activate the updated legacy configuration.");
+        Assert.DoesNotContain("legacy warning should be filtered", ReadLogs(updatedDirectory), StringComparison.Ordinal);
+        Assert.Contains("LogLevel 'Error' was applied as MinimumLevel Error", ReadLogs(updatedDirectory), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void LegacyFileDeletionAndRecreation_DisableAndEnableThePipeline()
+    {
+        var firstDirectory = this.CreateDirectory();
+        var secondDirectory = this.CreateDirectory();
+        using var controller = new SelfDiagnosticsController();
+        using var source = this.CreateLegacySource(controller, firstDirectory);
+        var configFilePath = source.ConfigFilePath!;
+        ControllerTestEventSource.Log.Warn("before legacy file deletion");
+        AssertLogsContain(
+            firstDirectory,
+            "before legacy file deletion",
+            "The legacy file sink did not capture the event before configuration deletion.");
+
+        File.Delete(configFilePath);
+        Assert.True(source.Refresh());
+        Assert.False(controller.Logger!.IsEnabled(LogLevel.Warning));
+        ControllerTestEventSource.Log.Warn("while legacy file is absent");
+
+        WriteLegacyConfiguration(configFilePath, secondDirectory, "Error");
+        Assert.True(source.Refresh());
+        ControllerTestEventSource.Log.Warn("warning after legacy file recreation");
+        OpenTelemetrySdkEventSource.Log.TracerProviderException("error after legacy file recreation", "test exception");
+
+        AssertLogsContain(
+            secondDirectory,
+            "error after legacy file recreation",
+            "Recreating the legacy configuration did not enable the new file sink.");
+        controller.Dispose();
+        var text = ReadLogs(firstDirectory) + ReadLogs(secondDirectory);
+        Assert.DoesNotContain("while legacy file is absent", text, StringComparison.Ordinal);
+        Assert.DoesNotContain("warning after legacy file recreation", text, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void LegacyFileCreatedLater_IsPickedUpByThePollTimer()
+    {
+        var directory = this.CreateDirectory();
+        var configFilePath = Path.Combine(this.CreateDirectory(), SelfDiagnosticsConfigParser.ConfigFileName);
+        using var controller = new SelfDiagnosticsController();
+        using var source = new SelfDiagnosticsLegacyConfigSource(
+            new SelfDiagnosticsConfigParser(() => File.Exists(configFilePath) ? configFilePath : null),
+            TimeSpan.FromMilliseconds(20),
+            controller.SetLegacyConfiguration);
+        Assert.Null(controller.Logger);
+
+        WriteLegacyConfiguration(configFilePath, directory);
+
+        AssertLogsContain(
+            directory,
+            "=== end preamble ===",
+            "The poll timer did not activate the new legacy configuration.");
+        Assert.NotNull(controller.Logger);
+    }
+
+    [Fact]
+    public void LegacyRefreshAfterControllerDisposal_DoesNotReapplyConfiguration()
+    {
+        var firstDirectory = this.CreateDirectory();
+        var secondDirectory = this.CreateDirectory();
+        var controller = new SelfDiagnosticsController();
+        using var source = this.CreateLegacySource(controller, firstDirectory);
+        Assert.NotNull(controller.Logger);
+
+        controller.Dispose();
+        WriteLegacyConfiguration(source.ConfigFilePath!, secondDirectory);
+
+        Assert.True(source.Refresh(), "Expected the source to refresh successfully.");
+        Assert.Null(controller.Logger);
+        Assert.Empty(Directory.GetFiles(secondDirectory));
+    }
+
+    [Fact]
+    public void SelfDiagnostics_ReportsIgnoredLegacyFileWithItsPath()
+    {
+        var legacyDirectory = this.CreateDirectory();
+        var providerDirectory = this.CreateDirectory();
+        var configFilePath = Path.Combine(this.CreateDirectory(), SelfDiagnosticsConfigParser.ConfigFileName);
+        WriteLegacyConfiguration(configFilePath, legacyDirectory);
+
+        using var selfDiagnostics = new Internal.SelfDiagnostics(
+            new SelfDiagnosticsConfigParser(() => configFilePath), Timeout.InfiniteTimeSpan);
+        using var provider = selfDiagnostics.Register(Monitor(FileOptions(providerDirectory)));
+
+        AssertLogsContain(
+            providerDirectory,
+            "SelfDiagnosticsLegacyConfigIgnored",
+            "The provider did not report the ignored legacy configuration.");
+
+        var text = ReadLogs(providerDirectory);
+
+        Assert.Contains(configFilePath, text, StringComparison.Ordinal);
+        Assert.Contains("was ignored because self-diagnostics sinks are configured", text, StringComparison.Ordinal);
+        Assert.Contains("EventId: 60", text, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -75,9 +381,10 @@ public sealed class SelfDiagnosticsControllerTests : IDisposable
 
         controller.Logger!.Log(LogLevel.Warning, default, "hello from the controller", null, static (m, _) => m);
 
-        Assert.True(
-            SelfDiagnosticsTestHelpers.WaitUntil(() => ReadLogs(directory).Contains("hello from the controller", StringComparison.Ordinal)),
-            "the entry never reached the file sink");
+        AssertLogsContain(
+            directory,
+            "hello from the controller",
+            "The entry never reached the file sink.");
 
         // Every file is self-contained, so the preamble is present too.
         Assert.Contains("=== end preamble ===", ReadLogs(directory), StringComparison.Ordinal);
@@ -95,9 +402,10 @@ public sealed class SelfDiagnosticsControllerTests : IDisposable
 
         ControllerTestEventSource.Log.Warn("event source reached the sink");
 
-        Assert.True(
-            SelfDiagnosticsTestHelpers.WaitUntil(() => ReadLogs(directory).Contains("event source reached the sink", StringComparison.Ordinal)),
-            "the EventSource event never reached the file sink");
+        AssertLogsContain(
+            directory,
+            "event source reached the sink",
+            "The EventSource event never reached the file sink.");
     }
 
     [Fact]
@@ -110,15 +418,16 @@ public sealed class SelfDiagnosticsControllerTests : IDisposable
 
         Assert.True(
             SelfDiagnosticsTestHelpers.WaitUntil(() => ReadLogs(directory).Length > 0),
-            "the file sink never opened");
+            "The file sink never opened.");
 
         using var interloper = controller.Register(Monitor(new SelfDiagnosticsOptions()));
 
         controller.Logger!.Log(LogLevel.Warning, default, "still logging", null, static (m, _) => m);
 
-        Assert.True(
-            SelfDiagnosticsTestHelpers.WaitUntil(() => ReadLogs(directory).Contains("still logging", StringComparison.Ordinal)),
-            "a registration with no sink took ownership and silenced the configured one");
+        AssertLogsContain(
+            directory,
+            "still logging",
+            "A registration without a sink silenced the configured sink.");
     }
 
     [Fact]
@@ -136,9 +445,10 @@ public sealed class SelfDiagnosticsControllerTests : IDisposable
         Assert.NotNull(controller.Logger);
         controller.Logger!.Log(LogLevel.Warning, default, "took over", null, static (m, _) => m);
 
-        Assert.True(
-            SelfDiagnosticsTestHelpers.WaitUntil(() => ReadLogs(directory).Contains("took over", StringComparison.Ordinal)),
-            "the registration that configured a sink did not take ownership");
+        AssertLogsContain(
+            directory,
+            "took over",
+            "The configured registration did not take ownership.");
     }
 
     [Fact]
@@ -150,9 +460,10 @@ public sealed class SelfDiagnosticsControllerTests : IDisposable
         var registration = controller.Register(Monitor(FileOptions(directory)));
 
         controller.Logger!.Log(LogLevel.Warning, default, "before dispose", null, static (m, _) => m);
-        Assert.True(
-            SelfDiagnosticsTestHelpers.WaitUntil(() => ReadLogs(directory).Contains("before dispose", StringComparison.Ordinal)),
-            "the entry never reached the file sink");
+        AssertLogsContain(
+            directory,
+            "before dispose",
+            "The entry never reached the file sink.");
 
         registration.Dispose();
 
@@ -160,7 +471,7 @@ public sealed class SelfDiagnosticsControllerTests : IDisposable
         // later) but the sink set is dropped, so nothing further is written.
         Assert.True(
             SelfDiagnosticsTestHelpers.WaitUntil(() => !controller.Logger!.IsEnabled(LogLevel.Warning)),
-            "diagnostics remained enabled after the last registration was disposed");
+            "Diagnostics remained enabled after the last registration was disposed.");
 
         // IsEnabled is false so Log() is a no-op at the logger level; the entry never enters the
         // pump, so DoesNotContain is deterministic without any sleep.
@@ -224,9 +535,10 @@ public sealed class SelfDiagnosticsControllerTests : IDisposable
         Assert.NotNull(controller.Logger);
         controller.Logger!.Log(LogLevel.Warning, default, "enabled by reload", null, static (m, _) => m);
 
-        Assert.True(
-            SelfDiagnosticsTestHelpers.WaitUntil(() => ReadLogs(directory).Contains("enabled by reload", StringComparison.Ordinal)),
-            "the reloaded configuration did not enable the file sink");
+        AssertLogsContain(
+            directory,
+            "enabled by reload",
+            "The reloaded configuration did not enable the file sink.");
     }
 
     [Fact]
@@ -244,7 +556,7 @@ public sealed class SelfDiagnosticsControllerTests : IDisposable
         Assert.True(
             SelfDiagnosticsTestHelpers.WaitUntil(
                 () => Directory.GetFiles(directory, "*.log").Any(file => file.EndsWith("-1.log", StringComparison.Ordinal))),
-            "the initial file sink never opened");
+            "The initial file sink never opened.");
 
         var replacement = FileOptions(directory);
         replacement.FileSizeLimitKilobytes = 2_048;
@@ -254,10 +566,10 @@ public sealed class SelfDiagnosticsControllerTests : IDisposable
         Assert.True(
             SelfDiagnosticsTestHelpers.WaitUntil(
                 () => Directory.GetFiles(directory, "*.log").Any(file => file.EndsWith("-2.log", StringComparison.Ordinal))),
-            "the replacement file sink never opened");
+            "The replacement file sink never opened.");
         Assert.True(
             SelfDiagnosticsTestHelpers.WaitUntil(() => Directory.GetFiles(directory, "*.log").Length == 1),
-            "the outgoing file remained outside the steady-state retention limit");
+            "The outgoing file exceeded the retention limit.");
     }
 
     [Fact]
@@ -292,7 +604,7 @@ public sealed class SelfDiagnosticsControllerTests : IDisposable
 
         Assert.True(
             SelfDiagnosticsTestHelpers.WaitUntil(() => controller.Logger?.IsEnabled(LogLevel.Warning) != true),
-            "a racing options callback re-enabled diagnostics after its registration was disposed");
+            "An options callback re-enabled diagnostics after registration disposal.");
     }
 
     [Theory]
@@ -308,9 +620,10 @@ public sealed class SelfDiagnosticsControllerTests : IDisposable
         {
             ProviderIntegrationEventSource.Log.Warn(beforeDispose);
 
-            Assert.True(
-                SelfDiagnosticsTestHelpers.WaitUntil(() => ReadLogs(directory).Contains(beforeDispose, StringComparison.Ordinal)),
-                $"the {providerKind} provider did not register its self-diagnostics options");
+            AssertLogsContain(
+                directory,
+                beforeDispose,
+                $"The {providerKind} provider did not register its self-diagnostics options.");
         }
 
         // provider.Dispose() synchronously tears down the EventListener and joins the pump thread,
@@ -332,19 +645,19 @@ public sealed class SelfDiagnosticsControllerTests : IDisposable
         using var second = BuildProvider("metrics", secondDirectory);
 
         ProviderIntegrationEventSource.Log.Warn("owned by the second provider");
-        Assert.True(
-            SelfDiagnosticsTestHelpers.WaitUntil(
-                () => ReadLogs(secondDirectory).Contains("owned by the second provider", StringComparison.Ordinal)),
-            "the most recently built configured provider did not take ownership");
+        AssertLogsContain(
+            secondDirectory,
+            "owned by the second provider",
+            "The latest configured provider did not take ownership.");
         Assert.DoesNotContain("owned by the second provider", ReadLogs(firstDirectory), StringComparison.Ordinal);
 
         second.Dispose();
         ProviderIntegrationEventSource.Log.Warn("restored to the first provider");
 
-        Assert.True(
-            SelfDiagnosticsTestHelpers.WaitUntil(
-                () => ReadLogs(firstDirectory).Contains("restored to the first provider", StringComparison.Ordinal)),
-            "disposing the active provider did not restore the previous configured provider");
+        AssertLogsContain(
+            firstDirectory,
+            "restored to the first provider",
+            "Disposing the active provider did not restore the previous provider.");
     }
 
     [Fact]
@@ -394,6 +707,16 @@ public sealed class SelfDiagnosticsControllerTests : IDisposable
 
     private static TestMonitor Monitor(SelfDiagnosticsOptions options) => new(options);
 
+    private static void WriteLegacyConfiguration(string path, string directory, string level = "Warning")
+    {
+#if NET
+        var escapedDirectory = directory.Replace("\\", "\\\\", StringComparison.Ordinal);
+#else
+        var escapedDirectory = directory.Replace("\\", "\\\\");
+#endif
+        File.WriteAllText(path, $$"""{"LogDirectory":"{{escapedDirectory}}","FileSize":32768,"LogLevel":"{{level}}"}""");
+    }
+
     private static IDisposable BuildProvider(string providerKind, string directory)
     {
         void Configure(IServiceCollection services)
@@ -414,6 +737,11 @@ public sealed class SelfDiagnosticsControllerTests : IDisposable
             _ => throw new ArgumentOutOfRangeException(nameof(providerKind)),
         };
     }
+
+    private static void AssertLogsContain(string directory, string expected, string userMessage) =>
+        Assert.True(
+            SelfDiagnosticsTestHelpers.WaitUntil(() => ReadLogs(directory).Contains(expected, StringComparison.Ordinal)),
+            userMessage);
 
     private static string ReadLogs(string directory)
     {
@@ -446,6 +774,16 @@ public sealed class SelfDiagnosticsControllerTests : IDisposable
         return directory.Path;
     }
 
+    private SelfDiagnosticsLegacyConfigSource CreateLegacySource(SelfDiagnosticsController controller, string directory)
+    {
+        var path = Path.Combine(this.CreateDirectory(), SelfDiagnosticsConfigParser.ConfigFileName);
+        WriteLegacyConfiguration(path, directory);
+        return new SelfDiagnosticsLegacyConfigSource(
+            new SelfDiagnosticsConfigParser(() => path),
+            Timeout.InfiniteTimeSpan,
+            controller.SetLegacyConfiguration);
+    }
+
     [EventSource(Name = "OpenTelemetry-SelfDiagnosticsProviderIntegrationTests")]
     private sealed class ProviderIntegrationEventSource : EventSource
     {
@@ -462,6 +800,12 @@ public sealed class SelfDiagnosticsControllerTests : IDisposable
 
         [Event(1, Message = "{0}", Level = EventLevel.Warning)]
         public void Warn(string message) => this.WriteEvent(1, message);
+
+        [Event(2, Message = "{0}", Level = EventLevel.LogAlways)]
+        public void Always(string message) => this.WriteEvent(2, message);
+
+        [Event(3, Message = "{0}", Level = EventLevel.Critical)]
+        public void Critical(string message) => this.WriteEvent(3, message);
     }
 
     private sealed class TestMonitor : IOptionsMonitor<SelfDiagnosticsOptions>

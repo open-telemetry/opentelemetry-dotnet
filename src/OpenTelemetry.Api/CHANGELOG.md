@@ -6,14 +6,28 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
-* Improve traceparent extraction throughput on .NET.
-  ([#8095](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8095))
-
 * **Breaking Change**: Isolate ambient baggage updates between execution contexts.
   Changes made in awaited async methods no longer update their caller's baggage.
   Enable the `OpenTelemetry.Baggage.AllowUnsafeLegacyFlow` AppContext switch at
   startup to temporarily restore insecure legacy sharing.
   ([#8042](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8042))
+
+## 1.21.0-rc.2
+
+Released 2026-Nov-09
+
+* Improve traceparent extraction throughput on .NET.
+  ([#8095](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8095))
+
+* Changed `EnvironmentVariableCarrier` snapshots to preserve environment variable
+  names, preventing extraction from non-normalized aliases and collisions with
+  normalized names. Process environment snapshots now follow the platform's
+  case-sensitivity rules.
+  ([#8098](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8098))
+
+* The experimental APIs previously covered by `OTEL1005`
+  (`EnvironmentVariableCarrier`) are now stable.
+  ([#8044](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8044))
 
 ## 1.21.0-rc.1
 

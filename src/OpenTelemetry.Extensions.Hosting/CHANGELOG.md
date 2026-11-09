@@ -6,6 +6,10 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+## 1.21.0-rc.2
+
+Released 2026-Nov-09
+
 * Fixed host resource detection throwing `SecurityException` when configuration
   values cannot be read.
   ([#8070](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8070))

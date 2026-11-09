@@ -6,6 +6,10 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+## 1.21.0-rc.2
+
+Released 2026-Nov-09
+
 * Fixed exporter option initialization failing when environment variable access
   is denied.
   ([#8070](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8070))
