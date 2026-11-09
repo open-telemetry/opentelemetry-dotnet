@@ -6,3 +6,7 @@ OpenTelemetry.Metrics.PeriodicExportingMetricReaderOptions.MaxExportBatchSize.ge
 OpenTelemetry.Metrics.PeriodicExportingMetricReaderOptions.MaxExportBatchSize.set -> void
 OpenTelemetry.Trace.Sampler.Shutdown(int timeoutMilliseconds = -1) -> bool
 virtual OpenTelemetry.Trace.Sampler.OnShutdown(int timeoutMilliseconds) -> bool
+OpenTelemetry.BatchActivityExportProcessor.ExportUnsampledSpans.get -> bool
+OpenTelemetry.BatchActivityExportProcessor.ExportUnsampledSpans.set -> void
+OpenTelemetry.SimpleActivityExportProcessor.ExportUnsampledSpans.get -> bool
+OpenTelemetry.SimpleActivityExportProcessor.ExportUnsampledSpans.set -> void

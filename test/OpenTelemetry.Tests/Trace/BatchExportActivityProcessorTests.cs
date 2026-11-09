@@ -274,6 +274,52 @@ public class BatchExportActivityProcessorTests
     }
 
     [Fact]
+    public void CheckExportForRecordingButNotSampledActivityWhenExportUnsampledSpansEnabled()
+    {
+        var exportedItems = new List<Activity>();
+        using var exporter = new InMemoryExporter<Activity>(exportedItems);
+
+        using var processor = new BatchActivityExportProcessor(exporter)
+        {
+            ExportUnsampledSpans = true,
+        };
+
+        // Record only: recording but not sampled.
+        using var activity = new Activity("Activity")
+        {
+            IsAllDataRequested = true,
+        };
+
+        processor.OnEnd(activity);
+        processor.ForceFlush();
+
+        Assert.Single(exportedItems);
+    }
+
+    [Fact]
+    public void CheckExportForNotRecordingActivityWhenExportUnsampledSpansEnabled()
+    {
+        var exportedItems = new List<Activity>();
+        using var exporter = new InMemoryExporter<Activity>(exportedItems);
+
+        using var processor = new BatchActivityExportProcessor(exporter)
+        {
+            ExportUnsampledSpans = true,
+        };
+
+        // Dropped by the sampler: not recording and not sampled.
+        using var activity = new Activity("Activity")
+        {
+            IsAllDataRequested = false,
+        };
+
+        processor.OnEnd(activity);
+        processor.ForceFlush();
+
+        Assert.Empty(exportedItems);
+    }
+
+    [Fact]
     public void CheckExportDrainsBatchOnFailure()
     {
         using var processor = new BatchActivityExportProcessor(
