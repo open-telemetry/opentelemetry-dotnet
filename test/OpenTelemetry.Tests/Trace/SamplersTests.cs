@@ -324,6 +324,27 @@ public class SamplersTests
         Assert.True(new AlwaysRecordSampler(new AlwaysOffSampler()).Shutdown());
     }
 
+    [Theory]
+    [InlineData(0.5)]
+    [InlineData(1.0)]
+    public void TraceIdRatioBasedSamplerDropsAfterShutdown(double probability)
+    {
+        var sampler = new TraceIdRatioBasedSampler(probability);
+        var parameters = new SamplingParameters(
+            default,
+            ActivityTraceId.CreateFromString("00000000000000010000000000000001".AsSpan()),
+            "Name",
+            ActivityKind.Internal,
+            null,
+            null);
+
+        Assert.Equal(SamplingDecision.RecordAndSample, sampler.ShouldSample(parameters).Decision);
+
+        Assert.True(sampler.Shutdown());
+
+        Assert.Equal(SamplingDecision.Drop, sampler.ShouldSample(parameters).Decision);
+    }
+
     [Fact]
     public void ParentBasedSamplerDropsWithoutDelegatingOnceShutdownHasBegun()
     {

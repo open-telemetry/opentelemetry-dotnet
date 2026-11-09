@@ -52,6 +52,11 @@ public sealed class TraceIdRatioBasedSampler
     /// <inheritdoc />
     public override SamplingResult ShouldSample(in SamplingParameters samplingParameters)
     {
+        if (this.IsShutdown)
+        {
+            return new SamplingResult(SamplingDecision.Drop);
+        }
+
         // Always sample if we are within probability range. This is true even for child activities (that
         // may have had a different sampling decision made) to allow for different sampling policies,
         // and dynamic increases to sampling probabilities for debugging purposes.
