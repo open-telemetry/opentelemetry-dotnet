@@ -63,24 +63,13 @@ public class EnvironmentVariableCarrierFuzzTests
     });
 
     [Property(MaxTest = MaxTests)]
-    public Property CaptureRoundTripPreservesOpaqueValues() => Prop.ForAll(Generators.EnvironmentCarrierArbitrary(), carrier =>
+    public Property CapturePreservesNamesAndOpaqueValues() => Prop.ForAll(Generators.EnvironmentCarrierArbitrary(), carrier =>
     {
         try
         {
             var snapshot = EnvironmentVariableCarrier.Capture(carrier);
-            var reinjected = new Dictionary<string, string?>(StringComparer.Ordinal);
-
-            foreach (var pair in snapshot)
-            {
-                var value = EnvironmentVariableCarrier.Get(snapshot, pair.Key);
-                if (value is not null)
-                {
-                    EnvironmentVariableCarrier.Set(reinjected, pair.Key, value.Single());
-                }
-            }
-
-            return snapshot.Count == reinjected.Count &&
-                snapshot.All(pair => reinjected.TryGetValue(pair.Key, out var value) && value == pair.Value);
+            return carrier.Count == snapshot.Count &&
+                carrier.All(pair => snapshot.TryGetValue(pair.Key, out var value) && value == pair.Value);
         }
         catch (Exception ex) when (FuzzTestHelpers.IsAllowedException(ex))
         {
