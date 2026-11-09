@@ -293,7 +293,7 @@ internal static class SelfDiagnosticsEnvironmentVariablePolicy
         while (true)
         {
             var separator = remaining.IndexOf(',');
-            var pair = separator < 0 ? remaining : remaining[..separator];
+            var pair = separator < 0 ? remaining : remaining.Slice(0, separator);
 
             if (!first)
             {
@@ -308,7 +308,7 @@ internal static class SelfDiagnosticsEnvironmentVariablePolicy
             }
 
             index += separator + 1;
-            remaining = remaining[(separator + 1)..];
+            remaining = remaining.Slice(separator + 1);
             first = false;
         }
 
@@ -331,10 +331,15 @@ internal static class SelfDiagnosticsEnvironmentVariablePolicy
         }
 
         builder.Append(value, index, equals).Append('=');
-        builder.Append(
-            IsSafeResourceAttributeKey(pair[..equals].Trim())
-                ? value.AsSpan(index + equals + 1, pair.Length - equals - 1)
-                : RedactedValue);
+
+        if (IsSafeResourceAttributeKey(pair.Slice(0, equals).Trim()))
+        {
+            builder.Append(value, index + equals + 1, pair.Length - equals - 1);
+        }
+        else
+        {
+            builder.Append(RedactedValue);
+        }
     }
 
     private static bool IsSafeResourceAttributeKey(ReadOnlySpan<char> key)
