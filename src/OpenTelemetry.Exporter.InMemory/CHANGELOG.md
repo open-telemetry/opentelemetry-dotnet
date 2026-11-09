@@ -6,6 +6,10 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+## 1.21.0-rc.2
+
+Released 2026-Nov-09
+
 * Added support for batching the metric points exported by the periodic
   exporting metric reader. Set
   `PeriodicExportingMetricReaderOptions.MaxExportBatchSize` to limit the
