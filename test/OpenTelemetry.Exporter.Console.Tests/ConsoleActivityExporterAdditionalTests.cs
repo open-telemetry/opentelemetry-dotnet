@@ -421,4 +421,100 @@ public class ConsoleActivityExporterAdditionalTests
         using var exporter = new ConsoleActivityExporter(new ConsoleExporterOptions());
         Assert.Equal(ExportResult.Success, exporter.Export(new Batch<Activity>([.. activities], activities.Count)));
     }
+
+    [Fact]
+    public void Export_ActivitySourceWithVersionSchemaUrlAndTags_WritesInstrumentationScope()
+    {
+        // Arrange
+        var name = Utils.GetCurrentMethodName();
+        using var activitySource = new ActivitySource(new ActivitySourceOptions(name)
+        {
+            Version = "1.2.3",
+            TelemetrySchemaUrl = "https://opentelemetry.io/schemas/1.40.0",
+            Tags =
+            [
+                new KeyValuePair<string, object?>("source.string", "value"),
+                new KeyValuePair<string, object?>("source.number", 42),
+            ],
+        });
+
+        var activities = new List<Activity>();
+
+        using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+            .AddSource(name)
+            .AddInMemoryExporter(activities)
+            .Build();
+
+        using (activitySource.StartActivity("ActivityWithScopeDetails"))
+        {
+        }
+
+        var activity = Assert.Single(activities);
+
+        // Act
+        using var capture = new TraceOutputCapture();
+        using var exporter = new ConsoleActivityExporter(new ConsoleExporterOptions { Targets = ConsoleExporterOutputTargets.Debug });
+        var actual = exporter.Export(new Batch<Activity>([activity], 1));
+
+        // Assert
+        Assert.Equal(ExportResult.Success, actual);
+
+        var scope = capture.Lines.SkipWhile((p) => p != "Instrumentation scope (ActivitySource):").Take(7).ToArray();
+        Assert.Equal(
+            [
+                "Instrumentation scope (ActivitySource):",
+                $"    Name: {name}",
+                "    Version: 1.2.3",
+                "    Schema URL: https://opentelemetry.io/schemas/1.40.0",
+                "    Tags:",
+            ],
+            scope.Take(5));
+
+        // The order the tags of an ActivitySource are enumerated in is not defined
+        Assert.Equal(
+            [
+                "        source.number: 42",
+                "        source.string: value",
+            ],
+            scope.Skip(5).OrderBy((p) => p, StringComparer.Ordinal));
+    }
+
+    [Fact]
+    public void Export_ActivityWithUnsupportedTag_WritesDroppedTagMessage()
+    {
+        // Arrange
+        var name = Utils.GetCurrentMethodName();
+        using var activitySource = new ActivitySource(name);
+
+        var activities = new List<Activity>();
+
+        using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+            .AddSource(name)
+            .AddInMemoryExporter(activities)
+            .Build();
+
+        using (var activity = activitySource.StartActivity("ActivityWithUnsupportedTag"))
+        {
+            activity?.SetTag("supported.tag", "value");
+            activity?.SetTag("unsupported.tag", new UnstringifiableValue());
+        }
+
+        var exported = Assert.Single(activities);
+
+        // Act
+        using var capture = new TraceOutputCapture();
+        using var exporter = new ConsoleActivityExporter(new ConsoleExporterOptions { Targets = ConsoleExporterOutputTargets.Debug });
+        var actual = exporter.Export(new Batch<Activity>([exported], 1));
+
+        // Assert
+        Assert.Equal(ExportResult.Success, actual);
+        Assert.Contains("    supported.tag: value", capture.Lines);
+        Assert.Contains($"Unsupported attribute value type '{typeof(UnstringifiableValue)}' for 'unsupported.tag'.", capture.Lines);
+        Assert.DoesNotContain(capture.Lines, (p) => p.StartsWith("    unsupported.tag", StringComparison.Ordinal));
+    }
+
+    private sealed class UnstringifiableValue
+    {
+        public override string ToString() => throw new InvalidOperationException("Cannot be converted to a string.");
+    }
 }

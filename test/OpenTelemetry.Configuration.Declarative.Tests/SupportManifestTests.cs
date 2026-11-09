@@ -6,18 +6,18 @@ namespace OpenTelemetry.Configuration.Declarative.Tests;
 public sealed class SupportManifestTests
 {
     [Fact]
-    public void CoveredPaths_ResolveInTheSchema()
+    public void HandledPaths_ResolveInTheSchema()
     {
-        var unresolved = SupportManifest.CoveredPaths.Where(path => ResolveSchemaPath(path) is null).ToList();
+        var unresolved = SupportManifest.HandledPaths.Where(path => ResolveSchemaPath(path) is null).ToList();
 
         Assert.Empty(unresolved);
     }
 
     [Fact]
-    public void CoveredPaths_AreNotNested()
+    public void HandledPaths_AreNotNested()
     {
-        var nested = SupportManifest.CoveredPaths
-            .Where(path => SupportManifest.CoveredPaths.Any(other =>
+        var nested = SupportManifest.HandledPaths
+            .Where(path => SupportManifest.HandledPaths.Any(other =>
                 path.StartsWith(other + ".", StringComparison.Ordinal) || path.StartsWith(other + "[].", StringComparison.Ordinal)))
             .ToList();
 
@@ -29,10 +29,10 @@ public sealed class SupportManifestTests
     {
         var unapplied = Assert.Single(Evaluate("""
             file_format: "1.2"
-            tracer_provider:
+            meter_provider:
             """));
 
-        Assert.Equal(new("tracer_provider", SchemaStability.Stable, new(2, 1)), unapplied);
+        Assert.Equal(new("meter_provider", SchemaStability.Stable, new(2, 1)), unapplied);
     }
 
     [Fact]
@@ -103,18 +103,18 @@ public sealed class SupportManifestTests
         var unapplied = Assert.Single(Evaluate(
             """
             file_format: "1.2"
-            tracer_provider:
-              tracer_configurator/development:
+            logger_provider:
+              logger_configurator/development:
                 default_config:
                   disabled: true
-                tracers:
+                loggers:
                   - name: a
                     config:
                       disabled: true
             """,
-            "tracer_provider.tracer_configurator/development.default_config"));
+            "logger_provider.logger_configurator/development.default_config"));
 
-        Assert.Equal("tracer_provider.tracer_configurator/development.tracers[0]", unapplied.Path);
+        Assert.Equal("logger_provider.logger_configurator/development.loggers[0]", unapplied.Path);
         Assert.Equal(SchemaStability.Experimental, unapplied.Stability);
     }
 
@@ -124,19 +124,19 @@ public sealed class SupportManifestTests
         var unapplied = Evaluate(
             """
             file_format: "1.2"
-            tracer_provider:
+            logger_provider:
               processors:
                 - simple:
                     exporter:
                       console:
               limits:
                 attribute_count_limit: 10
-              sampler:
-                always_on:
+              logger_configurator/development:
+                default_config:
             """,
-            "tracer_provider.sampler");
+            "logger_provider.logger_configurator/development");
 
-        Assert.Equal(["tracer_provider.processors[0]", "tracer_provider.limits"], unapplied.Select(p => p.Path));
+        Assert.Equal(["logger_provider.processors[0]", "logger_provider.limits"], unapplied.Select(p => p.Path));
     }
 
     [Fact]
@@ -145,7 +145,7 @@ public sealed class SupportManifestTests
         var unapplied = Evaluate(
             """
             file_format: "1.2"
-            tracer_provider:
+            logger_provider:
               processors:
                 - simple:
                     exporter:
@@ -153,12 +153,12 @@ public sealed class SupportManifestTests
                 - batch:
                     exporter:
                       console:
-              sampler:
-                always_on:
+              logger_configurator/development:
+                default_config:
             """,
-            "tracer_provider.sampler");
+            "logger_provider.logger_configurator/development");
 
-        Assert.Equal(["tracer_provider.processors[0]", "tracer_provider.processors[1]"], unapplied.Select(p => p.Path));
+        Assert.Equal(["logger_provider.processors[0]", "logger_provider.processors[1]"], unapplied.Select(p => p.Path));
         Assert.Equal([4, 7], unapplied.Select(p => p.Position.Line));
     }
 
@@ -168,14 +168,14 @@ public sealed class SupportManifestTests
         var unapplied = Assert.Single(Evaluate(
             """
             file_format: "1.2"
-            tracer_provider:
+            logger_provider:
               processors: []
-              sampler:
-                always_on:
+              logger_configurator/development:
+                default_config:
             """,
-            "tracer_provider.sampler"));
+            "logger_provider.logger_configurator/development"));
 
-        Assert.Equal("tracer_provider.processors", unapplied.Path);
+        Assert.Equal("logger_provider.processors", unapplied.Path);
     }
 
     [Fact]
@@ -200,7 +200,7 @@ public sealed class SupportManifestTests
         var unapplied = Evaluate(
             """
             file_format: "1.2"
-            tracer_provider:
+            logger_provider:
               processors:
                 - simple:
                     exporter:
@@ -209,9 +209,9 @@ public sealed class SupportManifestTests
                     exporter:
                       console:
             """,
-            "tracer_provider.processors[].simple");
+            "logger_provider.processors[].simple");
 
-        Assert.Equal(["tracer_provider.processors[1].batch"], unapplied.Select(p => p.Path));
+        Assert.Equal(["logger_provider.processors[1].batch"], unapplied.Select(p => p.Path));
     }
 
     [Fact]
@@ -290,7 +290,7 @@ public sealed class SupportManifestTests
         var unapplied = Evaluate(
             """
             file_format: "1.2"
-            tracer_provider:
+            logger_provider:
               processors:
                 - &processor
                   batch:
@@ -301,9 +301,9 @@ public sealed class SupportManifestTests
                       console:
                 - *processor
             """,
-            "tracer_provider.processors[].simple");
+            "logger_provider.processors[].simple");
 
-        Assert.Equal(["tracer_provider.processors[0].batch"], unapplied.Select(p => p.Path));
+        Assert.Equal(["logger_provider.processors[0].batch"], unapplied.Select(p => p.Path));
     }
 
     private static IReadOnlyList<UnappliedProperty> Evaluate(string yaml, params string[] additionalCoveredPaths)
@@ -313,7 +313,7 @@ public sealed class SupportManifestTests
         return SupportManifest.EvaluateUnapplied(
             properties,
             ConfigurationSchema.Pinned.Root,
-            [.. SupportManifest.CoveredPaths, .. additionalCoveredPaths]);
+            [.. SupportManifest.HandledPaths, .. additionalCoveredPaths]);
     }
 
     private static SchemaNode? ResolveSchemaPath(string path)

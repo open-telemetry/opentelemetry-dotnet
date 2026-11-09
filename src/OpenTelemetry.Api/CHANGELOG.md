@@ -6,6 +6,9 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Improve traceparent extraction throughput on .NET.
+  ([#8095](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8095))
+
 * **Breaking Change**: Isolate ambient baggage updates between execution contexts.
   Changes made in awaited async methods no longer update their caller's baggage.
   Enable the `OpenTelemetry.Baggage.AllowUnsafeLegacyFlow` AppContext switch at
