@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
-using OpenTelemetry;
 using OpenTelemetry.BlazorWasm.TestApp;
 using OpenTelemetry.Exporter;
 using OpenTelemetry.Logs;
@@ -66,6 +65,8 @@ builder.Logging.AddOpenTelemetry((options) =>
 
 var app = builder.Build();
 
-app.Services.GetRequiredService<ITelemetryHostInitializer>().Initialize();
+#if !NET11_0_OR_GREATER
+app.Services.GetRequiredService<OpenTelemetry.ITelemetryHostInitializer>().Initialize();
+#endif
 
 await app.RunAsync().ConfigureAwait(false);

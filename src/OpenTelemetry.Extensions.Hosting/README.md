@@ -124,15 +124,22 @@ A fully functional example can be found
 [here](https://github.com/open-telemetry/opentelemetry-dotnet/tree/main/examples/AspNetCore).
 
 > [!IMPORTANT]
-> Applications that do not support hosted services, such as Blazor, should
-> resolve the `ITelemetryHostInitializer` service from the service provider
-> to manually initialize the OpenTelemetry SDK as part of application startup.
+> Applications that do not support hosted services, such as Blazor WebAssembly
+> applications targeting .NET 10 or earlier, should resolve the
+> `ITelemetryHostInitializer` service from the service provider to manually
+> initialize the OpenTelemetry SDK as part of application startup.
 >
 > For example:
 >
 > ```csharp
 > app.Services.GetRequiredService<ITelemetryHostInitializer>().Initialize();
 > ```
+>
+> Blazor WebAssembly applications targeting .NET 11 or later start registered
+> `IHostedService` implementations as part of `RunAsync()`, so this is not
+> required for them. As hosted services are started when `RunAsync()` is called
+> rather than when the host is built, telemetry emitted before then is not
+> captured unless `Initialize()` is called explicitly beforehand.
 
 ### Resources
 

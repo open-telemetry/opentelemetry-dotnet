@@ -540,7 +540,7 @@ public sealed class DeclarativeConfigurationDocumentPropertiesTests
                   setting: value
                 """)));
 
-        Assert.Same(accessor.GetDocument().Properties, accessor.GetDocumentForProvider().Properties);
+        Assert.Same(accessor.GetDocument().Properties, accessor.GetDocumentForPipeline().Properties);
     }
 
     [Fact]

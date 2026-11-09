@@ -33,7 +33,10 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="MSTest" />
+    <PackageReference Include="Microsoft.Testing.Extensions.TrxReport" />
+    <PackageReference Include="MSTest.Analyzers" />
+    <PackageReference Include="MSTest.TestAdapter" />
+    <PackageReference Include="MSTest.TestFramework" />
   </ItemGroup>
 
   <!--

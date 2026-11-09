@@ -162,6 +162,12 @@ public sealed class LogRecordAttributeListTests
     [Theory]
     [InlineData(0)]
     [InlineData(1)]
+    [InlineData(2)]
+    [InlineData(3)]
+    [InlineData(4)]
+    [InlineData(5)]
+    [InlineData(6)]
+    [InlineData(7)]
     [InlineData(8)]
     [InlineData(9)]
     [InlineData(64)]
@@ -205,6 +211,107 @@ public sealed class LogRecordAttributeListTests
             Assert.Equal(index, (int)item.Value);
             index++;
         }
+    }
+
+    [Theory]
+    [InlineData(1)]
+    [InlineData(5)]
+    [InlineData(8)]
+    [InlineData(9)]
+    [InlineData(20)]
+    public void IndexerSetterReplacesItems(int numberOfItems)
+    {
+        LogRecordAttributeList attributes = default;
+
+        for (var i = 0; i < numberOfItems; i++)
+        {
+            attributes.Add($"key{i}", i);
+        }
+
+        for (var i = 0; i < numberOfItems; i++)
+        {
+            attributes[i] = new KeyValuePair<string, object?>($"new{i}", -i);
+        }
+
+        Assert.Equal(numberOfItems, attributes.Count);
+
+        for (var i = 0; i < numberOfItems; i++)
+        {
+            Assert.Equal($"new{i}", attributes[i].Key);
+            Assert.Equal(-i, (int)attributes[i].Value!);
+        }
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(3)]
+    [InlineData(8)]
+    public void IndexerThrowsWhenIndexIsOutOfRange(int numberOfItems)
+    {
+        LogRecordAttributeList attributes = default;
+
+        for (var i = 0; i < numberOfItems; i++)
+        {
+            attributes.Add($"key{i}", i);
+        }
+
+        Assert.Throws<ArgumentOutOfRangeException>(() => attributes[-1]);
+        Assert.Throws<ArgumentOutOfRangeException>(() => attributes[numberOfItems]);
+        Assert.Throws<ArgumentOutOfRangeException>(() => attributes[-1] = default);
+        Assert.Throws<ArgumentOutOfRangeException>(() => attributes[numberOfItems] = default);
+    }
+
+    [Fact]
+    public void RecordExceptionAddsExceptionAttributes()
+    {
+        LogRecordAttributeList attributes = default;
+
+        attributes.RecordException(new InvalidOperationException("boom"));
+
+        Assert.Equal(3, attributes.Count);
+
+        Assert.Equal(Trace.SemanticConventions.AttributeExceptionType, attributes[0].Key);
+        Assert.Equal(nameof(InvalidOperationException), attributes[0].Value);
+
+        Assert.Equal(Trace.SemanticConventions.AttributeExceptionMessage, attributes[1].Key);
+        Assert.Equal("boom", attributes[1].Value);
+
+        Assert.Equal(Trace.SemanticConventions.AttributeExceptionStacktrace, attributes[2].Key);
+        Assert.Contains("boom", Assert.IsType<string>(attributes[2].Value), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void RecordExceptionThrowsForNullException()
+    {
+        LogRecordAttributeList attributes = default;
+
+        Assert.Throws<ArgumentNullException>(() => attributes.RecordException(null!));
+    }
+
+    [Fact]
+    public void CreateFromEnumerableThrowsForNullAttributes()
+    {
+        Assert.Throws<ArgumentNullException>(() => LogRecordAttributeList.CreateFromEnumerable(null!));
+    }
+
+    [Fact]
+    public void InterfacesEnumerateAndIndexAttributes()
+    {
+        LogRecordAttributeList attributes = default;
+        attributes.Add("key0", 0);
+        attributes.Add("key1", 1);
+
+        var list = Assert.IsAssignableFrom<IReadOnlyList<KeyValuePair<string, object?>>>(attributes);
+        Assert.Equal(2, list.Count);
+        Assert.Equal("key1", list[1].Key);
+        Assert.Equal(["key0", "key1"], list.Select(x => x.Key));
+
+        System.Collections.IEnumerable nonGeneric = attributes;
+        var enumerator = nonGeneric.GetEnumerator();
+
+        Assert.True(enumerator.MoveNext());
+        Assert.Equal(new KeyValuePair<string, object?>("key0", 0), Assert.IsType<KeyValuePair<string, object?>>(enumerator.Current));
+        Assert.Throws<NotSupportedException>(enumerator.Reset);
     }
 
     [Fact]
