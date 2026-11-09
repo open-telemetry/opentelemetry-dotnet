@@ -9,7 +9,7 @@ Notes](../../RELEASENOTES.md).
 * `OpenTelemetryLoggerOptions` is now bound from the `Logging:OpenTelemetry`
   configuration section using the configuration binding source generator instead
   of reflection, making it fully trim and Native AOT compatible.
-  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+  ([#8100](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8100))
 
 ## 1.21.0-rc.2
 
