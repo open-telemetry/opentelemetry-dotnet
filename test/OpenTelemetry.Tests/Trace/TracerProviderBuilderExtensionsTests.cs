@@ -1223,6 +1223,72 @@ public class TracerProviderBuilderExtensionsTests
         Assert.True(sampler.Disposed);
     }
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void TracerProviderDisposeContinuesAfterProcessorThrows(bool useCompositeProcessor)
+    {
+        var activitySourceName = Utils.GetCurrentMethodName();
+        using var activitySource = new ActivitySource(activitySourceName);
+        using var eventListener = new TestEventListener(OpenTelemetrySdkEventSource.Log);
+        var expectedException = new InvalidOperationException("processor cleanup failure");
+
+#pragma warning disable CA2000 // Provider ownership and cleanup after failures are asserted below.
+        var sampler = new MyDisposableSampler();
+        var instrumentation = new MyInstrumentation();
+        var ownedService = new MyInstrumentation();
+        var processorDisposeCalls = 0;
+        var builder = Sdk.CreateTracerProviderBuilder()
+            .AddSource(activitySourceName)
+            .ConfigureServices(services => services.AddSingleton(_ => ownedService))
+            .SetSampler(sp =>
+            {
+                _ = sp.GetRequiredService<MyInstrumentation>();
+                return sampler;
+            })
+            .AddInstrumentation(() => instrumentation)
+            .AddProcessor(new DisposeCallbackProcessor(() =>
+            {
+                processorDisposeCalls++;
+                throw expectedException;
+            }));
+
+        MyProcessor? additionalProcessor = null;
+        if (useCompositeProcessor)
+        {
+            additionalProcessor = new MyProcessor();
+            builder.AddProcessor(additionalProcessor);
+        }
+
+        var provider = builder.Build();
+#pragma warning restore CA2000 // Provider ownership and cleanup after failures are asserted below.
+
+        provider.Dispose();
+
+        Assert.True(instrumentation.Disposed);
+        Assert.True(ownedService.Disposed);
+        Assert.Equal(1, processorDisposeCalls);
+        Assert.Equal(1, sampler.ShutdownCalls);
+        Assert.True(sampler.ShutdownBeforeDispose);
+        Assert.True(sampler.Disposed);
+        Assert.False(activitySource.HasListeners());
+
+        if (additionalProcessor != null)
+        {
+            Assert.True(additionalProcessor.Disposed);
+        }
+
+        var error = Assert.Single(
+            eventListener.Messages,
+            entry => entry.EventName == nameof(OpenTelemetrySdkEventSource.SpanProcessorException));
+        Assert.Equal("Dispose", error.Payload?[0]);
+        Assert.Contains(expectedException.Message, Assert.IsType<string>(error.Payload?[1]), StringComparison.Ordinal);
+
+        provider.Dispose();
+        Assert.Equal(1, processorDisposeCalls);
+        Assert.Equal(1, sampler.DisposeCalls);
+    }
+
     [Fact]
     public void TracerProviderAddProcessorFactoryTest()
     {
@@ -1356,6 +1422,8 @@ public class TracerProviderBuilderExtensionsTests
     {
         public bool Disposed { get; private set; }
 
+        public int DisposeCalls { get; private set; }
+
         public int ShutdownCalls { get; private set; }
 
         public int ShutdownTimeout { get; private set; }
@@ -1376,6 +1444,7 @@ public class TracerProviderBuilderExtensionsTests
 
         public void Dispose()
         {
+            this.DisposeCalls++;
             this.ShutdownBeforeDispose = this.ShutdownCalls > 0;
             this.Disposed = true;
         }
@@ -1401,6 +1470,15 @@ public class TracerProviderBuilderExtensionsTests
         {
             this.callback();
             return base.OnShutdown(timeoutMilliseconds);
+        }
+    }
+
+    private sealed class DisposeCallbackProcessor(Action callback) : BaseProcessor<Activity>
+    {
+        protected override void Dispose(bool disposing)
+        {
+            base.Dispose(disposing);
+            callback();
         }
     }
 

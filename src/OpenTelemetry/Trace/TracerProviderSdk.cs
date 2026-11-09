@@ -428,7 +428,15 @@ internal sealed class TracerProviderSdk : TracerProvider
                 {
                     // Wait for up to 5 seconds grace period
                     this.Processor.Shutdown(GracePeriodMilliseconds);
-                    this.Processor.Dispose();
+                    try
+                    {
+                        this.Processor.Dispose();
+                    }
+                    catch (Exception ex)
+                    {
+                        OpenTelemetrySdkEventSource.Log.SpanProcessorException(nameof(this.Dispose), ex);
+                    }
+
                     this.Processor = null;
                 }
 
