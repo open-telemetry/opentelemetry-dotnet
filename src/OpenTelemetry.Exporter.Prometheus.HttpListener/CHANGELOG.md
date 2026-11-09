@@ -62,6 +62,9 @@ Notes](../../RELEASENOTES.md).
   string is no longer swallowed and the attribute dropped; it now propagates.
   ([#7929](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7929))
 
+* Reduce allocations during `Accept` header negotiation.
+  ([#8094](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8094))
+
 ## 1.20.1-beta.1
 
 Released 2026-Oct-20

@@ -51,13 +51,13 @@ public class EnvironmentVariableCarrierBenchmarks
 
         this.CaptureSource = new Dictionary<string, string?>(StringComparer.Ordinal)
         {
-            ["traceparent"] = "00-0af7651916cd43dd8448eb211c80319c-b9c7c989f97918e1-01",
-            ["tracestate"] = "key1=value1,key2=value2",
+            ["TRACEPARENT"] = "00-0af7651916cd43dd8448eb211c80319c-b9c7c989f97918e1-01",
+            ["TRACESTATE"] = "key1=value1,key2=value2",
         };
 
         if (this.IncludeBaggage)
         {
-            this.CaptureSource["baggage"] = "key1=value1,key2=value2,key3=value3";
+            this.CaptureSource["BAGGAGE"] = "key1=value1,key2=value2,key3=value3";
         }
 
         this.ExtractCarrier = EnvironmentVariableCarrier.Capture(this.CaptureSource);
