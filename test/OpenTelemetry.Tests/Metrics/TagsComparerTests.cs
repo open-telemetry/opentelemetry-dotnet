@@ -1,7 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-#if NET9_0_OR_GREATER
+#if NET
 using System.Collections.Concurrent;
 #endif
 
@@ -37,7 +37,7 @@ public class TagsComparerTests
         Assert.False(comparer.Equals(tags1, different));
     }
 
-#if NET9_0_OR_GREATER
+#if NET
     [Fact]
     public void AlternateGetHashCode_Span_MatchesTagsHashCode()
     {

@@ -94,7 +94,7 @@ public static class Sdk
     /// <remarks><b>WARNING</b>: This is an experimental API which might change or be removed in the future. Use at your own risk.</remarks>
     /// <returns><see cref="LoggerProviderBuilder"/> instance, which is used
     /// to build a <see cref="LoggerProvider"/>.</returns>
-    [Experimental(DiagnosticDefinitions.LogsBridgeExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
+    [Experimental(DiagnosticDefinitions.LogsExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
     public
 #else
     /// <summary>

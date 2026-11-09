@@ -1,0 +1,2 @@
+﻿# TYPE test_gauge gauge
+test_gauge{otel_scope_name="test_meter",otel_scope_version="1.0.0",otel_scope_schema_url="https://opentelemetry.io/schemas/1.0.0",otel_scope_library_mascot="dotnetbot",metric_tag="value"} 123

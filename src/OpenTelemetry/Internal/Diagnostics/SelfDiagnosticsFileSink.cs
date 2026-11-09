@@ -80,6 +80,7 @@ internal sealed class SelfDiagnosticsFileSink : ISelfDiagnosticsSink
     private int fileIndex;
     private bool retentionSeeded;
     private DateTime nextOpenAttemptUtc = DateTime.MinValue;
+    private bool announceLogFile;
     private bool failureReported;
     private bool startupMessageEmitted;
     private volatile bool disposed;
@@ -92,7 +93,8 @@ internal sealed class SelfDiagnosticsFileSink : ISelfDiagnosticsSink
         Action<string>? reportError = null,
         TimeSpan? retryInterval = null,
         string? excludeFromPruning = null,
-        Func<DateTime>? utcNow = null)
+        Func<DateTime>? utcNow = null,
+        bool announceLogFile = true)
     {
         this.logDirectory = logDirectory;
         this.preambleFactory = preambleFactory;
@@ -100,6 +102,7 @@ internal sealed class SelfDiagnosticsFileSink : ISelfDiagnosticsSink
         this.retryInterval = retryInterval ?? DefaultRetryInterval;
         this.excludeFromPruning = excludeFromPruning;
         this.utcNow = utcNow ?? (() => DateTime.UtcNow);
+        this.announceLogFile = announceLogFile;
 
         // FileSizeLimitKilobytes <= 0 disables size-based rollover (treated as unlimited).
         this.fileSizeLimitBytes = (long)Math.Max(0, fileSizeLimitKilobytes) * 1024;
@@ -223,6 +226,9 @@ internal sealed class SelfDiagnosticsFileSink : ISelfDiagnosticsSink
     internal static string CreateFallbackProcessIdentity(Guid processInstanceId)
         => $"unknown-{processInstanceId:N}";
 
+    internal void UpdateAnnouncement(bool announceLogFile)
+        => this.announceLogFile = announceLogFile;
+
     private static string BuildProcessIdentity()
     {
         try
@@ -256,7 +262,12 @@ internal sealed class SelfDiagnosticsFileSink : ISelfDiagnosticsSink
     private static int ParseFileIndex(string path)
     {
         var name = Path.GetFileNameWithoutExtension(path);
+
+#if NET11_0_OR_GREATER
+        var separator = name.LastIndexOf('-', StringComparison.Ordinal);
+#else
         var separator = name.LastIndexOf('-');
+#endif
 
         if (separator < 0 || separator >= name.Length - 1)
         {
@@ -384,7 +395,7 @@ internal sealed class SelfDiagnosticsFileSink : ISelfDiagnosticsSink
 
             this.WriteFilePrologue();
 
-            if (!this.startupMessageEmitted)
+            if (this.announceLogFile && !this.startupMessageEmitted)
             {
                 this.startupMessageEmitted = true;
                 try

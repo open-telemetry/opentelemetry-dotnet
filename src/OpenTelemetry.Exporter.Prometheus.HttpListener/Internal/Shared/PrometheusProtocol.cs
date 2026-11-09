@@ -5,7 +5,7 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Text;
 
-#if NET8_0_OR_GREATER
+#if NET
 using SupportedEscapingSchemes = System.Collections.Immutable.ImmutableHashSet<string>;
 using SupportedVersions = System.Collections.Immutable.ImmutableHashSet<System.Version>;
 #else

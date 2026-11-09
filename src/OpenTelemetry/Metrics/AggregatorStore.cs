@@ -41,7 +41,7 @@ internal sealed class AggregatorStore
 
     private readonly ConcurrentDictionary<Tags, int> tagsToMetricPointIndexDictionary;
 
-#if NET9_0_OR_GREATER
+#if NET
     // Alternate lookup that resolves a MetricPoint directly from the incoming
     // tags span, avoiding the copy of the tags into thread-static storage.
     // Only used for cumulative aggregation (the non-reclaim lookup path).
@@ -66,6 +66,11 @@ internal sealed class AggregatorStore
 
     private int metricPointIndex;
     private int batchSize;
+
+    // The range of the current batch exposed by GetMetricPoints(). A negative count
+    // exposes the whole batch. Only set by a reader splitting the batch for export.
+    private int exportWindowStart;
+    private int exportWindowCount = -1;
 
     // The highest creation ordinal (see ToSlot) ever handed out by DequeueAvailableMetricPoint.
     // Only written under the delta dictionary lock. Slots with a higher ordinal have never held
@@ -159,7 +164,7 @@ internal sealed class AggregatorStore
             ? cardinalityLimit * 2
             : int.MaxValue;
 
-#if NET9_0_OR_GREATER
+#if NET
         this.tagsToMetricPointIndexDictionary = new(concurrencyLevel, capacity, comparer: TagsComparer.Instance);
 
         this.tagsToMetricPointIndexLookup =
@@ -173,7 +178,7 @@ internal sealed class AggregatorStore
         {
             this.availableMetricPoints = new Queue<int>(cardinalityLimit);
 
-#if NET9_0_OR_GREATER
+#if NET
             this.TagsToMetricPointIndexDictionaryDelta = new(concurrencyLevel, capacity, comparer: TagsComparer.Instance);
 
             this.tagsToMetricPointIndexLookupDelta =
@@ -221,6 +226,10 @@ internal sealed class AggregatorStore
 
     internal double[] HistogramBounds => this.histogramExplicitBounds.Bounds;
 
+    internal int SnapshotMetricPointCount => this.batchSize;
+
+    internal int ExportWindowStart => this.exportWindowStart;
+
     // Using this filter to indicate On/Off
     // instead of another separate flag.
     internal bool IsExemplarEnabled() => this.exemplarFilter != ExemplarFilterType.AlwaysOff;
@@ -254,6 +263,7 @@ internal sealed class AggregatorStore
     internal int Snapshot()
     {
         this.batchSize = 0;
+        this.ResetExportWindow();
         if (this.OutputDelta)
         {
             this.SnapshotDeltaWithMetricPointReclaim();
@@ -410,7 +420,23 @@ internal sealed class AggregatorStore
     }
 
     internal MetricPointsAccessor GetMetricPoints()
-        => new(this.metricPoints, this.currentMetricPointBatch, this.batchSize);
+        => this.exportWindowCount < 0
+            ? new(this.metricPoints, this.currentMetricPointBatch, 0, this.batchSize)
+            : new(this.metricPoints, this.currentMetricPointBatch, this.exportWindowStart, this.exportWindowStart + this.exportWindowCount);
+
+    internal void SetExportWindow(int start, int count)
+    {
+        Debug.Assert(start >= 0 && count > 0 && start + count <= this.batchSize, "The export window must be within the current batch.");
+
+        this.exportWindowStart = start;
+        this.exportWindowCount = count;
+    }
+
+    internal void ResetExportWindow()
+    {
+        this.exportWindowStart = 0;
+        this.exportWindowCount = -1;
+    }
 
     private static double[] FindDefaultHistogramBounds(in MetricStreamIdentity metricStreamIdentity)
     {
@@ -1411,7 +1437,7 @@ internal sealed class AggregatorStore
             return 0;
         }
 
-#if NET9_0_OR_GREATER
+#if NET
         // Fast path: look up an existing MetricPoint directly from the incoming
         // tags span. The dictionary stores keys in the given (unsorted) order too,
         // so a previously-seen tag set in its original order resolves here without

@@ -6,6 +6,29 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* `AddConsoleExporter()` now binds the `ConsoleExporterOptions` from the
+  `OpenTelemetry:Exporters:Console` configuration section.
+  ([#7880](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7880))
+
+## 1.21.0-rc.2
+
+Released 2026-Nov-09
+
+* An `OutOfMemoryException` thrown while converting an attribute value to a
+  string is no longer swallowed and the attribute dropped; it now propagates.
+  ([#7929](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7929))
+
+* Added support for batching the metric points exported by the periodic
+  exporting metric reader. Set
+  `PeriodicExportingMetricReaderOptions.MaxExportBatchSize` to limit the
+  number of metric points in each exported batch. It can also be configured
+  with the `OTEL_METRIC_EXPORT_MAX_BATCH_SIZE` environment variable.
+  ([#8053](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8053))
+
+## 1.21.0-rc.1
+
+Released 2026-Oct-28
+
 * Fixed `byte[]`-valued tags being serialized as a JSON array of numbers
   (e.g. `[1,2,3]`) instead of being Base64-encoded as per the specification.
   ([#7694](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7694))
@@ -41,9 +64,11 @@ Released 2026-Oct-15
   section (Name, Version, and Schema URL) for each exported `LogRecord`.
   ([#7727](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7727))
 
-* `AddConsoleExporter()` now binds the `ConsoleExporterOptions` from the
-  `OpenTelemetry:Exporters:Console` configuration section.
-  ([#7880](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7880))
+* **Breaking Change** Dropped support for `net8.0` and `net9.0`.
+  ([#6899](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6899))
+
+* Add support for .NET 11.0.
+  ([#6899](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6899))
 
 ## 1.19.1
 

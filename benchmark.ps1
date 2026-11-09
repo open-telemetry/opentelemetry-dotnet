@@ -29,7 +29,7 @@ The baseline branch, tag, or commit to benchmark for comparison. Defaults to "ma
 The BenchmarkDotNet job to use (e.g. "Short"). Defaults to "Default".
 
 .PARAMETER Runtimes
-One or more target frameworks to benchmark. Defaults to "net10.0".
+One or more target frameworks to benchmark. Defaults to "net11.0".
 
 .PARAMETER Affinity
 The BenchmarkDotNet affinity mask to set for the benchmark process. Defaults to none.
@@ -49,7 +49,7 @@ Runs only the target benchmark and skips the baseline ref.
 Runs the matching benchmarks for the current branch only.
 
 .EXAMPLE
-./benchmark.ps1 @("*ExporterBenchmarks*") -Target my-feature -Job Short -Runtimes @("net10.0", "net472")
+./benchmark.ps1 @("*ExporterBenchmarks*") -Target my-feature -Job Short -Runtimes @("net11.0", "net472")
 
 Runs the matching exporter benchmarks for the my-feature branch and main using the
 "Short" job for .NET 10 and .NET Framework 4.7.2.
@@ -60,7 +60,7 @@ param(
     [Parameter(Mandatory = $false)][string] $Target,
     [Parameter(Mandatory = $false)][string] $Baseline = "main",
     [Parameter(Mandatory = $false)][string] $Job = "Default",
-    [Parameter(Mandatory = $false)][string[]] $Runtimes = @("net10.0"),
+    [Parameter(Mandatory = $false)][string[]] $Runtimes = @("net11.0"),
     [Parameter(Mandatory = $false)][string] $Affinity = "",
     [Parameter(Mandatory = $false)][switch] $EnableMemoryDiagnoser,
     [Parameter(Mandatory = $false)][switch] $EnableEventPipeProfiler,
@@ -134,7 +134,7 @@ function ConvertTo-SafePathSegment {
 }
 
 $Configuration = "Release"
-$Framework = "net10.0"
+$Framework = "net11.0"
 
 if (-not ($Runtimes | Where-Object { $_ -notmatch "^net4\d+$" })) {
     $Framework = "net472"

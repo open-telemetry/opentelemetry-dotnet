@@ -50,11 +50,6 @@ Notes](../../RELEASENOTES.md).
   `OTEL_CONFIG_FILE`.
   ([#7873](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7873))
 
-* Strict mode now also masks the `OpenTelemetry:Exporters:Console` configuration
-  section, which the Console exporter binds into its options. Other keys under
-  `OpenTelemetry` remain visible.
-  ([#7880](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7880))
-
 * Validates property names against the schema. A property the schema does not
   define is rejected. Limits YAML collection nesting to depth 128, including
   paths through aliases, with the document root at depth zero. Rejects
@@ -68,3 +63,20 @@ Notes](../../RELEASENOTES.md).
   produces several error-level events until more sections are supported.
   ([#8009](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8009))
 
+* Dropped support for .NET 8.0 and 9.0.
+  ([#6899](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6899))
+
+* Add support for .NET 11.0.
+  ([#6899](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6899))
+
+* A document with `tracer_provider` now turns tracing on from
+  `UseDeclarativeConfiguration()`, listening to every `ActivitySource` unless
+  `tracer_configurator/development` narrows it, with `simple` and `batch` span
+  processors and the `console` exporter. Unsupported stable `tracer_provider`
+  settings now fail the tracer provider build.
+  ([#8080](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8080))
+
+* Strict mode now also masks the `OpenTelemetry:Exporters:Console` configuration
+  section, which the Console exporter binds into its options. Other keys under
+  `OpenTelemetry` remain visible.
+  ([#7880](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7880))

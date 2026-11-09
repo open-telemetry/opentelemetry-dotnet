@@ -6,6 +6,27 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+## 1.21.0-rc.2
+
+Released 2026-Nov-09
+
+* Improve traceparent extraction throughput on .NET.
+  ([#8095](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8095))
+
+* Changed `EnvironmentVariableCarrier` snapshots to preserve environment variable
+  names, preventing extraction from non-normalized aliases and collisions with
+  normalized names. Process environment snapshots now follow the platform's
+  case-sensitivity rules.
+  ([#8098](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8098))
+
+* The experimental APIs previously covered by `OTEL1005`
+  (`EnvironmentVariableCarrier`) are now stable.
+  ([#8044](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8044))
+
+## 1.21.0-rc.1
+
+Released 2026-Oct-28
+
 ## 1.20.1
 
 Released 2026-Oct-20
@@ -17,6 +38,19 @@ Released 2026-Oct-20
 * Fixed `TracerProvider.GetTracer` caching a new tracer for each call with equal
   array-valued scope tags.
   ([#7960](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7960))
+
+* **Breaking Change** Dropped support for `net8.0` and `net9.0`.
+  ([#6899](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6899))
+
+* Update `System.Diagnostics.DiagnosticSource` dependency to `11.0.0-rc.3.26522.148`
+  for all target frameworks.
+  ([#6899](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6899))
+
+* Add full support for W3C Trace Context Level 2 grammar.
+  ([#6899](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6899))
+
+* Add support for .NET 11.0.
+  ([#6899](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6899))
 
 ## 1.20.0
 

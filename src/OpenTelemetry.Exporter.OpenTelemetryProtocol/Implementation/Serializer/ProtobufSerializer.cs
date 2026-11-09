@@ -622,7 +622,7 @@ internal static class ProtobufSerializer
 
     /// <summary>
     /// Returns a buffer previously obtained from <see cref="RentBuffer(int)"/> or
-    /// grown by <see cref="IncreaseBufferSize"/> back to the pool after clearing
+    /// grown by <see cref="IncreaseBufferSize(ref byte[], OtlpSignalType, int)"/> back to the pool after clearing
     /// its contents.
     /// </summary>
     /// <param name="buffer">The buffer to return.</param>
@@ -656,6 +656,9 @@ internal static class ProtobufSerializer
     }
 
     internal static bool IncreaseBufferSize(ref byte[] buffer, OtlpSignalType otlpSignalType, int maxBufferSize = MaxBufferSize)
+        => IncreaseBufferSize(ArrayPool<byte>.Shared, ref buffer, otlpSignalType, maxBufferSize);
+
+    internal static bool IncreaseBufferSize(ArrayPool<byte> pool, ref byte[] buffer, OtlpSignalType otlpSignalType, int maxBufferSize = MaxBufferSize)
     {
         if (buffer.Length >= maxBufferSize)
         {
@@ -669,8 +672,6 @@ internal static class ProtobufSerializer
         // is usable, with no unreachable remainder. The pool rounds the request
         // up to its next size class, so the buffer still ends up at least this big.
         var nextBufferSize = (int)Math.Min((long)buffer.Length * 2, maxBufferSize);
-
-        var pool = ArrayPool<byte>.Shared;
 
         byte[] largerBuffer;
         try

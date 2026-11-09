@@ -7,10 +7,12 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using OpenTelemetry.Resources;
+using OpenTelemetry.Tests;
 using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Configuration.Declarative.Tests;
 
+[Collection(EnvVarsCollectionDefinition.Name)]
 public sealed class StrictModeMaskTests
 {
     [Fact]

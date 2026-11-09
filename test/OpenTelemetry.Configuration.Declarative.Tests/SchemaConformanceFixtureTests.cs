@@ -184,9 +184,17 @@ public sealed partial class SchemaConformanceFixtureTests
         foreach (var relativePath in EnumerateFixtures("examples").Concat(EnumerateFixtures("snippets")))
         {
             report.Append(relativePath).Append('\n');
-            foreach (var (path, stability, _) in Read(ReadFixture(relativePath)).UnappliedProperties)
+            foreach (var property in Read(ReadFixture(relativePath)).UnappliedProperties)
             {
-                report.Append("  ").Append(stability).Append(' ').Append(path).Append('\n');
+                report.Append("  ").Append(property.Stability).Append(' ').Append(property.Path);
+
+                // Not logged: it fails the tracer provider build instead.
+                if (SupportManifest.IsReportedByTracerProviderBuild(property))
+                {
+                    report.Append(" (fails the tracer provider build)");
+                }
+
+                report.Append('\n');
             }
         }
 

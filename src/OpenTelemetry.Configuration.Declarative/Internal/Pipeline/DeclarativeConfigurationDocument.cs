@@ -23,7 +23,7 @@ public sealed class DeclarativeConfigurationDocument
         this.FlatKeys = flatKeys;
         this.Properties = properties;
         this.referencedEnvironmentVariables = referencedEnvironmentVariables
-            ?? new Dictionary<string, string?>(OtelEnvironmentVariables.NameComparer);
+            ?? [with(OtelEnvironmentVariables.NameComparer)];
         this.UnappliedProperties = unappliedProperties ?? [];
     }
 

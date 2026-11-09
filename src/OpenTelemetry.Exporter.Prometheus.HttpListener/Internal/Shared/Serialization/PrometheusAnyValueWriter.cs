@@ -17,10 +17,16 @@ namespace OpenTelemetry.Exporter.Prometheus.Serialization;
 // TextFormatSerializer.GetLabelValueString formats those directly.
 internal sealed class PrometheusAnyValueWriter : JsonStringArrayTagWriter<PrometheusAnyValueWriter.AnyValue>
 {
-    public static readonly PrometheusAnyValueWriter Instance = new();
+    // A label value is ultimately copied into the scrape response, so its JSON representation is
+    // capped at the same size as the serialized tags of a histogram. See TextFormatSerializer.
+    public static readonly PrometheusAnyValueWriter Instance = new(TextFormatSerializer.MaxSerializedTagsBufferSize);
 
-    private PrometheusAnyValueWriter()
+    private readonly long maxJsonLength;
+
+    internal PrometheusAnyValueWriter(long maxJsonLength)
+        : base(maxJsonLength)
     {
+        this.maxJsonLength = maxJsonLength;
     }
 
     public string ToLabelValueString(string key, object? value)
@@ -84,6 +90,14 @@ internal sealed class PrometheusAnyValueWriter : JsonStringArrayTagWriter<Promet
         IEnumerable<KeyValuePair<string, object?>> kvList,
         int? tagValueMaxLength)
     {
+        // Like an array, an oversized map is replaced with "TRUNCATED". The entries are bounded first so
+        // that the keys of an unbounded map are not buffered in order to deduplicate them.
+        if (!TryDeduplicateKeys(kvList, GetMaxEntries(this.maxJsonLength), out var entries))
+        {
+            this.WriteTruncated(ref state, key, kvList);
+            return;
+        }
+
         using var stream = new MemoryStream();
         var writer = new Utf8JsonWriter(stream);
 
@@ -91,11 +105,34 @@ internal sealed class PrometheusAnyValueWriter : JsonStringArrayTagWriter<Promet
         {
             writer.WriteStartObject();
 
-            foreach (var kvp in DeduplicateKeys(kvList))
+            foreach (var kvp in entries)
             {
+                // A name or value that cannot fit is rejected before it is converted (or its escaped form,
+                // which is up to six times larger, is buffered) by working out how big that would be.
+                var pendingLength = this.GetPendingLength(writer, kvp, tagValueMaxLength, out var includesValue);
+                if (this.IsTooLong(writer, pendingLength))
+                {
+                    this.WriteTruncated(ref state, key, kvList);
+                    return;
+                }
+
                 AnyValue nestedValue = default;
                 if (this.TryWriteTag(ref nestedValue, kvp.Key, kvp.Value, tagValueMaxLength))
                 {
+                    long valueLength = nestedValue.Value?.Length ?? 0;
+#if !NET
+                    if (nestedValue.IsJsonLiteral && nestedValue.Value != null)
+                    {
+                        var remaining = this.maxJsonLength - writer.BytesCommitted - writer.BytesPending - pendingLength;
+                        valueLength = GetEmbeddedJsonLength(nestedValue.Value, remaining);
+                    }
+#endif
+                    if (this.IsTooLong(writer, includesValue ? pendingLength : pendingLength + valueLength))
+                    {
+                        this.WriteTruncated(ref state, key, kvList);
+                        return;
+                    }
+
                     writer.WritePropertyName(kvp.Key);
 
                     if (nestedValue.Value == null)
@@ -117,10 +154,23 @@ internal sealed class PrometheusAnyValueWriter : JsonStringArrayTagWriter<Promet
                     {
                         writer.WriteStringValue(nestedValue.Value);
                     }
+
+                    if (this.IsTooLong(writer, 0))
+                    {
+                        this.WriteTruncated(ref state, key, kvList);
+                        return;
+                    }
                 }
             }
 
             writer.WriteEndObject();
+
+            if (this.IsTooLong(writer, 0))
+            {
+                this.WriteTruncated(ref state, key, kvList);
+                return;
+            }
+
             writer.Flush();
         }
         finally
@@ -137,6 +187,122 @@ internal sealed class PrometheusAnyValueWriter : JsonStringArrayTagWriter<Promet
         state.Value = Encoding.UTF8.GetString(buffer.Array, buffer.Offset, buffer.Count);
 #endif
         state.IsJsonLiteral = true;
+    }
+
+#if !NET
+    private static long GetEmbeddedJsonLength(ReadOnlySpan<char> value, long limit)
+    {
+        long length = value.Length;
+        var inString = false;
+
+        // JsonElement.WriteTo re-encodes strings on the legacy targets. The array
+        // writer emits raw '+' in Base64 strings, so allow for its JSON escaping.
+        // Plus signs in numeric exponents and already escaped strings stay unchanged.
+        for (var i = 0; i < value.Length && length <= limit; i++)
+        {
+            switch (value[i])
+            {
+                case '\\' when inString:
+                    i++;
+                    break;
+
+                case '"':
+                    inString = !inString;
+                    break;
+
+                case '+' when inString:
+                    length += 5;
+                    break;
+            }
+        }
+
+        return length;
+    }
+#endif
+
+    private static long GetEscapedBase64StringLength(ReadOnlySpan<byte> value, long limit)
+    {
+        var length = GetBase64StringLength(value.Length);
+
+        // Base64 index 62 is '+', which the default JSON encoder writes as \u002B.
+        // Count those indices directly so the five extra bytes per '+' are included
+        // without allocating the encoded string. Padding cannot introduce a '+'.
+        for (var i = 0; i < value.Length && length <= limit; i += 3)
+        {
+            var first = value[i];
+            if (first >> 2 == 62)
+            {
+                length += 5;
+            }
+
+            if (i + 1 >= value.Length)
+            {
+                break;
+            }
+
+            var second = value[i + 1];
+            if ((((first & 0x03) << 4) | (second >> 4)) == 62)
+            {
+                length += 5;
+            }
+
+            if (i + 2 >= value.Length)
+            {
+                break;
+            }
+
+            var third = value[i + 2];
+            if ((((second & 0x0F) << 2) | (third >> 6)) == 62)
+            {
+                length += 5;
+            }
+
+            if ((third & 0x3F) == 62)
+            {
+                length += 5;
+            }
+        }
+
+        return length;
+    }
+
+    private long GetPendingLength(Utf8JsonWriter writer, KeyValuePair<string, object?> entry, int? tagValueMaxLength, out bool includesValue)
+    {
+        includesValue = false;
+        var remaining = this.maxJsonLength - writer.BytesCommitted - writer.BytesPending;
+        var length = GetEscapedLength(entry.Key, remaining) + 2;
+
+        switch (entry.Value)
+        {
+            case string stringValue:
+                var characters = stringValue.AsSpan();
+                if (tagValueMaxLength is { } maxChars && characters.Length > maxChars)
+                {
+                    characters = characters.Slice(0, maxChars);
+                }
+
+                length += GetEscapedLength(characters, remaining - length) + 2;
+                includesValue = true;
+                break;
+
+            case byte[] bytes when bytes.GetType() == typeof(byte[]):
+                var byteCount = tagValueMaxLength is { } maxBytes ? Math.Min(bytes.Length, maxBytes) : bytes.Length;
+                length += GetEscapedBase64StringLength(bytes.AsSpan(0, byteCount), remaining - length);
+                includesValue = true;
+                break;
+        }
+
+        return length;
+    }
+
+    private bool IsTooLong(Utf8JsonWriter writer, long pendingLength)
+        => writer.BytesCommitted + writer.BytesPending + pendingLength > this.maxJsonLength;
+
+    private void WriteTruncated(ref AnyValue state, string key, IEnumerable<KeyValuePair<string, object?>> kvList)
+    {
+        state.Value = "TRUNCATED";
+        state.IsJsonLiteral = false;
+        this.OnUnsupportedTagDropped(key, kvList.GetType().ToString());
     }
 
     internal struct AnyValue
