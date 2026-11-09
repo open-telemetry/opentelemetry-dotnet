@@ -426,8 +426,9 @@ internal sealed class TracerProviderSdk : TracerProvider
 
                 if (this.Processor != null)
                 {
-                    // Wait for up to 5 seconds grace period
+                    // Wait for up to the grace period
                     this.Processor.Shutdown(GracePeriodMilliseconds);
+
                     try
                     {
                         this.Processor.Dispose();
