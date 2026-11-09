@@ -30,12 +30,12 @@ public class EnvironmentVariableCarrierTests
     }
 
     [Fact]
-    public void Capture_NormalizesKeysAndPreservesValues()
+    public void Capture_PreservesNamesAndValues()
     {
         var snapshot = EnvironmentVariableCarrier.Capture(
         [
-            new("traceparent", "00-0af7651916cd43dd8448eb211c80319c-b9c7c989f97918e1-01"),
-            new("tracestate", "key1=value1,key2=value2"),
+            new("TRACEPARENT", "00-0af7651916cd43dd8448eb211c80319c-b9c7c989f97918e1-01"),
+            new("TRACESTATE", "key1=value1,key2=value2"),
             new("otel.trace.id", "value with spaces\tand\nnewlines"),
         ]);
 
@@ -49,7 +49,48 @@ public class EnvironmentVariableCarrierTests
 
         Assert.Equal(
             "value with spaces\tand\nnewlines",
-            EnvironmentVariableCarrier.Get(snapshot, "otel.trace.id")!.Single());
+            snapshot["otel.trace.id"]);
+
+        Assert.Null(EnvironmentVariableCarrier.Get(snapshot, "otel.trace.id"));
+    }
+
+    [Theory]
+    [InlineData("traceparent", "TRACEPARENT")]
+    [InlineData("x-b3-traceid", "X_B3_TRACEID")]
+    [InlineData("x.b3.traceid", "X_B3_TRACEID")]
+    [InlineData("123trace", "_123TRACE")]
+    [InlineData("", "_")]
+    public void Capture_DoesNotCreateNormalizedAliases(string key, string normalizedKey)
+    {
+        var snapshot = EnvironmentVariableCarrier.Capture([new(key, "value")]);
+
+        Assert.Equal("value", snapshot[key]);
+        Assert.False(snapshot.ContainsKey(normalizedKey));
+        Assert.Null(EnvironmentVariableCarrier.Get(snapshot, key));
+        Assert.Null(EnvironmentVariableCarrier.Get(snapshot, normalizedKey));
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void Capture_PreservesNormalizedValueWhenNamesCollide(bool reverseOrder)
+    {
+        KeyValuePair<string, string?>[] environmentVariables =
+        [
+            new("X_B3_TRACEID", "normalized-value"),
+            new("x-b3-traceid", "non-normalized-value"),
+        ];
+
+        if (reverseOrder)
+        {
+            Array.Reverse(environmentVariables);
+        }
+
+        var snapshot = EnvironmentVariableCarrier.Capture(environmentVariables);
+
+        Assert.Equal(2, snapshot.Count);
+        Assert.Equal("non-normalized-value", snapshot["x-b3-traceid"]);
+        Assert.Equal("normalized-value", EnvironmentVariableCarrier.Get(snapshot, "x-b3-traceid")!.Single());
     }
 
     [Fact]
@@ -58,8 +99,8 @@ public class EnvironmentVariableCarrierTests
         var opaqueValue = "value with spaces\tand\u0000control\u0080";
         var snapshot = EnvironmentVariableCarrier.Capture(
         [
-            new("empty.key", string.Empty),
-            new("opaque-key", opaqueValue),
+            new("EMPTY_KEY", string.Empty),
+            new("OPAQUE_KEY", opaqueValue),
         ]);
 
         Assert.Equal(string.Empty, EnvironmentVariableCarrier.Get(snapshot, "empty.key")!.Single());
@@ -84,17 +125,65 @@ public class EnvironmentVariableCarrierTests
     }
 
     [Fact]
+    public void CaptureFromCurrentProcess_DoesNotCreateNormalizedAliases()
+    {
+        var key = $"otel.carrier.{Guid.NewGuid():N}";
+        var normalizedKey = EnvironmentVariableCarrier.NormalizeKey(key);
+
+        using var scope = EnvironmentVariableScope.Create((key, "value"), (normalizedKey, null));
+        var snapshot = EnvironmentVariableCarrier.CaptureFromCurrentProcess();
+
+        Assert.Equal("value", snapshot[key]);
+        Assert.False(snapshot.ContainsKey(normalizedKey));
+        Assert.Null(EnvironmentVariableCarrier.Get(snapshot, key));
+    }
+
+    [Fact]
+    public void CaptureFromCurrentProcess_PreservesNormalizedValueWhenNamesCollide()
+    {
+        var key = $"otel.carrier.{Guid.NewGuid():N}";
+        var normalizedKey = EnvironmentVariableCarrier.NormalizeKey(key);
+        using var scope = EnvironmentVariableScope.Create(
+            (normalizedKey, "normalized-value"),
+            (key, "non-normalized-value"));
+        var snapshot = EnvironmentVariableCarrier.CaptureFromCurrentProcess();
+
+        Assert.Equal("non-normalized-value", snapshot[key]);
+        Assert.Equal("normalized-value", EnvironmentVariableCarrier.Get(snapshot, key)!.Single());
+    }
+
+    [Fact]
+    public void CaptureFromCurrentProcess_UsesPlatformCaseSensitivity()
+    {
+        var key = $"otel_carrier_{Guid.NewGuid():N}";
+
+        using var scope = EnvironmentVariableScope.Create(key, "value");
+        var snapshot = EnvironmentVariableCarrier.CaptureFromCurrentProcess();
+
+        var expected =
+#if NET
+            OperatingSystem.IsWindows()
+#else
+            Environment.OSVersion.Platform == PlatformID.Win32NT
+#endif
+                ? "value"
+                : null;
+
+        Assert.Equal(expected, EnvironmentVariableCarrier.Get(snapshot, key)?.Single());
+    }
+
+    [Fact]
     public void Capture_DoesNotObserveSourceMutationsAfterCapture()
     {
         var source = new Dictionary<string, string?>(StringComparer.Ordinal)
         {
-            ["traceparent"] = "value-before",
+            ["TRACEPARENT"] = "value-before",
         };
 
         var snapshot = EnvironmentVariableCarrier.Capture(source);
 
-        source["traceparent"] = "value-after";
-        source["tracestate"] = "new-value";
+        source["TRACEPARENT"] = "value-after";
+        source["TRACESTATE"] = "new-value";
 
         Assert.Equal("value-before", EnvironmentVariableCarrier.Get(snapshot, "traceparent")!.Single());
         Assert.Null(EnvironmentVariableCarrier.Get(snapshot, "tracestate"));
