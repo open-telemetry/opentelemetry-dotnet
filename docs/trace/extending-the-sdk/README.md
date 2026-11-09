@@ -346,6 +346,12 @@ Custom samplers can be implemented to cover more scenarios:
   the samplers they delegate to from `OnShutdown`, as the `TracerProvider` only
   knows about the outermost sampler. The built-in `ParentBasedSampler` and
   `AlwaysRecordSampler` do this for the samplers they were created with.
+* A sampler instance and its delegates have one shutdown lifetime. Sharing an
+  instance between providers means that shutting down any of those providers
+  shuts down that instance for all of them. Use separate instances when
+  providers have independent lifetimes. This also applies to built-in wrappers
+  such as `ParentBasedSampler` and `AlwaysRecordSampler`, which return `Drop`
+  after shutdown begins.
 * `Sampler` does not implement `IDisposable`, to avoid requiring every sampler
   to be disposed. A custom sampler may still implement `IDisposable`, in which
   case the `TracerProvider` disposes of it after shutting it down. The
