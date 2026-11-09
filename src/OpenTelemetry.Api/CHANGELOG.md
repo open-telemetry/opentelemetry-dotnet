@@ -6,6 +6,9 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Improve traceparent extraction throughput on .NET.
+  ([#8095](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8095))
+
 * The experimental APIs previously covered by `OTEL1005`
   (`EnvironmentVariableCarrier`) are now stable.
   ([#8044](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8044))

@@ -10,6 +10,13 @@ Notes](../../RELEASENOTES.md).
   string is no longer swallowed and the attribute dropped; it now propagates.
   ([#7929](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7929))
 
+* Added support for batching the metric points exported by the periodic
+  exporting metric reader. Set
+  `PeriodicExportingMetricReaderOptions.MaxExportBatchSize` to limit the
+  number of metric points in each exported batch. It can also be configured
+  with the `OTEL_METRIC_EXPORT_MAX_BATCH_SIZE` environment variable.
+  ([#8053](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8053))
+
 ## 1.21.0-rc.1
 
 Released 2026-Oct-28
