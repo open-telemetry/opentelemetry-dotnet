@@ -408,6 +408,7 @@ appBuilder.Services.AddOpenTelemetry()
         readerOptions.TemporalityPreference = MetricReaderTemporalityPreference.Delta;
         readerOptions.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds = 10_000;
         readerOptions.PeriodicExportingMetricReaderOptions.ExportTimeoutMilliseconds = 5_000;
+        readerOptions.PeriodicExportingMetricReaderOptions.MaxExportBatchSize = 1_000;
     }));
 
 // Set via Options API using code:
@@ -416,12 +417,21 @@ appBuilder.Services.Configure<MetricReaderOptions>(o =>
     o.TemporalityPreference = MetricReaderTemporalityPreference.Delta;
     o.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds = 10_000;
     o.PeriodicExportingMetricReaderOptions.ExportTimeoutMilliseconds = 5_000;
+    o.PeriodicExportingMetricReaderOptions.MaxExportBatchSize = 1_000;
 });
 
 // Set via Options API using configuration:
 appBuilder.Services.Configure<MetricReaderOptions>(
     appBuilder.Configuration.GetSection("OpenTelemetry:Metrics"));
 ```
+
+By default, all the metric points of a collection are sent in a single export
+request. Set `PeriodicExportingMetricReaderOptions.MaxExportBatchSize` to split
+them into batches of at most that many metric points instead, even if that
+splits up the metric points of a single metric, with each batch sent in its own
+export request. The batches are exported one after another and the export
+timeout applies to each request. This keeps the size of each request bounded
+when a collection is large (see [Dropped batches](#dropped-batches)).
 
 ## Environment Variables
 
@@ -522,6 +532,7 @@ or reader
   | ----------------------------------------------------| ------------------------------------------------|
   | `OTEL_METRIC_EXPORT_INTERVAL`                       | `ExportIntervalMilliseconds`                    |
   | `OTEL_METRIC_EXPORT_TIMEOUT`                        | `ExportTimeoutMilliseconds`                     |
+  | `OTEL_METRIC_EXPORT_MAX_BATCH_SIZE`                 | `MaxExportBatchSize`                            |
 
   The following environment variables can be used to override the default values
   of the `OtlpExporterOptions` used for metrics when using the [UseOtlpExporter
@@ -587,6 +598,25 @@ used for logging:
 
 * `OTEL_LOGRECORD_ATTRIBUTE_VALUE_LENGTH_LIMIT`
 * `OTEL_LOGRECORD_ATTRIBUTE_COUNT_LIMIT`
+
+### IUtf8SpanFormattable attribute values
+
+On .NET 10+, attribute values implementing `IUtf8SpanFormattable` that are not
+already handled as a built-in type are formatted directly into the export
+buffer with `TryFormat` instead of through `ToString()`, and exported as string
+attributes. Built-in types such as `Int128`, `DateOnly`, `TimeOnly`, `Version`
+and `IPAddress` also take this path.
+
+`TryFormat` must return `false` only when the destination is too small, and
+must not throw for any other reason: an `ArgumentException` or
+`IndexOutOfRangeException` is treated as the destination being too small.
+Without an attribute value length limit, a value that never fits grows the
+export buffer to its maximum size and the batch is dropped.
+
+A formatter may write anywhere in the space it is given, and all of that space
+is cleared before the export buffer goes back to the shared array pool. That
+space is 3 bytes per char of the attribute value length limit, or the rest of
+the export buffer when there is no limit.
 
 ## Configure HttpClient
 
@@ -768,10 +798,12 @@ items in each batch with `MaxExportBatchSize` (see [Environment
 Variables](#environment-variables)), and the size of individual items with the
 [attribute limits](#attribute-limits).
 
-A metrics batch contains every metric collected by the reader and there is no
-batch size to lower, so reduce the size of the payload instead: drop
-instruments or attribute keys using views, or lower the cardinality of the
-attributes being recorded.
+For metrics, a batch contains every metric point collected by the reader unless
+batching is enabled, so limit the number of metric points in each batch with
+`PeriodicExportingMetricReaderOptions.MaxExportBatchSize` (see
+[MetricReaderOptions](#metricreaderoptions)). The size of the payload can also
+be reduced by dropping instruments or attribute keys using views, or by lowering
+the cardinality of the attributes being recorded.
 
 ## References
 

@@ -46,6 +46,22 @@ internal sealed class PluginComponentProviderRegistry
     }
 
     /// <summary>
+    /// Determines whether a provider is registered for <typeparamref name="TComponent"/> under
+    /// <paramref name="name"/>.
+    /// </summary>
+    /// <typeparam name="TComponent">The type of component. Matched exactly.</typeparam>
+    /// <param name="name">The name that selects the provider.</param>
+    /// <returns>
+    /// <see langword="true"/> when a provider is registered; otherwise, <see langword="false"/>.
+    /// </returns>
+    public bool Contains<TComponent>(string name)
+        where TComponent : class
+    {
+        Guard.ThrowIfNull(name);
+        return this.registrations.ContainsKey(new(typeof(TComponent), name));
+    }
+
+    /// <summary>
     /// Creates the <typeparamref name="TComponent"/> registered under <paramref name="name"/>.
     /// </summary>
     /// <remarks>

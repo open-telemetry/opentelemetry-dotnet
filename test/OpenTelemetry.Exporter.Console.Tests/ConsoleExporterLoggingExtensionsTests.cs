@@ -1,8 +1,10 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using OpenTelemetry.Logs;
+using OpenTelemetry.Tests;
 
 namespace OpenTelemetry.Exporter.Console.Tests;
 
@@ -141,5 +143,105 @@ public class ConsoleExporterLoggingExtensionsTests
         // Act and Assert
         LoggerProviderBuilder? builder = null;
         Assert.Throws<ArgumentNullException>(() => builder!.AddConsoleExporter());
+    }
+
+    [Fact]
+    public void AddConsoleExporter_LoggerProviderBuilder_WithNoParameters_UsesDefaultOptions()
+    {
+        // Arrange
+        ConsoleExporterOutputTargets? targets = null;
+
+        using var serviceProvider = BuildServiceProvider(
+            (services) => services.Configure<ConsoleExporterOptions>((options) => targets = options.Targets),
+            (builder) => builder.AddConsoleExporter());
+
+        // Act
+        LogTestMessage(serviceProvider);
+
+        // Assert
+        Assert.Equal(ConsoleExporterOutputTargets.Console, targets);
+    }
+
+    [Fact]
+    public void AddConsoleExporter_LoggerProviderBuilder_WithConfigureAction_ExportsLog()
+    {
+        // Arrange
+        using var capture = new TraceOutputCapture();
+        using var serviceProvider = BuildServiceProvider(
+            configureServices: null,
+            (builder) => builder.AddConsoleExporter((options) => options.Targets = ConsoleExporterOutputTargets.Debug));
+
+        // Act
+        LogTestMessage(serviceProvider);
+
+        // Assert
+        Assert.Contains(GetTestMessageBodyLine(), capture.Lines);
+    }
+
+    [Fact]
+    public void AddConsoleExporter_LoggerProviderBuilder_WithNameAndConfigureAction_ExportsLog()
+    {
+        // Arrange
+        using var capture = new TraceOutputCapture();
+        using var serviceProvider = BuildServiceProvider(
+            configureServices: null,
+            (builder) => builder.AddConsoleExporter("custom-name", (options) => options.Targets = ConsoleExporterOutputTargets.Debug));
+
+        // Act
+        LogTestMessage(serviceProvider);
+
+        // Assert
+        Assert.Contains(GetTestMessageBodyLine(), capture.Lines);
+    }
+
+    [Fact]
+    public void AddConsoleExporter_LoggerProviderBuilder_WithNameAndNullConfigureAction_UsesNamedOptions()
+    {
+        // Arrange
+        using var capture = new TraceOutputCapture();
+        using var serviceProvider = BuildServiceProvider(
+            (services) =>
+            {
+                services.Configure<ConsoleExporterOptions>((options) => options.Targets = ConsoleExporterOutputTargets.Console);
+                services.Configure<ConsoleExporterOptions>("custom-name", (options) => options.Targets = ConsoleExporterOutputTargets.Debug);
+            },
+            (builder) => builder.AddConsoleExporter("custom-name", configure: null));
+
+        // Act
+        LogTestMessage(serviceProvider);
+
+        // Assert
+        Assert.Contains(GetTestMessageBodyLine(), capture.Lines);
+    }
+
+    [Fact]
+    public void AddConsoleExporter_LoggerProviderBuilder_WithConfigureAction_ThrowsOnNullBuilder()
+    {
+        // Act and Assert
+        LoggerProviderBuilder? builder = null;
+        Assert.Throws<ArgumentNullException>(() => builder!.AddConsoleExporter((options) => { }));
+    }
+
+    private static string GetTestMessageBodyLine()
+        => $"{"LogRecord.Body:",-35}Test message";
+
+    private static ServiceProvider BuildServiceProvider(
+        Action<IServiceCollection>? configureServices,
+        Action<LoggerProviderBuilder> configure)
+    {
+        var services = new ServiceCollection();
+
+        configureServices?.Invoke(services);
+
+        services.AddLogging((builder) => builder.AddOpenTelemetry());
+        services.ConfigureOpenTelemetryLoggerProvider(configure);
+
+        return services.BuildServiceProvider();
+    }
+
+    private static void LogTestMessage(ServiceProvider serviceProvider)
+    {
+        var logger = serviceProvider.GetRequiredService<ILoggerFactory>().CreateLogger(Utils.GetCurrentMethodName());
+        logger.LogInformation("Test message");
     }
 }

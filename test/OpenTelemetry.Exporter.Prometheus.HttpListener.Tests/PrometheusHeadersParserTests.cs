@@ -57,4 +57,23 @@ public class PrometheusHeadersParserTests
 
         Assert.Equal(PrometheusProtocol.Fallback, actual);
     }
+
+    [Theory]
+    [InlineData("text/plain; q=0.5, application/openmetrics-text; q=0.5", false)]
+    [InlineData("application/openmetrics-text; q=0.5, text/plain; q=0.5", true)]
+    [InlineData("text/plain; q=0.4, application/openmetrics-text; q=0.5", true)]
+    [InlineData("application/openmetrics-text; q=0.4, text/plain; q=0.5", false)]
+    [InlineData("text/plain; q=0.5, application/openmetrics-text; q=0.9; version=invalid", false)]
+    public void Negotiate_PreservesQualityAndHeaderOrder(string accept, bool isOpenMetrics)
+    {
+        var expected = isOpenMetrics
+            ? new PrometheusProtocol(
+                PrometheusProtocol.OpenMetricsMediaType,
+                PrometheusProtocol.UnderscoresEscaping,
+                PrometheusProtocol.OpenMetricsV1,
+                true)
+            : PrometheusProtocol.Fallback;
+
+        Assert.Equal(expected, PrometheusHeadersParser.Negotiate(accept));
+    }
 }

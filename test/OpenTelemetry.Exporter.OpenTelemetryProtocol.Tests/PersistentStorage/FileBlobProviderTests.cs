@@ -1,12 +1,16 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Diagnostics.CodeAnalysis;
+using System.Diagnostics.Tracing;
 using System.Runtime.InteropServices;
+using OpenTelemetry.PersistentStorage.Abstractions;
 using OpenTelemetry.PersistentStorage.FileSystem;
 using OpenTelemetry.Tests;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests.PersistentStorage;
 
+[Collection(EventSourceCollectionDefinition.Name)]
 public class FileBlobProviderTests
 {
     [Fact]
@@ -616,4 +620,220 @@ public class FileBlobProviderTests
         Assert.Null(data);
     }
 #endif
+
+    [Fact]
+    [Obsolete("Exercises obsolete PersistentBlob and PersistentBlobProvider overloads.")]
+    public void PersistentBlob_DelegatesToImplementation()
+    {
+        var blob = new StubBlob();
+        byte[] array = [1, 2, 3];
+        ReadOnlySpan<byte> span = [4, 5, 6];
+
+        Assert.True(blob.TryRead(out var buffer));
+        Assert.Equal<byte>([9, 9], buffer);
+
+        Assert.True(blob.TryWrite(span, 100));
+        Assert.NotNull(blob.Written);
+        Assert.Equal<byte>([4, 5, 6], blob.Written);
+        Assert.Equal(100, blob.LeasePeriod);
+
+        Assert.True(blob.TryLease(200));
+        Assert.Equal(200, blob.LeasePeriod);
+
+        Assert.True(blob.TryDelete());
+        Assert.True(blob.Deleted);
+
+        Assert.True(blob.TryWrite(array, 50));
+        Assert.NotNull(blob.Written);
+        Assert.Equal<byte>([1, 2, 3], blob.Written);
+    }
+
+    [Fact]
+    [Obsolete("Exercises obsolete PersistentBlob and PersistentBlobProvider overloads.")]
+    public void PersistentBlob_WhenImplementationThrows_ReturnsFalseAndLogsError()
+    {
+        using var listener = new TestEventListener();
+        listener.EnableEvents(PersistentStorageAbstractionsEventSource.Log, EventLevel.Error, EventKeywords.All);
+
+        var blob = new StubBlob { Throw = true };
+        byte[] array = [1, 2, 3];
+        ReadOnlySpan<byte> span = [4, 5, 6];
+
+        Assert.False(blob.TryRead(out var buffer));
+        Assert.Null(buffer);
+        Assert.False(blob.TryWrite(span));
+        Assert.False(blob.TryWrite(array, 50));
+        Assert.False(blob.TryLease(100));
+        Assert.False(blob.TryDelete());
+
+        Assert.Equal(5, listener.CurrentMessages.Count);
+    }
+
+    [Fact]
+    [Obsolete("Exercises obsolete PersistentBlob and PersistentBlobProvider overloads.")]
+    public void PersistentBlobProvider_DelegatesToImplementation()
+    {
+        var provider = new StubBlobProvider();
+        byte[] array = [1, 2, 3];
+        ReadOnlySpan<byte> span = [4, 5, 6];
+
+        Assert.True(provider.TryCreateBlob(span, 100, out var blob));
+        Assert.NotNull(blob);
+        Assert.NotNull(provider.Created);
+        Assert.Equal<byte>([4, 5, 6], provider.Created);
+        Assert.Equal(100, provider.LeasePeriod);
+
+        Assert.True(provider.TryCreateBlob(span, out blob));
+        Assert.NotNull(blob);
+        Assert.NotNull(provider.Created);
+        Assert.Equal<byte>([4, 5, 6], provider.Created);
+        Assert.Null(provider.LeasePeriod);
+
+        Assert.True(provider.TryCreateBlob(array, 200, out blob));
+        Assert.NotNull(provider.Created);
+        Assert.Equal<byte>([1, 2, 3], provider.Created);
+        Assert.Equal(200, provider.LeasePeriod);
+
+        Assert.True(provider.TryCreateBlob(array, out blob));
+        Assert.NotNull(provider.Created);
+        Assert.Equal<byte>([1, 2, 3], provider.Created);
+        Assert.Null(provider.LeasePeriod);
+
+        Assert.True(provider.TryGetBlob(out blob));
+        Assert.NotNull(blob);
+
+        Assert.Equal(2, provider.GetBlobs().Count());
+    }
+
+    [Fact]
+    [Obsolete("Exercises obsolete PersistentBlob and PersistentBlobProvider overloads.")]
+    public void PersistentBlobProvider_WhenImplementationThrows_ReturnsFalseAndLogsError()
+    {
+        using var listener = new TestEventListener();
+        listener.EnableEvents(PersistentStorageAbstractionsEventSource.Log, EventLevel.Error, EventKeywords.All);
+
+        var provider = new StubBlobProvider { Throw = true };
+        byte[] array = [1, 2, 3];
+        ReadOnlySpan<byte> span = [4, 5, 6];
+
+        Assert.False(provider.TryCreateBlob(span, 100, out var blob));
+        Assert.Null(blob);
+        Assert.False(provider.TryCreateBlob(span, out blob));
+        Assert.Null(blob);
+        Assert.False(provider.TryCreateBlob(array, 200, out blob));
+        Assert.Null(blob);
+        Assert.False(provider.TryCreateBlob(array, out blob));
+        Assert.Null(blob);
+        Assert.False(provider.TryGetBlob(out blob));
+        Assert.Null(blob);
+        Assert.Empty(provider.GetBlobs());
+
+        Assert.Equal(6, listener.CurrentMessages.Count);
+    }
+
+    [Fact]
+    public void PersistentBlobProvider_GetBlobs_WhenImplementationReturnsNull_ReturnsEmpty()
+    {
+        var provider = new StubBlobProvider { ReturnNullBlobs = true };
+
+        Assert.Empty(provider.GetBlobs());
+    }
+
+    private sealed class StubBlob : PersistentBlob
+    {
+        public bool Throw { get; set; }
+
+        public byte[]? Written { get; private set; }
+
+        public int? LeasePeriod { get; private set; }
+
+        public bool Deleted { get; private set; }
+
+        protected override bool OnTryRead([NotNullWhen(true)] out byte[]? buffer)
+        {
+            this.ThrowIfRequested();
+            buffer = [9, 9];
+            return true;
+        }
+
+        protected override bool OnTryWrite(byte[] buffer, int leasePeriodMilliseconds = 0)
+        {
+            this.ThrowIfRequested();
+            this.Written = buffer;
+            this.LeasePeriod = leasePeriodMilliseconds;
+            return true;
+        }
+
+        protected override bool OnTryLease(int leasePeriodMilliseconds)
+        {
+            this.ThrowIfRequested();
+            this.LeasePeriod = leasePeriodMilliseconds;
+            return true;
+        }
+
+        protected override bool OnTryDelete()
+        {
+            this.ThrowIfRequested();
+            this.Deleted = true;
+            return true;
+        }
+
+        private void ThrowIfRequested()
+        {
+            if (this.Throw)
+            {
+                throw new InvalidOperationException("boom");
+            }
+        }
+    }
+
+    private sealed class StubBlobProvider : PersistentBlobProvider
+    {
+        public bool Throw { get; set; }
+
+        public bool ReturnNullBlobs { get; set; }
+
+        public byte[]? Created { get; private set; }
+
+        public int? LeasePeriod { get; private set; }
+
+        protected override IEnumerable<PersistentBlob> OnGetBlobs()
+        {
+            this.ThrowIfRequested();
+            return this.ReturnNullBlobs ? null! : [new StubBlob(), new StubBlob()];
+        }
+
+        protected override bool OnTryCreateBlob(byte[] buffer, int leasePeriodMilliseconds, [NotNullWhen(true)] out PersistentBlob? blob)
+        {
+            this.ThrowIfRequested();
+            this.Created = buffer;
+            this.LeasePeriod = leasePeriodMilliseconds;
+            blob = new StubBlob();
+            return true;
+        }
+
+        protected override bool OnTryCreateBlob(byte[] buffer, [NotNullWhen(true)] out PersistentBlob? blob)
+        {
+            this.ThrowIfRequested();
+            this.Created = buffer;
+            this.LeasePeriod = null;
+            blob = new StubBlob();
+            return true;
+        }
+
+        protected override bool OnTryGetBlob([NotNullWhen(true)] out PersistentBlob? blob)
+        {
+            this.ThrowIfRequested();
+            blob = new StubBlob();
+            return true;
+        }
+
+        private void ThrowIfRequested()
+        {
+            if (this.Throw)
+            {
+                throw new InvalidOperationException("boom");
+            }
+        }
+    }
 }
