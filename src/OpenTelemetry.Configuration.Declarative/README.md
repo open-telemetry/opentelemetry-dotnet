@@ -164,6 +164,7 @@ application.
 | YAML field | Effect |
 | --- | --- |
 | `disabled` | Disables the OpenTelemetry SDK when `true` |
+| `log_level` | Sets the minimum level of the SDK's self-diagnostics (see [`log_level`](#log_level)) |
 | `resource.attributes` | Adds typed resource attributes to all signals |
 | `resource.attributes_list` | Adds resource attributes from a `key=value` list |
 | `resource.schema_url` | Sets a resource schema URL, subject to merge rules below |
@@ -209,6 +210,24 @@ building the tracer provider rather than ignoring the settings. See
 
 Only the outermost unsupported property is reported, without its nested
 properties. Non-empty lists are reported per item.
+
+### `log_level`
+
+`log_level` sets the minimum level of the SDK's self-diagnostics. It does not
+enable output; configure an output separately, for example with
+`OTEL_DOTNET_SELF_DIAGNOSTICS_SINKS`.
+
+Accepted values are lowercase `trace`, `debug`, `info`, `warn`, `error` and
+`fatal`, optionally suffixed with `2`, `3` or `4`. Suffixed values map to the
+same .NET log level as their base value; `fatal` maps to `Critical`. Other
+values, including `none`, are rejected.
+
+Other schema-defined SDK settings (e.g. `tracer_provider`, `propagator`) are
+retained but not applied. Unsupported stable settings are logged as errors and
+experimental settings as warnings when the document is loaded. Only the
+outermost unsupported property is reported, without its nested properties.
+Non-empty sequences are reported per item. Loading still succeeds, although
+structurally invalid content can fail configuration loading.
 
 `instrumentation/development` and `distribution` are retained for consumers
 through `DeclarativeConfigurationDocument.Properties`. The SDK does not
@@ -458,6 +477,8 @@ Points to be aware of:
 - Full schema validation is not implemented. Tracing setup checks component
   entries, required processor/exporter settings, batch values and
   source-selection settings; not every value in the document is validated.
+- Property names are validated against the schema, but value types, ranges and
+  required properties are not, apart from `log_level`.
 - Some components read environment variables directly and are not covered by
   strict mode: including options created with a public
   parameterless constructor in application code (for example

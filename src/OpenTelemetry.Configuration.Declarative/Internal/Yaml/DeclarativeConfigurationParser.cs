@@ -29,6 +29,7 @@ internal sealed class DeclarativeConfigurationParser(YamlParseContext context)
         new(fileFormat)
         {
             Disabled = this.ReadDisabled(root),
+            LogLevel = this.ReadLogLevel(root),
             Resource = this.ReadResource(root),
         };
 
@@ -53,6 +54,28 @@ internal sealed class DeclarativeConfigurationParser(YamlParseContext context)
 
     private ModelProperty<bool> ReadDisabled(YamlMappingNode node) =>
         this.reader.ReadBoolean(node, YamlKeys.Disabled);
+
+    private ModelProperty<SeverityNumber> ReadLogLevel(YamlMappingNode node)
+    {
+        if (!node.TryGetValueNode(YamlKeys.LogLevel, out var valueNode))
+        {
+            return ModelProperty<SeverityNumber>.Absent;
+        }
+
+        if (valueNode is not YamlScalarNode scalar)
+        {
+            throw SeverityNumberParser.CreateTypeMismatch(YamlKeys.LogLevel, valueNode.NodeType.ToString(), valueNode.Start);
+        }
+
+        var resolved = context.ResolveScalar(scalar);
+        return resolved.Kind switch
+        {
+            YamlScalarKind.Null => ModelProperty<SeverityNumber>.Null,
+            YamlScalarKind.String => ModelProperty<SeverityNumber>.Create(
+                SeverityNumberParser.Parse(YamlKeys.LogLevel, resolved.Value, valueNode.Start)),
+            _ => throw SeverityNumberParser.CreateTypeMismatch(YamlKeys.LogLevel, resolved.Kind.GetYamlKindName(), valueNode.Start),
+        };
+    }
 
     private ModelProperty<ResourceConfiguration> ReadResource(YamlMappingNode node) =>
         this.reader.ReadMapping(node, YamlKeys.Resource, this.ReadResourceConfiguration);

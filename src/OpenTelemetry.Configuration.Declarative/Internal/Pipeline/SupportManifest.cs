@@ -33,7 +33,7 @@ internal static class SupportManifest
     [
         YamlKeys.FileFormat,
         YamlKeys.Disabled,
-
+        YamlKeys.LogLevel,
         ResourceAttributes,
         ResourceAttributesList,
 

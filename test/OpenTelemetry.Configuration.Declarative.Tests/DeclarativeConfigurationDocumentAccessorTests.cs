@@ -860,7 +860,7 @@ public sealed class DeclarativeConfigurationDocumentAccessorTests
         var events = listener.Messages.Where(e => e.EventId is ConfiguredPropertyNotAppliedEventId or DevelopmentPropertyNotAppliedEventId).ToList();
         Assert.All(events, e => Assert.Equal(EventLevel.Error, e.Level));
         Assert.Equal(
-            ["log_level", "attribute_limits", "propagator", "meter_provider", "logger_provider"],
+            ["attribute_limits", "propagator", "meter_provider", "logger_provider"],
             events.Select(e => (string)e.Payload![1]!));
         Assert.All(events, e => Assert.Equal(filePath.DisplayPath, e.Payload![0]));
         Assert.All(events, e => Assert.Equal(1L, e.Payload![3]));
