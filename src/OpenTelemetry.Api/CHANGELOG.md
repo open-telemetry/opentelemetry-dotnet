@@ -15,6 +15,10 @@ Notes](../../RELEASENOTES.md).
   case-sensitivity rules.
   ([#8098](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8098))
 
+* The experimental APIs previously covered by `OTEL1005`
+  (`EnvironmentVariableCarrier`) are now stable.
+  ([#8044](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8044))
+
 ## 1.21.0-rc.1
 
 Released 2026-Oct-28
