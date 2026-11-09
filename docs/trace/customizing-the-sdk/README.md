@@ -252,6 +252,42 @@ tracing and logging by implementing `Activity` and `LogRecord` respectively.
 Follow [this](../extending-the-sdk/README.md#processor) document to learn about
 writing custom processors.
 
+##### Exporting unsampled spans
+
+By default, `BatchActivityExportProcessor` and `SimpleActivityExportProcessor`
+only pass sampled activities (`Activity.Recorded` is `true`) to the exporter,
+as recommended by the [OpenTelemetry
+specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk.md#sampling),
+which says that span exporters SHOULD NOT receive unsampled spans.
+
+Setting `ExportUnsampledSpans` to `true` also passes activities that are
+recorded but not sampled (`SamplingDecision.RecordOnly`) to the exporter. This
+is useful when a downstream component, such as an OpenTelemetry Collector,
+needs to see every span, for example to compute accurate request metrics or
+to make tail-based sampling decisions. Activities dropped by the sampler
+(`SamplingDecision.Drop`) are never exported.
+
+The built-in exporter registration helpers, such as `AddOtlpExporter`, create
+their processors internally and do not expose this setting. To use it, create
+the processor yourself and add it with `AddProcessor`:
+
+```csharp
+var tracerProvider = Sdk.CreateTracerProviderBuilder()
+    .AddSource("MyCompany.MyProduct.MyLibrary")
+    .SetSampler(new AlwaysRecordSampler(new TraceIdRatioBasedSampler(0.25)))
+    .AddProcessor(new BatchActivityExportProcessor(
+        new OtlpTraceExporter(new OtlpExporterOptions()))
+    {
+        ExportUnsampledSpans = true,
+    })
+    .Build();
+```
+
+> [!NOTE]
+> Exported unsampled spans do not have the sampled flag set in their trace
+> flags. Backends and Collector processors that should only keep sampled spans
+> need to check this flag.
+
 #### Exporter Configuration
 
 The snippet below shows how to add export processors to the provider before it

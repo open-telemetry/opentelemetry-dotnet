@@ -469,6 +469,98 @@ public class ActivityExportProcessorSelfObservabilityTests
     }
 
     [Fact]
+    public void RecordOnlySpansAreCountedAsAlreadyShutdownWhenExportUnsampledSpansEnabled()
+    {
+        var exportedMetrics = new List<Metric>();
+        using var meterProvider = CreateMeterProvider(exportedMetrics);
+
+        var exported = new List<Activity>();
+        using var exporter = new InMemoryExporter<Activity>(exported);
+        var processor = new BatchActivityExportProcessor(exporter)
+        { ExportUnsampledSpans = true, };
+
+        var sourceName = Utils.GetCurrentMethodName();
+        using var source = new ActivitySource(sourceName);
+        using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+            .AddSource(sourceName)
+            .SetSampler(new RecordOnlySampler())
+            .AddProcessor(processor)
+            .Build();
+
+        processor.Shutdown();
+
+        StartAndStopActivities(source, 2);
+
+        meterProvider.ForceFlush();
+
+        // With ExportUnsampledSpans enabled, a RECORD_ONLY span would have been
+        // exported, so after shutdown it is lost and counted as "already_shutdown".
+        var points = GetMetricPoints(exportedMetrics);
+        var point = points.Single();
+
+        Assert.Equal(2, point.GetSumLong());
+        Assert.True(HasTagValue(point, "error.type", "already_shutdown"));
+        Assert.Empty(exported);
+    }
+
+    [Fact]
+    public void RecordOnlySpansAreCountedAsQueueFullWhenExportUnsampledSpansEnabled()
+    {
+        var exportedMetrics = new List<Metric>();
+        using var meterProvider = CreateMeterProvider(exportedMetrics);
+
+        // Use a blocking exporter so the worker thread holds the queue slot
+        // while we overflow it, guaranteeing drops.
+        using var exportStarted = new ManualResetEventSlim(false);
+        using var allowExport = new ManualResetEventSlim(false);
+        using var exporter = new DelegatingExporter<Activity>
+        {
+            OnExportFunc = batch =>
+            {
+                exportStarted.Set();
+                allowExport.Wait();
+                return ExportResult.Success;
+            },
+        };
+        using var processor = new BatchActivityExportProcessor(
+            exporter,
+            maxQueueSize: 1,
+            scheduledDelayMilliseconds: 1,
+            maxExportBatchSize: 1)
+        {
+            ExportUnsampledSpans = true,
+        };
+
+        var sourceName = Utils.GetCurrentMethodName();
+        using var source = new ActivitySource(sourceName);
+        using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+            .AddSource(sourceName)
+            .SetSampler(new RecordOnlySampler())
+            .AddProcessor(processor)
+            .Build();
+
+        // First span triggers the worker; wait for it to block in Export.
+        StartAndStopActivities(source, 1);
+        Assert.True(exportStarted.Wait(TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken));
+
+        // Now the queue is being drained but the worker is blocked.
+        // Subsequent spans will overflow the queue (size=1).
+        StartAndStopActivities(source, 5);
+
+        // Release the exporter so the flush can complete.
+        allowExport.Set();
+        processor.ForceFlush();
+
+        meterProvider.ForceFlush();
+
+        var points = GetMetricPoints(exportedMetrics);
+        var queueFullPoint = points.Single(p => HasTagValue(p, "error.type", "queue_full"));
+
+        Assert.True(queueFullPoint.GetSumLong() > 0);
+        Assert.Equal(6, points.Sum(p => p.GetSumLong()));
+    }
+
+    [Fact]
     public void NoListener_NoException()
     {
         // No MeterProvider subscribing to "otel.sdk.experimental" - verifying no exceptions.

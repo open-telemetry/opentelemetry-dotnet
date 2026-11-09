@@ -36,6 +36,33 @@ public class ExportProcessorTests
     }
 
     [Fact]
+    public void ExportProcessorIgnoresActivityWhenDroppedAndExportUnsampledSpansEnabled()
+    {
+        var activitySourceName = Utils.GetCurrentMethodName();
+        var sampler = new AlwaysOffSampler();
+        var exportedItems = new List<Activity>();
+#pragma warning disable CA2000 // Dispose objects before losing scope
+        using var processor = new TestActivityExportProcessor(new InMemoryExporter<Activity>(exportedItems))
+        { ExportUnsampledSpans = true, };
+#pragma warning restore CA2000 // Dispose objects before losing scope
+        using var activitySource = new ActivitySource(activitySourceName);
+        using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+            .AddSource(activitySourceName)
+            .SetSampler(sampler)
+            .AddProcessor(processor)
+            .Build();
+
+        using (var activity = activitySource.StartActivity("Activity"))
+        {
+            Assert.NotNull(activity);
+            Assert.False(activity.IsAllDataRequested);
+            Assert.Equal(ActivityTraceFlags.RandomTraceId, activity.ActivityTraceFlags);
+        }
+
+        Assert.Empty(processor.ExportedItems);
+    }
+
+    [Fact]
     public void ExportProcessorIgnoresActivityMarkedAsRecordOnly()
     {
         var activitySourceName = Utils.GetCurrentMethodName();
@@ -69,6 +96,33 @@ public class ExportProcessorTests
         var exportedItems = new List<Activity>();
 #pragma warning disable CA2000 // Dispose objects before losing scope
         using var processor = new TestActivityExportProcessor(new InMemoryExporter<Activity>(exportedItems));
+#pragma warning restore CA2000 // Dispose objects before losing scope
+        using var activitySource = new ActivitySource(activitySourceName);
+        using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+            .AddSource(activitySourceName)
+            .SetSampler(sampler)
+            .AddProcessor(processor)
+            .Build();
+
+        using (var activity = activitySource.StartActivity("Activity"))
+        {
+            Assert.NotNull(activity);
+            Assert.True(activity.IsAllDataRequested);
+            Assert.Equal(ActivityTraceFlags.Recorded | ActivityTraceFlags.RandomTraceId, activity.ActivityTraceFlags);
+        }
+
+        Assert.Single(processor.ExportedItems);
+    }
+
+    [Fact]
+    public void ExportProcessorExportsActivityMarkedAsRecordAndSampleWhenExportUnsampledSpansEnabled()
+    {
+        var activitySourceName = Utils.GetCurrentMethodName();
+        var sampler = new AlwaysOnSampler();
+        var exportedItems = new List<Activity>();
+#pragma warning disable CA2000 // Dispose objects before losing scope
+        using var processor = new TestActivityExportProcessor(new InMemoryExporter<Activity>(exportedItems))
+        { ExportUnsampledSpans = true, };
 #pragma warning restore CA2000 // Dispose objects before losing scope
         using var activitySource = new ActivitySource(activitySourceName);
         using var tracerProvider = Sdk.CreateTracerProviderBuilder()

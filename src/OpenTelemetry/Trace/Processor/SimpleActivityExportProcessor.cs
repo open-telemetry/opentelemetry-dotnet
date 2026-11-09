@@ -37,9 +37,16 @@ public class SimpleActivityExportProcessor : SimpleExportProcessor<Activity>
     }
 
     /// <summary>
-    /// Gets or sets a value indicating whether recorded but unsampled activities are exported.
+    /// Gets or sets a value indicating whether activities that are recorded but not sampled
+    /// (<see cref="Activity.IsAllDataRequested"/> is <see langword="true"/> and
+    /// <see cref="Activity.Recorded"/> is <see langword="false"/>) are exported.
     /// The default value is <see langword="false" />.
     /// </summary>
+    /// <remarks>
+    /// Set this property before the processor is added to a tracer provider.
+    /// Exported unsampled activities do not have the
+    /// <see cref="ActivityTraceFlags.Recorded"/> flag set.
+    /// </remarks>
     public bool ExportUnsampledSpans { get; set; }
 
     /// <inheritdoc />
@@ -47,8 +54,9 @@ public class SimpleActivityExportProcessor : SimpleExportProcessor<Activity>
     {
         Guard.ThrowIfNull(data);
 #pragma warning disable CA1062 // Validate arguments of public methods - needed for netstandard2.1
-        if (!data.Recorded && !(this.ExportUnsampledSpans && data.IsAllDataRequested))
+        var shouldExport = data.Recorded || (this.ExportUnsampledSpans && data.IsAllDataRequested);
 #pragma warning restore CA1062 // Validate arguments of public methods - needed for netstandard2.1
+        if (!shouldExport)
         {
             if (data.IsAllDataRequested)
             {

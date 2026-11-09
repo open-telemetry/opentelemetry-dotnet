@@ -100,9 +100,11 @@ reflected in this metric. When present:
 > [!NOTE]
 > Sampling affects `otel.sdk.processor.span.processed` as follows. Spans dropped
 > by the sampler (`DROP`) are not counted, because span processors are not
-> invoked for them at all. Spans sampled as `RECORD_ONLY` are counted as
-> successfully processed because they do reach the processor and by design are
-> never handed to an exporter.
+> invoked for them at all. By default, spans sampled as `RECORD_ONLY` are
+> counted as successfully processed because they do reach the processor and are
+> never handed to an exporter. If `ExportUnsampledSpans` is enabled on the
+> export processor, they are exported and counted in the same way as sampled
+> spans.
 
 ## Troubleshooting
 
