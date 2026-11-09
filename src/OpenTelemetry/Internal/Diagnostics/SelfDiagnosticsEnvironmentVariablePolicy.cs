@@ -34,8 +34,6 @@ internal static class SelfDiagnosticsEnvironmentVariablePolicy
     private const string ResourceAttributesVarName = "OTEL_RESOURCE_ATTRIBUTES";
     private const string JwtPrefix = "eyJ";
 
-    private static readonly char[] ResourceAttributeKeyValueSeparator = ['='];
-
     /// <summary>
     /// Variables whose values are safe to persist verbatim.
     /// </summary>
@@ -287,47 +285,66 @@ internal static class SelfDiagnosticsEnvironmentVariablePolicy
     /// <returns>The value with unrecognised keys' values replaced.</returns>
     private static string RedactResourceAttributes(string value)
     {
-        var pairs = value.Split(',');
         var builder = StringBuilderCache.Acquire(value.Length);
+        var remaining = value.AsSpan();
+        var index = 0;
+        var first = true;
 
-        for (var i = 0; i < pairs.Length; i++)
+        while (true)
         {
-            if (i > 0)
+            var separator = remaining.IndexOf(',');
+            var pair = separator < 0 ? remaining : remaining[..separator];
+
+            if (!first)
             {
                 builder.Append(',');
             }
 
-            AppendResourceAttribute(builder, pairs[i]);
+            AppendResourceAttribute(builder, value, index, pair);
+
+            if (separator < 0)
+            {
+                break;
+            }
+
+            index += separator + 1;
+            remaining = remaining[(separator + 1)..];
+            first = false;
         }
 
         return StringBuilderCache.GetStringAndRelease(builder);
     }
 
-    private static void AppendResourceAttribute(StringBuilder builder, string pair)
+    private static void AppendResourceAttribute(StringBuilder builder, string value, int index, ReadOnlySpan<char> pair)
     {
-        if (pair.Length == 0)
+        if (pair.IsEmpty)
         {
             return;
         }
 
-        var parts = pair.Split(ResourceAttributeKeyValueSeparator, 2);
-        if (parts.Length != 2)
+        var equals = pair.IndexOf('=');
+        if (equals < 0)
         {
             // No key to classify against, so nothing can be shown safely.
             builder.Append(RedactedValue);
             return;
         }
 
-        builder.Append(parts[0]).Append('=');
+        builder.Append(value, index, equals).Append('=');
         builder.Append(
-            IsSafeResourceAttributeKey(parts[0].Trim())
-                ? parts[1]
+            IsSafeResourceAttributeKey(pair[..equals].Trim())
+                ? value.AsSpan(index + equals + 1, pair.Length - equals - 1)
                 : RedactedValue);
     }
 
-    private static bool IsSafeResourceAttributeKey(string key)
+    private static bool IsSafeResourceAttributeKey(ReadOnlySpan<char> key)
     {
-        if (SafeResourceAttributeKeys.Contains(key))
+#if NET
+        var alternateLookup = SafeResourceAttributeKeys.GetAlternateLookup<ReadOnlySpan<char>>();
+        if (alternateLookup.Contains(key))
+#else
+        if (SafeResourceAttributeKeys.Contains(key.ToString()))
+#endif
         {
             return true;
         }
