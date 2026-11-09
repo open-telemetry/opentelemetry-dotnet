@@ -1,7 +1,6 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-using System.Reflection;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -213,20 +212,78 @@ public sealed class OpenTelemetryLoggingExtensionsTests
         Assert.Equal(2, afterDelegateIndex);
     }
 
-    // This test validates that the OpenTelemetryLoggerOptions contains only primitive (or string) type
-    // properties. This is necessary to ensure trim correctness since that class is effectively deserialized
-    // from configuration. The top level properties are ensured via annotation on the RegisterProviderOptions
-    // API but if there was any complex type property, members of the complex type would not be preserved
-    // and could lead to incompatibilities with trimming. string is allowed alongside the primitive types
-    // recognized by Type.IsPrimitive because it binds from configuration natively and has no members that
-    // need to be separately preserved.
     [Fact]
-    public void TestTrimmingCorrectnessOfOpenTelemetryLoggerOptions()
+    public void UseOpenTelemetryBindsAllOptionsFromConfigurationTest()
     {
-        foreach (var prop in typeof(OpenTelemetryLoggerOptions).GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance))
+        var serviceCollection = new ServiceCollection();
+
+        var config = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["Logging:OpenTelemetry:IncludeFormattedMessage"] = "true",
+                ["Logging:OpenTelemetry:IncludeScopes"] = "true",
+                ["Logging:OpenTelemetry:ParseStateValues"] = "true",
+                ["Logging:OpenTelemetry:SchemaUrl"] = "https://example.com/schema",
+                ["Logging:OpenTelemetry:Version"] = "1.2.3",
+                ["Logging:OpenTelemetry:IncludeAttributes"] = "false",
+                ["Logging:OpenTelemetry:IncludeTraceState"] = "true",
+            })
+            .Build();
+
+        serviceCollection.AddLogging(logging =>
         {
-            Assert.True(prop.PropertyType.IsPrimitive || prop.PropertyType == typeof(string), $"Property OpenTelemetryLoggerOptions.{prop.Name} doesn't have a primitive or string type. This is potentially a trim compatibility issue.");
-        }
+            logging.AddConfiguration(config.GetSection("Logging"));
+            logging.UseOpenTelemetry();
+        });
+
+        using var sp = serviceCollection.BuildServiceProvider();
+
+        var options = sp.GetRequiredService<IOptions<OpenTelemetryLoggerOptions>>().Value;
+
+        Assert.True(options.IncludeFormattedMessage);
+        Assert.True(options.IncludeScopes);
+        Assert.True(options.ParseStateValues);
+        Assert.Equal("https://example.com/schema", options.SchemaUrl);
+        Assert.Equal("1.2.3", options.Version);
+
+        // Internal properties are not configurable from configuration and keep their defaults.
+        Assert.True(options.IncludeAttributes);
+        Assert.False(options.IncludeTraceState);
+    }
+
+    [Fact]
+    public void UseOpenTelemetryRegistersOptionsBindingOnceAndTracksConfigurationChangesTest()
+    {
+        var serviceCollection = new ServiceCollection();
+
+        var config = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?> { ["Logging:OpenTelemetry:IncludeScopes"] = "false" })
+            .Build();
+
+        serviceCollection.AddLogging(logging =>
+        {
+            logging.AddConfiguration(config.GetSection("Logging"));
+            logging.UseOpenTelemetry();
+            logging.UseOpenTelemetry();
+        });
+
+        Assert.Single(
+            serviceCollection,
+            d => d.ServiceType == typeof(IConfigureOptions<OpenTelemetryLoggerOptions>)
+                && d.ImplementationType == typeof(OpenTelemetryLoggerOptionsConfigureOptions));
+
+        using var sp = serviceCollection.BuildServiceProvider();
+
+        var changeTokenSource = Assert.Single(sp.GetServices<IOptionsChangeTokenSource<OpenTelemetryLoggerOptions>>());
+
+        var changeToken = changeTokenSource.GetChangeToken();
+
+        Assert.False(changeToken.HasChanged);
+
+        config["Logging:OpenTelemetry:IncludeScopes"] = "true";
+        config.Reload();
+
+        Assert.True(changeToken.HasChanged);
     }
 
     [Fact]

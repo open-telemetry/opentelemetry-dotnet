@@ -246,24 +246,14 @@ public static class OpenTelemetryLoggingExtensions
 
         return builder;
 
-        // The warning here is about the fact that the OpenTelemetryLoggerOptions will be bound to configuration using ConfigurationBinder
-        // That uses reflection a lot - so if any of the properties on that class were complex types reflection would be used on them
-        // and nothing could guarantee its correctness.
-        // Since currently this class only contains primitive properties this is OK. The top level properties are kept
-        // because the first generic argument of RegisterProviderOptions below is annotated with
-        // DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All) so it will preserve everything on the OpenTelemetryLoggerOptions.
-        // But it would not work recursively into complex property values;
-        // This should be fully fixed with the introduction of Configuration binder source generator in .NET 8
-        // and then there should be a way to do this without any warnings.
-        // The correctness of these suppressions is verified by a test which validates that all properties of OpenTelemetryLoggerOptions
-        // are of a primitive type.
-#if NET
-        [UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "OpenTelemetryLoggerOptions contains only primitive properties.")]
-        [UnconditionalSuppressMessage("AOT", "IL3050", Justification = "OpenTelemetryLoggerOptions contains only primitive properties.")]
-#endif
         static void RegisterLoggerProviderOptions(IServiceCollection services)
         {
-            LoggerProviderOptions.RegisterProviderOptions<OpenTelemetryLoggerOptions, OpenTelemetryLoggerProvider>(services);
+            // Equivalent to LoggerProviderOptions.RegisterProviderOptions<OpenTelemetryLoggerOptions, OpenTelemetryLoggerProvider>(),
+            // but binding is done by the configuration binding source generator so it is trim and AOT safe.
+            services.TryAddEnumerable(
+                ServiceDescriptor.Singleton<IConfigureOptions<OpenTelemetryLoggerOptions>, OpenTelemetryLoggerOptionsConfigureOptions>());
+            services.TryAddEnumerable(
+                ServiceDescriptor.Singleton<IOptionsChangeTokenSource<OpenTelemetryLoggerOptions>, LoggerProviderOptionsChangeTokenSource<OpenTelemetryLoggerOptions, OpenTelemetryLoggerProvider>>());
         }
     }
 }
