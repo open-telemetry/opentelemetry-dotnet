@@ -129,20 +129,19 @@ public sealed class DeclarativeConfigurationDocumentAcquisitionTests
     }
 
     [Fact]
-    public void GetOpenTelemetryDeclarativeConfiguration_ServiceProvider_ParseFailure_Throws()
+    public void UseDeclarativeConfiguration_ServiceCollection_ParseFailure_ThrowsFromTheCall()
     {
         using var yamlFile = DeclarativeYamlTestFile.CreateDeclarativeYaml(fileFormat: "99.0");
 
         var services = new ServiceCollection();
-        new TestOpenTelemetryBuilder(services).UseDeclarativeConfiguration(yamlFile.Path);
-        using var sp = services.BuildServiceProvider();
+        var builder = new TestOpenTelemetryBuilder(services);
 
         using var listener = CreateErrorListener();
 
-        var ex1 = Assert.Throws<DeclarativeConfigurationException>(sp.GetOpenTelemetryDeclarativeConfiguration);
-        var ex2 = Assert.Throws<DeclarativeConfigurationException>(sp.GetOpenTelemetryDeclarativeConfiguration);
+        // The document is read during the call, so a broken file fails registration rather than the
+        // first resolve of the configuration.
+        Assert.Throws<DeclarativeConfigurationException>(() => builder.UseDeclarativeConfiguration(yamlFile.Path));
 
-        Assert.Same(ex1, ex2);
         Assert.Single(listener.Messages, e => e.EventId == FailedToLoadConfigurationEventId);
     }
 
@@ -216,7 +215,7 @@ public sealed class DeclarativeConfigurationDocumentAcquisitionTests
             serviceProvider.GetRequiredService<IConfiguration>(),
             exactMatch: false);
         var provider = Assert.Single(configuration.Providers.OfType<DeclarativeConfigurationProvider>());
-        return provider.Accessor.GetDocumentForProvider();
+        return provider.Accessor.GetDocumentForPipeline();
     }
 
     private static TestEventListener CreateVerboseListener()

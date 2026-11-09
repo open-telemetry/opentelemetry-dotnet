@@ -1,21 +1,23 @@
 ﻿examples/otel-getting-started.yaml
   Experimental resource.detection/development
   Stable propagator
-  Stable tracer_provider
+  Stable tracer_provider.sampler (fails the tracer provider build)
   Stable meter_provider
   Stable logger_provider
 examples/otel-sdk-config.yaml
   Stable log_level
   Stable attribute_limits
   Stable propagator
-  Stable tracer_provider
+  Stable tracer_provider.limits (fails the tracer provider build)
+  Stable tracer_provider.sampler (fails the tracer provider build)
   Stable meter_provider
   Stable logger_provider
 examples/otel-sdk-migration-config.yaml
   Stable log_level
   Stable attribute_limits
   Stable propagator
-  Stable tracer_provider
+  Stable tracer_provider.limits (fails the tracer provider build)
+  Stable tracer_provider.sampler (fails the tracer provider build)
   Stable meter_provider
   Stable logger_provider
 snippets/CardinalityLimits_kitchen_sink.yaml
@@ -23,7 +25,6 @@ snippets/CardinalityLimits_kitchen_sink.yaml
 snippets/ConsoleExporter_logs_kitchen_sink.yaml
   Stable logger_provider
 snippets/ConsoleExporter_traces_kitchen_sink.yaml
-  Stable tracer_provider
 snippets/ConsoleMetricExporter_traces_kitchen_sink.yaml
   Stable meter_provider
 snippets/ExperimentalGeneralInstrumentation_semconv_stability_opt_in.yaml
@@ -37,9 +38,7 @@ snippets/ExperimentalOtlpFileExporter_logs_file.yaml
 snippets/ExperimentalOtlpFileExporter_logs_stdout.yaml
   Stable logger_provider
 snippets/ExperimentalOtlpFileExporter_traces_file.yaml
-  Stable tracer_provider
 snippets/ExperimentalOtlpFileExporter_traces_stdout.yaml
-  Stable tracer_provider
 snippets/ExperimentalOtlpFileMetricExporter_metrics_file.yaml
   Stable meter_provider
 snippets/ExperimentalOtlpFileMetricExporter_metrics_stdout.yaml
@@ -47,9 +46,7 @@ snippets/ExperimentalOtlpFileMetricExporter_metrics_stdout.yaml
 snippets/ExperimentalPrometheusMetricExporter_kitchen_sink.yaml
   Stable meter_provider
 snippets/ExperimentalTracerConfigurator_kitchen_sink.yaml
-  Stable tracer_provider
 snippets/IdGenerator_custom.yaml
-  Stable tracer_provider
 snippets/LogRecordLimits_kitchen_sink.yaml
   Stable attribute_limits
   Stable logger_provider
@@ -58,13 +55,11 @@ snippets/MeterProvider_composable_views.yaml
 snippets/OtlpGrpcExporter_logs_kitchen_sink.yaml
   Stable logger_provider
 snippets/OtlpGrpcExporter_traces_kitchen_sink.yaml
-  Stable tracer_provider
 snippets/OtlpGrpcMetricExporter_metrics_kitchen_sink.yaml
   Stable meter_provider
 snippets/OtlpHttpExporter_logs_kitchen_sink.yaml
   Stable logger_provider
 snippets/OtlpHttpExporter_traces_kitchen_sink.yaml
-  Stable tracer_provider
 snippets/OtlpHttpMetricExporter_metrics_kitchen_sink.yaml
   Stable meter_provider
 snippets/OtlpHttpMetricExporter_use_base2_exponential_histogram.yaml
@@ -74,18 +69,18 @@ snippets/Propagator_kitchen_sink.yaml
 snippets/Resource_kitchen_sink.yaml
   Experimental resource.detection/development
 snippets/Sampler_always_record_typical.yaml
-  Stable tracer_provider
+  Stable tracer_provider.sampler (fails the tracer provider build)
 snippets/Sampler_composite_rule_based_drop_redis_ping.yaml
-  Stable tracer_provider
+  Stable tracer_provider.sampler (fails the tracer provider build)
 snippets/Sampler_parent_based_typical.yaml
-  Stable tracer_provider
+  Stable tracer_provider.sampler (fails the tracer provider build)
 snippets/Sampler_probability_kitchen_sink.yaml
-  Stable tracer_provider
+  Stable tracer_provider.sampler (fails the tracer provider build)
 snippets/Sampler_rule_based_kitchen_sink.yaml
-  Stable tracer_provider
+  Stable tracer_provider.sampler (fails the tracer provider build)
 snippets/SpanLimits_kitchen_sink.yaml
   Stable attribute_limits
-  Stable tracer_provider
+  Stable tracer_provider.limits (fails the tracer provider build)
 snippets/View_kitchen_sink.yaml
   Stable meter_provider
 snippets/View_override_default_histogram_buckets.yaml
