@@ -9,6 +9,12 @@ Notes](../../RELEASENOTES.md).
 * Improve traceparent extraction throughput on .NET.
   ([#8095](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8095))
 
+* **Experimental (pre-release builds only):** Changed `EnvironmentVariableCarrier`
+  snapshots to preserve environment variable names, preventing extraction from
+  non-normalized aliases and collisions with normalized names. Process environment
+  snapshots now follow the platform's case-sensitivity rules.
+  ([#NNNN](https://github.com/open-telemetry/opentelemetry-dotnet/pull/NNNN))
+
 ## 1.21.0-rc.1
 
 Released 2026-Oct-28
