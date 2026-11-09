@@ -90,6 +90,7 @@ internal static class SelfDiagnosticsEnvironmentVariablePolicy
         "OTEL_LOG_LEVEL",
         "OTEL_LOGS_EXPORTER",
         "OTEL_METRIC_EXPORT_INTERVAL",
+        "OTEL_METRIC_EXPORT_MAX_BATCH_SIZE",
         "OTEL_METRIC_EXPORT_TIMEOUT",
         "OTEL_METRICS_EXEMPLAR_FILTER",
         "OTEL_METRICS_EXPORTER",
