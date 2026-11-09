@@ -192,4 +192,31 @@ internal sealed class OpenTelemetryDeclarativeConfigurationEventSource : EventSo
         Message = "Declarative config: '{1}' in '{0}' (line {2}, column {3}) is a Development configuration setting that this package does not implement. The setting has no effect.",
         Level = EventLevel.Warning)]
     public void DevelopmentPropertyNotApplied(string filePath, string propertyPath, long line, long column) => this.WriteEvent(45, filePath, propertyPath, line, column);
+
+    [Event(
+        46,
+        Message = "Declarative config: '{1}' in '{0}' (line {2}, column {3}) is 0. The batch span processor requires a configured schedule delay of at least 1 millisecond, so 1 millisecond is used instead.",
+        Level = EventLevel.Warning)]
+    public void ScheduleDelayZeroReplaced(string filePath, string propertyPath, long line, long column) => this.WriteEvent(46, filePath, propertyPath, line, column);
+
+    [Event(
+        47,
+        Message = "Declarative config: '{1}' in '{0}' (line {2}, column {3}) requests disabling tracers matching '{4}', but this package cannot fully apply the exclusion because {5}. Matching ActivitySource instances may still be listened to.",
+        Level = EventLevel.Warning)]
+    public void TracerExclusionNotApplied(string filePath, string entryPath, long line, long column, string name, string reason) => this.WriteEvent(47, filePath, entryPath, line, column, name, reason);
+
+    [NonEvent]
+    public void ComponentCleanupFailed(string componentType, Exception ex)
+    {
+        if (this.IsEnabled(EventLevel.Error, EventKeywords.All))
+        {
+            this.ComponentCleanupFailed(componentType, ex.ToInvariantString());
+        }
+    }
+
+    [Event(
+        48,
+        Message = "Declarative config: failed to clean up component '{0}' after tracer provider construction failed: {1}",
+        Level = EventLevel.Error)]
+    public void ComponentCleanupFailed(string componentType, string error) => this.WriteEvent(48, componentType, error);
 }

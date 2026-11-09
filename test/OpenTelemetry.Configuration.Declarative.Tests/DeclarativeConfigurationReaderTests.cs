@@ -1460,9 +1460,9 @@ public sealed class DeclarativeConfigurationReaderTests
     {
         const string yaml = """
             file_format: "1.2"
-            tracer_provider:
-              processors:
-                - batch:
+            meter_provider:
+              readers:
+                - periodic:
                     exporter:
                       console:
             """;
@@ -1473,7 +1473,7 @@ public sealed class DeclarativeConfigurationReaderTests
         var document = DeclarativeConfigurationReader.Read(new FilePath(factory.CreateYamlFile(yaml)));
 
         var unapplied = Assert.Single(document.UnappliedProperties);
-        Assert.Equal("tracer_provider", unapplied.Path);
+        Assert.Equal("meter_provider", unapplied.Path);
         Assert.Equal(SchemaStability.Stable, unapplied.Stability);
         Assert.DoesNotContain(listener.CurrentMessages, e => e.EventId is UndefinedRootPropertyEventId or ConfiguredPropertyNotAppliedEventId or DevelopmentPropertyNotAppliedEventId);
     }

@@ -7,6 +7,10 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+## 1.21.0-rc.2
+
+Released 2026-Nov-09
+
 * Fixed unbounded resource serialization buffer growth and incorrect buffer
   reuse after buffer allocation failures.
   ([#8069](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8069))
@@ -58,6 +62,13 @@ Notes](../../RELEASENOTES.md).
   ending in half of a surrogate pair. The truncated value now ends before the
   pair instead.
   ([#7929](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7929))
+
+* Added support for batching the metric points exported by the periodic
+  exporting metric reader. Set
+  `PeriodicExportingMetricReaderOptions.MaxExportBatchSize` to limit the
+  number of metric points in each exported batch. It can also be configured
+  with the `OTEL_METRIC_EXPORT_MAX_BATCH_SIZE` environment variable.
+  ([#8053](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8053))
 
 ## 1.21.0-rc.1
 
