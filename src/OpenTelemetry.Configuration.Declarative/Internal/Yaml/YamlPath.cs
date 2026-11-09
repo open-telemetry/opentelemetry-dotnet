@@ -30,4 +30,15 @@ internal static class YamlPath
     /// <param name="index">The zero-based item index.</param>
     /// <returns>The composed path.</returns>
     internal static string Index(string parent, int index) => $"{parent}[{index.ToString(CultureInfo.InvariantCulture)}]";
+
+    /// <summary>
+    /// Formats a document path and position for use at the start of a message.
+    /// </summary>
+    /// <param name="path">The document path.</param>
+    /// <param name="position">The position, which may be unknown.</param>
+    /// <returns>The quoted path, followed by the line and column when the position is known.</returns>
+    internal static string Describe(string path, ConfigValuePosition position) =>
+        position.HasPosition
+            ? FormattableString.Invariant($"'{path}' (line {position.Line}, column {position.Column})")
+            : $"'{path}'";
 }

@@ -7,6 +7,10 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+## 1.21.0-rc.2
+
+Released 2026-Nov-09
+
 * Fixed unbounded resource serialization buffer growth and incorrect buffer
   reuse after buffer allocation failures.
   ([#8069](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8069))
@@ -14,6 +18,57 @@ Notes](../../RELEASENOTES.md).
 * Fixed exporter option initialization failing when environment variable access
   is denied.
   ([#8070](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8070))
+
+* Fixed `OTEL_EXPORTER_OTLP_HEADERS` (and the `Headers` option) being decoded
+  before it was split into headers, so that a percent-encoded `,` in a value
+  started a new header and encoded leading or trailing whitespace was removed.
+  ([#8075](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8075))
+
+* Fixed the retry delay of a gRPC response being ignored or misread when a
+  length which does not fit in an `int` was truncated instead of being
+  rejected.
+  ([#8075](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8075))
+
+* Fixed the retry delay of a gRPC response being ignored or misread when a
+  field did not have the wire type that its number defines, instead of the
+  field being skipped.
+  ([#8075](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8075))
+
+* Fixed the retry delay of a gRPC response being misread when the `retry_delay`
+  field was repeated, instead of the occurrences being merged.
+  ([#8075](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8075))
+
+* Fixed the retry delay of a gRPC response being ignored when the
+  `grpc-status-details-bin` trailer was Base64-encoded without padding, as
+  emitted by gRPC-Go.
+  ([#8075](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8075))
+
+* The retry delay in the `grpc-status-details-bin` trailer of a gRPC response is
+  now ignored if the status code in the details contradicts the `grpc-status`
+  of the response.
+  ([#8078](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8078))
+
+* Attribute values implementing `IUtf8SpanFormattable` (.NET 10+) that are not
+  already handled as a built-in type are now formatted directly into the export
+  buffer with `TryFormat` and exported as string attributes, instead of through
+  `ToString()`.
+  ([#7929](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7929))
+
+* An `OutOfMemoryException` thrown while converting an attribute value to a
+  string is no longer swallowed and the attribute dropped; it now propagates.
+  ([#7929](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7929))
+
+* Fixed string attribute values truncated by an attribute value length limit
+  ending in half of a surrogate pair. The truncated value now ends before the
+  pair instead.
+  ([#7929](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7929))
+
+* Added support for batching the metric points exported by the periodic
+  exporting metric reader. Set
+  `PeriodicExportingMetricReaderOptions.MaxExportBatchSize` to limit the
+  number of metric points in each exported batch. It can also be configured
+  with the `OTEL_METRIC_EXPORT_MAX_BATCH_SIZE` environment variable.
+  ([#8053](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8053))
 
 ## 1.21.0-rc.1
 

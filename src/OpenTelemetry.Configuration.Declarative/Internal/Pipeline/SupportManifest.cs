@@ -4,30 +4,50 @@
 namespace OpenTelemetry.Configuration.Declarative;
 
 /// <summary>
-/// Lists the schema paths this package handles, and reports present properties it does not handle.
+/// Identifies schema-defined properties for unapplied-property diagnostics.
 /// </summary>
+/// <remarks>
+/// This manifest is not a complete inventory of supported configuration. Paths handled by the
+/// package, checked at provider build time, or delegated to consumers are excluded from these
+/// diagnostics. Excluding a path does not guarantee that every setting below it is supported.
+/// </remarks>
 internal static class SupportManifest
 {
     internal const string ResourceAttributes = $"{YamlKeys.Resource}.{YamlKeys.Attributes}";
     internal const string ResourceAttributesList = $"{YamlKeys.Resource}.{YamlKeys.AttributesList}";
     internal const string ResourceSchemaUrl = $"{YamlKeys.Resource}.{YamlKeys.SchemaUrl}";
+    internal const string TracerProviderProcessors = $"{YamlKeys.TracerProvider}.{YamlKeys.Processors}";
+    internal const string TracerProviderConfigurator = $"{YamlKeys.TracerProvider}.{YamlKeys.Development.TracerConfigurator}";
+    internal const string TracerProviderRandomIdGenerator = $"{YamlKeys.TracerProvider}.{YamlKeys.IdGenerator}.{YamlKeys.Random}";
+
+    internal const string TracerProviderPrefix = $"{YamlKeys.TracerProvider}.";
 
     /// <summary>
-    /// The schema paths this package applies, partly applies, or delegates to consumers, including
-    /// everything below them.
+    /// The schema paths excluded from unapplied-property diagnostics, including everything below them.
     /// </summary>
-    internal static readonly IReadOnlyCollection<string> CoveredPaths =
+    /// <remarks>
+    /// These paths are applied, partly applied, handled at provider build time, or delegated to
+    /// consumers. They do not represent a guarantee of full support for their nested settings.
+    /// </remarks>
+    internal static readonly IReadOnlyCollection<string> HandledPaths =
     [
         YamlKeys.FileFormat,
         YamlKeys.Disabled,
+
         ResourceAttributes,
         ResourceAttributesList,
 
         // Partly applied: a merge input that the resource merge can drop.
         ResourceSchemaUrl,
 
+        // Handled at tracer-provider build time, including plugin resolution and rejection of
+        // unsupported component names. Exclude these paths from unapplied-property diagnostics.
+        TracerProviderProcessors,
+        TracerProviderConfigurator,
+        TracerProviderRandomIdGenerator,
+
         // Delegated: exposed through DeclarativeConfigurationDocument.Properties, and not interpreted by the SDK.
-        YamlKeys.InstrumentationDevelopment,
+        YamlKeys.Development.Instrumentation,
         YamlKeys.Distribution,
     ];
 
@@ -39,7 +59,7 @@ internal static class SupportManifest
     /// <param name="properties">The document-rooted properties.</param>
     /// <returns>The unapplied properties, in document order.</returns>
     internal static IReadOnlyList<UnappliedProperty> EvaluateUnapplied(ConfigProperties properties) =>
-        EvaluateUnapplied(properties, ConfigurationSchema.Pinned.Root, CoveredPaths);
+        EvaluateUnapplied(properties, ConfigurationSchema.Pinned.Root, HandledPaths);
 
     /// <summary>
     /// <inheritdoc cref="EvaluateUnapplied(ConfigProperties)" path="/summary"/>
@@ -57,6 +77,24 @@ internal static class SupportManifest
         walk.VisitMapping(properties, root, SchemaStability.Stable, string.Empty, string.Empty);
         return walk.Unapplied;
     }
+
+    /// <summary>
+    /// Determines whether an unapplied property should be reported as an error when building the
+    /// tracer provider, rather than logged when reading the document.
+    /// </summary>
+    /// <remarks>
+    /// This package builds the <c>tracer_provider</c> section, so any stable setting in that section
+    /// that it cannot apply is a configuration error. Reporting the error at build time allows it
+    /// to be included with other unsupported settings in a single exception.
+    /// </remarks>
+    /// <param name="property">The unapplied property.</param>
+    /// <returns>
+    /// <see langword="true"/> if the property is stable and belongs to the <c>tracer_provider</c>
+    /// section; otherwise, <see langword="false"/>.
+    /// </returns>
+    internal static bool IsReportedByTracerProviderBuild(UnappliedProperty property) =>
+        property.Stability == SchemaStability.Stable
+        && property.Path.StartsWith(TracerProviderPrefix, StringComparison.Ordinal);
 
     private static string Child(string parent, string key) => parent.Length == 0 ? key : YamlPath.Child(parent, key);
 

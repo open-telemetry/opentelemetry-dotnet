@@ -752,9 +752,8 @@ public sealed class DeclarativeConfigurationDocumentAccessorTests
     {
         using var yamlFile = DeclarativeYamlTestFile.CreateYamlFile("""
             file_format: "1.2"
-            tracer_provider:
-              sampler:
-                always_on:
+            attribute_limits:
+              attribute_count_limit: 10
             """);
         var filePath = new FilePath(yamlFile.Path);
         var accessor = new DeclarativeConfigurationDocumentAccessor(filePath);
@@ -765,7 +764,30 @@ public sealed class DeclarativeConfigurationDocumentAccessorTests
         var error = Assert.Single(listener.Messages, e => e.EventId is ConfiguredPropertyNotAppliedEventId or DevelopmentPropertyNotAppliedEventId);
         Assert.Equal(ConfiguredPropertyNotAppliedEventId, error.EventId);
         Assert.Equal(EventLevel.Error, error.Level);
-        Assert.Equal([filePath.DisplayPath, "tracer_provider", 2L, 1L], error.Payload!);
+        Assert.Equal([filePath.DisplayPath, "attribute_limits", 2L, 1L], error.Payload!);
+    }
+
+    [Fact]
+    public void GetDocument_StableUnappliedPropertyInTracerProvider_IsHeldForTheProviderBuild()
+    {
+        using var yamlFile = DeclarativeYamlTestFile.CreateYamlFile("""
+            file_format: "1.2"
+            tracer_provider:
+              processors:
+                - simple:
+                    exporter:
+                      console:
+              sampler:
+                always_on:
+            """);
+        var accessor = new DeclarativeConfigurationDocumentAccessor(new FilePath(yamlFile.Path));
+
+        using var listener = CreateVerboseListener();
+        var document = accessor.GetDocument();
+
+        var unapplied = Assert.Single(document.UnappliedProperties);
+        Assert.Equal("tracer_provider.sampler", unapplied.Path);
+        Assert.DoesNotContain(listener.Messages, e => e.EventId is ConfiguredPropertyNotAppliedEventId or DevelopmentPropertyNotAppliedEventId);
     }
 
     [Fact]
@@ -838,7 +860,7 @@ public sealed class DeclarativeConfigurationDocumentAccessorTests
         var events = listener.Messages.Where(e => e.EventId is ConfiguredPropertyNotAppliedEventId or DevelopmentPropertyNotAppliedEventId).ToList();
         Assert.All(events, e => Assert.Equal(EventLevel.Error, e.Level));
         Assert.Equal(
-            ["log_level", "attribute_limits", "propagator", "tracer_provider", "meter_provider", "logger_provider"],
+            ["log_level", "attribute_limits", "propagator", "meter_provider", "logger_provider"],
             events.Select(e => (string)e.Payload![1]!));
         Assert.All(events, e => Assert.Equal(filePath.DisplayPath, e.Payload![0]));
         Assert.All(events, e => Assert.Equal(1L, e.Payload![3]));
@@ -893,7 +915,7 @@ public sealed class DeclarativeConfigurationDocumentAccessorTests
     {
         using var yamlFile = DeclarativeYamlTestFile.CreateYamlFile("""
             file_format: "1.2"
-            tracer_provider:
+            propagator:
             """);
 
         using var listener = CreateVerboseListener();
@@ -939,7 +961,7 @@ public sealed class DeclarativeConfigurationDocumentAccessorTests
 
         using var listener = new UnappliedPropertyListener(filePath.DisplayPath);
         var callers = Enumerable.Range(0, 8)
-            .Select(i => Task.Run(() => i % 2 == 0 ? accessor.GetDocument() : accessor.GetDocumentForProvider()))
+            .Select(i => Task.Run(() => i % 2 == 0 ? accessor.GetDocument() : accessor.GetDocumentForPipeline()))
             .ToArray();
         start.Set();
         await Task.WhenAll(callers);

@@ -34,11 +34,6 @@ public class TraceContextPropagator : TextMapPropagator
     private const int TraceStateMaxCombinedLength = 512;
     private const int TraceStateLargeEntryLength = 128;
 
-#if NET
-    private const int TraceIdSizeInBytes = 16;
-    private const int SpanIdSizeInBytes = 8;
-#endif
-
     private static readonly int VersionPrefixIdLength = "00-".Length;
     private static readonly int TraceIdLength = "0af7651916cd43dd8448eb211c80319c".Length;
     private static readonly int VersionAndTraceIdLength = "00-0af7651916cd43dd8448eb211c80319c-".Length;
@@ -48,6 +43,7 @@ public class TraceContextPropagator : TextMapPropagator
     private static readonly int TraceparentLengthV0 = "00-0af7651916cd43dd8448eb211c80319c-00f067aa0ba902b7-00".Length;
 
 #if NET
+    private static readonly SearchValues<char> LowerCaseHexChars = SearchValues.Create("0123456789abcdef");
     private static readonly ImmutableHashSet<string> AllFields = [TraceState, TraceParent];
 #else
     private static readonly HashSet<string> AllFields = [TraceState, TraceParent];
@@ -276,16 +272,14 @@ public class TraceContextPropagator : TextMapPropagator
         }
 
 #if NET
-        // Fast path for .NET that can benefit from SearchValues to avoid exceptions on invalid input
-        Span<byte> idBytes = stackalloc byte[TraceIdSizeInBytes];
-
-        if (!TryParseLowerCaseHex(traceparent.AsSpan(VersionPrefixIdLength, TraceIdLength), idBytes))
+        var traceIdSpan = traceparent.AsSpan(VersionPrefixIdLength, TraceIdLength);
+        if (!IsValidId(traceIdSpan))
         {
             // it's ok to still parse tracestate
             return false;
         }
 
-        traceId = ActivityTraceId.CreateFromBytes(idBytes);
+        traceId = ActivityTraceId.CreateFromString(traceIdSpan);
 #else
         try
         {
@@ -304,16 +298,14 @@ public class TraceContextPropagator : TextMapPropagator
         }
 
 #if NET
-        // Fast path for .NET that can benefit from SearchValues to avoid exceptions on invalid input
-        var spanIdBytes = idBytes.Slice(0, SpanIdSizeInBytes);
-
-        if (!TryParseLowerCaseHex(traceparent.AsSpan(VersionAndTraceIdLength, SpanIdLength), spanIdBytes))
+        var spanIdSpan = traceparent.AsSpan(VersionAndTraceIdLength, SpanIdLength);
+        if (!IsValidId(spanIdSpan))
         {
             // it's ok to still parse tracestate
             return false;
         }
 
-        spanId = ActivitySpanId.CreateFromBytes(spanIdBytes);
+        spanId = ActivitySpanId.CreateFromString(spanIdSpan);
 #else
         try
         {
@@ -735,60 +727,15 @@ public class TraceContextPropagator : TextMapPropagator
 
 #if NET
     /// <summary>
-    /// Parses lower-case hexadecimal characters into bytes, rejecting any other character
-    /// and rejecting an all-zero result. These are the same constraints
+    /// Validates lower-case hexadecimal characters, rejecting any other character
+    /// and rejecting an all-zero id. These are the same constraints
     /// <see cref="ActivityTraceId.CreateFromString"/> and
     /// <see cref="ActivitySpanId.CreateFromString"/> enforce by throwing.
     /// </summary>
-    /// <param name="source">The characters to parse. Must be twice the length of <paramref name="destination"/>.</param>
-    /// <param name="destination">Receives the parsed bytes.</param>
+    /// <param name="source">The characters to validate.</param>
     /// <returns><see langword="true"/> if the characters form a valid, non-zero id; otherwise, <see langword="false"/>.</returns>
-    private static bool TryParseLowerCaseHex(ReadOnlySpan<char> source, Span<byte> destination)
-    {
-        Debug.Assert(source.Length == destination.Length * 2, "source was not twice the length of destination");
-
-        var allZero = true;
-
-        for (var i = 0; i < destination.Length; i++)
-        {
-            var high = HexCharToNibble(source[i * 2]);
-            var low = HexCharToNibble(source[(i * 2) + 1]);
-
-            // A non-hex character yields -1, so the sign bit of either nibble marks failure.
-            if ((high | low) < 0)
-            {
-                return false;
-            }
-
-            var value = (byte)((high << 4) | low);
-
-            destination[i] = value;
-            allZero &= value == 0;
-        }
-
-        return !allZero;
-    }
-
-    /// <summary>
-    /// Converts a lower-case hexadecimal character to its value, or -1 when the character
-    /// is not lower-case hexadecimal.
-    /// </summary>
-    /// <param name="c">The character to convert.</param>
-    /// <returns>The value of the character, or -1.</returns>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static int HexCharToNibble(char c)
-    {
-        var digit = (uint)(c - '0');
-
-        if (digit <= 9)
-        {
-            return (int)digit;
-        }
-
-        var letter = (uint)(c - 'a');
-
-        return letter <= 5 ? (int)letter + 10 : -1;
-    }
+    private static bool IsValidId(ReadOnlySpan<char> source)
+        => !source.ContainsAnyExcept(LowerCaseHexChars) && source.ContainsAnyExcept('0');
 #else
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static bool IsAsciiLetterOrDigitLower(char c)

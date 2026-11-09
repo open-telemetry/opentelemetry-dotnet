@@ -17,11 +17,11 @@ internal static class GrpcStatusDeserializer
     private const int WIRETYPE_FIXED32 = 5;
 #pragma warning restore SA1310 // Field names should not contain underscore
 
-    internal static TimeSpan? TryGetGrpcRetryDelay(string? grpcStatusDetailsHeader)
+    internal static TimeSpan? TryGetGrpcRetryDelay(string? grpcStatusDetailsHeader, StatusCode? grpcStatus = null)
     {
         try
         {
-            var retryInfo = ExtractRetryInfo(grpcStatusDetailsHeader);
+            var retryInfo = ExtractRetryInfo(grpcStatusDetailsHeader, grpcStatus);
             if (retryInfo?.RetryDelay != null)
             {
                 var retryDelay = TimeSpan.FromSeconds(retryInfo.Value.RetryDelay.Value.Seconds) +
@@ -52,7 +52,16 @@ internal static class GrpcStatusDeserializer
         }
 
         var status = new Status();
-        byte[] data = Convert.FromBase64String(grpcStatusDetailsBin);
+
+        // Binary metadata is Base64-encoded and gRPC implementations must accept both padded and un-padded values
+        // (and gRPC-Go, for example, emits them un-padded), so restore any missing padding before decoding it.
+        var encoded = grpcStatusDetailsBin!.Trim();
+        if (encoded.IndexOf('=') < 0 && encoded.Length % 4 != 0)
+        {
+            encoded = encoded.PadRight(encoded.Length + (4 - (encoded.Length % 4)), '=');
+        }
+
+        byte[] data = Convert.FromBase64String(encoded);
         using (var stream = new MemoryStream(data))
         {
             while (stream.Position < stream.Length)
@@ -63,16 +72,18 @@ internal static class GrpcStatusDeserializer
 
                 switch (fieldNumber)
                 {
-                    case 1: // code
+                    case 1 when wireType == WIRETYPE_VARINT: // code
                         status.Code = DecodeInt32(stream);
+                        status.HasCode = true;
                         break;
-                    case 2: // message
+                    case 2 when wireType == WIRETYPE_LENGTH_DELIMITED: // message
                         status.Message = DecodeString(stream);
                         break;
-                    case 3: // details
+                    case 3 when wireType == WIRETYPE_LENGTH_DELIMITED: // details
                         status.Details.Add(DecodeAny(stream));
                         break;
                     default:
+                        // A field which does not have the wire type of its number is an unknown field
                         SkipField(stream, wireType);
                         break;
                 }
@@ -83,11 +94,20 @@ internal static class GrpcStatusDeserializer
     }
 
     // Marked as internal for test.
-    internal static RetryInfo? ExtractRetryInfo(string? grpcStatusDetailsBin)
+    internal static RetryInfo? ExtractRetryInfo(string? grpcStatusDetailsBin, StatusCode? grpcStatus = null)
     {
         var status = DeserializeStatus(grpcStatusDetailsBin);
         if (status == null)
         {
+            return null;
+        }
+
+        // A status code in the details must not contradict the grpc-status of the response, and a consumer must verify that.
+        // Details which do contradict it cannot be trusted, so they are ignored. Only a code which is present on the wire is
+        // compared, so an explicit zero (OK) contradicts an error status, while an omitted code (the default value) does not.
+        if (grpcStatus is { } expected && status.Value.HasCode && status.Value.Code != (int)expected)
+        {
+            OpenTelemetryProtocolExporterEventSource.Log.GrpcStatusDetailsCodeMismatch((int)expected, status.Value.Code);
             return null;
         }
 
@@ -115,8 +135,9 @@ internal static class GrpcStatusDeserializer
 
                 switch (fieldNumber)
                 {
-                    case 1: // retry_delay
-                        retryInfo = new RetryInfo(DecodeDuration(stream));
+                    case 1 when wireType == WIRETYPE_LENGTH_DELIMITED: // retry_delay
+                        // A repeated occurrence of a singular message field is merged into the previous one
+                        retryInfo = new RetryInfo(DecodeDuration(stream, retryInfo?.RetryDelay));
                         break;
                     default:
                         SkipField(stream, wireType);
@@ -128,15 +149,15 @@ internal static class GrpcStatusDeserializer
         return retryInfo;
     }
 
-    private static Duration DecodeDuration(Stream stream)
+    private static Duration DecodeDuration(Stream stream, Duration? previous)
     {
         var length = DecodeVarint(stream);
 
         CheckLength(length, stream);
 
         var endPosition = stream.Position + length;
-        long seconds = 0;
-        int nanos = 0;
+        long seconds = previous?.Seconds ?? 0;
+        int nanos = previous?.Nanos ?? 0;
 
         while (stream.Position < endPosition)
         {
@@ -146,10 +167,10 @@ internal static class GrpcStatusDeserializer
 
             switch (fieldNumber)
             {
-                case 1: // seconds
+                case 1 when wireType == WIRETYPE_VARINT: // seconds
                     seconds = DecodeInt64(stream);
                     break;
-                case 2: // nanos
+                case 2 when wireType == WIRETYPE_VARINT: // nanos
                     nanos = DecodeInt32(stream);
                     break;
                 default:
@@ -180,10 +201,10 @@ internal static class GrpcStatusDeserializer
 
             switch (fieldNumber)
             {
-                case 1: // type_url
+                case 1 when wireType == WIRETYPE_LENGTH_DELIMITED: // type_url
                     typeUrl = DecodeString(stream);
                     break;
-                case 2: // value
+                case 2 when wireType == WIRETYPE_LENGTH_DELIMITED: // value
                     value = DecodeBytes(stream);
                     break;
                 default:
@@ -239,9 +260,13 @@ internal static class GrpcStatusDeserializer
 
     private static byte[] DecodeBytes(Stream stream)
     {
-        var length = (int)DecodeVarint(stream);
+        // The length is validated before it is narrowed, otherwise a length which does not fit in an int
+        // (such as 2^32 + n) would be read as a much smaller one and the message accepted.
+        var declaredLength = DecodeVarint(stream);
 
-        CheckLength(length, stream);
+        CheckLength(declaredLength, stream);
+
+        var length = (int)declaredLength;
 
         var buffer = new byte[length];
         int read = stream.Read(buffer, 0, length);
@@ -337,6 +362,8 @@ internal static class GrpcStatusDeserializer
         }
 
         public int Code { get; set; }
+
+        public bool HasCode { get; set; }
 
         public string? Message { get; set; }
 
