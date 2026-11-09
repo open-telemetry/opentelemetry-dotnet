@@ -7,7 +7,7 @@ using System.Buffers;
 using System.Collections;
 using System.Collections.ObjectModel;
 using System.Runtime.CompilerServices;
-#if !NET && !NETFRAMEWORK
+#if NETSTANDARD
 using System.Runtime.InteropServices;
 #endif
 using OpenTelemetry.Internal;
