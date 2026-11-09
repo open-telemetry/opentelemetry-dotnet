@@ -86,15 +86,6 @@ internal sealed class OpenTelemetrySdkEventSource : EventSource, IConfigurationE
     }
 
     [NonEvent]
-    public void SelfDiagnosticsFileCreateException(string logDirectory, Exception ex)
-    {
-        if (this.IsEnabled(EventLevel.Warning, EventKeywords.All))
-        {
-            this.SelfDiagnosticsFileCreateException(logDirectory, ex.ToInvariantString());
-        }
-    }
-
-    [NonEvent]
     public void TracerProviderException(string evnt, Exception ex)
     {
         if (this.IsEnabled(EventLevel.Error, EventKeywords.All))
@@ -212,10 +203,6 @@ internal sealed class OpenTelemetrySdkEventSource : EventSource, IConfigurationE
     [Event(25, Message = "Activity stopped. Name = '{0}', Id = '{1}'.", Level = EventLevel.Verbose)]
     public void ActivityStopped(string name, string? id)
         => this.WriteEvent(25, name, id);
-
-    [Event(26, Message = "Failed to create file. LogDirectory ='{0}', Id = '{1}'.", Level = EventLevel.Warning)]
-    public void SelfDiagnosticsFileCreateException(string logDirectory, string exception)
-        => this.WriteEvent(26, logDirectory, exception);
 
     [Event(28, Message = "Unknown error in TracerProvider '{0}': '{1}'.", Level = EventLevel.Error)]
     public void TracerProviderException(string evnt, string ex)
@@ -347,6 +334,10 @@ internal sealed class OpenTelemetrySdkEventSource : EventSource, IConfigurationE
     [Event(59, Message = "Resource merge encountered conflicting Schema URLs: old = '{0}', updating = '{1}'. No Schema URL will be used for the merged resource.", Level = EventLevel.Warning)]
     public void ResourceSchemaUrlMergeConflict(string oldSchemaUrl, string updatingSchemaUrl)
         => this.WriteEvent(59, oldSchemaUrl, updatingSchemaUrl);
+
+    [Event(60, Message = "OTEL_DIAGNOSTICS.json at '{0}' was ignored because self-diagnostics sinks are configured through SelfDiagnosticsOptions or OTEL_DOTNET_SELF_DIAGNOSTICS_* environment variables.", Level = EventLevel.Warning)]
+    public void SelfDiagnosticsLegacyConfigIgnored(string configFilePath)
+        => this.WriteEvent(60, configFilePath);
 
     void IConfigurationExtensionsLogger.LogInvalidConfigurationValue(string key, string value)
         => this.InvalidConfigurationValue(key, value);
