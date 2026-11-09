@@ -13,7 +13,7 @@ Notes](../../RELEASENOTES.md).
   snapshots to preserve environment variable names, preventing extraction from
   non-normalized aliases and collisions with normalized names. Process environment
   snapshots now follow the platform's case-sensitivity rules.
-  ([#NNNN](https://github.com/open-telemetry/opentelemetry-dotnet/pull/NNNN))
+  ([#8098](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8098))
 
 ## 1.21.0-rc.1
 
