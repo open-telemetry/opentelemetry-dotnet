@@ -20,7 +20,7 @@ namespace OpenTelemetry.Internal;
 /// and a background pump thread into the host process.
 /// </para>
 /// <para>
-/// The stack is created lazily. Until some registered provider asks for a level and a sink,
+/// The stack is created lazily. Until a provider or the legacy JSON file enables a sink,
 /// nothing is constructed and the SDK stays silent. Once created it is retained for the lifetime
 /// of the controller, because the listener's subscription to the <c>OpenTelemetry-*</c> sources is
 /// what makes later reconfiguration possible. A configuration that resolves to no sink drops the
@@ -33,7 +33,7 @@ namespace OpenTelemetry.Internal;
 internal sealed class SelfDiagnosticsController : IDisposable
 {
     private readonly Lock stateLock = new();
-    private readonly SelfDiagnosticsOptions.SelfDiagnosticsConfigurationCoordinator coordinator;
+    private readonly SelfDiagnosticsConfigurationCoordinator coordinator;
 
     private volatile SelfDiagnosticsLogger? logger;
     private SelfDiagnosticsLoggingEventListener? listener;
@@ -41,10 +41,9 @@ internal sealed class SelfDiagnosticsController : IDisposable
     private long latestConfigurationGeneration;
     private bool disposed;
 
-    internal SelfDiagnosticsController()
+    internal SelfDiagnosticsController(Action<string>? onLegacyConfigurationIgnored = null)
     {
-        this.coordinator =
-            new SelfDiagnosticsOptions.SelfDiagnosticsConfigurationCoordinator(this.ApplyConfiguration);
+        this.coordinator = new SelfDiagnosticsConfigurationCoordinator(this.ApplyConfiguration, onLegacyConfigurationIgnored);
     }
 
     /// <summary>
@@ -90,6 +89,15 @@ internal sealed class SelfDiagnosticsController : IDisposable
     /// <returns>A lease that relinquishes ownership when the provider is disposed.</returns>
     internal IDisposable Register(IOptionsMonitor<SelfDiagnosticsOptions> monitor)
         => this.coordinator.Register(monitor);
+
+    /// <summary>
+    /// Sets the configuration read from the legacy <c>OTEL_DIAGNOSTICS.json</c> file. It applies
+    /// only while no registered provider has configured a sink.
+    /// </summary>
+    /// <param name="options">The legacy options, or <see langword="null"/> when no valid file exists.</param>
+    /// <param name="configFilePath">The legacy file path, or <see langword="null"/> when no valid file exists.</param>
+    internal void SetLegacyConfiguration(SelfDiagnosticsOptions? options, string? configFilePath)
+        => this.coordinator.SetLegacyConfiguration(options, configFilePath);
 
     private void ApplyConfiguration(SelfDiagnosticsOptions.SelfDiagnosticsConfiguration configuration)
     {

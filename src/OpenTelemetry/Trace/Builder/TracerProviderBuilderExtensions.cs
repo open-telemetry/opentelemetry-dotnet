@@ -149,10 +149,10 @@ public static class TracerProviderBuilderExtensions
     /// <para>When called multiple times the callbacks are chained in
     /// registration order, each receiving the sampler returned by the previous
     /// one.</para>
-    /// <para>The provider only disposes the final resolved sampler. Any sampler
-    /// which is replaced by a callback is not disposed of by the provider; a callback which
-    /// discards the sampler it receives, or wraps it, is responsible for that
-    /// sampler's lifetime.</para>
+    /// <para>The provider only shuts down (see <see cref="Sampler.Shutdown(int)"/>) and disposes
+    /// the final resolved sampler. Any sampler which is replaced by a callback is not shut down
+    /// or disposed of by the provider; a callback which discards the sampler it receives, or
+    /// wraps it, is responsible for that sampler's lifetime.</para>
     /// </remarks>
     /// <param name="tracerProviderBuilder"><see cref="TracerProviderBuilder"/>.</param>
     /// <param name="configureSampler">Callback which receives the resolved

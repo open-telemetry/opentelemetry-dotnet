@@ -6,6 +6,10 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+## 1.21.0-rc.2
+
+Released 2026-Nov-09
+
 * Fixed an exception when downscaling empty exponential histogram buckets after
   a reset.
   ([#8064](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8064))
@@ -51,6 +55,34 @@ Notes](../../RELEASENOTES.md).
   `Shutdown()` was called before its background task had started running on
   platforms where threading is not available, such as browsers.
   ([#8053](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8053))
+
+* `OTEL_DIAGNOSTICS.json` now uses the `SelfDiagnosticsOptions` pipeline,
+  adding configuration warnings and a redacted environment snapshot to each
+  file's preamble. `Verbose` and `LogAlways` also log loaded assemblies.
+  File-open failures are reported on standard error.
+  ([#7997](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7997))
+
+* **Breaking Change** `OTEL_DIAGNOSTICS.json` now writes rolling
+  `otel-dotnet-*.log` files in the standard entry format instead of a circular
+  `{executable}.{pid}.log` file. `FileSize` is split evenly across two
+  retained files, so total disk usage stays close to the configured limit.
+  `FormatMessage` is now ignored; messages are always formatted.
+  Provider-configured sinks, including those enabled through environment
+  variables, override the JSON configuration with a warning event. Writes are
+  asynchronous and may drop entries when the bounded queue fills.
+  ([#7997](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7997))
+
+* Added `Sampler.Shutdown` and the overridable `Sampler.OnShutdown` to allow
+  samplers to release resources, as described in the
+  [specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk.md#shutdown-1).
+  `TracerProvider` now calls `Shutdown` on its sampler when it is shut down or
+  disposed, and `ParentBasedSampler` and `AlwaysRecordSampler` call `Shutdown`
+  on the samplers they delegate to.
+  ([#8060](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8060))
+
+* The `TracerProvider` now disposes of its sampler after its listener has
+  stopped calling the sampler, rather than before the processors are shut down.
+  ([#8060](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8060))
 
 ## 1.21.0-rc.1
 

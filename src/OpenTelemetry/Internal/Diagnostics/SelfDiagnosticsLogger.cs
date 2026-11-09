@@ -118,6 +118,17 @@ internal sealed class SelfDiagnosticsLogger : IDisposable, ILogger
         this.Dispatcher.Dispose();
     }
 
+    /// <summary>
+    /// Determines whether an entry would be captured, optionally regardless of the minimum level.
+    /// </summary>
+    /// <param name="logLevel">The candidate log level.</param>
+    /// <param name="bypassMinimumLevel">
+    /// <see langword="true"/> to admit the entry at any minimum level while diagnostics are enabled.
+    /// </param>
+    /// <returns><see langword="true"/> when the entry should be captured.</returns>
+    internal bool IsEnabled(LogLevel logLevel, bool bypassMinimumLevel)
+        => this.Dispatcher.IsEnabled(logLevel, bypassMinimumLevel);
+
     internal void Write(in SelfDiagnosticsLogEntry entry) => this.Dispatcher.Enqueue(in entry);
 
     internal void ApplyOptions(SelfDiagnosticsOptions options)

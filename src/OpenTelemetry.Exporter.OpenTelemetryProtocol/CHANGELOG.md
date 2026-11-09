@@ -7,6 +7,10 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+## 1.21.0-rc.2
+
+Released 2026-Nov-09
+
 * Fixed unbounded resource serialization buffer growth and incorrect buffer
   reuse after buffer allocation failures.
   ([#8069](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8069))

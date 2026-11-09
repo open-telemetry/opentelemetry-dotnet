@@ -6,6 +6,10 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+## 1.21.0-rc.2
+
+Released 2026-Nov-09
+
 * An `OutOfMemoryException` thrown while converting an attribute value to a
   string is no longer swallowed and the attribute dropped; it now propagates.
   ([#7929](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7929))
