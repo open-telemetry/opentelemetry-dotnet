@@ -85,7 +85,7 @@
       These packages are referenced as "PrivateAssets" or used in tests/examples.
   -->
   <ItemGroup>
-    <PackageVersion Include="BenchmarkDotNet" Version="0.15.8" />
+    <PackageVersion Include="BenchmarkDotNet" Version="0.16.0-preview.2" />
     <PackageVersion Include="CommandLineParser" Version="2.9.1" />
     <PackageVersion Include="FSharp.Core" Version="10.1.403" />
     <PackageVersion Include="FsCheck.Xunit.v3" Version="3.6.0" />

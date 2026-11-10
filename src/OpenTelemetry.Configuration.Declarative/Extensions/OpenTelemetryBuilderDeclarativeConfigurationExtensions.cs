@@ -4,11 +4,13 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Options;
 using OpenTelemetry.Configuration.Declarative;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
+using OpenTelemetry.SelfDiagnostics;
 using OpenTelemetry.Trace;
 
 namespace OpenTelemetry;
@@ -268,6 +270,13 @@ public static class OpenTelemetryBuilderDeclarativeConfigurationExtensions
         services.ConfigureOpenTelemetryTracerProvider((sp, _) => sp.GetRequiredService<StrictModeDiagnostics>().ReportOnce(sp));
         services.ConfigureOpenTelemetryMeterProvider((sp, _) => sp.GetRequiredService<StrictModeDiagnostics>().ReportOnce(sp));
         services.ConfigureOpenTelemetryLoggerProvider((sp, _) => sp.GetRequiredService<StrictModeDiagnostics>().ReportOnce(sp));
+
+        // The document's log level goes in ahead of everything registered so far, so that
+        // configuration from code wins whatever the call order.
+        services.Insert(
+            0,
+            ServiceDescriptor.Singleton<IConfigureOptions<SelfDiagnosticsOptions>>(sp =>
+                new DocumentLogLevelConfigureOptions(sp.GetRequiredService<DeclarativeConfigurationDocumentAccessor>())));
 
         services.ConfigureOpenTelemetryTracerProvider(b => b.ConfigureResource(AddDeclarativeResourceDetector));
         services.ConfigureOpenTelemetryMeterProvider(b => b.ConfigureResource(AddDeclarativeResourceDetector));
