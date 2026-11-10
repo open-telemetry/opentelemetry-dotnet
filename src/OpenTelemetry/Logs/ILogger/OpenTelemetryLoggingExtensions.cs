@@ -142,17 +142,22 @@ public static class OpenTelemetryLoggingExtensions
 
         var services = builder.Services;
 
-        // Note: This will bind logger options element (e.g., "Logging:OpenTelemetry") to OpenTelemetryLoggerOptions
-        RegisterLoggerProviderOptions(services);
+        // This will bind logger options element (e.g., "Logging:OpenTelemetry") to OpenTelemetryLoggerOptions.
+        // It is equivalent to LoggerProviderOptions.RegisterProviderOptions<OpenTelemetryLoggerOptions, OpenTelemetryLoggerProvider>(),
+        // but the binding is done by the configuration binding source generator so it is trim and AOT safe.
+        services.TryAddEnumerable(
+            ServiceDescriptor.Singleton<IConfigureOptions<OpenTelemetryLoggerOptions>, OpenTelemetryLoggerOptionsConfigureOptions>());
+        services.TryAddEnumerable(
+            ServiceDescriptor.Singleton<IOptionsChangeTokenSource<OpenTelemetryLoggerOptions>, LoggerProviderOptionsChangeTokenSource<OpenTelemetryLoggerOptions, OpenTelemetryLoggerProvider>>());
 
-        // Note: We disable built-in IOptionsMonitor and IOptionsSnapshot
+        // We disable built-in IOptionsMonitor and IOptionsSnapshot
         // features for OpenTelemetryLoggerOptions as a workaround to prevent
         // unwanted objects (processors, exporters, etc.) being created by
         // configuration delegates being re-run during reload of IConfiguration
         // or from options created while under scopes.
         services.DisableOptionsReloading<OpenTelemetryLoggerOptions>();
 
-        /* Note: This ensures IConfiguration is available when using
+        /* This ensures IConfiguration is available when using
          * IServiceCollections NOT attached to a host. For example when
          * performing:
          *
@@ -162,7 +167,7 @@ public static class OpenTelemetryLoggingExtensions
 
         if (configureOptions != null)
         {
-            // Note: Order is important here so that user-supplied delegate
+            // Order is important here so that user-supplied delegate
             // fires AFTER the options are bound to Logging:OpenTelemetry
             // configuration.
             services.Configure(configureOptions);
@@ -215,8 +220,6 @@ public static class OpenTelemetryLoggingExtensions
                             }
 
                             /*
-                             * Note:
-                             *
                              * There is a possibility of a circular reference when
                              * accessing LoggerProvider from the IServiceProvider.
                              *
@@ -245,15 +248,5 @@ public static class OpenTelemetryLoggingExtensions
                 }));
 
         return builder;
-
-        static void RegisterLoggerProviderOptions(IServiceCollection services)
-        {
-            // Equivalent to LoggerProviderOptions.RegisterProviderOptions<OpenTelemetryLoggerOptions, OpenTelemetryLoggerProvider>(),
-            // but binding is done by the configuration binding source generator so it is trim and AOT safe.
-            services.TryAddEnumerable(
-                ServiceDescriptor.Singleton<IConfigureOptions<OpenTelemetryLoggerOptions>, OpenTelemetryLoggerOptionsConfigureOptions>());
-            services.TryAddEnumerable(
-                ServiceDescriptor.Singleton<IOptionsChangeTokenSource<OpenTelemetryLoggerOptions>, LoggerProviderOptionsChangeTokenSource<OpenTelemetryLoggerOptions, OpenTelemetryLoggerProvider>>());
-        }
     }
 }

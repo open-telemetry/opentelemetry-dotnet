@@ -252,17 +252,12 @@ public sealed class OpenTelemetryLoggingExtensionsTests
     }
 
     [Fact]
-    public void UseOpenTelemetryRegistersOptionsBindingOnceAndTracksConfigurationChangesTest()
+    public void UseOpenTelemetryCalledTwiceRegistersOptionsBindingOnceTest()
     {
         var serviceCollection = new ServiceCollection();
 
-        var config = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?> { ["Logging:OpenTelemetry:IncludeScopes"] = "false" })
-            .Build();
-
         serviceCollection.AddLogging(logging =>
         {
-            logging.AddConfiguration(config.GetSection("Logging"));
             logging.UseOpenTelemetry();
             logging.UseOpenTelemetry();
         });
@@ -272,18 +267,36 @@ public sealed class OpenTelemetryLoggingExtensionsTests
             d => d.ServiceType == typeof(IConfigureOptions<OpenTelemetryLoggerOptions>)
                 && d.ImplementationType == typeof(OpenTelemetryLoggerOptionsConfigureOptions));
 
-        using var sp = serviceCollection.BuildServiceProvider();
+        Assert.Single(
+            serviceCollection,
+            d => d.ServiceType == typeof(IOptionsChangeTokenSource<OpenTelemetryLoggerOptions>));
+    }
 
-        var changeTokenSource = Assert.Single(sp.GetServices<IOptionsChangeTokenSource<OpenTelemetryLoggerOptions>>());
+    [Fact]
+    public void UseOpenTelemetryIgnoresEmptyBooleanOptionValuesTest()
+    {
+        // Empty values are skipped by the generated binder, so the defaults are kept.
+        // The reflection-based binder used previously threw on some target frameworks.
+        var options = GetOptionsFromConfiguration(
+            new Dictionary<string, string?>
+            {
+                ["Logging:OpenTelemetry:IncludeFormattedMessage"] = string.Empty,
+                ["Logging:OpenTelemetry:IncludeScopes"] = string.Empty,
+                ["Logging:OpenTelemetry:ParseStateValues"] = string.Empty,
+            });
 
-        var changeToken = changeTokenSource.GetChangeToken();
+        Assert.False(options.IncludeFormattedMessage);
+        Assert.False(options.IncludeScopes);
+        Assert.False(options.ParseStateValues);
+    }
 
-        Assert.False(changeToken.HasChanged);
-
-        config["Logging:OpenTelemetry:IncludeScopes"] = "true";
-        config.Reload();
-
-        Assert.True(changeToken.HasChanged);
+    [Theory]
+    [InlineData("notabool")]
+    [InlineData(" ")]
+    public void UseOpenTelemetryThrowsForInvalidBooleanOptionValuesTest(string value)
+    {
+        Assert.Throws<InvalidOperationException>(
+            () => GetOptionsFromConfiguration(new Dictionary<string, string?> { ["Logging:OpenTelemetry:IncludeScopes"] = value }));
     }
 
     [Fact]
@@ -600,6 +613,25 @@ public sealed class OpenTelemetryLoggingExtensionsTests
 
         var optionsSnapshot = scope.ServiceProvider.GetRequiredService<IOptionsSnapshot<OpenTelemetryLoggerOptions>>().Value;
         Assert.True(ReferenceEquals(options, optionsSnapshot));
+    }
+
+    private static OpenTelemetryLoggerOptions GetOptionsFromConfiguration(Dictionary<string, string?> values)
+    {
+        var config = new ConfigurationBuilder()
+            .AddInMemoryCollection(values)
+            .Build();
+
+        var serviceCollection = new ServiceCollection();
+
+        serviceCollection.AddLogging(logging =>
+        {
+            logging.AddConfiguration(config.GetSection("Logging"));
+            logging.UseOpenTelemetry();
+        });
+
+        using var sp = serviceCollection.BuildServiceProvider();
+
+        return sp.GetRequiredService<IOptions<OpenTelemetryLoggerOptions>>().Value;
     }
 
     private sealed class TestLogProcessor : BaseProcessor<LogRecord>

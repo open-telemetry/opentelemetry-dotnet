@@ -8,7 +8,10 @@ Notes](../../RELEASENOTES.md).
 
 * `OpenTelemetryLoggerOptions` is now bound from the `Logging:OpenTelemetry`
   configuration section using the configuration binding source generator instead
-  of reflection, making it fully trim and Native AOT compatible.
+  of reflection, making it fully trim and Native AOT compatible. An empty value
+  for a boolean option is now ignored on all target frameworks rather than
+  throwing on some, depending on the version of
+  `Microsoft.Extensions.Configuration.Binder` in use.
   ([#8100](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8100))
 
 ## 1.21.0-rc.2
