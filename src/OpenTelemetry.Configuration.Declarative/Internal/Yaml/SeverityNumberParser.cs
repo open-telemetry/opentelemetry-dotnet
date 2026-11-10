@@ -4,7 +4,6 @@
 #if NET
 using System.Collections.Frozen;
 #endif
-using System.Globalization;
 using YamlDotNet.Core;
 
 namespace OpenTelemetry.Configuration.Declarative;
@@ -14,15 +13,19 @@ namespace OpenTelemetry.Configuration.Declarative;
 /// </summary>
 internal static class SeverityNumberParser
 {
-    private const string AllowedValues =
-        "trace, trace2, trace3, trace4, debug, debug2, debug3, debug4, info, info2, info3, info4, "
-        + "warn, warn2, warn3, warn4, error, error2, error3, error4, fatal, fatal2, fatal3, fatal4";
+#if NET
+    private static readonly SeverityNumber[] Values = Enum.GetValues<SeverityNumber>();
+#else
+    private static readonly SeverityNumber[] Values = (SeverityNumber[])Enum.GetValues(typeof(SeverityNumber));
+#endif
 
 #if NET
     private static readonly FrozenDictionary<string, SeverityNumber> Severities = BuildSeverities();
 #else
     private static readonly Dictionary<string, SeverityNumber> Severities = BuildSeverities();
 #endif
+
+    private static readonly string AllowedValues = string.Join(", ", Values.Select(ToName));
 
     /// <summary>
     /// Parses a severity name.
@@ -51,7 +54,7 @@ internal static class SeverityNumberParser
         new($"'{key}' {Describe(position)} must be a string, but is a {actual} value. Allowed values are: {AllowedValues}.");
 
     private static string Describe(Mark position) =>
-        $"at line {position.Line.ToString(CultureInfo.InvariantCulture)}, column {position.Column.ToString(CultureInfo.InvariantCulture)}";
+        FormattableString.Invariant($"at line {position.Line}, column {position.Column}");
 
     private static string CaseHint(string text)
     {
@@ -64,28 +67,25 @@ internal static class SeverityNumberParser
     }
 
 #pragma warning disable CA1308 // The schema's values are lowercase.
-#if NET
-    private static FrozenDictionary<string, SeverityNumber> BuildSeverities()
-    {
-        var severities = new Dictionary<string, SeverityNumber>(24, StringComparer.Ordinal);
-        foreach (var severity in Enum.GetValues<SeverityNumber>())
-        {
-            severities[severity.ToString().ToLowerInvariant()] = severity;
-        }
+    private static string ToName(SeverityNumber severity) => severity.ToString().ToLowerInvariant();
+#pragma warning restore CA1308
 
-        return severities.ToFrozenDictionary(StringComparer.Ordinal);
-    }
-#else
-    private static Dictionary<string, SeverityNumber> BuildSeverities()
+    private static Dictionary<string, SeverityNumber> BuildSeverityDictionary()
     {
-        var severities = new Dictionary<string, SeverityNumber>(24, StringComparer.Ordinal);
-        foreach (SeverityNumber severity in Enum.GetValues(typeof(SeverityNumber)))
+        var severities = new Dictionary<string, SeverityNumber>(Values.Length, StringComparer.Ordinal);
+
+        foreach (var severity in Values)
         {
-            severities[severity.ToString().ToLowerInvariant()] = severity;
+            severities[ToName(severity)] = severity;
         }
 
         return severities;
     }
+
+#if NET
+    private static FrozenDictionary<string, SeverityNumber> BuildSeverities() =>
+        BuildSeverityDictionary().ToFrozenDictionary(StringComparer.Ordinal);
+#else
+    private static Dictionary<string, SeverityNumber> BuildSeverities() => BuildSeverityDictionary();
 #endif
-#pragma warning restore CA1308
 }

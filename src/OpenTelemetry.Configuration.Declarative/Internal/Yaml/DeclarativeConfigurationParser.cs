@@ -71,8 +71,7 @@ internal sealed class DeclarativeConfigurationParser(YamlParseContext context)
         return resolved.Kind switch
         {
             YamlScalarKind.Null => ModelProperty<SeverityNumber>.Null,
-            YamlScalarKind.String => ModelProperty<SeverityNumber>.Create(
-                SeverityNumberParser.Parse(YamlKeys.LogLevel, resolved.Value, valueNode.Start)),
+            YamlScalarKind.String => ModelProperty<SeverityNumber>.Create(SeverityNumberParser.Parse(YamlKeys.LogLevel, resolved.Value, valueNode.Start)),
             _ => throw SeverityNumberParser.CreateTypeMismatch(YamlKeys.LogLevel, resolved.Kind.GetYamlKindName(), valueNode.Start),
         };
     }

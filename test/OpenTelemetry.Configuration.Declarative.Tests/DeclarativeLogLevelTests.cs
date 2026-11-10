@@ -59,6 +59,13 @@ public sealed class DeclarativeLogLevelTests
     [Fact]
     public void SchemaValues_CoverEveryValueTheSchemaDefines() => Assert.Equal(24, SchemaValues().Count);
 
+    [Theory]
+    [InlineData(0)]
+    [InlineData(25)]
+    [InlineData(-1)]
+    public void ToLogLevel_UndefinedSeverity_Throws(int value) =>
+        Assert.Throws<ArgumentOutOfRangeException>(() => ((SeverityNumber)value).ToLogLevel());
+
     [Fact]
     public void HostApplicationBuilderPath_SetsMinimumLevel()
     {
