@@ -1,7 +1,9 @@
 # Persistent Storage APIs for OTLP Exporter
 
 <!--
-   TODO: Update the PersistentStorage-1.1.0 tags below when opentelemetry-dotnet-contrib sync merged.
+   TODO: Update the PersistentStorage-1.1.0 tags below after
+   https://github.com/open-telemetry/opentelemetry-dotnet-contrib/pull/5949
+   is merged and released.
 -->
 
 The files in this folder have been copied over from
