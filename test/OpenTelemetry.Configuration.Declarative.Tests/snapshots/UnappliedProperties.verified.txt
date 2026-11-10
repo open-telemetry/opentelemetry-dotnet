@@ -5,7 +5,6 @@
   Stable meter_provider
   Stable logger_provider
 examples/otel-sdk-config.yaml
-  Stable log_level
   Stable attribute_limits
   Stable propagator
   Stable tracer_provider.limits (fails the tracer provider build)
@@ -13,7 +12,6 @@ examples/otel-sdk-config.yaml
   Stable meter_provider
   Stable logger_provider
 examples/otel-sdk-migration-config.yaml
-  Stable log_level
   Stable attribute_limits
   Stable propagator
   Stable tracer_provider.limits (fails the tracer provider build)
