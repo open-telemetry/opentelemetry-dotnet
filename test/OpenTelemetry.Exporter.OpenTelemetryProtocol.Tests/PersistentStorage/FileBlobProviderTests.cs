@@ -524,6 +524,23 @@ public class FileBlobProviderTests
     }
 
     [Fact]
+    public void TryWrite_ExistingBlobWithContentLargerThanStorageLimit_RejectsWithoutReplacingExistingContent()
+    {
+        using var temp = new TemporaryDirectory();
+        using var provider = new FileBlobProvider(temp.Path, maxSizeInBytes: 4);
+
+        Assert.True(provider.TryCreateBlob([1, 2, 3], out var blob));
+        Assert.False(blob.TryWrite([1, 2, 3, 4, 5]));
+        Assert.False(blob.TryWrite([1, 2, 3, 4, 5], 60_000));
+
+        // The existing content is still stored, is not leased, and is still readable
+        Assert.Single(Directory.EnumerateFiles(temp.Path));
+        Assert.Single(Directory.EnumerateFiles(temp.Path, "*.blob"));
+        Assert.True(blob.TryRead(out var content));
+        Assert.Equal<byte>([1, 2, 3], content);
+    }
+
+    [Fact]
     public void TryWrite_BlobWhoseFileWasRemoved_UsesTemporaryFileThatIsNotTimedOutImmediately()
     {
         using var temp = new TemporaryDirectory();
