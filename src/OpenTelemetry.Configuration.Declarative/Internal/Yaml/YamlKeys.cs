@@ -10,6 +10,7 @@ internal static class YamlKeys
 {
     internal const string FileFormat = "file_format";
     internal const string Disabled = "disabled";
+    internal const string LogLevel = "log_level";
     internal const string Resource = "resource";
     internal const string Attributes = "attributes";
     internal const string AttributesList = "attributes_list";
