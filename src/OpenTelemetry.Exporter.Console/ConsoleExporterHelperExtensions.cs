@@ -48,6 +48,8 @@ public static class ConsoleExporterHelperExtensions
             builder.ConfigureServices(services => services.Configure(name, configure));
         }
 
+        builder.ConfigureServices(services => services.AddConsoleExporterServices());
+
         return builder.AddProcessor(sp =>
         {
             var options = sp.GetRequiredService<IOptionsMonitor<ConsoleExporterOptions>>().Get(name);

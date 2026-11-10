@@ -6,6 +6,10 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* `AddConsoleExporter()` now binds the `ConsoleExporterOptions` from the
+  `OpenTelemetry:Exporters:Console` configuration section.
+  ([#7880](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7880))
+
 ## 1.21.0-rc.2
 
 Released 2026-Nov-09

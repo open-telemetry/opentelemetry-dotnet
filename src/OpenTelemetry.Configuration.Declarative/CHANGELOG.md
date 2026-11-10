@@ -75,3 +75,8 @@ Notes](../../RELEASENOTES.md).
   processors and the `console` exporter. Unsupported stable `tracer_provider`
   settings now fail the tracer provider build.
   ([#8080](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8080))
+
+* Strict mode now also masks the `OpenTelemetry:Exporters:Console` configuration
+  section, which the Console exporter binds into its options. Other keys under
+  `OpenTelemetry` remain visible.
+  ([#7880](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7880))
