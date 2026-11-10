@@ -124,7 +124,8 @@ internal static class OtlpExporterOptionsExtensions
                 Path.Combine(
                     experimentalOptions.DiskRetryDirectoryPath,
                     GetSignalStorageDirectoryName(otlpSignalType),
-                    GetDestinationStorageDirectoryName(options)));
+                    GetDestinationStorageDirectoryName(options)),
+                experimentalOptions.DiskRetryCheckPermissions);
         }
         else
         {
