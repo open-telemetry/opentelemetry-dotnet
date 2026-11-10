@@ -25,6 +25,11 @@ internal sealed record DeclarativeConfiguration(string FileFormat)
     public ModelProperty<bool> Disabled { get; init; }
 
     /// <summary>
+    /// Gets the root <c>log_level</c>, a <c>SeverityNumber</c>.
+    /// </summary>
+    public ModelProperty<SeverityNumber> LogLevel { get; init; }
+
+    /// <summary>
     /// Gets the <c>resource</c> section.
     /// </summary>
     public ModelProperty<ResourceConfiguration> Resource { get; init; }

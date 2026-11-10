@@ -133,7 +133,7 @@ public sealed class SchemaPropertyNameValidatorTests
         {
             """
             file_format: "1.2"
-            log_level: &key foo
+            distribution: &key foo
             resource:
               *key : 1
               bar: 2
@@ -144,32 +144,149 @@ public sealed class SchemaPropertyNameValidatorTests
             "resource.foo@4:3;resource.bar@5:3;tracer_provider.foo@7:3;tracer_provider.baz@8:3"
         },
         {
-            "file_format: \"1.2\"\nlog_level: &key foo\nresource:\n  *key : 1\n  attributes: []\n",
+            """
+            file_format: "1.2"
+            distribution: &key foo
+            resource:
+              *key : 1
+              attributes: []
+            """,
             "resource.foo@4:3"
         },
         {
-            "file_format: \"1.2\"\nlog_level: &key foo\nresource:\n  attributes:\n    - name: service.name\n      value: example\n  *key : 1\n",
+            """
+            file_format: "1.2"
+            distribution: &key foo
+            resource:
+              attributes:
+                - name: service.name
+                  value: example
+              *key : 1
+            """,
             "resource.foo@7:3"
         },
         {
-            "file_format: \"1.2\"\nlog_level: &key foo\nresource: {*key : 1, attributes: [{name: service.name, value: example}]}\n",
+            """
+            file_format: "1.2"
+            distribution: &key foo
+            resource: {*key : 1, attributes: [{name: service.name, value: example}]}
+            """,
             "resource.foo@3:12"
         },
         {
-            "file_format: \"1.2\"\nlog_level: &key foo\ntracer_provider:\n  processors:\n    - batch:\n        exporter: {console: {}}\n        *key : 1\n",
+            """
+            file_format: "1.2"
+            distribution: &key foo
+            tracer_provider:
+              processors:
+                - batch:
+                    exporter: {console: {}}
+                    *key : 1
+            """,
             "tracer_provider.processors[0].batch.foo@7:9"
         },
         {
-            "file_format: \"1.2\"\nlog_level: &key foo\ntracer_provider: {processors: [{batch: {exporter: {console: {}}, *key : 1}}]}\n",
+            """
+            file_format: "1.2"
+            distribution: &key foo
+            tracer_provider: {processors: [{batch: {exporter: {console: {}}, *key : 1}}]}
+            """,
             "tracer_provider.processors[0].batch.foo@3:66"
         },
         {
-            "file_format: \"1.2\"\nresource:\n  \"\": 1\n",
+            """
+            file_format: "1.2"
+            resource:
+              "": 1
+            """,
             "resource.<empty>@3:3"
         },
         {
-            "file_format: \"1.2\"\n!!str resource:\n  foo: 1\n",
+            """
+            file_format: "1.2"
+            !!str resource:
+              foo: 1
+            """,
             "resource.foo@3:3"
+        },
+    };
+
+    public static TheoryData<string, int, string> AliasedRetainedKeyCases => new()
+    {
+        {
+            """
+            file_format: "1.3"
+            distribution: &key foo
+            resource:
+              bar: 1
+              *key : 2
+            """,
+            UndefinedPropertyRetainedEventId,
+            "resource.bar;resource.foo"
+        },
+        {
+            """
+            file_format: "1.2"
+            distribution: &key foo
+            resource:
+              detection/development:
+                bar: 1
+                *key : 2
+            """,
+            UndefinedPropertyRetainedEventId,
+            "resource.detection/development.bar;resource.detection/development.foo"
+        },
+        {
+            """
+            file_format: "1.2"
+            distribution: &key vendor_last
+            vendor_first: {}
+            *key : 1
+            """,
+            UndefinedRootPropertyEventId,
+            "vendor_first;vendor_last"
+        },
+    };
+
+    public static TheoryData<string, string> ExperimentalKeyCases => new()
+    {
+        {
+            """
+            file_format: "1.2"
+            instrumentation/development:
+              general:
+                foo: 1
+            """,
+            "instrumentation/development.general.foo"
+        },
+        {
+            """
+            file_format: "1.2"
+            resource:
+              detection/development:
+                foo: 1
+            """,
+            "resource.detection/development.foo"
+        },
+        {
+            """
+            file_format: "1.2"
+            resource:
+              detection/development:
+                detectors:
+                  - host:
+                      foo: 1
+            """,
+            "resource.detection/development.detectors[0].host.foo"
+        },
+        {
+            """
+            file_format: "1.2"
+            resource:
+              future/development:
+                x: 1
+            """,
+            "resource.future/development"
         },
     };
 
@@ -405,18 +522,7 @@ public sealed class SchemaPropertyNameValidatorTests
     }
 
     [Theory]
-    [InlineData(
-        "file_format: \"1.3\"\nlog_level: &key foo\nresource:\n  bar: 1\n  *key : 2\n",
-        UndefinedPropertyRetainedEventId,
-        "resource.bar;resource.foo")]
-    [InlineData(
-        "file_format: \"1.2\"\nlog_level: &key foo\nresource:\n  detection/development:\n    bar: 1\n    *key : 2\n",
-        UndefinedPropertyRetainedEventId,
-        "resource.detection/development.bar;resource.detection/development.foo")]
-    [InlineData(
-        "file_format: \"1.2\"\nlog_level: &key vendor_last\nvendor_first: {}\n*key : 1\n",
-        UndefinedRootPropertyEventId,
-        "vendor_first;vendor_last")]
+    [MemberData(nameof(AliasedRetainedKeyCases))]
     public void Read_AliasedRetainedKeys_AreReportedInDocumentOrder(string yaml, int eventId, string expected)
     {
         using var listener = CreateListener();
@@ -497,13 +603,15 @@ public sealed class SchemaPropertyNameValidatorTests
     [InlineData("tracer_provider: [1, 2]")]
     [InlineData("tracer_provider:")]
     [InlineData("tracer_provider: 5")]
-    [InlineData("log_level: { a: 1 }")]
     [InlineData("propagator: [a, b]")]
     public void Read_ValueWithTheWrongShape_StopsDescentWithoutAnError(string section)
     {
         using var listener = CreateListener();
 
-        var document = Read($"file_format: \"1.2\"\n{section}\n");
+        var document = Read($"""
+            file_format: "1.2"
+            {section}
+            """);
 
         Assert.NotEmpty(document.Properties.Keys);
         Assert.DoesNotContain(
@@ -563,24 +671,15 @@ public sealed class SchemaPropertyNameValidatorTests
     {
         using var listener = CreateListener();
 
-        _ = Read("file_format: \"1.2\"\n");
+        _ = Read("""
+            file_format: "1.2"
+            """);
 
         Assert.DoesNotContain(listener.CurrentMessages, e => e.EventId == FileFormatWarningEventId);
     }
 
     [Theory]
-    [InlineData(
-        "file_format: \"1.2\"\ninstrumentation/development:\n  general:\n    foo: 1\n",
-        "instrumentation/development.general.foo")]
-    [InlineData(
-        "file_format: \"1.2\"\nresource:\n  detection/development:\n    foo: 1\n",
-        "resource.detection/development.foo")]
-    [InlineData(
-        "file_format: \"1.2\"\nresource:\n  detection/development:\n    detectors:\n      - host:\n          foo: 1\n",
-        "resource.detection/development.detectors[0].host.foo")]
-    [InlineData(
-        "file_format: \"1.2\"\nresource:\n  future/development:\n    x: 1\n",
-        "resource.future/development")]
+    [MemberData(nameof(ExperimentalKeyCases))]
     public void Read_UndefinedKeyInOrUnderAnExperimentalProperty_IsRetainedAndWarns(string yaml, string path)
     {
         using var listener = CreateListener();

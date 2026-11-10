@@ -36,14 +36,15 @@ public sealed class SupportManifestTests
     }
 
     [Fact]
-    public void EvaluateUnapplied_Scalar_IsReported()
+    public void EvaluateUnapplied_Mapping_IsReported()
     {
         var unapplied = Assert.Single(Evaluate("""
             file_format: "1.2"
-            log_level: debug
+            attribute_limits:
+              attribute_count_limit: 128
             """));
 
-        Assert.Equal(new("log_level", SchemaStability.Stable, new(2, 1)), unapplied);
+        Assert.Equal(new("attribute_limits", SchemaStability.Stable, new(2, 1)), unapplied);
     }
 
     [Fact]

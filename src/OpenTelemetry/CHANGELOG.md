@@ -6,6 +6,18 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* `OpenTelemetryLoggerOptions` is now bound from the `Logging:OpenTelemetry`
+  configuration section using the configuration binding source generator instead
+  of reflection, making it fully trim and Native AOT compatible. An empty value
+  for a boolean option is now ignored on all target frameworks rather than
+  throwing on some, depending on the version of
+  `Microsoft.Extensions.Configuration.Binder` in use.
+  ([#8100](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8100))
+
+* Fixed the self-diagnostics environment snapshot leaving a dangling comma in a
+  redacted `OTEL_RESOURCE_ATTRIBUTES` value when it contained empty entries.
+  ([#8104](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8104))
+
 ## 1.21.0-rc.2
 
 Released 2026-Nov-09
