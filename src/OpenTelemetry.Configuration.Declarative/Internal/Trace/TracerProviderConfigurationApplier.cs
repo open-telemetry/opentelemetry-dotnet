@@ -130,6 +130,43 @@ internal static class TracerProviderConfigurationApplier
         return batch with { ScheduleDelayMilliseconds = 1 };
     }
 
+    internal static BaseProcessor<Activity> CreateProcessor(
+        FilePath filePath,
+        SpanProcessorEntry entry,
+        PluginComponentProviderRegistry registry)
+    {
+        if (entry.Exporter is not { } exporterConfiguration)
+        {
+            return registry.Create<BaseProcessor<Activity>>(entry.Processor.Name, entry.Processor.Properties);
+        }
+
+        // The processor owns the exporter; it is disposed here only if the processor is not created.
+#pragma warning disable CA2000 // Dispose objects before losing scope
+        var exporter = registry.Create<BaseExporter<Activity>>(exporterConfiguration.Name, exporterConfiguration.Properties);
+#pragma warning restore CA2000
+        try
+        {
+            if (entry.BatchSection is null)
+            {
+                return new SimpleActivityExportProcessor(exporter);
+            }
+
+            var batch = GetEffectiveBatchSettings(filePath, entry);
+
+            return new BatchActivityExportProcessor(
+                exporter,
+                maxQueueSize: batch.MaxQueueSize,
+                scheduledDelayMilliseconds: batch.ScheduleDelayMilliseconds,
+                exporterTimeoutMilliseconds: batch.ExportTimeoutMilliseconds,
+                maxExportBatchSize: batch.MaxExportBatchSize);
+        }
+        catch
+        {
+            ComponentCleanup.RunAndLogFailure(exporter, exporter.Dispose);
+            throw;
+        }
+    }
+
     private static void ValidateSupportedConfiguration(
         FilePath filePath,
         DeclarativeConfigurationDocument document,
@@ -185,42 +222,5 @@ internal static class TracerProviderConfigurationApplier
 
         throw new DeclarativeConfigurationException(
             $"The tracer provider cannot be built from '{filePath.DisplayPath}', because this version of the package does not support these settings: {string.Join("; ", details)}.");
-    }
-
-    private static BaseProcessor<Activity> CreateProcessor(
-        FilePath filePath,
-        SpanProcessorEntry entry,
-        PluginComponentProviderRegistry registry)
-    {
-        if (entry.Exporter is not { } exporterConfiguration)
-        {
-            return registry.Create<BaseProcessor<Activity>>(entry.Processor.Name, entry.Processor.Properties);
-        }
-
-        // The processor owns the exporter; it is disposed here only if the processor is not created.
-#pragma warning disable CA2000 // Dispose objects before losing scope
-        var exporter = registry.Create<BaseExporter<Activity>>(exporterConfiguration.Name, exporterConfiguration.Properties);
-#pragma warning restore CA2000
-        try
-        {
-            if (entry.BatchSection is null)
-            {
-                return new SimpleActivityExportProcessor(exporter);
-            }
-
-            var batch = GetEffectiveBatchSettings(filePath, entry);
-
-            return new BatchActivityExportProcessor(
-                exporter,
-                maxQueueSize: batch.MaxQueueSize,
-                scheduledDelayMilliseconds: batch.ScheduleDelayMilliseconds,
-                exporterTimeoutMilliseconds: batch.ExportTimeoutMilliseconds,
-                maxExportBatchSize: batch.MaxExportBatchSize);
-        }
-        catch
-        {
-            ComponentCleanup.RunAndLogFailure(exporter, exporter.Dispose);
-            throw;
-        }
     }
 }
