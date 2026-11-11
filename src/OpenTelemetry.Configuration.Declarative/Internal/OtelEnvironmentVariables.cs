@@ -27,6 +27,16 @@ internal static class OtelEnvironmentVariables
     internal const string ServiceName = "OTEL_SERVICE_NAME";
 
     /// <summary>
+    /// The sampler selected by name.
+    /// </summary>
+    internal const string TracesSampler = "OTEL_TRACES_SAMPLER";
+
+    /// <summary>
+    /// The argument of the sampler selected by <see cref="TracesSampler"/>.
+    /// </summary>
+    internal const string TracesSamplerArg = "OTEL_TRACES_SAMPLER_ARG";
+
+    /// <summary>
     /// Path to the declarative configuration YAML file.
     /// </summary>
     internal const string ConfigFile = "OTEL_CONFIG_FILE";

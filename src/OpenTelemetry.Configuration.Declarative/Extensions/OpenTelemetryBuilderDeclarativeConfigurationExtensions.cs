@@ -263,6 +263,7 @@ public static class OpenTelemetryBuilderDeclarativeConfigurationExtensions
         TracerProviderSection? tracing)
     {
         var services = builder.Services;
+        BuiltInComponentProviders.Register(services);
         services.AddSingleton(new DeclarativeConfigurationRegistrationMarker(filePath));
 
         // Strict mode diagnostics run at the first provider build, against the final configuration.
@@ -285,8 +286,10 @@ public static class OpenTelemetryBuilderDeclarativeConfigurationExtensions
         // Processors are added when the tracer provider is built, from the document selected for the
         // service provider. Callbacks run in registration order, so processors added in code before
         // this call run first.
-        services.TryAddSingleton<PluginComponentProviderRegistry>();
         services.ConfigureOpenTelemetryTracerProvider(TracerProviderConfigurationApplier.Configure);
+
+        // Inserted first, so that a sampler set in code replaces the document's whatever the call order.
+        services.Insert(0, ServiceDescriptor.Singleton<IConfigureTracerProviderBuilder>(new DeclarativeSamplerConfigurationApplier()));
 
         if (tracing is not null)
         {

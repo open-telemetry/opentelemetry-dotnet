@@ -7,6 +7,10 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+## 1.21.0-beta.1
+
+Released 2026-Nov-11
+
 * Fixed OpenMetrics scrape responses containing a `# UNIT` line whose unit is
   not an underscore-separated suffix of the metric family name (for example
   `auth.failedlogins` with the unit `logins`), which caused scrapers such as
@@ -64,6 +68,9 @@ Notes](../../RELEASENOTES.md).
 
 * Reduce allocations during `Accept` header negotiation.
   ([#8094](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8094))
+
+* Updated OpenTelemetry core component version(s) to `1.21.0`.
+  ([#8119](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8119))
 
 ## 1.20.1-beta.1
 

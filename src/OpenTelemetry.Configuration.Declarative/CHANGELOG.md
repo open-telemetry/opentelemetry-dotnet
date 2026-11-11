@@ -79,3 +79,8 @@ Notes](../../RELEASENOTES.md).
 * Applies the root `log_level` to `SelfDiagnosticsOptions.MinimumLevel`. The
   setting sets a threshold only and does not turn any output on.
   ([#8101](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8101))
+
+* The `tracer_provider.sampler` setting now takes effect. Supports
+  `always_on`, `always_off`, `always_record`, `trace_id_ratio_based` and
+  `parent_based`, nested to any depth.
+  ([#8117](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8117))
