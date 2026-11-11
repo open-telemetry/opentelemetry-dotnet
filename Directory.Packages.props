@@ -87,7 +87,7 @@
   <ItemGroup>
     <PackageVersion Include="BenchmarkDotNet" Version="0.16.0-preview.2" />
     <PackageVersion Include="CommandLineParser" Version="2.9.1" />
-    <PackageVersion Include="FSharp.Core" Version="10.1.403" />
+    <PackageVersion Include="FSharp.Core" Version="10.1.404" />
     <PackageVersion Include="FsCheck.Xunit.v3" Version="3.6.0" />
     <PackageVersion Include="GitHubActionsTestLogger" Version="3.0.5" />
     <PackageVersion Include="Google.Protobuf" Version="3.36.2" />
