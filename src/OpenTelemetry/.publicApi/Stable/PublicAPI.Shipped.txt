@@ -1,3 +1,4 @@
+*REMOVED*OpenTelemetry.Metrics.PeriodicExportingMetricReader.PeriodicExportingMetricReader(OpenTelemetry.BaseExporter<OpenTelemetry.Metrics.Metric!>! exporter, int exportIntervalMilliseconds = 60000, int exportTimeoutMilliseconds = 30000) -> void
 #nullable enable
 ~OpenTelemetry.Batch<T>.GetEnumerator() -> OpenTelemetry.Batch<T>.Enumerator
 abstract OpenTelemetry.BaseExporter<T>.Export(in OpenTelemetry.Batch<T!> batch) -> OpenTelemetry.ExportResult
@@ -266,12 +267,17 @@ OpenTelemetry.Metrics.MetricType.LongSum = 26 -> OpenTelemetry.Metrics.MetricTyp
 OpenTelemetry.Metrics.MetricType.LongSumNonMonotonic = 138 -> OpenTelemetry.Metrics.MetricType
 OpenTelemetry.Metrics.MetricTypeExtensions
 OpenTelemetry.Metrics.PeriodicExportingMetricReader
+OpenTelemetry.Metrics.PeriodicExportingMetricReader.MaxExportBatchSize.get -> int?
+OpenTelemetry.Metrics.PeriodicExportingMetricReader.PeriodicExportingMetricReader(OpenTelemetry.BaseExporter<OpenTelemetry.Metrics.Metric!>! exporter, int exportIntervalMilliseconds = 60000, int exportTimeoutMilliseconds = 30000, int? maxExportBatchSize = null) -> void
 OpenTelemetry.Metrics.PeriodicExportingMetricReader.PeriodicExportingMetricReader(OpenTelemetry.BaseExporter<OpenTelemetry.Metrics.Metric!>! exporter, int exportIntervalMilliseconds = 60000, int exportTimeoutMilliseconds = 30000) -> void
+OpenTelemetry.Metrics.PeriodicExportingMetricReader.PeriodicExportingMetricReader(OpenTelemetry.BaseExporter<OpenTelemetry.Metrics.Metric!>! exporter, int exportIntervalMilliseconds, int exportTimeoutMilliseconds) -> void
 OpenTelemetry.Metrics.PeriodicExportingMetricReaderOptions
 OpenTelemetry.Metrics.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds.get -> int?
 OpenTelemetry.Metrics.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds.set -> void
 OpenTelemetry.Metrics.PeriodicExportingMetricReaderOptions.ExportTimeoutMilliseconds.get -> int?
 OpenTelemetry.Metrics.PeriodicExportingMetricReaderOptions.ExportTimeoutMilliseconds.set -> void
+OpenTelemetry.Metrics.PeriodicExportingMetricReaderOptions.MaxExportBatchSize.get -> int?
+OpenTelemetry.Metrics.PeriodicExportingMetricReaderOptions.MaxExportBatchSize.set -> void
 OpenTelemetry.Metrics.PeriodicExportingMetricReaderOptions.PeriodicExportingMetricReaderOptions() -> void
 OpenTelemetry.Metrics.ReadOnlyExemplarCollection
 OpenTelemetry.Metrics.ReadOnlyExemplarCollection.Enumerator
@@ -368,6 +374,7 @@ OpenTelemetry.Trace.Sampler
 OpenTelemetry.Trace.Sampler.Description.get -> string!
 OpenTelemetry.Trace.Sampler.Description.set -> void
 OpenTelemetry.Trace.Sampler.Sampler() -> void
+OpenTelemetry.Trace.Sampler.Shutdown(int timeoutMilliseconds = -1) -> bool
 OpenTelemetry.Trace.SamplingDecision
 OpenTelemetry.Trace.SamplingDecision.Drop = 0 -> OpenTelemetry.Trace.SamplingDecision
 OpenTelemetry.Trace.SamplingDecision.RecordAndSample = 2 -> OpenTelemetry.Trace.SamplingDecision
@@ -528,3 +535,4 @@ virtual OpenTelemetry.BaseProcessor<T>.OnStart(T data) -> void
 virtual OpenTelemetry.Metrics.MetricReader.Dispose(bool disposing) -> void
 virtual OpenTelemetry.Metrics.MetricReader.OnCollect(int timeoutMilliseconds) -> bool
 virtual OpenTelemetry.Metrics.MetricReader.OnShutdown(int timeoutMilliseconds) -> bool
+virtual OpenTelemetry.Trace.Sampler.OnShutdown(int timeoutMilliseconds) -> bool
