@@ -7,6 +7,10 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+## 1.21.0-beta.1
+
+Released 2026-Nov-11
+
 * Fixed OpenMetrics scrape responses containing a `# UNIT` line whose unit is
   not an underscore-separated suffix of the metric family name (for example
   `auth.failedlogins` with the unit `logins`), which caused scrapers such as
