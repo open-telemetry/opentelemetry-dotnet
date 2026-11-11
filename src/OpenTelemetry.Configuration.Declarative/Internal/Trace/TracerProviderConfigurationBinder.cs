@@ -32,7 +32,8 @@ internal static class TracerProviderConfigurationBinder
         return new(
             BindProcessors(tracerProvider, root.GetKeyPosition(YamlKeys.TracerProvider)),
             BindTracerConfigurator(tracerProvider),
-            BindIdGenerator(tracerProvider));
+            BindIdGenerator(tracerProvider),
+            BindSampler(tracerProvider));
     }
 
     private static ReadOnlyCollection<SpanProcessorEntry> BindProcessors(ConfigProperties tracerProvider, ConfigValuePosition sectionPosition)
@@ -209,5 +210,20 @@ internal static class TracerProviderConfigurationBinder
             YamlPath.Child(YamlKeys.TracerProvider, YamlKeys.IdGenerator),
             "ID generator",
             tracerProvider.GetKeyPosition(YamlKeys.IdGenerator));
+    }
+
+    private static ComponentConfiguration? BindSampler(ConfigProperties tracerProvider)
+    {
+        // An omitted sampler uses the default; an explicit null sampler is invalid.
+        if (!tracerProvider.TryGetValue(YamlKeys.Sampler, out var value))
+        {
+            return null;
+        }
+
+        return BindingHelpers.BindComponent(
+            value,
+            YamlPath.Child(YamlKeys.TracerProvider, YamlKeys.Sampler),
+            "sampler",
+            tracerProvider.GetKeyPosition(YamlKeys.Sampler));
     }
 }
