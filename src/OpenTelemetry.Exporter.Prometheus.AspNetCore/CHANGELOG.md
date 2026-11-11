@@ -58,6 +58,9 @@ Notes](../../RELEASENOTES.md).
   string is no longer swallowed and the attribute dropped; it now propagates.
   ([#7929](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7929))
 
+* Updated OpenTelemetry core component version(s) to `1.21.0`.
+  ([#8119](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8119))
+
 ## 1.20.1-beta.1
 
 Released 2026-Oct-20
