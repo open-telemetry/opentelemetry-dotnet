@@ -2479,8 +2479,8 @@ public sealed class PrometheusCollectionManagerTests
         // Only OpenMetrics has the "_created" sample of a counter, so that is the only format in which the gauge is dropped
         var createdSamples = samples.Where(s => s.StartsWith("generated_counter_created", StringComparison.Ordinal)).ToList();
 
-        Assert.Single(createdSamples);
-        Assert.Equal(!openMetricsRequested, createdSamples[0].EndsWith(" 100", StringComparison.Ordinal));
+        var createdSample = Assert.Single(createdSamples);
+        Assert.Equal(!openMetricsRequested, createdSample.EndsWith(" 100", StringComparison.Ordinal));
 
         Assert.Single(samples, s => s.StartsWith("dropped_histogram_sum_count", StringComparison.Ordinal));
         Assert.Single(samples, s => s.StartsWith("mixed_gauge", StringComparison.Ordinal));

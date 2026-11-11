@@ -33,9 +33,9 @@ public class GrpcStatusDeserializerTests
         Assert.NotNull(deserializedStatus);
         Assert.Equal(status.Code, deserializedStatus.Value.Code);
         Assert.Equal(status.Message, deserializedStatus.Value.Message);
-        Assert.Single(deserializedStatus.Value.Details);
-        Assert.Equal("type.googleapis.com/google.protobuf.StringValue", deserializedStatus.Value.Details[0].TypeUrl);
-        var stringValue = StringValue.Parser.ParseFrom(deserializedStatus.Value.Details[0].Value);
+        var singleDetail = Assert.Single(deserializedStatus.Value.Details);
+        Assert.Equal("type.googleapis.com/google.protobuf.StringValue", singleDetail.TypeUrl);
+        var stringValue = StringValue.Parser.ParseFrom(singleDetail.Value);
         Assert.Equal("Example detail", stringValue.Value);
     }
 

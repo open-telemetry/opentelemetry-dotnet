@@ -946,7 +946,7 @@ public class MetricViewTests : MetricTestsBase
 
     [Theory]
     [MemberData(nameof(MetricTestData.ValidHistogramMinMax), MemberType = typeof(MetricTestData))]
-    public void HistogramMinMax(double[] values, HistogramConfiguration histogramConfiguration, double expectedMin, double expectedMax)
+    public void HistogramMinMax(double[] values, string histogramConfigurationName, double expectedMin, double expectedMax)
     {
 #if NET
         Assert.NotNull(values);
@@ -956,6 +956,8 @@ public class MetricViewTests : MetricTestsBase
             throw new ArgumentNullException(nameof(values));
         }
 #endif
+
+        var histogramConfiguration = MetricTestData.CreateHistogramConfiguration(histogramConfigurationName);
 
         using var meter = new Meter(Utils.GetCurrentMethodName());
         var histogram = meter.CreateHistogram<double>("MyHistogram");
@@ -993,7 +995,7 @@ public class MetricViewTests : MetricTestsBase
 
     [Theory]
     [MemberData(nameof(MetricTestData.InvalidHistogramMinMax), MemberType = typeof(MetricTestData))]
-    public void HistogramMinMaxNotPresent(double[] values, HistogramConfiguration histogramConfiguration)
+    public void HistogramMinMaxNotPresent(double[] values, string histogramConfigurationName)
     {
 #if NET
         Assert.NotNull(values);
@@ -1003,6 +1005,8 @@ public class MetricViewTests : MetricTestsBase
             throw new ArgumentNullException(nameof(values));
         }
 #endif
+
+        var histogramConfiguration = MetricTestData.CreateHistogramConfiguration(histogramConfigurationName, recordMinMax: false);
 
         using var meter = new Meter(Utils.GetCurrentMethodName());
         var histogram = meter.CreateHistogram<double>("MyHistogram");

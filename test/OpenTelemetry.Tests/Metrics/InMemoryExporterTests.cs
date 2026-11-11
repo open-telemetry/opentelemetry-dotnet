@@ -30,10 +30,9 @@ public class InMemoryExporterTests
 
         meterProvider.ForceFlush();
 
-        Assert.Single(exportedItems);
-        var metric1 = exportedItems[0]; // Only one Metric object is added to the collection at this point
-        Assert.Single(metric1.MetricPoints);
-        Assert.Equal(10, metric1.MetricPoints[0].GetSumLong());
+        var metric1 = Assert.Single(exportedItems); // Only one Metric object is added to the collection at this point
+        var singleMetricPoint = Assert.Single(metric1.MetricPoints);
+        Assert.Equal(10, singleMetricPoint.GetSumLong());
 
         // TEST 2: Emit 25 for the MetricPoint with a single key-value pair: ("tag1", "value1")
         counter.Add(25, new KeyValuePair<string, object?>("tag1", "value1"));
@@ -42,12 +41,12 @@ public class InMemoryExporterTests
 
         Assert.Equal(2, exportedItems.Count);
         var metric2 = exportedItems[1]; // Second Metric object is added to the collection at this point
-        Assert.Single(metric2.MetricPoints);
-        Assert.Equal(25, metric2.MetricPoints[0].GetSumLong());
+        var metricPoint = Assert.Single(metric2.MetricPoints);
+        Assert.Equal(25, metricPoint.GetSumLong());
 
         // TEST 3: Verify first exported metric is unchanged
         // MetricPoint.LongValue for the first exported metric should still be 10
-        Assert.Equal(10, metric1.MetricPoints[0].GetSumLong());
+        Assert.Equal(10, singleMetricPoint.GetSumLong());
     }
 
     [Fact]

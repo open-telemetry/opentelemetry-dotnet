@@ -97,8 +97,7 @@ public class TelemetrySpanTests
 
         span.AddLink(context);
 
-        Assert.Single(activity.Links);
-        var link = activity.Links.First();
+        var link = Assert.Single(activity.Links);
         Assert.Equal(traceId, link.Context.TraceId);
         Assert.Equal(spanId, link.Context.SpanId);
         Assert.Null(link.Tags);
@@ -120,11 +119,9 @@ public class TelemetrySpanTests
 
         span.AddLink(context, attributes);
 
-        Assert.Single(activity.Links);
-        var link = activity.Links.First();
+        var link = Assert.Single(activity.Links);
         Assert.NotNull(link.Tags);
-        Assert.Single(link.Tags);
-        var tag = link.Tags.First();
+        var tag = Assert.Single(link.Tags);
         Assert.Equal("key1", tag.Key);
         Assert.Equal("value1", tag.Value);
     }

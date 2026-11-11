@@ -11,9 +11,9 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClie
 
 public class OtlpRetryTests
 {
-    public static TheoryData<GrpcRetryTestCase> GrpcRetryTestData => GrpcRetryTestCase.GetGrpcTestCases();
+    public static TheoryData<string> GrpcRetryTestData => GrpcRetryTestCase.GetGrpcTestCases();
 
-    public static TheoryData<HttpRetryTestCase> HttpRetryTestData => HttpRetryTestCase.GetHttpTestCases();
+    public static TheoryData<string> HttpRetryTestData => HttpRetryTestCase.GetHttpTestCases();
 
 #if NET
     [Theory]
@@ -68,16 +68,9 @@ public class OtlpRetryTests
 
     [Theory]
     [MemberData(nameof(GrpcRetryTestData))]
-    public void TryGetGrpcRetryResultTest(GrpcRetryTestCase testCase)
+    public void TryGetGrpcRetryResultTest(string testCaseName)
     {
-#if NET
-        Assert.NotNull(testCase);
-#else
-        if (testCase == null)
-        {
-            throw new ArgumentNullException(nameof(testCase));
-        }
-#endif
+        var testCase = GrpcRetryTestCase.GetTestCase(testCaseName);
         var attempts = 0;
         var nextRetryDelayMilliseconds = OtlpRetry.InitialBackoffMilliseconds;
 
@@ -118,16 +111,9 @@ public class OtlpRetryTests
 
     [Theory]
     [MemberData(nameof(HttpRetryTestData))]
-    public void TryGetHttpRetryResultTest(HttpRetryTestCase testCase)
+    public void TryGetHttpRetryResultTest(string testCaseName)
     {
-#if NET
-        Assert.NotNull(testCase);
-#else
-        if (testCase == null)
-        {
-            throw new ArgumentNullException(nameof(testCase));
-        }
-#endif
+        var testCase = HttpRetryTestCase.GetTestCase(testCaseName);
         var attempts = 0;
         var nextRetryDelayMilliseconds = OtlpRetry.InitialBackoffMilliseconds;
 
