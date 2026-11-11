@@ -268,7 +268,6 @@ OpenTelemetry.Metrics.MetricTypeExtensions
 OpenTelemetry.Metrics.PeriodicExportingMetricReader
 OpenTelemetry.Metrics.PeriodicExportingMetricReader.MaxExportBatchSize.get -> int?
 OpenTelemetry.Metrics.PeriodicExportingMetricReader.PeriodicExportingMetricReader(OpenTelemetry.BaseExporter<OpenTelemetry.Metrics.Metric!>! exporter, int exportIntervalMilliseconds = 60000, int exportTimeoutMilliseconds = 30000, int? maxExportBatchSize = null) -> void
-OpenTelemetry.Metrics.PeriodicExportingMetricReader.PeriodicExportingMetricReader(OpenTelemetry.BaseExporter<OpenTelemetry.Metrics.Metric!>! exporter, int exportIntervalMilliseconds = 60000, int exportTimeoutMilliseconds = 30000) -> void
 OpenTelemetry.Metrics.PeriodicExportingMetricReader.PeriodicExportingMetricReader(OpenTelemetry.BaseExporter<OpenTelemetry.Metrics.Metric!>! exporter, int exportIntervalMilliseconds, int exportTimeoutMilliseconds) -> void
 OpenTelemetry.Metrics.PeriodicExportingMetricReaderOptions
 OpenTelemetry.Metrics.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds.get -> int?
