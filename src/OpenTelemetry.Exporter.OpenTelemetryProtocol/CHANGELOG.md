@@ -7,6 +7,10 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+## 1.21.0
+
+Released 2026-Nov-11
+
 * Hardened the experimental disk retry feature.
   * **Breaking:** When running on .NET on non-Windows platforms, creating the
     exporter now throws an `UnauthorizedAccessException` if the retry

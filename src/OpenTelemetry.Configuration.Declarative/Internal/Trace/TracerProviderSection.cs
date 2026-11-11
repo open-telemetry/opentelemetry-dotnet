@@ -13,7 +13,9 @@ namespace OpenTelemetry.Configuration.Declarative;
 /// <param name="Processors">The span processors, in document order.</param>
 /// <param name="Configurator">The tracer configurator, or <see langword="null"/> when omitted.</param>
 /// <param name="IdGeneratorConfiguration">The ID generator configuration, or <see langword="null"/> when omitted or null.</param>
+/// <param name="Sampler">The sampler, or <see langword="null"/> when omitted.</param>
 internal sealed record TracerProviderSection(
     IReadOnlyList<SpanProcessorEntry> Processors,
     TracerConfiguratorSection? Configurator,
-    ComponentConfiguration? IdGeneratorConfiguration);
+    ComponentConfiguration? IdGeneratorConfiguration,
+    ComponentConfiguration? Sampler);

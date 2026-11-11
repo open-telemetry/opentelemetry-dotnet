@@ -56,8 +56,17 @@ internal static class StrictModeDiagnosticsAnalyzer
         return Analysis.Available(
             declarative.FilePath.DisplayPath,
             FindIgnoredKeys(entries, masked, declarativeEntry, declarative),
-            FindUnmaskedProviders(entries, masked, declarativeEntry, declarativeIndex));
+            FindUnmaskedProviders(entries, masked, declarativeEntry, declarativeIndex, DocumentHasSampler(declarative.Accessor.GetDocument())));
     }
+
+    private static bool DocumentHasSampler(DeclarativeConfigurationDocument document) =>
+        document.Properties.TryGetValue(YamlKeys.TracerProvider, out var tracerProvider)
+        && tracerProvider.Kind == ConfigValueKind.Mapping
+        && tracerProvider.AsMapping().TryGetValue(YamlKeys.Sampler, out _);
+
+    private static bool IsSamplerKey(string key) =>
+        string.Equals(key, OtelEnvironmentVariables.TracesSampler, StringComparison.OrdinalIgnoreCase)
+        || string.Equals(key, OtelEnvironmentVariables.TracesSamplerArg, StringComparison.OrdinalIgnoreCase);
 
     private static HashSet<ProviderEntry> FindMaskedEntries(
         List<ProviderEntry> entries,
@@ -118,7 +127,8 @@ internal static class StrictModeDiagnosticsAnalyzer
         List<ProviderEntry> entries,
         HashSet<ProviderEntry> masked,
         ProviderEntry declarativeEntry,
-        int declarativeIndex)
+        int declarativeIndex,
+        bool documentSetsSampler)
     {
         var providers = new List<UnmaskedProvider>();
 
@@ -135,7 +145,8 @@ internal static class StrictModeDiagnosticsAnalyzer
             var keys = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
             foreach (var key in GetInScopeKeys(entry.Provider, includeEmptyValues: true))
             {
-                if (!entry.IsExposedThroughContainingChains(key))
+                // A sampler configured by the document takes precedence over the sampler environment variables.
+                if (!entry.IsExposedThroughContainingChains(key) || (documentSetsSampler && IsSamplerKey(key)))
                 {
                     continue;
                 }

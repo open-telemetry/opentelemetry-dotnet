@@ -4,6 +4,143 @@ This file contains highlights and announcements covering all components.
 For more details see `CHANGELOG.md` files maintained in the root source
 directory of each individual package.
 
+## 1.21.0
+
+Release details: [1.21.0](https://github.com/open-telemetry/opentelemetry-dotnet/releases/tag/core-1.21.0)
+
+* **Breaking change** Dropped support for `net8.0` and `net9.0`. The supported
+  .NET targets are now `net10.0`, `net11.0`, `net462` and `netstandard2.0`.
+* Added support for .NET 11.0, including enabling `ActivitySource`s from
+  configuration using the `Microsoft.Extensions.Diagnostics` tracing APIs
+  (for example, `services.AddTracing(b => b.AddConfiguration(section))`).
+  Activities from sources enabled this way are processed by the OpenTelemetry
+  `TracerProvider` registered through `AddOpenTelemetry().WithTracing()`.
+  This is not supported when targeting `net10.0`.
+* **Breaking change** When running on .NET on non-Windows platforms, creating an
+  OTLP exporter with the experimental disk retry feature enabled now throws an
+  `UnauthorizedAccessException` if the retry directory could be changed by
+  another user. The retry directory must be owned by the current user and must
+  not be writable by its group or by other users, and each directory and
+  symbolic link in its path must be owned by the current user or by root and
+  must not be writable by its group or by other users unless it has the sticky
+  bit set (such as `/tmp`). These checks can be disabled by setting
+  `OTEL_DOTNET_EXPERIMENTAL_OTLP_DISK_RETRY_CHECK_PERMISSIONS` to `false`.
+* **Breaking change** `OTEL_DIAGNOSTICS.json` now writes rolling
+  `otel-dotnet-*.log` files in the standard entry format instead of a circular
+  `{executable}.{pid}.log` file. `FileSize` is split evenly across two retained
+  files, `FormatMessage` is now ignored, and writes are asynchronous and may
+  drop entries when the bounded queue fills. Sinks configured through
+  providers, including those enabled through environment variables, override
+  the JSON configuration with a warning event. The preamble of each file now
+  includes configuration warnings and a redacted environment snapshot.
+* **Breaking change** The span status description (`Activity.StatusDescription`
+  or the `otel.status_description` tag) exported by the OTLP exporter is now
+  truncated to the configured span attribute value length limit (for example
+  `OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT`) instead of being exported in full.
+* The `EnvironmentVariableCarrier` APIs previously covered by `OTEL1005` are now
+  stable. Carrier snapshots now preserve environment variable names, preventing
+  extraction from non-normalized aliases and collisions with normalized names,
+  and follow the platform's case-sensitivity rules.
+* Added support for batching the metric points exported by
+  `PeriodicExportingMetricReader`. Set
+  `PeriodicExportingMetricReaderOptions.MaxExportBatchSize` (or the
+  `OTEL_METRIC_EXPORT_MAX_BATCH_SIZE` environment variable) to split the metric
+  points of each collection into batches of at most that many metric points.
+* Added `Sampler.Shutdown` and the overridable `Sampler.OnShutdown` so samplers
+  can release resources. `TracerProvider` now calls `Shutdown` on its sampler
+  when it is shut down or disposed, and `ParentBasedSampler` and
+  `AlwaysRecordSampler` call `Shutdown` on the samplers they delegate to.
+* `SelfDiagnosticsOptions` is now automatically bound from the
+  `OpenTelemetry:SelfDiagnostics` configuration section, when present.
+* `OpenTelemetryLoggerOptions` is now bound from the `Logging:OpenTelemetry`
+  configuration section using the configuration binding source generator
+  instead of reflection, making it fully trim and Native AOT compatible.
+* The OpenTelemetry providers are now initialized in
+  `IHostedLifecycleService.StartingAsync` instead of `IHostedService.StartAsync`
+  so that telemetry emitted by other hosted services during `StartingAsync` is
+  captured.
+* Updated the schema URL of resources created by the SDK and the host
+  environment resource detector to use OpenTelemetry Semantic Conventions
+  version `1.45.0`.
+* Improved traceparent extraction throughput on .NET.
+* Updated the `System.Diagnostics.DiagnosticSource` dependency to `11.0.0` for
+  all target frameworks.
+* Reduced allocations during `Accept` header negotiation in the Prometheus
+  exporters.
+* Attribute values implementing `IUtf8SpanFormattable` (.NET 10+) are now
+  formatted directly into the OTLP export buffer instead of through
+  `ToString()`.
+* The timeout passed to `MetricReader.Collect()` (for example by
+  `MeterProvider.ForceFlush()`), the `ExportTimeoutMilliseconds` of
+  `PeriodicExportingMetricReader` and the `ExporterTimeoutMilliseconds` of
+  `BatchExportProcessor<T>` are now made available to the exporter. The OTLP
+  exporter now cancels an export when the shorter of these timeouts and
+  `OtlpExporterOptions.TimeoutMilliseconds` elapses, counting the time taken to
+  serialize the telemetry, and fixed in-memory retries exceeding the export
+  timeout when a retried request stalls.
+* Redacted nonstandard OTLP endpoint paths in internal diagnostic logs.
+* Fixed `byte[]`-valued tags and attributes, array-valued tags containing `NaN`
+  or infinite values, nested arrays and maps, and arrays of string-valued
+  key/value pairs being exported incorrectly by the Console, OTLP, Zipkin and
+  Prometheus exporters. They are now exported as specified (for example
+  `byte[]` values are Base64-encoded and arrays and maps are JSON-encoded
+  instead of being written as a .NET type name).
+* Fixed the Prometheus exporters:
+  * Producing OpenMetrics scrape responses containing a `# UNIT` line whose unit
+    is not an underscore-separated suffix of the metric family name, which
+    caused Prometheus to reject the whole response. The line is now omitted.
+  * Producing scrape responses containing the same series more than once, or a
+    metric named like a sample generated for another metric, which caused
+    Prometheus to reject the whole response. Such series and metrics are now
+    dropped and a warning event is written.
+  * Triggering a separate metrics collection for each scrape that negotiates a
+    different response format within the
+    `ScrapeResponseCacheDurationMilliseconds` window.
+  * Scrape clients which stop reading their response delaying other scrapes
+    until `ScrapeResponseTimeoutMilliseconds` elapses.
+* Fixed a race where collecting a delta metric concurrently with the creation of
+  a new `MetricPoint` could lose the measurement or export the same series
+  twice in a single collection.
+* Fixed a race where collecting a cumulative metric concurrently with the
+  creation of a new `MetricPoint` could export a `MetricPoint` that was not yet
+  fully initialized, causing a `NullReferenceException` when enumerating `Tags`.
+* Fixed an exception when downscaling empty exponential histogram buckets after
+  a reset.
+* Fixed wildcard matching timeouts that could prevent configured source, meter,
+  legacy activity, or metric view patterns from matching, and a name with a
+  trailing line feed matching a wildcard pattern which does not end in a
+  wildcard.
+* Fixed `OTEL_RESOURCE_ATTRIBUTES` values being decoded as form data, which
+  changed a `+` to a space. Values are now only percent-decoded.
+* Fixed initialization failures in the SDK, the OTLP, Zipkin and Prometheus
+  exporters and host resource detection when environment variable access is
+  denied.
+* Fixed tracing callbacks continuing after provider shutdown or disposal on
+  older target frameworks.
+* Fixed `PeriodicExportingMetricReader` exporting a collection which was still
+  in progress after its exporter had been shut down, and not making its final
+  collection when `Shutdown()` was called before its background task had
+  started running on platforms where threading is not available.
+* Fixed `OTEL_EXPORTER_OTLP_HEADERS` (and the `Headers` option) being decoded
+  before it was split into headers, so that a percent-encoded `,` in a value
+  started a new header and encoded leading or trailing whitespace was removed.
+* Fixed the retry delay of an OTLP/gRPC response being ignored or misread for
+  oversized lengths, fields with an unexpected wire type, repeated fields and
+  unpadded Base64 `grpc-status-details-bin` trailers, and it is now ignored when
+  the status code in the details contradicts the `grpc-status` of the response.
+* Fixed unbounded OTLP resource serialization buffer growth and incorrect buffer
+  reuse after buffer allocation failures.
+* Fixed string attribute values truncated by an attribute value length limit
+  ending in half of a surrogate pair. The truncated value now ends before the
+  pair instead.
+* An `OutOfMemoryException` thrown while converting an attribute value to a
+  string is no longer swallowed and the attribute dropped; it now propagates.
+* Fixed a race in the self-diagnostics sink dispatcher where disposing it while
+  its pump thread was exiting could throw `ArgumentNullException` on .NET
+  Framework.
+* Fixed a dangling comma in a redacted `OTEL_RESOURCE_ATTRIBUTES` value in the
+  self-diagnostics environment snapshot when it contained empty entries.
+
 ## 1.20.1
 
 Release details: [1.20.1](https://github.com/open-telemetry/opentelemetry-dotnet/releases/tag/core-1.20.1)

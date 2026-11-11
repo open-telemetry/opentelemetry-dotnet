@@ -777,8 +777,8 @@ public sealed class DeclarativeConfigurationDocumentAccessorTests
                 - simple:
                     exporter:
                       console:
-              sampler:
-                always_on:
+              limits:
+                attribute_count_limit: 10
             """);
         var accessor = new DeclarativeConfigurationDocumentAccessor(new FilePath(yamlFile.Path));
 
@@ -786,7 +786,7 @@ public sealed class DeclarativeConfigurationDocumentAccessorTests
         var document = accessor.GetDocument();
 
         var unapplied = Assert.Single(document.UnappliedProperties);
-        Assert.Equal("tracer_provider.sampler", unapplied.Path);
+        Assert.Equal("tracer_provider.limits", unapplied.Path);
         Assert.DoesNotContain(listener.Messages, e => e.EventId is ConfiguredPropertyNotAppliedEventId or DevelopmentPropertyNotAppliedEventId);
     }
 

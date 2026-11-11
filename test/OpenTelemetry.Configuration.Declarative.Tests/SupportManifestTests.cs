@@ -222,15 +222,13 @@ public sealed class SupportManifestTests
             """
             file_format: "1.2"
             tracer_provider:
-              sampler:
-                parent_based:
-                  root: &sampler
-                    always_on:
-                  remote_parent_sampled: *sampler
+              limits: &limits
+                attribute_count_limit: 10
+            attribute_limits: *limits
             """,
-            "tracer_provider.sampler.parent_based.local_parent_sampled");
+            "tracer_provider.processors");
 
-        Assert.Equal(["tracer_provider.sampler.parent_based.root"], unapplied.Select(p => p.Path));
+        Assert.Equal(["tracer_provider.limits"], unapplied.Select(p => p.Path));
     }
 
     [Theory]
@@ -274,15 +272,13 @@ public sealed class SupportManifestTests
             """
             file_format: "1.2"
             tracer_provider:
-              sampler:
-                parent_based:
-                  root: &sampler
-                    always_on:
-                  remote_parent_sampled: *sampler
+              limits: &limits
+                attribute_count_limit: 10
+            attribute_limits: *limits
             """,
-            "tracer_provider.sampler.parent_based.root");
+            "tracer_provider.limits");
 
-        Assert.Equal(["tracer_provider.sampler.parent_based.remote_parent_sampled"], unapplied.Select(p => p.Path));
+        Assert.Equal(["attribute_limits"], unapplied.Select(p => p.Path));
     }
 
     [Fact]
