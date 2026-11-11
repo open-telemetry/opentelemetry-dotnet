@@ -12,6 +12,9 @@ Notes](../../RELEASENOTES.md).
 * Add support for .NET 11.0.
   ([#6899](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6899))
 
+* Updated OpenTelemetry core component version(s) to `1.21.0`.
+  ([#8119](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8119))
+
 ## 1.20.1-beta.1
 
 Released 2026-Oct-20
