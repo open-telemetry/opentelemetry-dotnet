@@ -46,7 +46,7 @@ public class InMemoryExporterTests
 
         // TEST 3: Verify first exported metric is unchanged
         // MetricPoint.LongValue for the first exported metric should still be 10
-        Assert.Equal(10, singleMetricPoint.GetSumLong());
+        Assert.Equal(10, Assert.Single(metric1.MetricPoints).GetSumLong());
     }
 
     [Fact]
