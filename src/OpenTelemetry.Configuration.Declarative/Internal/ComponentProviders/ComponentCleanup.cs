@@ -27,7 +27,7 @@ internal static class ComponentCleanup
         }
         catch (Exception ex)
         {
-            OpenTelemetryDeclarativeConfigurationEventSource.Log.ComponentCleanupFailed(component.GetType().ToString(), ex);
+            OpenTelemetryDeclarativeConfigurationEventSource.Log.ComponentCleanupFailed(component.GetType().FullName ?? component.GetType().Name, ex);
         }
     }
 

@@ -44,7 +44,7 @@ internal sealed class DeclarativeSamplerConfigurationApplier : IConfigureTracerP
                 sampler.Path,
                 sampler.Position.Line,
                 sampler.Position.Column,
-                selected.GetType().ToString());
+                selected.GetType().FullName ?? selected.GetType().Name);
 
             return selected;
         });
