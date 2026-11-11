@@ -8,7 +8,7 @@ using OpenTelemetry.Trace;
 namespace OpenTelemetry.Configuration.Declarative;
 
 /// <summary>
-/// Creates the samplers a document names, at any depth.
+/// Creates the samplers named by a document, at any depth.
 /// </summary>
 internal static class SamplerFactory
 {
@@ -28,7 +28,7 @@ internal static class SamplerFactory
 
         if (!registry.Contains<Sampler>(component.Name))
         {
-            throw BindingHelpers.CreateException(component.Path, component.Position, "is a sampler that this package does not support.");
+            throw BindingHelpers.CreateException(component.Path, component.Position, "is a sampler that is not supported by declarative configuration.");
         }
 
         return registry.Create<Sampler>(component.Name, component.Properties);

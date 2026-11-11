@@ -90,8 +90,8 @@ internal static class TracerProviderConfigurationApplier
             // Clean up components not yet owned by the provider, preserving the original failure.
             foreach (var processor in processors)
             {
-                ComponentCleanup.RunAndLogFailure(processor, () => processor.Shutdown(0));
-                ComponentCleanup.RunAndLogFailure(processor, processor.Dispose);
+                ComponentCleanup.InvokeAndLogFailure(processor, () => processor.Shutdown(0));
+                ComponentCleanup.InvokeAndLogFailure(processor, processor.Dispose);
             }
 
             throw;
@@ -162,7 +162,7 @@ internal static class TracerProviderConfigurationApplier
         }
         catch
         {
-            ComponentCleanup.RunAndLogFailure(exporter, exporter.Dispose);
+            ComponentCleanup.InvokeAndLogFailure(exporter, exporter.Dispose);
             throw;
         }
     }

@@ -324,14 +324,15 @@ column is thrown for:
   in `UseDeclarativeConfiguration()`.
 - A `sampler` entry that does not name exactly one sampler. This fails in
   `UseDeclarativeConfiguration()`.
-- Invalid settings inside a sampler, such as a `ratio` outside 0 to 1, an
-  `always_record` sampler without a `root`, or a `parent_based` child that does
-  not name exactly one sampler. These fail when the tracer provider is built.
-- Valid `tracer_provider` settings that this package does not support. These
-  fail when the tracer provider is built, in one exception that lists them all.
-  A sampler nested in `parent_based` or `always_record` that this package
-  cannot build fails on its own, at the point the sampler is created. See
-  [Supported settings](#supported-settings).
+- Invalid settings inside a sampler, such as a `ratio` value outside of the range
+  0 to 1 inclusive, an `always_record` sampler without a `root`, or a
+  `parent_based` child that does not name exactly one sampler. These fail when
+  the tracer provider is built.
+- Valid `tracer_provider` settings that are not supported by declarative
+  configuration. These fail when the tracer provider is built, in one exception
+  that lists them all. A sampler nested in `parent_based` or `always_record`
+  that is not supported fails on its own, at the point the sampler is created.
+  See [Supported settings](#supported-settings).
 
 ### What is logged
 

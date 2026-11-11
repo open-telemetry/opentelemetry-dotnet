@@ -56,10 +56,10 @@ internal static class StrictModeDiagnosticsAnalyzer
         return Analysis.Available(
             declarative.FilePath.DisplayPath,
             FindIgnoredKeys(entries, masked, declarativeEntry, declarative),
-            FindUnmaskedProviders(entries, masked, declarativeEntry, declarativeIndex, SetsSampler(declarative.Accessor.GetDocument())));
+            FindUnmaskedProviders(entries, masked, declarativeEntry, declarativeIndex, DocumentHasSampler(declarative.Accessor.GetDocument())));
     }
 
-    private static bool SetsSampler(DeclarativeConfigurationDocument document) =>
+    private static bool DocumentHasSampler(DeclarativeConfigurationDocument document) =>
         document.Properties.TryGetValue(YamlKeys.TracerProvider, out var tracerProvider)
         && tracerProvider.Kind == ConfigValueKind.Mapping
         && tracerProvider.AsMapping().TryGetValue(YamlKeys.Sampler, out _);

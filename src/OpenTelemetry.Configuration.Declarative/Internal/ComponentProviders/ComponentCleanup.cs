@@ -19,7 +19,7 @@ internal static class ComponentCleanup
     /// </summary>
     /// <param name="component">The component being cleaned up, named in the log entry.</param>
     /// <param name="cleanup">The cleanup to run.</param>
-    internal static void RunAndLogFailure(object component, Action cleanup)
+    internal static void InvokeAndLogFailure(object component, Action cleanup)
     {
         try
         {
@@ -37,11 +37,11 @@ internal static class ComponentCleanup
     /// <param name="sampler">The sampler to release.</param>
     internal static void ShutDownAndDispose(Sampler sampler)
     {
-        RunAndLogFailure(sampler, () => sampler.Shutdown(0));
+        InvokeAndLogFailure(sampler, () => sampler.Shutdown(0));
 
         if (sampler is IDisposable disposable)
         {
-            RunAndLogFailure(sampler, disposable.Dispose);
+            InvokeAndLogFailure(sampler, disposable.Dispose);
         }
     }
 }
