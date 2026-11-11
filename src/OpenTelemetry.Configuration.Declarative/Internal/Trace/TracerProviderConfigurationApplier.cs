@@ -57,8 +57,7 @@ internal static class TracerProviderConfigurationApplier
     {
         Guard.ThrowIfNull(serviceProvider);
 
-        var accessor = serviceProvider.GetService<DeclarativeConfigurationDocumentAccessor>();
-        if (accessor is null)
+        if (serviceProvider.GetService<DeclarativeConfigurationDocumentAccessor>() is not { } accessor)
         {
             return [];
         }
@@ -83,7 +82,7 @@ internal static class TracerProviderConfigurationApplier
         {
             foreach (var entry in configuration.Processors)
             {
-                processors.Add(CreateProcessor(serviceProvider, accessor.FilePath, entry, registry));
+                processors.Add(CreateProcessor(accessor.FilePath, entry, registry));
             }
         }
         catch
@@ -91,8 +90,8 @@ internal static class TracerProviderConfigurationApplier
             // Clean up components not yet owned by the provider, preserving the original failure.
             foreach (var processor in processors)
             {
-                CleanUp(processor, () => processor.Shutdown(0));
-                CleanUp(processor, processor.Dispose);
+                ComponentCleanup.RunAndLogFailure(processor, () => processor.Shutdown(0));
+                ComponentCleanup.RunAndLogFailure(processor, processor.Dispose);
             }
 
             throw;
@@ -139,6 +138,11 @@ internal static class TracerProviderConfigurationApplier
     {
         var unsupported = new List<(ConfigValuePosition Position, string Message)>();
 
+        if (configuration.Sampler is { } sampler && !registry.Contains<Sampler>(sampler.Name))
+        {
+            unsupported.Add((sampler.Position, $"{YamlPath.Describe(sampler.Path, sampler.Position)} is a sampler"));
+        }
+
         foreach (var property in document.UnappliedProperties)
         {
             if (SupportManifest.IsReportedByTracerProviderBuild(property))
@@ -158,8 +162,7 @@ internal static class TracerProviderConfigurationApplier
         {
             if (entry.Exporter is { } exporter)
             {
-                if (BuiltInComponentProviders.FindSpanExporter(exporter.Name) is null
-                    && !registry.Contains<BaseExporter<Activity>>(exporter.Name))
+                if (!registry.Contains<BaseExporter<Activity>>(exporter.Name))
                 {
                     unsupported.Add((exporter.Position, $"{YamlPath.Describe(exporter.Path, exporter.Position)} is a span exporter"));
                 }
@@ -185,7 +188,6 @@ internal static class TracerProviderConfigurationApplier
     }
 
     private static BaseProcessor<Activity> CreateProcessor(
-        IServiceProvider serviceProvider,
         FilePath filePath,
         SpanProcessorEntry entry,
         PluginComponentProviderRegistry registry)
@@ -197,7 +199,7 @@ internal static class TracerProviderConfigurationApplier
 
         // The processor owns the exporter; it is disposed here only if the processor is not created.
 #pragma warning disable CA2000 // Dispose objects before losing scope
-        var exporter = CreateExporter(serviceProvider, exporterConfiguration, registry);
+        var exporter = registry.Create<BaseExporter<Activity>>(exporterConfiguration.Name, exporterConfiguration.Properties);
 #pragma warning restore CA2000
         try
         {
@@ -217,28 +219,8 @@ internal static class TracerProviderConfigurationApplier
         }
         catch
         {
-            CleanUp(exporter, exporter.Dispose);
+            ComponentCleanup.RunAndLogFailure(exporter, exporter.Dispose);
             throw;
-        }
-    }
-
-    private static BaseExporter<Activity> CreateExporter(
-        IServiceProvider serviceProvider,
-        ComponentConfiguration exporter,
-        PluginComponentProviderRegistry registry) =>
-            BuiltInComponentProviders.FindSpanExporter(exporter.Name) is { } builtIn
-                ? builtIn.Create(exporter.Properties, serviceProvider)
-                : registry.Create<BaseExporter<Activity>>(exporter.Name, exporter.Properties);
-
-    private static void CleanUp(IDisposable component, Action cleanup)
-    {
-        try
-        {
-            cleanup();
-        }
-        catch (Exception ex)
-        {
-            OpenTelemetryDeclarativeConfigurationEventSource.Log.ComponentCleanupFailed(component.GetType().ToString(), ex);
         }
     }
 }

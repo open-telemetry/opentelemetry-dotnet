@@ -732,36 +732,41 @@ public sealed class DeclarativeTracerProviderTests
     }
 
     [Fact]
-    public void ConsoleExporter_IsCreatedByBuiltInProvider()
+    public void ConsoleExporter_IsCreatedThroughTheRegistry()
     {
-        var provider = Assert.IsType<ConsoleSpanExporterProvider>(BuiltInComponentProviders.FindSpanExporter("console"));
-
-        Assert.Same(ConsoleSpanExporterProvider.Instance, provider);
-        Assert.Null(BuiltInComponentProviders.FindSpanExporter("otlp_http"));
-
-        using var services = new ServiceCollection().BuildServiceProvider();
-        using var exporter = provider.Create(ConfigProperties.Empty, services);
+        using var yamlFile = CreateDocument(SimpleProcessor("console"));
+        using var services = CreateServices(yamlFile.Path);
+        var registry = services.GetRequiredService<PluginComponentProviderRegistry>();
+        using var exporter = registry.Create<BaseExporter<Activity>>("console", ConfigProperties.Empty);
 
         Assert.IsType<ConsoleActivityExporter>(exporter);
     }
 
-    [Fact]
-    public void ConsoleExporter_RegisteredProviderDoesNotReplaceBuiltIn()
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void ConsoleExporter_ConflictingRegisteredProvider_Throws(bool registerBefore)
     {
-        var sourceName = NewSourceName();
-        var exported = new List<Activity>();
-
         using var yamlFile = CreateDocument(SimpleProcessor("console"));
+        var services = new ServiceCollection();
+        var builder = services.AddOpenTelemetry();
+        var provider = new MemoryExporterProvider([]);
 
-        using var services = Build(
-            RegistrationPath.ServiceCollection,
-            yamlFile.Path,
-            s => s.AddPluginComponentProvider("console", new MemoryExporterProvider(exported)));
-        _ = services.Provider.GetRequiredService<TracerProvider>();
+        InvalidOperationException exception;
+        if (registerBefore)
+        {
+            services.AddPluginComponentProvider("console", provider);
+            exception = Assert.Throws<InvalidOperationException>(() => builder.UseDeclarativeConfiguration(yamlFile.Path));
+        }
+        else
+        {
+            builder.UseDeclarativeConfiguration(yamlFile.Path);
+            exception = Assert.Throws<InvalidOperationException>(() => services.AddPluginComponentProvider("console", provider));
+        }
 
-        StartAndStop(sourceName);
-
-        Assert.Empty(exported);
+        Assert.Contains("console", exception.Message, StringComparison.Ordinal);
+        Assert.Contains(nameof(ConsoleSpanExporterProvider), exception.Message, StringComparison.Ordinal);
+        Assert.Contains(nameof(MemoryExporterProvider), exception.Message, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -1017,13 +1022,13 @@ public sealed class DeclarativeTracerProviderTests
                     exporter:
                       otlp_http:
               sampler:
-                always_on:
+                x_vendor_sampler:
               limits:
                 attribute_count_limit: 10
             """);
 
         var exporter = exception.Message.IndexOf("'tracer_provider.processors[0].batch.exporter.otlp_http'", StringComparison.Ordinal);
-        var sampler = exception.Message.IndexOf("'tracer_provider.sampler' (line 7, column 3) is a Stable setting", StringComparison.Ordinal);
+        var sampler = exception.Message.IndexOf("'tracer_provider.sampler.x_vendor_sampler' (line 8, column 5) is a sampler", StringComparison.Ordinal);
         var limits = exception.Message.IndexOf("'tracer_provider.limits' (line 9, column 3) is a Stable setting", StringComparison.Ordinal);
 
         Assert.True(
