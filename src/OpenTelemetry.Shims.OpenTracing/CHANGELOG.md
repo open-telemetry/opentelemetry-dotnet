@@ -6,6 +6,10 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+## 1.21.0-beta.1
+
+Released 2026-Nov-11
+
 * **Breaking Change** Dropped support for `net8.0` and `net9.0`.
   ([#6899](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6899))
 
