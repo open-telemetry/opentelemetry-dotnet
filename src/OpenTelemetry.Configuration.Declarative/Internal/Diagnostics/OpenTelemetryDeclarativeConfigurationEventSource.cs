@@ -219,4 +219,11 @@ internal sealed class OpenTelemetryDeclarativeConfigurationEventSource : EventSo
         Message = "Declarative config: failed to clean up component '{0}' after tracer provider construction failed: {1}",
         Level = EventLevel.Error)]
     public void ComponentCleanupFailed(string componentType, string error) => this.WriteEvent(48, componentType, error);
+
+    [Event(
+        49,
+        Message = "Declarative config: the sampler in '{0}' ('{1}', line {2}, column {3}) is not used, because a sampler set in code takes precedence. The sampler in use is of type '{4}'.",
+        Level = EventLevel.Warning)]
+    public void SamplerReplacedByCode(string filePath, string propertyPath, long line, long column, string replacingSamplerType) =>
+        this.WriteEvent(49, filePath, propertyPath, line, column, replacingSamplerType);
 }

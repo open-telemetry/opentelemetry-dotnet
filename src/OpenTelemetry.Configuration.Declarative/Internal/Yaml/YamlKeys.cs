@@ -35,6 +35,18 @@ internal static class YamlKeys
     internal const string Tracers = "tracers";
     internal const string Config = "config";
     internal const string Enabled = "enabled";
+    internal const string Sampler = "sampler";
+    internal const string AlwaysOn = "always_on";
+    internal const string AlwaysOff = "always_off";
+    internal const string AlwaysRecord = "always_record";
+    internal const string ParentBased = "parent_based";
+    internal const string TraceIdRatioBased = "trace_id_ratio_based";
+    internal const string Root = "root";
+    internal const string RemoteParentSampled = "remote_parent_sampled";
+    internal const string RemoteParentNotSampled = "remote_parent_not_sampled";
+    internal const string LocalParentSampled = "local_parent_sampled";
+    internal const string LocalParentNotSampled = "local_parent_not_sampled";
+    internal const string Ratio = "ratio";
 
     /// <summary>
     /// Key names the schema marks as under development (with the <c>/development</c> suffix).
