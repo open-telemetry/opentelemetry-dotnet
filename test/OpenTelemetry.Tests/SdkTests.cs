@@ -23,18 +23,8 @@ public class SdkTests
     public void DefaultTextMapPropagatorIsInstalledAsTheGlobalDefault()
     {
         var propagator = Sdk.DefaultTextMapPropagator;
-        var original = Propagators.DefaultTextMapPropagator;
 
-        try
-        {
-            Sdk.SetDefaultTextMapPropagator(propagator);
-
-            Assert.Same(propagator, Propagators.DefaultTextMapPropagator);
-        }
-        finally
-        {
-            Sdk.SetDefaultTextMapPropagator(original);
-        }
+        Assert.Same(propagator, Propagators.DefaultTextMapPropagator);
     }
 
     [Fact]
