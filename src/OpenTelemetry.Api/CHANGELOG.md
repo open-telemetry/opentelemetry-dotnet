@@ -12,6 +12,14 @@ Notes](../../RELEASENOTES.md).
   startup to temporarily restore insecure legacy sharing.
   ([#8042](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8042))
 
+## 1.21.0
+
+Released 2026-Nov-11
+
+* Update `System.Diagnostics.DiagnosticSource` dependency to `11.0.0`
+  for all target frameworks.
+  ([#8066](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8066))
+
 ## 1.21.0-rc.2
 
 Released 2026-Nov-09

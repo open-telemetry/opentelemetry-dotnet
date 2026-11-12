@@ -25,8 +25,8 @@ public class LoggerProviderBuilderExtensionsTests
         var registrationCount = builder.InvokeRegistrations();
 
         Assert.Equal(1, registrationCount);
-        Assert.Single(builder.Instrumentation);
-        Assert.Equal(instrumentation, builder.Instrumentation[0]);
+        var instrumentationItem = Assert.Single(builder.Instrumentation);
+        Assert.Equal(instrumentation, instrumentationItem);
     }
 
     [Fact]
@@ -42,8 +42,8 @@ public class LoggerProviderBuilderExtensionsTests
         var registrationCount = builder.InvokeRegistrations();
 
         Assert.Equal(1, registrationCount);
-        Assert.Single(builder.Instrumentation);
-        Assert.Equal(instrumentation, builder.Instrumentation[0]);
+        var instrumentationItem = Assert.Single(builder.Instrumentation);
+        Assert.Equal(instrumentation, instrumentationItem);
     }
 
     [Fact]
@@ -64,8 +64,8 @@ public class LoggerProviderBuilderExtensionsTests
         var registrationCount = builder.InvokeRegistrations();
 
         Assert.Equal(1, registrationCount);
-        Assert.Single(builder.Instrumentation);
-        Assert.Equal(instrumentation, builder.Instrumentation[0]);
+        var instrumentationItem = Assert.Single(builder.Instrumentation);
+        Assert.Equal(instrumentation, instrumentationItem);
     }
 
     [Fact]
@@ -87,8 +87,8 @@ public class LoggerProviderBuilderExtensionsTests
         var registrationCount = builder.InvokeRegistrations();
 
         Assert.Equal(1, registrationCount);
-        Assert.Single(builder.Instrumentation);
-        Assert.Equal(instrumentation, builder.Instrumentation[0]);
+        var instrumentationItem = Assert.Single(builder.Instrumentation);
+        Assert.Equal(instrumentation, instrumentationItem);
     }
 
     [Fact]
@@ -122,8 +122,8 @@ public class LoggerProviderBuilderExtensionsTests
         var registrationCount = builder.InvokeRegistrations();
 
         Assert.Equal(1, registrationCount);
-        Assert.Single(builder.Instrumentation);
-        Assert.True(ReferenceEquals(instrumentation, builder.Instrumentation[0]));
+        var instrumentationItem = Assert.Single(builder.Instrumentation);
+        Assert.True(ReferenceEquals(instrumentation, instrumentationItem));
     }
 
     private sealed class TestInstrumentation

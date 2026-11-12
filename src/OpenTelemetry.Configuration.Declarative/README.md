@@ -164,11 +164,13 @@ application.
 | YAML field | Effect |
 | --- | --- |
 | `disabled` | Disables the OpenTelemetry SDK when `true` |
+| `log_level` | Sets the minimum level of the SDK's self-diagnostics (see [`log_level`](#log_level)) |
 | `resource.attributes` | Adds typed resource attributes to all signals |
 | `resource.attributes_list` | Adds resource attributes from a `key=value` list |
 | `resource.schema_url` | Sets a resource schema URL, subject to merge rules below |
 | `tracer_provider` | Enables tracing |
 | `tracer_provider.processors` | Adds `simple` and `batch` span processors with the `console` exporter |
+| `tracer_provider.sampler` | Sets the sampler: `always_on`, `always_off`, `always_record`, `trace_id_ratio_based` or `parent_based` |
 | `tracer_provider.tracer_configurator/development` | Selects which `ActivitySource` names to listen to |
 | `tracer_provider.id_generator` | Supports `random`, the SDK's default |
 
@@ -209,6 +211,24 @@ building the tracer provider rather than ignoring the settings. See
 
 Only the outermost unsupported property is reported, without its nested
 properties. Non-empty lists are reported per item.
+
+### `log_level`
+
+`log_level` sets the minimum level of the SDK's self-diagnostics. It does not
+enable output; configure an output separately, for example with
+`OTEL_DOTNET_SELF_DIAGNOSTICS_SINKS`.
+
+Accepted values are lowercase `trace`, `debug`, `info`, `warn`, `error` and
+`fatal`, optionally suffixed with `2`, `3` or `4`. Suffixed values map to the
+same .NET log level as their base value; `fatal` maps to `Critical`. Other
+values, including `none`, are rejected.
+
+Other schema-defined SDK settings (e.g. `tracer_provider`, `propagator`) are
+retained but not applied. Unsupported stable settings are logged as errors and
+experimental settings as warnings when the document is loaded. Only the
+outermost unsupported property is reported, without its nested properties.
+Non-empty sequences are reported per item. Loading still succeeds, although
+structurally invalid content can fail configuration loading.
 
 `instrumentation/development` and `distribution` are retained for consumers
 through `DeclarativeConfigurationDocument.Properties`. The SDK does not
@@ -255,6 +275,27 @@ both configure the same tracer provider.
   replaced by 1 millisecond with a warning, because the SDK requires a delay.
 - **Exporter.** `console`, with default options. Code and `IConfiguration`
   cannot change the options of this exporter.
+- **Sampler.** `always_on`, `always_off`, `always_record`,
+  `trace_id_ratio_based` and `parent_based`, nested to any depth:
+
+  ```yaml
+  tracer_provider:
+    processors:
+      - simple:
+          exporter:
+            console:
+    sampler:
+      parent_based:
+        root:
+          trace_id_ratio_based:
+            ratio: 0.25
+  ```
+
+  An omitted or null `ratio` is 1. An omitted `parent_based` child uses the
+  specification's default: `always_on` for `root`, `remote_parent_sampled` and
+  `local_parent_sampled`, and `always_off` for the two `not_sampled` children.
+  When `sampler` is omitted, the SDK default applies, a `parent_based` sampler
+  with an `always_on` root.
 
 ### Adding tracing settings in code
 
@@ -267,6 +308,12 @@ Code still adds to the pipeline:
   `UseDeclarativeConfiguration()`. Adding a console exporter in both code and
   YAML prints each span twice.
 
+### Precedence
+
+Code wins over the document for the sampler, wherever it is called. A
+`SetSampler` call replaces the document's sampler whether it comes before or
+after `UseDeclarativeConfiguration()`.
+
 ### What fails at start-up
 
 A `DeclarativeConfigurationException` naming the setting, its line and its
@@ -275,8 +322,16 @@ column is thrown for:
 - Invalid `tracer_provider` settings, such as a missing or empty `processors`
   list or invalid processor, exporter or source-selection entries. These fail
   in `UseDeclarativeConfiguration()`.
-- Valid `tracer_provider` settings that this package does not support. These
-  fail when the tracer provider is built, in one exception that lists them all.
+- A `sampler` entry that does not name exactly one sampler. This fails in
+  `UseDeclarativeConfiguration()`.
+- Invalid settings inside a sampler, such as a `ratio` value outside of the range
+  0 to 1 inclusive, an `always_record` sampler without a `root`, or a
+  `parent_based` child that does not name exactly one sampler. These fail when
+  the tracer provider is built.
+- Valid `tracer_provider` settings that are not supported by declarative
+  configuration. These fail when the tracer provider is built, in one exception
+  that lists them all. A sampler nested in `parent_based` or `always_record`
+  that is not supported fails on its own, at the point the sampler is created.
   See [Supported settings](#supported-settings).
 
 ### What is logged
@@ -458,6 +513,8 @@ Points to be aware of:
 - Full schema validation is not implemented. Tracing setup checks component
   entries, required processor/exporter settings, batch values and
   source-selection settings; not every value in the document is validated.
+- Property names are validated against the schema, but value types, ranges and
+  required properties are not, apart from `log_level`.
 - Some components read environment variables directly and are not covered by
   strict mode: including options created with a public
   parameterless constructor in application code (for example

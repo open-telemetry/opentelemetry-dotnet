@@ -295,12 +295,17 @@ internal static class SelfDiagnosticsEnvironmentVariablePolicy
             var separator = remaining.IndexOf(',');
             var pair = separator < 0 ? remaining : remaining.Slice(0, separator);
 
-            if (!first)
+            // Empty pairs carry no content, so skip them rather than emit a dangling separator.
+            if (!pair.IsEmpty)
             {
-                builder.Append(',');
-            }
+                if (!first)
+                {
+                    builder.Append(',');
+                }
 
-            AppendResourceAttribute(builder, value, index, pair);
+                AppendResourceAttribute(builder, value, index, pair);
+                first = false;
+            }
 
             if (separator < 0)
             {
@@ -309,7 +314,6 @@ internal static class SelfDiagnosticsEnvironmentVariablePolicy
 
             index += separator + 1;
             remaining = remaining.Slice(separator + 1);
-            first = false;
         }
 
         return StringBuilderCache.GetStringAndRelease(builder);
@@ -317,11 +321,6 @@ internal static class SelfDiagnosticsEnvironmentVariablePolicy
 
     private static void AppendResourceAttribute(StringBuilder builder, string value, int index, ReadOnlySpan<char> pair)
     {
-        if (pair.IsEmpty)
-        {
-            return;
-        }
-
         var equals = pair.IndexOf('=');
         if (equals < 0)
         {

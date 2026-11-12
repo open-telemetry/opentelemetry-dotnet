@@ -50,18 +50,9 @@ public sealed class OtlpExporterOptionsTests : IDisposable
 
     [Theory]
     [ClassData(typeof(OtlpSpecConfigDefinitionTests))]
-    public void OtlpExporterOptions_EnvironmentVariableOverride(object testDataObject)
+    public void OtlpExporterOptions_EnvironmentVariableOverride(string testDataName)
     {
-#if NET
-        Assert.NotNull(testDataObject);
-#else
-        if (testDataObject == null)
-        {
-            throw new ArgumentNullException(nameof(testDataObject));
-        }
-#endif
-        var testData = testDataObject as OtlpSpecConfigDefinitionTests.TestData;
-        Assert.NotNull(testData);
+        var testData = OtlpSpecConfigDefinitionTests.GetTestData(testDataName);
 
         testData.SetEnvVars();
 
@@ -72,18 +63,9 @@ public sealed class OtlpExporterOptionsTests : IDisposable
 
     [Theory]
     [ClassData(typeof(OtlpSpecConfigDefinitionTests))]
-    public void OtlpExporterOptions_UsingIConfiguration(object testDataObject)
+    public void OtlpExporterOptions_UsingIConfiguration(string testDataName)
     {
-#if NET
-        Assert.NotNull(testDataObject);
-#else
-        if (testDataObject == null)
-        {
-            throw new ArgumentNullException(nameof(testDataObject));
-        }
-#endif
-        var testData = testDataObject as OtlpSpecConfigDefinitionTests.TestData;
-        Assert.NotNull(testData);
+        var testData = OtlpSpecConfigDefinitionTests.GetTestData(testDataName);
 
         var configuration = testData.ToConfiguration();
 

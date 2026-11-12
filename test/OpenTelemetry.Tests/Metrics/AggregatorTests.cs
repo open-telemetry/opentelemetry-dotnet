@@ -440,8 +440,7 @@ public class AggregatorTests
             metricPoints.Add(mp);
         }
 
-        Assert.Single(metricPoints);
-        var metricPoint = metricPoints[0];
+        var metricPoint = Assert.Single(metricPoints);
 
         var count = metricPoint.GetHistogramCount();
         var sum = metricPoint.GetHistogramSum();
@@ -585,8 +584,7 @@ public class AggregatorTests
             metricPoints.Add(mp);
         }
 
-        Assert.Single(metricPoints);
-        var metricPoint = metricPoints[0];
+        var metricPoint = Assert.Single(metricPoints);
 
         // After a single measurement there will not have been a scale down.
         // Scale will equal MaxScale.

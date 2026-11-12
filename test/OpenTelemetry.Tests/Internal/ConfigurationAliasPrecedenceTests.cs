@@ -122,7 +122,7 @@ public class ConfigurationAliasPrecedenceTests
     {
         var section = CreateBindableSection(BuildConfiguration(($"{SectionPath}:Mode", "fast")));
 
-        Assert.Equal(SectionPath, Assert.IsAssignableFrom<IConfigurationSection>(section).Path);
+        Assert.Equal(SectionPath, Assert.IsType<IConfigurationSection>(section, exactMatch: false).Path);
         Assert.Equal($"{SectionPath}:Mode", section.GetSection("Mode").Path);
     }
 

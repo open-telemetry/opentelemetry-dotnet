@@ -36,14 +36,15 @@ public sealed class SupportManifestTests
     }
 
     [Fact]
-    public void EvaluateUnapplied_Scalar_IsReported()
+    public void EvaluateUnapplied_Mapping_IsReported()
     {
         var unapplied = Assert.Single(Evaluate("""
             file_format: "1.2"
-            log_level: debug
+            attribute_limits:
+              attribute_count_limit: 128
             """));
 
-        Assert.Equal(new("log_level", SchemaStability.Stable, new(2, 1)), unapplied);
+        Assert.Equal(new("attribute_limits", SchemaStability.Stable, new(2, 1)), unapplied);
     }
 
     [Fact]
@@ -221,15 +222,13 @@ public sealed class SupportManifestTests
             """
             file_format: "1.2"
             tracer_provider:
-              sampler:
-                parent_based:
-                  root: &sampler
-                    always_on:
-                  remote_parent_sampled: *sampler
+              limits: &limits
+                attribute_count_limit: 10
+            attribute_limits: *limits
             """,
-            "tracer_provider.sampler.parent_based.local_parent_sampled");
+            "tracer_provider.processors");
 
-        Assert.Equal(["tracer_provider.sampler.parent_based.root"], unapplied.Select(p => p.Path));
+        Assert.Equal(["tracer_provider.limits"], unapplied.Select(p => p.Path));
     }
 
     [Theory]
@@ -273,15 +272,13 @@ public sealed class SupportManifestTests
             """
             file_format: "1.2"
             tracer_provider:
-              sampler:
-                parent_based:
-                  root: &sampler
-                    always_on:
-                  remote_parent_sampled: *sampler
+              limits: &limits
+                attribute_count_limit: 10
+            attribute_limits: *limits
             """,
-            "tracer_provider.sampler.parent_based.root");
+            "tracer_provider.limits");
 
-        Assert.Equal(["tracer_provider.sampler.parent_based.remote_parent_sampled"], unapplied.Select(p => p.Path));
+        Assert.Equal(["attribute_limits"], unapplied.Select(p => p.Path));
     }
 
     [Fact]

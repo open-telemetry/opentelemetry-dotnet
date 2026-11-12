@@ -74,6 +74,16 @@ public class FileBlob : PersistentBlob
 
     protected override bool OnTryWriteSpan(ReadOnlySpan<byte> buffer, int leasePeriodMilliseconds)
     {
+        // A blob that is larger than the maximum size of the storage is never read, so it is rejected before the
+        // content of an existing blob is replaced, as otherwise the blob would be left with content that is unreadable.
+        if (this.directorySizeTracker is { } tracker && buffer.Length > tracker.MaxSizeInBytes)
+        {
+            PersistentStorageEventSource.Log.CouldNotWriteFileBlob(
+                this.FullPath,
+                new IOException($"The content of {buffer.Length} bytes is larger than the maximum size of the storage of {tracker.MaxSizeInBytes} bytes."));
+            return false;
+        }
+
         // If the blob has already been written, its content is replaced. Any leases are removed from its name
         // first, so that leases are never nested and the existing blob is not left behind alongside the new one.
         var released = PersistentStorageHelper.RemoveLeases(this.FullPath);

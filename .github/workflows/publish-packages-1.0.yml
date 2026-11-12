@@ -70,11 +70,11 @@ jobs:
         "epoch=$(git log -1 --pretty=%ct)" >> ${env:GITHUB_OUTPUT}
 
     - name: Setup .NET
-      uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+      uses: actions/setup-dotnet@0f4a354dd5547a28c70b7853dbd95d5b67886e73 # v6.1.0
       id: setup-dotnet
 
     - name: Install Cosign
-      uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 # v4.1.2
+      uses: sigstore/cosign-installer@756fe2d284c7292c4e9b62c8a28f1e5629c59532 # v4.1.3
 
     - name: dotnet restore
       run: dotnet restore ./build/OpenTelemetry.proj -p:RunningDotNetPack=true
@@ -161,12 +161,12 @@ jobs:
         sparse-checkout: build/scripts
 
     - name: Setup .NET
-      uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+      uses: actions/setup-dotnet@0f4a354dd5547a28c70b7853dbd95d5b67886e73 # v6.1.0
       with:
         dotnet-version: ${{ needs.build-pack.outputs.dotnet-sdk-version }}
 
     - name: Install Cosign
-      uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 # v4.1.2
+      uses: sigstore/cosign-installer@756fe2d284c7292c4e9b62c8a28f1e5629c59532 # v4.1.3
 
     - name: Install NuGet package validation tools
       env:
@@ -288,7 +288,7 @@ jobs:
         sparse-checkout: build/scripts
 
     - name: Setup .NET
-      uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+      uses: actions/setup-dotnet@0f4a354dd5547a28c70b7853dbd95d5b67886e73 # v6.1.0
       with:
         dotnet-version: ${{ needs.build-pack.outputs.dotnet-sdk-version }}
 

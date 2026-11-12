@@ -84,13 +84,45 @@ public class FileBlobProvider : PersistentBlobProvider, IDisposable
     {
     }
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="FileBlobProvider"/>
+    /// class, optionally without verifying that the storage directory is private to the current user.
+    /// </summary>
+    /// <remarks>
+    /// Blobs are replayed with the credentials of the application, so on .NET on non-Windows platforms the
+    /// storage directory is verified to not be changeable by other users. Only disable the verification
+    /// when the permissions of the directory cannot be made to satisfy it, such as on a volume that
+    /// does not support them, and the directory is otherwise protected from other users.
+    /// The default maximum size, maintenance period, retention period and write timeout are used.
+    /// </remarks>
+    /// <param name="path">
+    /// Sets file storage folder location where blobs are stored.
+    /// </param>
+    /// <param name="checkPermissions">
+    /// Whether to verify, on .NET on non-Windows platforms, that the storage directory is owned by the current user
+    /// and cannot be changed by other users, including any directory in its path.
+    /// The check is repeated before blobs are listed, created or removed.
+    /// </param>
+    /// <exception cref="ArgumentNullException">
+    /// path is null.
+    /// </exception>
+    /// <exception cref="UnauthorizedAccessException">
+    /// insufficient privileges for provided path, or, when <paramref name="checkPermissions"/> is
+    /// <see langword="true"/> on .NET on non-Windows platforms, the path is not owned by the current user
+    /// or its contents could be changed by another user.
+    /// </exception>
+    public FileBlobProvider(string path, bool checkPermissions)
+        : this(path, checkPermissions, 52428800, 120000, 172800000, 60000)
+    {
+    }
+
     internal FileBlobProvider(
         string path,
         bool checkPermissions,
-        long maxSizeInBytes = 52428800,
-        int maintenancePeriodInMilliseconds = 120000,
-        long retentionPeriodInMilliseconds = 172800000,
-        int writeTimeoutInMilliseconds = 60000)
+        long maxSizeInBytes,
+        int maintenancePeriodInMilliseconds,
+        long retentionPeriodInMilliseconds,
+        int writeTimeoutInMilliseconds)
     {
         Guard.ThrowIfNull(path);
 
@@ -145,14 +177,18 @@ public class FileBlobProvider : PersistentBlobProvider, IDisposable
 
     protected override bool OnTryCreateBlob(byte[] buffer, int leasePeriodMilliseconds, [NotNullWhen(true)] out PersistentBlob? blob)
     {
-        blob = this.CreateFileBlob(new ReadOnlySpan<byte>(buffer), leasePeriodMilliseconds);
+        Guard.ThrowIfNull(buffer);
+
+        blob = this.CreateFileBlob(buffer.AsSpan(), leasePeriodMilliseconds);
 
         return blob != null;
     }
 
     protected override bool OnTryCreateBlob(byte[] buffer, [NotNullWhen(true)] out PersistentBlob? blob)
     {
-        blob = this.CreateFileBlob(new ReadOnlySpan<byte>(buffer));
+        Guard.ThrowIfNull(buffer);
+
+        blob = this.CreateFileBlob(buffer.AsSpan());
 
         return blob != null;
     }
