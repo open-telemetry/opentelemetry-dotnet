@@ -165,6 +165,45 @@ dotnet_diagnostic.IDE0046.severity = silent
 # RS0041: Public members should not use oblivious types
 dotnet_diagnostic.RS0041.severity = suggestion
 
+# xUnit1033: Test classes decorated with 'IClassFixture<T>' or 'ICollectionFixture<T>' should add a constructor argument of type 'T'
+dotnet_diagnostic.xUnit1033.severity = warning
+
+# xUnit1042: The member referenced by the MemberData attribute returns untyped data rows
+dotnet_diagnostic.xUnit1042.severity = warning
+
+# xUnit1044: Avoid using TheoryData type arguments that are not serializable
+dotnet_diagnostic.xUnit1044.severity = warning
+
+# xUnit1045: Avoid using TheoryData type arguments that might not be serializable
+dotnet_diagnostic.xUnit1045.severity = warning
+
+# xUnit1046: Avoid using TheoryDataRow arguments that are not serializable
+dotnet_diagnostic.xUnit1046.severity = warning
+
+# xUnit1047: Avoid using TheoryDataRow arguments that might not be serializable
+dotnet_diagnostic.xUnit1047.severity = warning
+
+# xUnit1050: The class referenced by the ClassData attribute returns untyped data rows
+dotnet_diagnostic.xUnit1050.severity = warning
+
+# xUnit2022: Boolean assertions should not be negated
+dotnet_diagnostic.xUnit2022.severity = warning
+
+# xUnit2023: Do not use collection methods for single-item collections
+dotnet_diagnostic.xUnit2023.severity = warning
+
+# xUnit2024: Do not use boolean asserts for simple equality tests
+dotnet_diagnostic.xUnit2024.severity = warning
+
+# xUnit2025: The boolean assertion statement can be simplified
+dotnet_diagnostic.xUnit2025.severity = warning
+
+# xUnit2032: Type assertions based on 'assignable from' are confusingly named
+dotnet_diagnostic.xUnit2032.severity = warning
+
+# xUnit2033: Use the assertion return value instead of re-deriving it
+dotnet_diagnostic.xUnit2033.severity = warning
+
 [*Tests.cs]
 # CA1515: Disable making types internal for Tests classes. It is required by xunit
 dotnet_diagnostic.CA1515.severity = none
