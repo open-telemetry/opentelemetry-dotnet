@@ -1,6 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+#if !NETFRAMEWORK
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests;
 
 [CollectionDefinition(Name, DisableParallelization = true)]
@@ -12,3 +13,4 @@ public sealed class MockCollectorCollection
 {
     public const string Name = "Mock collector";
 }
+#endif
