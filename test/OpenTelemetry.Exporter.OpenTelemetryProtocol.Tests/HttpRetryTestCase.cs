@@ -9,9 +9,7 @@ using System.Net.Http.Headers;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient.Tests;
 
-#pragma warning disable CA1515 // Consider making public types internal
-public class HttpRetryTestCase
-#pragma warning restore CA1515 // Consider making public types internal
+internal sealed class HttpRetryTestCase
 {
     private static readonly TimeSpan MinThrottleDelay = TimeSpan.FromMilliseconds(100);
 
@@ -28,7 +26,15 @@ public class HttpRetryTestCase
 
     internal HttpRetryAttempt[] RetryAttempts { get; }
 
-    public static TheoryData<HttpRetryTestCase> GetHttpTestCases() =>
+    public static TheoryData<string> GetHttpTestCases()
+        => [.. CreateTestCases().Select(testCase => testCase.testRunnerName)];
+
+    public static HttpRetryTestCase GetTestCase(string name)
+        => CreateTestCases().Single(testCase => string.Equals(testCase.testRunnerName, name, StringComparison.Ordinal));
+
+    public override string ToString() => this.testRunnerName;
+
+    private static HttpRetryTestCase[] CreateTestCases() =>
     [
         new HttpRetryTestCase("NetworkError", [new(statusCode: null)]),
         new HttpRetryTestCase("NetworkError with expired deadline", [new(statusCode: null, isDeadlineExceeded: true, expectedSuccess: false)]),
@@ -98,8 +104,6 @@ public class HttpRetryTestCase
                 new(statusCode: HttpStatusCode.ServiceUnavailable, isDeadlineExceeded: true, expectedSuccess: false),
             ]),
     ];
-
-    public override string ToString() => this.testRunnerName;
 
     internal sealed class HttpRetryAttempt
     {

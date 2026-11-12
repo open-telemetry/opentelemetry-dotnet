@@ -188,8 +188,8 @@ public sealed class OtlpTraceExporterTests : IDisposable
         {
             var request = CreateTraceExportRequest(sdkOptions, batch, resourceBuilder.Build());
 
-            Assert.Single(request.ResourceSpans);
-            var otlpResource = request.ResourceSpans.First().Resource;
+            var resourceSpan = Assert.Single(request.ResourceSpans);
+            var otlpResource = resourceSpan.Resource;
             if (includeServiceNameInResource)
             {
                 Assert.Contains(otlpResource.Attributes, (kvp) => kvp.Key == ResourceSemanticConventions.AttributeServiceName && kvp.Value.StringValue == "service-name");
@@ -200,7 +200,7 @@ public sealed class OtlpTraceExporterTests : IDisposable
                 Assert.DoesNotContain(otlpResource.Attributes, kvp => kvp.Key == ResourceSemanticConventions.AttributeServiceName);
             }
 
-            var scopeSpans = request.ResourceSpans.First().ScopeSpans;
+            var scopeSpans = resourceSpan.ScopeSpans;
             Assert.Equal(2, scopeSpans.Count);
             foreach (var scope in scopeSpans)
             {
@@ -664,21 +664,21 @@ public sealed class OtlpTraceExporterTests : IDisposable
         ArrayValueAsserts(otlpSpan.Attributes[1].Value.ArrayValue.Values);
         Assert.Equal(new object().ToString()!.Substring(0, 4), otlpSpan.Attributes[2].Value.StringValue);
 
-        Assert.Single(otlpSpan.Events);
+        var otlpEvent = Assert.Single(otlpSpan.Events);
         Assert.Equal(1u, otlpSpan.DroppedEventsCount);
-        Assert.Equal(3, otlpSpan.Events[0].Attributes.Count);
-        Assert.Equal(1u, otlpSpan.Events[0].DroppedAttributesCount);
-        Assert.Equal("1234", otlpSpan.Events[0].Attributes[0].Value.StringValue);
-        ArrayValueAsserts(otlpSpan.Events[0].Attributes[1].Value.ArrayValue.Values);
-        Assert.Equal(new object().ToString()!.Substring(0, 4), otlpSpan.Events[0].Attributes[2].Value.StringValue);
+        Assert.Equal(3, otlpEvent.Attributes.Count);
+        Assert.Equal(1u, otlpEvent.DroppedAttributesCount);
+        Assert.Equal("1234", otlpEvent.Attributes[0].Value.StringValue);
+        ArrayValueAsserts(otlpEvent.Attributes[1].Value.ArrayValue.Values);
+        Assert.Equal(new object().ToString()!.Substring(0, 4), otlpEvent.Attributes[2].Value.StringValue);
 
-        Assert.Single(otlpSpan.Links);
+        var otlpLink = Assert.Single(otlpSpan.Links);
         Assert.Equal(1u, otlpSpan.DroppedLinksCount);
-        Assert.Equal(3, otlpSpan.Links[0].Attributes.Count);
-        Assert.Equal(1u, otlpSpan.Links[0].DroppedAttributesCount);
-        Assert.Equal("1234", otlpSpan.Links[0].Attributes[0].Value.StringValue);
-        ArrayValueAsserts(otlpSpan.Links[0].Attributes[1].Value.ArrayValue.Values);
-        Assert.Equal(new object().ToString()!.Substring(0, 4), otlpSpan.Links[0].Attributes[2].Value.StringValue);
+        Assert.Equal(3, otlpLink.Attributes.Count);
+        Assert.Equal(1u, otlpLink.DroppedAttributesCount);
+        Assert.Equal("1234", otlpLink.Attributes[0].Value.StringValue);
+        ArrayValueAsserts(otlpLink.Attributes[1].Value.ArrayValue.Values);
+        Assert.Equal(new object().ToString()!.Substring(0, 4), otlpLink.Attributes[2].Value.StringValue);
     }
 
     [Fact]
@@ -1025,10 +1025,10 @@ public sealed class OtlpTraceExporterTests : IDisposable
                 // Buffer should be expanded to accommodate the large array.
                 Assert.True(buffer.Length > 50);
 
-                Assert.Single(request.ResourceSpans);
-                var scopeSpans = request.ResourceSpans.First().ScopeSpans;
-                Assert.Single(scopeSpans);
-                var otlpSpan = scopeSpans.First().Spans.First();
+                var resourceSpan = Assert.Single(request.ResourceSpans);
+                var scopeSpans = resourceSpan.ScopeSpans;
+                var scopeSpan = Assert.Single(scopeSpans);
+                var otlpSpan = scopeSpan.Spans.First();
                 Assert.NotNull(otlpSpan);
 
                 // The string is too large, hence not evaluating the content.

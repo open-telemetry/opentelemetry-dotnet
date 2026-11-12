@@ -5,11 +5,23 @@ using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Exporter.Zipkin.Implementation.Tests;
 
-#pragma warning disable CA1515 // Consider making public types internal
-public class RemoteEndpointPriorityTestCase
-#pragma warning restore CA1515 // Consider making public types internal
+internal sealed class RemoteEndpointPriorityTestCase
 {
-    public static TheoryData<RemoteEndpointPriorityTestCase> TestCases =>
+    public static TheoryData<string> TestCases
+        => [.. CreateTestCases().Select(testCase => testCase.Name!)];
+
+    public string? Name { get; private set; }
+
+    public string? ExpectedResult { get; private set; }
+
+    public Dictionary<string, object>? RemoteEndpointAttributes { get; private set; }
+
+    public static RemoteEndpointPriorityTestCase GetTestCase(string name)
+        => CreateTestCases().Single(testCase => string.Equals(testCase.Name, name, StringComparison.Ordinal));
+
+    public override string? ToString() => this.Name;
+
+    private static RemoteEndpointPriorityTestCase[] CreateTestCases() =>
     [
         new RemoteEndpointPriorityTestCase()
         {
@@ -145,12 +157,4 @@ public class RemoteEndpointPriorityTestCase
             },
         },
     ];
-
-    public string? Name { get; private set; }
-
-    public string? ExpectedResult { get; private set; }
-
-    public Dictionary<string, object>? RemoteEndpointAttributes { get; private set; }
-
-    public override string? ToString() => this.Name;
 }

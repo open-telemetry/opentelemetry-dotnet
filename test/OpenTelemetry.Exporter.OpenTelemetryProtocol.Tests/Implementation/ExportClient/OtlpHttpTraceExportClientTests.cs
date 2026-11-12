@@ -178,9 +178,8 @@ public sealed class OtlpHttpTraceExportClientTests : IDisposable
 
             var exportTraceRequest = OtlpCollector.ExportTraceServiceRequest.Parser.ParseFrom(testHttpHandler.HttpRequestContent);
             Assert.NotNull(exportTraceRequest);
-            Assert.Single(exportTraceRequest.ResourceSpans);
 
-            var resourceSpan = exportTraceRequest.ResourceSpans.First();
+            var resourceSpan = Assert.Single(exportTraceRequest.ResourceSpans);
             if (includeServiceNameInResource)
             {
                 Assert.Contains(resourceSpan.Resource.Attributes, (kvp) => kvp.Key == ResourceSemanticConventions.AttributeServiceName && kvp.Value.StringValue == "service_name");

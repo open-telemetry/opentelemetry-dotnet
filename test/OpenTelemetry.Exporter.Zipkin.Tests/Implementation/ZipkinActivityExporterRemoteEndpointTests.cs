@@ -12,16 +12,9 @@ public class ZipkinActivityExporterRemoteEndpointTests
 
     [Theory]
     [MemberData(nameof(RemoteEndpointPriorityTestCase.TestCases), MemberType = typeof(RemoteEndpointPriorityTestCase))]
-    public void GenerateActivity_RemoteEndpointResolutionPriority(RemoteEndpointPriorityTestCase testCase)
+    public void GenerateActivity_RemoteEndpointResolutionPriority(string testCaseName)
     {
-#if NET
-        Assert.NotNull(testCase);
-#else
-        if (testCase == null)
-        {
-            throw new ArgumentNullException(nameof(testCase));
-        }
-#endif
+        var testCase = RemoteEndpointPriorityTestCase.GetTestCase(testCaseName);
 
         // Arrange
         using var activity =

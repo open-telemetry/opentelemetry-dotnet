@@ -233,8 +233,8 @@ public class ObservableSumOverflowTests
         var point = Assert.Single(
             GetPoints(metrics.Single(metric => metric.Name == name)),
             point => point.Tags.KeyAndValues[0].Key == "otel.metric.overflow");
-        Assert.Single(point.Tags.KeyAndValues);
-        Assert.Equal(true, point.Tags.KeyAndValues[0].Value);
+        var keyAndValue = Assert.Single(point.Tags.KeyAndValues);
+        Assert.Equal(true, keyAndValue.Value);
         return point;
     }
 
