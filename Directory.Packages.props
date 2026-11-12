@@ -109,14 +109,14 @@
     <PackageVersion Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" Condition="$(OS) != 'Windows_NT'" />
     <PackageVersion Include="Microsoft.Playwright" Version="1.64.1" />
     <PackageVersion Include="Microsoft.Testing.Extensions.CodeCoverage" Version="18.12.0" />
-    <PackageVersion Include="Microsoft.Testing.Extensions.HangDump" Version="2.5.2" />
-    <PackageVersion Include="Microsoft.Testing.Extensions.TrxReport" Version="2.5.2" />
-    <PackageVersion Include="Microsoft.Testing.Platform" Version="2.5.2" />
+    <PackageVersion Include="Microsoft.Testing.Extensions.HangDump" Version="2.5.3" />
+    <PackageVersion Include="Microsoft.Testing.Extensions.TrxReport" Version="2.5.3" />
+    <PackageVersion Include="Microsoft.Testing.Platform" Version="2.5.3" />
     <PackageVersion Include="MinVer" Version="8.0.0" />
-    <PackageVersion Include="MSTest" Version="4.5.2" />
-    <PackageVersion Include="MSTest.Analyzers" Version="4.5.2" />
-    <PackageVersion Include="MSTest.TestAdapter" Version="4.5.2" />
-    <PackageVersion Include="MSTest.TestFramework" Version="4.5.2" />
+    <PackageVersion Include="MSTest" Version="4.5.3" />
+    <PackageVersion Include="MSTest.Analyzers" Version="4.5.3" />
+    <PackageVersion Include="MSTest.TestAdapter" Version="4.5.3" />
+    <PackageVersion Include="MSTest.TestFramework" Version="4.5.3" />
     <PackageVersion Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.21.0" />
     <PackageVersion Include="OpenTelemetry.Instrumentation.GrpcNetClient" Version="1.21.0-beta.1" />
     <PackageVersion Include="OpenTelemetry.Instrumentation.Http" Version="1.21.0" />
