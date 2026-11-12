@@ -14,7 +14,9 @@ namespace OpenTelemetry.Tests;
 /// </summary>
 [CollectionDefinition(Name, DisableParallelization = true)]
 #pragma warning disable CA1515 // xUnit1027 requires [CollectionDefinition] classes to be public.
+#pragma warning disable xUnit1073 // Used by test projects that link this file, but not by every project that compiles it.
 public sealed class RuntimeContextCollectionDefinition
+#pragma warning restore xUnit1073
 #pragma warning restore CA1515
 {
     public const string Name = "RuntimeContext";
