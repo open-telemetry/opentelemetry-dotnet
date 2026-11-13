@@ -79,6 +79,52 @@ A complete example can be found [here](./Program.cs).
 Note: this feature is platform dependent as it relies on
 [System.Runtime.InteropServices.Marshal.GetExceptionPointers](https://docs.microsoft.com/dotnet/api/system.runtime.interopservices.marshal.getexceptionpointers).
 
+#### Caught exceptions in async code
+
+This feature can set the status to `Error` on an activity whose code caught
+the exception, when the exception came from an awaited call. In the
+following example, `Foo` can end with status `Error` even though
+`SomeException` is handled:
+
+```csharp
+using (var activity = MyActivitySource.StartActivity("Foo"))
+{
+    try
+    {
+        await FuncAsync(); // throws SomeException after its first await
+    }
+    catch (SomeException ex)
+    {
+        DoSomething();
+    }
+}
+```
+
+When an awaited method throws, the compiler-generated code catches the
+exception and completes the `Task` from inside that catch block. The code
+after the `await` (here, the `catch` block and the end of the `using` block)
+often runs right away on the same thread, while that exception is still
+being handled. `GetExceptionPointers` then reports that exception, and the
+feature cannot tell it apart from an exception leaving the `using` block.
+See [#2753](https://github.com/open-telemetry/opentelemetry-dotnet/issues/2753)
+for details.
+
+If this affects you, either:
+
+* Add `await Task.Yield();` after the `catch` block, before the activity
+  ends. The rest of the method then runs outside that catch block. If there
+  is a synchronization context (for example, in a UI app), the rest of the
+  method resumes on it rather than on a thread pool thread.
+* Turn off `SetErrorStatusOnException` and set the status yourself, as in
+  [Option 1](#option-1---set-activity-status-manually). The feature applies to
+  the whole `TracerProvider`, so Option 1 on one code path is not enough
+  while it is on.
+
+Setting the status to `Ok` in the `catch` block, with
+`activity.SetStatus(ActivityStatusCode.Ok)` or the older
+`activity.SetStatus(Status.Ok)`, does not help, because the feature replaces
+the status with `Error` when the activity ends.
+
 ### Option 3 - Set Activity Status with Error description
 
 While convenient, the `SetErrorStatusOnException` feature only sets the activity
