@@ -310,6 +310,55 @@ public class OtlpPartialSuccessTests
     }
 
     [Theory]
+    [InlineData(true, 1L, ExportPartiallySucceededEventId, 3)]
+    [InlineData(false, 1L, ExportPartiallySucceededEventId, 3)]
+    [InlineData(true, 0L, ExportSucceededWithWarningEventId, 1)]
+    [InlineData(false, 0L, ExportSucceededWithWarningEventId, 1)]
+    public void SendExportRequest_LongErrorMessage_IsTruncated(bool grpc, long rejected, int expectedEventId, int messageIndex)
+    {
+        using var listener = new TestEventListener(OpenTelemetryProtocolExporterEventSource.Log, EventLevel.Warning);
+
+        // Larger than the ETW event size limit once encoded as UTF-16.
+        var errorMessage = new string('x', 50_000);
+
+        var response = Export(grpc, PartialSuccessResponse.Create(rejected, errorMessage), OtlpSignalType.Traces, out _, maxResponseSizeBytes: 1024 * 1024);
+
+        Assert.True(response.Success);
+
+        var message = Assert.Single(listener.Messages, e => e.EventId == expectedEventId);
+        Assert.NotNull(message.Payload);
+        Assert.Equal(
+            new string('x', OtlpExportClient.MaxLoggedErrorMessageLength) + "[TRUNCATED]",
+            message.Payload[messageIndex]);
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("short")]
+    public void TruncateErrorMessage_ShortMessage_IsUnchanged(string? errorMessage)
+        => Assert.Same(errorMessage, OtlpExportClient.TruncateErrorMessage(errorMessage));
+
+    [Fact]
+    public void TruncateErrorMessage_MessageAtLimit_IsUnchanged()
+    {
+        var errorMessage = new string('x', OtlpExportClient.MaxLoggedErrorMessageLength);
+
+        Assert.Same(errorMessage, OtlpExportClient.TruncateErrorMessage(errorMessage));
+    }
+
+    [Fact]
+    public void TruncateErrorMessage_DoesNotSplitSurrogatePair()
+    {
+        // A surrogate pair straddling the limit is dropped as a whole.
+        var errorMessage = new string('x', OtlpExportClient.MaxLoggedErrorMessageLength - 1) + "\U0001F600" + "tail";
+
+        var truncated = OtlpExportClient.TruncateErrorMessage(errorMessage);
+
+        Assert.Equal(new string('x', OtlpExportClient.MaxLoggedErrorMessageLength - 1) + "[TRUNCATED]", truncated);
+    }
+
+    [Theory]
     [InlineData(true)]
     [InlineData(false)]
     public void SendExportRequest_UnreadableBodyWithoutListener_Succeeds(bool grpc)
@@ -321,14 +370,14 @@ public class OtlpPartialSuccessTests
         Assert.Equal(1, requestCount);
     }
 
-    private static ExportClientResponse Export(bool grpc, byte[] message, OtlpSignalType? signalType, out int requestCount)
-        => ExportRaw(grpc, grpc ? PartialSuccessResponse.CreateGrpcFrame(message) : message, signalType, out requestCount);
+    private static ExportClientResponse Export(bool grpc, byte[] message, OtlpSignalType? signalType, out int requestCount, int maxResponseSizeBytes = MaxResponseSizeBytes)
+        => ExportRaw(grpc, grpc ? PartialSuccessResponse.CreateGrpcFrame(message) : message, signalType, out requestCount, maxResponseSizeBytes);
 
-    private static ExportClientResponse ExportRaw(bool grpc, byte[] body, OtlpSignalType? signalType, out int requestCount)
+    private static ExportClientResponse ExportRaw(bool grpc, byte[] body, OtlpSignalType? signalType, out int requestCount, int maxResponseSizeBytes = MaxResponseSizeBytes)
     {
         using var handler = new PartialSuccessHttpMessageHandler(body, grpc);
 
-        var exportClient = CreateClient(grpc, handler, signalType, out var httpClient);
+        var exportClient = CreateClient(grpc, handler, signalType, out var httpClient, maxResponseSizeBytes);
 
         using (httpClient)
         {
@@ -338,14 +387,14 @@ public class OtlpPartialSuccessTests
         }
     }
 
-    private static OtlpExportClient CreateClient(bool grpc, HttpMessageHandler handler, OtlpSignalType? signalType, out HttpClient httpClient)
+    private static OtlpExportClient CreateClient(bool grpc, HttpMessageHandler handler, OtlpSignalType? signalType, out HttpClient httpClient, int maxResponseSizeBytes = MaxResponseSizeBytes)
     {
 #pragma warning disable CS0618 // Suppressing gRPC obsolete warning
         var options = new OtlpExporterOptions
         {
             Endpoint = new Uri(grpc ? "http://localhost:4317" : "http://localhost:4318/v1/traces"),
             Protocol = grpc ? OtlpExportProtocol.Grpc : OtlpExportProtocol.HttpProtobuf,
-            MaxResponseSizeBytes = MaxResponseSizeBytes,
+            MaxResponseSizeBytes = maxResponseSizeBytes,
         };
 #pragma warning restore CS0618 // Suppressing gRPC obsolete warning
 

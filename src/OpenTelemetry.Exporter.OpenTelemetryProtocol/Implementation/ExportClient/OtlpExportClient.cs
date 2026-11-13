@@ -19,6 +19,15 @@ internal abstract class OtlpExportClient : IExportClient
     /// </summary>
     internal const int MaxLoggedResponseSizeBytes = 4 * 1024;
 
+    /// <summary>
+    /// The maximum length, in characters, of a partial success error message
+    /// to include in the diagnostic log, keeping the event well within the
+    /// ETW event size limit (about 64 KiB).
+    /// </summary>
+    internal const int MaxLoggedErrorMessageLength = 4 * 1024;
+
+    private const string TruncatedMarker = "[TRUNCATED]";
+
     private static readonly Version Http2RequestVersion = new(2, 0);
     private static readonly TimeSpan MaxDeadlineDelay = TimeSpan.FromMilliseconds(int.MaxValue);
 
@@ -121,6 +130,34 @@ internal abstract class OtlpExportClient : IExportClient
         // CancelAfter() does not accept a delay of more than int.MaxValue milliseconds (about 24.8 days),
         // so a deadline further away than that is reached sooner rather than not at all.
         return remaining > MaxDeadlineDelay ? MaxDeadlineDelay : remaining;
+    }
+
+    /// <summary>
+    /// Shortens a server error message to at most <see cref="MaxLoggedErrorMessageLength"/>
+    /// characters, followed by a truncation marker.
+    /// </summary>
+    /// <param name="errorMessage">The error message from the server.</param>
+    /// <returns>The message, truncated if it is too long to log.</returns>
+    internal static string? TruncateErrorMessage(string? errorMessage)
+    {
+        if (errorMessage == null || errorMessage.Length <= MaxLoggedErrorMessageLength)
+        {
+            return errorMessage;
+        }
+
+        var length = MaxLoggedErrorMessageLength;
+
+        // Do not split a surrogate pair.
+        if (char.IsHighSurrogate(errorMessage[length - 1]))
+        {
+            length--;
+        }
+
+#if NET
+        return string.Concat(errorMessage.AsSpan(0, length), TruncatedMarker);
+#else
+        return errorMessage.Substring(0, length) + TruncatedMarker;
+#endif
     }
 
     protected internal static string? TryGetResponseBody(HttpResponseMessage? httpResponse, int maxResponseSizeBytes, CancellationToken cancellationToken) =>
@@ -278,6 +315,8 @@ internal abstract class OtlpExportClient : IExportClient
         {
             return;
         }
+
+        errorMessage = TruncateErrorMessage(errorMessage);
 
         if (rejectedCount > 0)
         {

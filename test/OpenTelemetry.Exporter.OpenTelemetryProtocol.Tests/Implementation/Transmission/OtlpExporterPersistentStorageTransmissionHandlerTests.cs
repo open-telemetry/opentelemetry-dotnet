@@ -1,6 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Diagnostics.Tracing;
 using System.Net;
 #if NETFRAMEWORK
 using System.Net.Http;
@@ -13,6 +14,7 @@ using OpenTelemetry.Tests;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Transmission.Tests;
 
+[Collection(EventSourceCollectionDefinition.Name)]
 public class OtlpExporterPersistentStorageTransmissionHandlerTests
 {
     [Fact]
@@ -58,6 +60,9 @@ public class OtlpExporterPersistentStorageTransmissionHandlerTests
     [InlineData(false, 0L)]
     public void TrySubmitRequest_DoesNotPersistOrRetryPartialSuccess(bool grpc, long rejected)
     {
+        // The listener makes the client read and report the partial success.
+        using var listener = new TestEventListener(OpenTelemetryProtocolExporterEventSource.Log, EventLevel.Warning);
+
         var message = PartialSuccessResponse.Create(rejected, "partially rejected");
         using var handler = new PartialSuccessHttpMessageHandler(grpc ? PartialSuccessResponse.CreateGrpcFrame(message) : message, grpc);
         using var httpClient = new HttpClient(handler, disposeHandler: false);
@@ -81,6 +86,7 @@ public class OtlpExporterPersistentStorageTransmissionHandlerTests
         Assert.True(transmissionHandler.TrySubmitRequest([0, 0, 0, 0, 0], contentLength: 5));
         Assert.Equal(1, handler.RequestCount);
         Assert.Null(persistentBlobProvider.LastBuffer);
+        Assert.Single(listener.Messages, e => e.EventId == (rejected > 0 ? 45 : 46));
     }
 
     [Fact]

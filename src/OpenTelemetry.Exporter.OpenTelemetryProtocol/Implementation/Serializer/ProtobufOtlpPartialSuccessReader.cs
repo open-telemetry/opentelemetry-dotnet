@@ -195,6 +195,13 @@ internal static class ProtobufOtlpPartialSuccessReader
             }
 
             var b = buffer[position++];
+
+            // The tenth byte only carries the 64th bit, anything more overflows a ulong.
+            if (i == MaxVarIntLength - 1 && b > 0x01)
+            {
+                return false;
+            }
+
             value |= (ulong)(b & 0x7F) << (7 * i);
 
             if ((b & 0x80) == 0)
