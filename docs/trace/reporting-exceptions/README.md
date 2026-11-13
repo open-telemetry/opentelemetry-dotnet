@@ -112,7 +112,9 @@ for details.
 If this affects you, either:
 
 * Add `await Task.Yield();` after the `catch` block, before the activity
-  ends. The rest of the method then runs outside that catch block.
+  ends. The rest of the method then runs outside that catch block. If there
+  is a synchronization context (for example, in a UI app), the rest of the
+  method resumes on it rather than on a thread pool thread.
 * Turn off `SetErrorStatusOnException` and set the status yourself, as in
   [Option 1](#option-1---set-activity-status-manually). The feature applies to
   the whole `TracerProvider`, so Option 1 on one code path is not enough
