@@ -6,6 +6,10 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Added `Sdk.DefaultTextMapPropagator` to expose the SDK's default
+  `TextMapPropagator`.
+  ([#8129](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8129))
+
 ## 1.21.0
 
 Released 2026-Nov-11

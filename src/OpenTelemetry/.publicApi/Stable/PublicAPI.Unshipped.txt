@@ -1,0 +1,1 @@
+static OpenTelemetry.Sdk.DefaultTextMapPropagator.get -> OpenTelemetry.Context.Propagation.TextMapPropagator!
