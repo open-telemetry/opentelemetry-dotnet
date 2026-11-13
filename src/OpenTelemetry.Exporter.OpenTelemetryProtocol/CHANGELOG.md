@@ -13,7 +13,7 @@ Notes](../../RELEASENOTES.md).
   are now logged as a warning (event 45), and an error message sent without any
   rejected items is logged as a warning (event 46). A partial success is still
   a successful export and is not retried.
-  ([#XXXX](https://github.com/open-telemetry/opentelemetry-dotnet/pull/XXXX))
+  ([#8130](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8130))
 
 ## 1.21.0
 
