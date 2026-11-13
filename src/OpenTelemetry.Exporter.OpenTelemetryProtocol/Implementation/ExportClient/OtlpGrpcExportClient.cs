@@ -30,8 +30,8 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
     private static readonly byte[] GrpcFrameHeader = [0, 0, 0, 0, 0];
 #endif
 
-    public OtlpGrpcExportClient(OtlpExporterOptions options, HttpClient httpClient, string signalPath)
-        : base(options, httpClient, signalPath)
+    public OtlpGrpcExportClient(OtlpExporterOptions options, HttpClient httpClient, string signalPath, OtlpSignalType? signalType = null)
+        : base(options, httpClient, signalPath, signalType)
     {
     }
 
@@ -53,6 +53,10 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
     public override ExportClientResponse SendExportRequest(byte[] buffer, int contentLength, DateTime deadlineUtc, CancellationToken cancellationToken = default)
     {
         HttpResponseMessage? httpResponse = null;
+        Stream? responseStream = null;
+
+        // The first byte of the response message frame, if it has already been read.
+        var firstByte = -1;
 
         try
         {
@@ -107,12 +111,8 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
 
             if (string.Equals(status.Detail, Status.NoReplyDetailMessage, StringComparison.Ordinal))
             {
-#if NET
-                using var responseStream = httpResponse.Content.ReadAsStream(cancellationToken);
-#else
-                using var responseStream = httpResponse.Content.ReadAsStreamAsync().GetAwaiter().GetResult();
-#endif
-                var firstByte = responseStream.ReadByte();
+                responseStream = OpenResponseStream(httpResponse, cancellationToken);
+                firstByte = responseStream.ReadByte();
 
                 if (firstByte == -1)
                 {
@@ -143,6 +143,12 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
             if (status.StatusCode == StatusCode.OK)
             {
                 OpenTelemetryProtocolExporterEventSource.Log.ExportSuccess(this.Endpoint, "Export completed successfully.");
+
+                if (IsPartialSuccessReportingEnabled())
+                {
+                    this.TryReportPartialSuccess(httpResponse, ref responseStream, firstByte, cancellationToken);
+                }
+
                 return SuccessExportResponse;
             }
 
@@ -228,6 +234,7 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
         }
         finally
         {
+            responseStream?.Dispose();
             httpResponse?.Dispose();
         }
     }
@@ -236,6 +243,32 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
         this.CompressionEnabled
             ? this.CreateGZipHttpContent(buffer, contentLength)
             : base.CreateHttpContent(buffer, contentLength);
+
+    private static Stream OpenResponseStream(HttpResponseMessage httpResponse, CancellationToken cancellationToken) =>
+#if NET
+        httpResponse.Content.ReadAsStream(cancellationToken);
+#else
+        httpResponse.Content.ReadAsStreamAsync().GetAwaiter().GetResult();
+#endif
+
+    private static bool TryReadExactly(Stream stream, byte[] buffer, int count)
+    {
+        var totalRead = 0;
+
+        while (totalRead < count)
+        {
+            var bytesRead = stream.Read(buffer, totalRead, count - totalRead);
+
+            if (bytesRead == 0)
+            {
+                return false;
+            }
+
+            totalRead += bytesRead;
+        }
+
+        return true;
+    }
 
     private static bool IsTransientNetworkError(HttpRequestException ex) =>
         ex.InnerException is SocketException { SocketErrorCode: SocketError.TimedOut or SocketError.ConnectionReset or SocketError.HostUnreachable or SocketError.ConnectionRefused };
@@ -292,5 +325,64 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
         var content = new StreamContent(compressedStream);
         content.Headers.ContentType = this.MediaTypeHeader;
         return content;
+    }
+
+    /// <summary>
+    /// Reports the partial success of the message in a successful response, if it has one.
+    /// </summary>
+    /// <remarks>
+    /// The response content is buffered (see <see cref="CompletionOption"/>), so reading
+    /// it cannot block. A response that cannot be read is ignored, as the export succeeded.
+    /// </remarks>
+    /// <param name="httpResponse">The successful response.</param>
+    /// <param name="responseStream">The stream of the response content, if it has already been opened.</param>
+    /// <param name="firstByte">The first byte of the stream, if it has already been read; otherwise -1.</param>
+    /// <param name="cancellationToken">The <see cref="CancellationToken"/> to use.</param>
+    private void TryReportPartialSuccess(HttpResponseMessage httpResponse, ref Stream? responseStream, int firstByte, CancellationToken cancellationToken)
+    {
+        try
+        {
+            responseStream ??= OpenResponseStream(httpResponse, cancellationToken);
+
+            var compressionFlag = firstByte >= 0 ? firstByte : responseStream.ReadByte();
+
+            // No message, or a compressed one, which is not requested and so cannot be read.
+            if (compressionFlag != 0)
+            {
+                return;
+            }
+
+            var lengthBytes = new byte[GrpcMessageHeaderSize - 1];
+
+            if (!TryReadExactly(responseStream, lengthBytes, lengthBytes.Length))
+            {
+                return;
+            }
+
+            var messageLength = BinaryPrimitives.ReadUInt32BigEndian(lengthBytes);
+
+            if (messageLength == 0)
+            {
+                return;
+            }
+
+            if (messageLength > (uint)this.MaxResponseSizeBytes)
+            {
+                // Do not buffer a message larger than the limit, even if the response did not declare its size.
+                OpenTelemetryProtocolExporterEventSource.Log.ResponseDiscardedDueToSizeLimit(this.Endpoint, messageLength, this.MaxResponseSizeBytes);
+                return;
+            }
+
+            var message = new byte[messageLength];
+
+            if (TryReadExactly(responseStream, message, message.Length))
+            {
+                this.ReportPartialSuccess(message, 0, message.Length);
+            }
+        }
+        catch (Exception)
+        {
+            // The export succeeded, so failing to read the partial success must not fail it.
+        }
     }
 }

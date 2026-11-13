@@ -393,6 +393,46 @@ internal sealed class OpenTelemetryProtocolExporterEventSource : EventSource, IC
     internal void GrpcStatusDetailsCodeMismatch(int grpcStatusCode, int detailsStatusCode)
         => this.WriteEvent(44, grpcStatusCode, detailsStatusCode);
 
+    [NonEvent]
+    internal void ExportPartiallySucceeded(Uri endpoint, OtlpSignalType? signalType, long rejectedCount, string? errorMessage)
+    {
+        if (Log.IsEnabled(EventLevel.Warning, EventKeywords.All))
+        {
+            this.ExportPartiallySucceeded(RedactEndpointUri(endpoint), GetRejectedItemsName(signalType), rejectedCount, errorMessage ?? string.Empty);
+        }
+    }
+
+    [Event(
+        45,
+        Message = "The export to {0} partially succeeded. The server rejected {2} {1}, which will not be retried. Error message: '{3}'",
+        Level = EventLevel.Warning)]
+    internal void ExportPartiallySucceeded(string endpoint, string rejectedItemsName, long rejectedCount, string errorMessage)
+        => this.WriteEvent(45, endpoint, rejectedItemsName, rejectedCount, errorMessage);
+
+    [NonEvent]
+    internal void ExportSucceededWithWarning(Uri endpoint, string errorMessage)
+    {
+        if (Log.IsEnabled(EventLevel.Warning, EventKeywords.All))
+        {
+            this.ExportSucceededWithWarning(RedactEndpointUri(endpoint), errorMessage);
+        }
+    }
+
+    [Event(
+        46,
+        Message = "The export to {0} succeeded with a warning from the server: '{1}'",
+        Level = EventLevel.Warning)]
+    internal void ExportSucceededWithWarning(string endpoint, string warningMessage)
+        => this.WriteEvent(46, endpoint, warningMessage);
+
+    private static string GetRejectedItemsName(OtlpSignalType? signalType) => signalType switch
+    {
+        OtlpSignalType.Traces => "span(s)",
+        OtlpSignalType.Metrics => "data point(s)",
+        OtlpSignalType.Logs => "log record(s)",
+        _ => "item(s)",
+    };
+
     private static string RedactEndpointUri(Uri endpoint)
     {
         var authority = endpoint.GetComponents(UriComponents.SchemeAndServer, UriFormat.UriEscaped);

@@ -4,7 +4,9 @@
 #if NETFRAMEWORK
 using System.Net.Http;
 #endif
+using System.Diagnostics.Tracing;
 using System.Net.Http.Headers;
+using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Serializer;
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
@@ -16,6 +18,15 @@ internal abstract class OtlpExportClient : IExportClient
     /// response to include in the diagnostic log (4 KiB).
     /// </summary>
     internal const int MaxLoggedResponseSizeBytes = 4 * 1024;
+
+    /// <summary>
+    /// The maximum length, in characters, of a partial success error message
+    /// to include in the diagnostic log, keeping the event well within the
+    /// ETW event size limit (about 64 KiB).
+    /// </summary>
+    internal const int MaxLoggedErrorMessageLength = 4 * 1024;
+
+    private const string TruncatedMarker = "[TRUNCATED]";
 
     private static readonly Version Http2RequestVersion = new(2, 0);
     private static readonly TimeSpan MaxDeadlineDelay = TimeSpan.FromMilliseconds(int.MaxValue);
@@ -33,7 +44,7 @@ internal abstract class OtlpExportClient : IExportClient
         !OperatingSystem.IsBrowser();
 #endif
 
-    protected OtlpExportClient(OtlpExporterOptions options, HttpClient httpClient, string signalPath)
+    protected OtlpExportClient(OtlpExporterOptions options, HttpClient httpClient, string signalPath, OtlpSignalType? signalType = null)
     {
         Guard.ThrowIfNull(options);
         Guard.ThrowIfNull(httpClient);
@@ -58,6 +69,7 @@ internal abstract class OtlpExportClient : IExportClient
         this.HttpClient = httpClient;
         this.CompressionEnabled = options.Compression == OtlpExportCompression.GZip;
         this.MaxResponseSizeBytes = options.MaxResponseSizeBytes;
+        this.SignalType = signalType;
     }
 
     internal HttpClient HttpClient { get; }
@@ -72,6 +84,11 @@ internal abstract class OtlpExportClient : IExportClient
     /// Gets the maximum size, in bytes, of a response the exporter will accept.
     /// </summary>
     internal int MaxResponseSizeBytes { get; }
+
+    /// <summary>
+    /// Gets the signal the client exports, if known, which names the rejected items of a partial success.
+    /// </summary>
+    internal OtlpSignalType? SignalType { get; }
 
     internal abstract MediaTypeHeaderValue MediaTypeHeader { get; }
 
@@ -115,6 +132,34 @@ internal abstract class OtlpExportClient : IExportClient
         return remaining > MaxDeadlineDelay ? MaxDeadlineDelay : remaining;
     }
 
+    /// <summary>
+    /// Shortens a server error message to at most <see cref="MaxLoggedErrorMessageLength"/>
+    /// characters, followed by a truncation marker.
+    /// </summary>
+    /// <param name="errorMessage">The error message from the server.</param>
+    /// <returns>The message, truncated if it is too long to log.</returns>
+    internal static string? TruncateErrorMessage(string? errorMessage)
+    {
+        if (errorMessage == null || errorMessage.Length <= MaxLoggedErrorMessageLength)
+        {
+            return errorMessage;
+        }
+
+        var length = MaxLoggedErrorMessageLength;
+
+        // Do not split a surrogate pair.
+        if (char.IsHighSurrogate(errorMessage[length - 1]))
+        {
+            length--;
+        }
+
+#if NET
+        return string.Concat(errorMessage.AsSpan(0, length), TruncatedMarker);
+#else
+        return errorMessage.Substring(0, length) + TruncatedMarker;
+#endif
+    }
+
     protected internal static string? TryGetResponseBody(HttpResponseMessage? httpResponse, int maxResponseSizeBytes, CancellationToken cancellationToken) =>
         HttpClientHelpers.TryGetResponseBodyAsString(httpResponse, maxResponseSizeBytes, cancellationToken);
 
@@ -155,6 +200,52 @@ internal abstract class OtlpExportClient : IExportClient
 
         return TryGetResponseBody(httpResponse, maxResponseSizeBytes, deadlineCts.Token);
     }
+
+    /// <summary>
+    /// Reads up to <paramref name="maxResponseSizeBytes"/> bytes of the body of a response and
+    /// passes them to <paramref name="reader"/>, giving up once <paramref name="deadlineUtc"/> has passed.
+    /// </summary>
+    /// <typeparam name="TState">The type of the state passed to <paramref name="reader"/>.</typeparam>
+    /// <param name="httpResponse">The response to read the body of.</param>
+    /// <param name="maxResponseSizeBytes">The maximum number of bytes to read.</param>
+    /// <param name="deadlineUtc">The deadline time in UTC for the export request to finish.</param>
+    /// <param name="reader">Processes the bytes that were read.</param>
+    /// <param name="state">The state to pass to <paramref name="reader"/>.</param>
+    /// <param name="cancellationToken">The <see cref="CancellationToken"/> to use.</param>
+    /// <returns><see langword="true"/> if the body was read; otherwise <see langword="false"/>.</returns>
+    protected internal static bool TryReadResponseBody<TState>(
+        HttpResponseMessage httpResponse,
+        int maxResponseSizeBytes,
+        DateTime deadlineUtc,
+        HttpClientHelpers.ResponseBodyReader<TState> reader,
+        ref TState state,
+        CancellationToken cancellationToken)
+    {
+        if (GetTimeUntilDeadline(deadlineUtc) is not { } remaining)
+        {
+            // There is no deadline, so only the caller's token applies.
+            return HttpClientHelpers.TryReadResponseBody(httpResponse, maxResponseSizeBytes, reader, ref state, cancellationToken);
+        }
+
+        if (remaining <= TimeSpan.Zero)
+        {
+            return false;
+        }
+
+        using var deadlineCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+
+        deadlineCts.CancelAfter(remaining);
+
+        return HttpClientHelpers.TryReadResponseBody(httpResponse, maxResponseSizeBytes, reader, ref state, deadlineCts.Token);
+    }
+
+    /// <summary>
+    /// Gets whether a partial success in a response would be reported, so
+    /// that the response does not need to be read if it would not be.
+    /// </summary>
+    /// <returns><see langword="true"/> if a partial success would be reported.</returns>
+    protected static bool IsPartialSuccessReportingEnabled() =>
+        OpenTelemetryProtocolExporterEventSource.Log.IsEnabled(EventLevel.Warning, EventKeywords.All);
 
     /// <summary>
     /// Creates the exception that <see cref="HttpResponseMessage.EnsureSuccessStatusCode"/>
@@ -205,6 +296,36 @@ internal abstract class OtlpExportClient : IExportClient
 
         exception = null;
         return false;
+    }
+
+    /// <summary>
+    /// Reports the <c>partial_success</c> of a successful export response, if it has one.
+    /// </summary>
+    /// <remarks>
+    /// A response with a partial success is still a successful export which must not be
+    /// retried, so a response that cannot be read is ignored rather than failing the export.
+    /// </remarks>
+    /// <param name="buffer">The buffer holding the serialized response message.</param>
+    /// <param name="offset">The position of the message in <paramref name="buffer"/>.</param>
+    /// <param name="count">The length of the message.</param>
+    protected void ReportPartialSuccess(byte[] buffer, int offset, int count)
+    {
+        if (count == 0
+            || !ProtobufOtlpPartialSuccessReader.TryRead(buffer, offset, count, out var rejectedCount, out var errorMessage))
+        {
+            return;
+        }
+
+        errorMessage = TruncateErrorMessage(errorMessage);
+
+        if (rejectedCount > 0)
+        {
+            OpenTelemetryProtocolExporterEventSource.Log.ExportPartiallySucceeded(this.Endpoint, this.SignalType, rejectedCount, errorMessage);
+        }
+        else if (!string.IsNullOrEmpty(errorMessage))
+        {
+            OpenTelemetryProtocolExporterEventSource.Log.ExportSucceededWithWarning(this.Endpoint, errorMessage!);
+        }
     }
 
     protected HttpRequestMessage CreateHttpRequest(byte[] buffer, int contentLength)
