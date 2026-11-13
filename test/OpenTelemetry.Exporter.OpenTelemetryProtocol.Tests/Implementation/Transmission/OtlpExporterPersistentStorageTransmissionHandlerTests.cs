@@ -6,6 +6,7 @@ using System.Net;
 using System.Net.Http;
 #endif
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
+using OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests;
 using OpenTelemetry.PersistentStorage.Abstractions;
 using OpenTelemetry.PersistentStorage.FileSystem;
 using OpenTelemetry.Tests;
@@ -48,6 +49,38 @@ public class OtlpExporterPersistentStorageTransmissionHandlerTests
         Assert.True(result);
         Assert.NotNull(persistentBlobProvider.LastBuffer);
         Assert.Equal([1, 2, 3, 4], persistentBlobProvider.LastBuffer);
+    }
+
+    [Theory]
+    [InlineData(true, 5L)]
+    [InlineData(false, 5L)]
+    [InlineData(true, 0L)]
+    [InlineData(false, 0L)]
+    public void TrySubmitRequest_DoesNotPersistOrRetryPartialSuccess(bool grpc, long rejected)
+    {
+        var message = PartialSuccessResponse.Create(rejected, "partially rejected");
+        using var handler = new PartialSuccessHttpMessageHandler(grpc ? PartialSuccessResponse.CreateGrpcFrame(message) : message, grpc);
+        using var httpClient = new HttpClient(handler, disposeHandler: false);
+
+#pragma warning disable CS0618 // Suppressing gRPC obsolete warning
+        var options = new OtlpExporterOptions
+        {
+            Endpoint = new Uri(grpc ? "http://localhost:4317" : "http://localhost:4318/v1/traces"),
+            Protocol = grpc ? OtlpExportProtocol.Grpc : OtlpExportProtocol.HttpProtobuf,
+        };
+#pragma warning restore CS0618 // Suppressing gRPC obsolete warning
+
+        IExportClient exportClient = grpc
+            ? new OtlpGrpcExportClient(options, httpClient, "opentelemetry.proto.collector.trace.v1.TraceService/Export", OtlpSignalType.Traces)
+            : new OtlpHttpExportClient(options, httpClient, "v1/traces", OtlpSignalType.Traces);
+
+        var persistentBlobProvider = new CapturingBlobProvider();
+
+        using var transmissionHandler = new OtlpExporterPersistentStorageTransmissionHandler(persistentBlobProvider, exportClient, timeoutMilliseconds: 10_000);
+
+        Assert.True(transmissionHandler.TrySubmitRequest([0, 0, 0, 0, 0], contentLength: 5));
+        Assert.Equal(1, handler.RequestCount);
+        Assert.Null(persistentBlobProvider.LastBuffer);
     }
 
     [Fact]

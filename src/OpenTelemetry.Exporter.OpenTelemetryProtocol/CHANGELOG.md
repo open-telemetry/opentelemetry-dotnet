@@ -7,6 +7,14 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Added support for the `partial_success` field of OTLP export responses, for
+  both gRPC and HTTP/protobuf. When the server rejects some of the exported
+  spans, data points or log records, the number rejected and the error message
+  are now logged as a warning (event 45), and an error message sent without any
+  rejected items is logged as a warning (event 46). A partial success is still
+  a successful export and is not retried.
+  ([#XXXX](https://github.com/open-telemetry/opentelemetry-dotnet/pull/XXXX))
+
 ## 1.21.0
 
 Released 2026-Nov-11

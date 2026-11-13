@@ -14,6 +14,16 @@ internal static class HttpClientHelpers
     internal const int DefaultMessageSizeLimit = 4 * 1024 * 1024; // 4MiB
 
     /// <summary>
+    /// Processes the bytes of a response body read by <see cref="TryReadResponseBody{TState}"/>.
+    /// </summary>
+    /// <typeparam name="TState">The type of the state passed to the reader.</typeparam>
+    /// <param name="buffer">The buffer holding the body, which is only valid during the call.</param>
+    /// <param name="length">The number of bytes of the body in <paramref name="buffer"/>.</param>
+    /// <param name="truncated">Whether the body was longer than the limit it was read with.</param>
+    /// <param name="state">The state passed to <see cref="TryReadResponseBody{TState}"/>.</param>
+    internal delegate void ResponseBodyReader<TState>(byte[] buffer, int length, bool truncated, ref TState state);
+
+    /// <summary>
     /// Reads up to <paramref name="limit"/> bytes of a response body as a string,
     /// marking it as truncated if there was more.
     /// </summary>
@@ -26,9 +36,47 @@ internal static class HttpClientHelpers
     /// </returns>
     internal static string? TryGetResponseBodyAsString(HttpResponseMessage? httpResponse, int limit, CancellationToken cancellationToken)
     {
+        // Decode using the charset from the response content headers, if available
+        (Encoding Encoding, string? Body) state = (GetEncoding(httpResponse?.Content?.Headers.ContentType?.CharSet), null);
+
+        var read = TryReadResponseBody(
+            httpResponse,
+            limit,
+            static (byte[] buffer, int length, bool truncated, ref (Encoding Encoding, string? Body) state) =>
+            {
+                var body = state.Encoding.GetString(buffer, 0, length);
+                state.Body = truncated ? body + "[TRUNCATED]" : body;
+            },
+            ref state,
+            cancellationToken);
+
+        return read ? state.Body : null;
+    }
+
+    /// <summary>
+    /// Reads up to <paramref name="limit"/> bytes of a response body and passes them to
+    /// <paramref name="reader"/>, along with whether there was more.
+    /// </summary>
+    /// <typeparam name="TState">The type of the state passed to <paramref name="reader"/>.</typeparam>
+    /// <param name="httpResponse">The response to read the body of.</param>
+    /// <param name="limit">The maximum number of bytes to read.</param>
+    /// <param name="reader">Processes the bytes that were read.</param>
+    /// <param name="state">The state to pass to <paramref name="reader"/>.</param>
+    /// <param name="cancellationToken">The <see cref="CancellationToken"/> to use.</param>
+    /// <returns>
+    /// <see langword="false"/> if there is no body or it could not be read before
+    /// <paramref name="cancellationToken"/> was cancelled; otherwise <see langword="true"/>.
+    /// </returns>
+    internal static bool TryReadResponseBody<TState>(
+        HttpResponseMessage? httpResponse,
+        int limit,
+        ResponseBodyReader<TState> reader,
+        ref TState state,
+        CancellationToken cancellationToken)
+    {
         if (httpResponse?.Content is null || cancellationToken.IsCancellationRequested)
         {
-            return null;
+            return false;
         }
 
         try
@@ -80,16 +128,9 @@ internal static class HttpClientHelpers
                     extra = Read(stream, probe, 0, 1, cancelled, cancellationToken) > 0;
                 }
 
-                // Decode using the charset from the response content headers, if available
-                var encoding = GetEncoding(httpResponse.Content.Headers.ContentType?.CharSet);
-                var result = encoding.GetString(buffer, 0, totalRead);
+                reader(buffer, totalRead, extra, ref state);
 
-                if (extra)
-                {
-                    result += "[TRUNCATED]";
-                }
-
-                return result;
+                return true;
             }
             finally
             {
@@ -100,8 +141,8 @@ internal static class HttpClientHelpers
         }
         catch (Exception)
         {
-            // The body is only used for diagnostics, so it is not worth failing over.
-            return null;
+            // Reading the body is best effort (e.g. for diagnostics), so it is not worth failing over.
+            return false;
         }
     }
 
