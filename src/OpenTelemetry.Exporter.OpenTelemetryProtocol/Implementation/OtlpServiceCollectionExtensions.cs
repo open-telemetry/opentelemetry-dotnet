@@ -28,6 +28,9 @@ internal static class OtlpServiceCollectionExtensions
             registerSdkLimitOptions: true,
             OtlpLogExporterHttpClientCategory);
 
+    public static void AddOtlpLogExporterHttpClientLoggerFilter(LoggerFilterOptions loggerFilterOptions)
+        => AddOtlpHttpClientLoggerFilter(loggerFilterOptions, OtlpLogExporterHttpClientCategory);
+
     public static void AddOtlpExporterMetricsServices(this IServiceCollection services, string name)
     {
         AddOtlpExporterSharedServices(

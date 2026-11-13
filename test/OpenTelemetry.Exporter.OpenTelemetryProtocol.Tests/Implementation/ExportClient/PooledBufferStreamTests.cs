@@ -141,7 +141,7 @@ public class PooledBufferStreamTests
         stream.Write([1, 2]);
 
         Assert.Equal(2, pool.Rented.Count);
-        Assert.Single(pool.Returned);
+        var returnedItem = Assert.Single(pool.Returned);
 
         stream.Dispose();
 
@@ -149,9 +149,9 @@ public class PooledBufferStreamTests
         Assert.False(stream.CanSeek);
         Assert.False(stream.CanWrite);
         Assert.Equal(2, pool.Returned.Count);
-        Assert.Same(pool.Rented[0], pool.Returned[0]);
+        Assert.Same(pool.Rented[0], returnedItem);
         Assert.Same(pool.Rented[1], pool.Returned[1]);
-        Assert.All(pool.Returned[0], (p) => Assert.Equal(0, p));
+        Assert.All(returnedItem, (p) => Assert.Equal(0, p));
         Assert.All(pool.Returned[1], (p) => Assert.Equal(0, p));
         Assert.Throws<ObjectDisposedException>(stream.Flush);
         Assert.Throws<ObjectDisposedException>(() => _ = stream.Length);

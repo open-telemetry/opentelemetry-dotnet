@@ -47,18 +47,7 @@ internal abstract class TagWriter<TTagState, TArrayState>
         {
             // Ordered by how often each type is likely to appear for performance
             case string s:
-                if (tagValueMaxLength is { } length && s.Length > length)
-                {
-                    this.WriteStringTag(
-                        ref state,
-                        key,
-                        s.AsSpan(0, length));
-                }
-                else
-                {
-                    this.WriteStringTag(ref state, key, s);
-                }
-
+                this.WriteStringTag(ref state, key, s, tagValueMaxLength);
                 break;
             case int i:
                 this.WriteIntegralTag(ref state, key, i);
@@ -101,17 +90,29 @@ internal abstract class TagWriter<TTagState, TArrayState>
             case IEnumerable<KeyValuePair<string, object?>> kvList:
                 return this.TryWriteKvListTagWithinDepthLimit(ref state, key, value, kvList, tagValueMaxLength);
 
+            case IEnumerable<KeyValuePair<string, string?>> stringKvList:
+                return this.TryWriteKvListTagWithinDepthLimit(ref state, key, value, AdaptStringKvList(stringKvList), tagValueMaxLength);
+
             case Array array:
-                if (value.GetType() == typeof(byte[]) && this.TryWriteByteArrayTag(ref state, key, ((byte[])value).AsSpan()))
+                if (value.GetType() == typeof(byte[]))
                 {
-                    return true;
+                    var bytes = ((byte[])value).AsSpan();
+                    if (tagValueMaxLength is { } byteLimit && bytes.Length > byteLimit)
+                    {
+                        bytes = bytes.Slice(0, byteLimit);
+                    }
+
+                    if (this.TryWriteByteArrayTag(ref state, key, bytes))
+                    {
+                        return true;
+                    }
                 }
 
                 try
                 {
                     this.WriteArrayTagInternal(ref state, key, array, tagValueMaxLength);
                 }
-                catch (Exception ex) when (ex is IndexOutOfRangeException or ArgumentException)
+                catch (Exception ex) when (ex is IndexOutOfRangeException or ArgumentException or OutOfMemoryException)
                 {
                     throw;
                 }
@@ -144,11 +145,14 @@ internal abstract class TagWriter<TTagState, TArrayState>
                 break;
 #endif
 
-            case IEnumerable<KeyValuePair<string, string?>> stringKvList:
-                return this.TryWriteKvListTagWithinDepthLimit(ref state, key, value, AdaptStringKvList(stringKvList), tagValueMaxLength);
-
             case IDictionary dictionary:
                 return this.TryWriteKvListTagWithinDepthLimit(ref state, key, value, AdaptDictionary(dictionary), tagValueMaxLength);
+
+#if NET
+            // Checked after the built-in types above, most of which also implement this interface.
+            case IUtf8SpanFormattable utf8SpanFormattable:
+                return this.TryWriteUtf8SpanFormattableTag(ref state, key, utf8SpanFormattable, tagValueMaxLength);
+#endif
 
             // All other types are converted to strings including the following
             // built-in value types:
@@ -157,30 +161,90 @@ internal abstract class TagWriter<TTagState, TArrayState>
             // case ulong:   May throw an exception on overflow (where ISpanFormattable not available).
             // case decimal: Converting to double produces rounding errors (where ISpanFormattable not available).
             default:
-                try
-                {
-                    var stringValue = Convert.ToString(value, CultureInfo.InvariantCulture);
-                    if (stringValue == null)
-                    {
-                        return this.LogUnsupportedTagTypeAndReturnFalse(key, value);
-                    }
-
-                    this.WriteStringTag(
-                        ref state,
-                        key,
-                        stringValue,
-                        tagValueMaxLength);
-                }
-                catch
-                {
-                    // If ToString throws an exception then the tag is ignored.
-                    return this.LogUnsupportedTagTypeAndReturnFalse(key, value);
-                }
-
-                break;
+                return this.TryWriteToStringTag(ref state, key, value, tagValueMaxLength);
         }
 
         return true;
+    }
+
+    protected static IEnumerable<KeyValuePair<string, object?>> DeduplicateKeys(IEnumerable<KeyValuePair<string, object?>> kvList)
+    {
+        TryDeduplicateKeys(kvList, long.MaxValue, out var result);
+        return result;
+    }
+
+    protected static bool TryDeduplicateKeys(
+        IEnumerable<KeyValuePair<string, object?>> kvList,
+        long maxEntries,
+        out IEnumerable<KeyValuePair<string, object?>> result)
+    {
+        // See https://github.com/open-telemetry/opentelemetry-specification/blob/v1.62.0/specification/common/README.md#mapstring-anyvalue;
+        // exported maps must only contain unique keys. Keys are compared case-sensitively and, as when setting an attribute that already
+        // exists, the last value for a key wins. The key keeps the position at which it first appeared.
+        if (kvList is Dictionary<string, object?> { Comparer: var comparer } dictionary &&
+            (comparer == EqualityComparer<string>.Default ||
+             comparer == StringComparer.Ordinal ||
+             comparer == StringComparer.OrdinalIgnoreCase))
+        {
+            // The keys of the dictionary are already unique when compared ordinally. Other comparers
+            // (e.g. ReferenceEqualityComparer) can allow keys containing the same text, so are not trusted.
+            result = dictionary;
+            return dictionary.Count <= maxEntries;
+        }
+
+        result = kvList;
+
+        if (kvList is ICollection<KeyValuePair<string, object?>> { Count: var count } && count > maxEntries)
+        {
+            return false;
+        }
+
+        var items = new List<KeyValuePair<string, object?>>();
+        var indexes = new Dictionary<string, int>(StringComparer.Ordinal);
+        long enumerated = 0;
+
+        foreach (var kvp in kvList)
+        {
+            if (++enumerated > maxEntries)
+            {
+                return false;
+            }
+
+            if (indexes.TryGetValue(kvp.Key, out var index))
+            {
+                items[index] = kvp;
+            }
+            else
+            {
+                indexes[kvp.Key] = items.Count;
+                items.Add(kvp);
+            }
+        }
+
+        result = items;
+        return true;
+    }
+
+    /// <summary>
+    /// Truncates a string to at most <paramref name="maxLength"/> UTF-16 chars without splitting a
+    /// surrogate pair, which would leave a lone surrogate that cannot be encoded as UTF-8.
+    /// </summary>
+    /// <param name="value">The string to truncate.</param>
+    /// <param name="maxLength">The maximum length in UTF-16 chars, if any.</param>
+    /// <returns>The leading part of <paramref name="value"/> that fits within the limit.</returns>
+    protected static ReadOnlySpan<char> TruncateString(ReadOnlySpan<char> value, int? maxLength)
+    {
+        if (maxLength is not { } length || value.Length <= length)
+        {
+            return value;
+        }
+
+        if (length > 0 && char.IsSurrogatePair(value[length - 1], value[length]))
+        {
+            length--;
+        }
+
+        return value.Slice(0, length);
     }
 
     protected abstract bool TryWriteEmptyTag(ref TTagState state, string key, object? value);
@@ -200,16 +264,52 @@ internal abstract class TagWriter<TTagState, TArrayState>
 
     protected abstract void WriteArrayTag(ref TTagState state, string key, ref TArrayState value);
 
+#if NET
+    protected virtual bool TryWriteUtf8SpanFormattableTag(ref TTagState state, string key, IUtf8SpanFormattable value, int? tagValueMaxLength)
+        => this.TryWriteToStringTag(ref state, key, value, tagValueMaxLength);
+#endif
+
     protected abstract void WriteKvListTag(ref TTagState state, string key, IEnumerable<KeyValuePair<string, object?>> kvList, int? tagValueMaxLength);
 
     protected abstract void OnUnsupportedTagDropped(
         string tagKey,
         string tagValueTypeFullName);
 
-    private static ReadOnlySpan<char> TruncateString(ReadOnlySpan<char> value, int? maxLength)
-        => maxLength is { } maxLengthValue && value.Length > maxLengthValue
-           ? value.Slice(0, maxLengthValue)
-           : value;
+    protected bool LogUnsupportedTagTypeAndReturnFalse(string key, object value)
+    {
+        this.OnUnsupportedTagDropped(key, value.GetType().ToString());
+        return false;
+    }
+
+    protected bool TryWriteToStringTag(ref TTagState state, string key, object value, int? tagValueMaxLength)
+    {
+        string? stringValue;
+        try
+        {
+            stringValue = Convert.ToString(value, CultureInfo.InvariantCulture);
+        }
+        catch (Exception ex) when (ex is not OutOfMemoryException)
+        {
+            // If ToString throws an exception then the tag is ignored.
+            return this.LogUnsupportedTagTypeAndReturnFalse(key, value);
+        }
+
+        if (stringValue == null)
+        {
+            return this.LogUnsupportedTagTypeAndReturnFalse(key, value);
+        }
+
+        // Written outside of the try block so that an exception thrown
+        // because the buffer is full reaches the serializer, which
+        // resizes the buffer and retries, instead of the tag being dropped.
+        this.WriteStringTag(
+            ref state,
+            key,
+            stringValue,
+            tagValueMaxLength);
+
+        return true;
+    }
 
     private static IEnumerable<KeyValuePair<string, object?>> AdaptStringKvList(IEnumerable<KeyValuePair<string, string?>> source)
     {
@@ -253,7 +353,7 @@ internal abstract class TagWriter<TTagState, TArrayState>
                     key,
                     TruncateString(stringValue.AsSpan(), tagValueMaxLength));
             }
-            catch (Exception ex) when (ex is IndexOutOfRangeException or ArgumentException)
+            catch (Exception ex) when (ex is IndexOutOfRangeException or ArgumentException or OutOfMemoryException)
             {
                 recursionDepth = 0;
                 throw;
@@ -273,7 +373,7 @@ internal abstract class TagWriter<TTagState, TArrayState>
         {
             this.WriteKvListTag(ref state, key, kvList, tagValueMaxLength);
         }
-        catch (Exception ex) when (ex is IndexOutOfRangeException or ArgumentException)
+        catch (Exception ex) when (ex is IndexOutOfRangeException or ArgumentException or OutOfMemoryException)
         {
             recursionDepth = 0;
             throw;
@@ -439,80 +539,159 @@ internal abstract class TagWriter<TTagState, TArrayState>
     {
         for (var i = 0; i < array.Length; ++i)
         {
-            var item = array.GetValue(i);
-            if (item == null)
-            {
-                this.arrayWriter.WriteNullValue(ref arrayState);
-                continue;
-            }
+            this.WriteArrayItem(ref arrayState, array.GetValue(i), tagValueMaxLength);
+        }
+    }
 
-            // Ordered by how often each type is likely to appear for performance
-            switch (item)
-            {
-                case string s:
+    private void WriteArrayItem(ref TArrayState arrayState, object? item, int? tagValueMaxLength)
+    {
+        if (item == null)
+        {
+            this.arrayWriter.WriteNullValue(ref arrayState);
+            return;
+        }
+
+        // Ordered by how often each type is likely to appear for performance
+        switch (item)
+        {
+            case string s:
+                this.WriteStringValue(
+                    ref arrayState,
+                    s,
+                    tagValueMaxLength);
+                break;
+            case int intValue:
+                this.arrayWriter.WriteIntegralValue(ref arrayState, intValue);
+                break;
+            case long l:
+                this.arrayWriter.WriteIntegralValue(ref arrayState, l);
+                break;
+            case bool b:
+                this.arrayWriter.WriteBooleanValue(ref arrayState, b);
+                break;
+            case double d:
+                this.arrayWriter.WriteFloatingPointValue(ref arrayState, d);
+                break;
+            case char c:
+                this.WriteCharValue(ref arrayState, c);
+                break;
+            case byte b:
+                this.arrayWriter.WriteIntegralValue(ref arrayState, b);
+                break;
+            case sbyte sb:
+                this.arrayWriter.WriteIntegralValue(ref arrayState, sb);
+                break;
+            case short s:
+                this.arrayWriter.WriteIntegralValue(ref arrayState, s);
+                break;
+            case ushort us:
+                this.arrayWriter.WriteIntegralValue(ref arrayState, us);
+                break;
+            case uint ui:
+                this.arrayWriter.WriteIntegralValue(ref arrayState, ui);
+                break;
+            case float f:
+                this.arrayWriter.WriteFloatingPointValue(ref arrayState, f);
+                break;
+
+            // A nested byte array, array or map is only written as a native nested value when
+            // the array writer supports embedding one (currently the JSON-based writers); when
+            // it is not supported, or the nesting limit below has been reached, the "when"
+            // clause is false and the switch falls through to the string-converted default.
+            // The exact type check is needed because the runtime also allows a sbyte[] to match byte[].
+            // Maps are matched before arrays so that an array of key/value pairs is written as a map.
+            case byte[] byteArray when byteArray.GetType() == typeof(byte[]) && this.arrayWriter.TryWriteByteArrayValue(ref arrayState, byteArray):
+                break;
+
+            case IEnumerable<KeyValuePair<string, object?>> nestedKvList when this.TryWriteNestedObjectValue(ref arrayState, nestedKvList, tagValueMaxLength):
+                break;
+
+            case IEnumerable<KeyValuePair<string, string?>> nestedStringKvList when this.TryWriteNestedObjectValue(ref arrayState, AdaptStringKvList(nestedStringKvList), tagValueMaxLength):
+                break;
+
+            case IDictionary nestedDictionary when this.TryWriteNestedObjectValue(ref arrayState, AdaptDictionary(nestedDictionary), tagValueMaxLength):
+                break;
+
+            case Array nestedArray when this.TryWriteNestedArrayValue(ref arrayState, nestedArray, tagValueMaxLength):
+                break;
+
+            // All other types are converted to strings including the following
+            // built-in value types:
+            // case nint:    Pointer type.
+            // case nuint:   Pointer type.
+            // case ulong:   May throw an exception on overflow.
+            // case decimal: Converting to double produces rounding errors.
+            default:
+                var stringValue = Convert.ToString(item, CultureInfo.InvariantCulture);
+                if (stringValue == null)
+                {
+                    this.arrayWriter.WriteNullValue(ref arrayState);
+                }
+                else
+                {
                     this.WriteStringValue(
                         ref arrayState,
-                        s,
+                        stringValue,
                         tagValueMaxLength);
-                    break;
-                case int intValue:
-                    this.arrayWriter.WriteIntegralValue(ref arrayState, intValue);
-                    break;
-                case long l:
-                    this.arrayWriter.WriteIntegralValue(ref arrayState, l);
-                    break;
-                case bool b:
-                    this.arrayWriter.WriteBooleanValue(ref arrayState, b);
-                    break;
-                case double d:
-                    this.arrayWriter.WriteFloatingPointValue(ref arrayState, d);
-                    break;
-                case char c:
-                    this.WriteCharValue(ref arrayState, c);
-                    break;
-                case byte b:
-                    this.arrayWriter.WriteIntegralValue(ref arrayState, b);
-                    break;
-                case sbyte sb:
-                    this.arrayWriter.WriteIntegralValue(ref arrayState, sb);
-                    break;
-                case short s:
-                    this.arrayWriter.WriteIntegralValue(ref arrayState, s);
-                    break;
-                case ushort us:
-                    this.arrayWriter.WriteIntegralValue(ref arrayState, us);
-                    break;
-                case uint ui:
-                    this.arrayWriter.WriteIntegralValue(ref arrayState, ui);
-                    break;
-                case float f:
-                    this.arrayWriter.WriteFloatingPointValue(ref arrayState, f);
-                    break;
+                }
 
-                // All other types are converted to strings including the following
-                // built-in value types:
-                // case Array:   Nested array.
-                // case nint:    Pointer type.
-                // case nuint:   Pointer type.
-                // case ulong:   May throw an exception on overflow.
-                // case decimal: Converting to double produces rounding errors.
-                default:
-                    var stringValue = Convert.ToString(item, CultureInfo.InvariantCulture);
-                    if (stringValue == null)
-                    {
-                        this.arrayWriter.WriteNullValue(ref arrayState);
-                    }
-                    else
-                    {
-                        this.WriteStringValue(
-                            ref arrayState,
-                            stringValue,
-                            tagValueMaxLength);
-                    }
+                break;
+        }
+    }
 
-                    break;
+    private bool TryWriteNestedArrayValue(ref TArrayState arrayState, Array nestedArray, int? tagValueMaxLength)
+    {
+        if (recursionDepth >= MaxRecursionDepth || !this.arrayWriter.TryBeginNestedArrayValue(ref arrayState))
+        {
+            return false;
+        }
+
+        recursionDepth++;
+        try
+        {
+            foreach (var element in nestedArray)
+            {
+                this.WriteArrayItem(ref arrayState, element, tagValueMaxLength);
             }
         }
+        finally
+        {
+            recursionDepth--;
+        }
+
+        this.arrayWriter.EndNestedArrayValue(ref arrayState);
+        return true;
+    }
+
+    private bool TryWriteNestedObjectValue(ref TArrayState arrayState, IEnumerable<KeyValuePair<string, object?>> kvList, int? tagValueMaxLength)
+    {
+        if (recursionDepth >= MaxRecursionDepth || !this.arrayWriter.TryBeginNestedObjectValue(ref arrayState))
+        {
+            return false;
+        }
+
+        if (!TryDeduplicateKeys(kvList, this.arrayWriter.MaxNestedObjectEntries, out var entries))
+        {
+            // Signals "the buffer is too small" in the same way as the array writer does.
+            throw new ArgumentException("The map has too many entries to be written.");
+        }
+
+        recursionDepth++;
+        try
+        {
+            foreach (var kvp in entries)
+            {
+                this.arrayWriter.WriteNestedObjectPropertyName(ref arrayState, kvp.Key);
+                this.WriteArrayItem(ref arrayState, kvp.Value, tagValueMaxLength);
+            }
+        }
+        finally
+        {
+            recursionDepth--;
+        }
+
+        this.arrayWriter.EndNestedObjectValue(ref arrayState);
+        return true;
     }
 
     private void WriteToArrayCovariant<TItem>(ref TArrayState arrayState, TItem[] array)
@@ -683,7 +862,7 @@ internal abstract class TagWriter<TTagState, TArrayState>
     {
         if (maxLength is { } length && value.Length > length)
         {
-            this.WriteStringTag(ref state, key, value.AsSpan(0, length));
+            this.WriteStringTag(ref state, key, TruncateString(value.AsSpan(), length));
         }
         else
         {
@@ -695,17 +874,11 @@ internal abstract class TagWriter<TTagState, TArrayState>
     {
         if (maxLength is { } length && value.Length > length)
         {
-            this.arrayWriter.WriteStringValue(ref state, value.AsSpan(0, length));
+            this.arrayWriter.WriteStringValue(ref state, TruncateString(value.AsSpan(), length));
         }
         else
         {
             this.arrayWriter.WriteStringValue(ref state, value);
         }
-    }
-
-    private bool LogUnsupportedTagTypeAndReturnFalse(string key, object value)
-    {
-        this.OnUnsupportedTagDropped(key, value.GetType().ToString());
-        return false;
     }
 }

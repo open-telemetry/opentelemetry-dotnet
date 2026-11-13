@@ -469,6 +469,132 @@ public sealed class TracerTests : IDisposable
     }
 
     [Fact]
+    public void GetTracer_WithEqualArrayTags_ReturnsSameInstance()
+    {
+        using var tracerProvider = new TestTracerProvider();
+        Tracer? firstTracer = null;
+
+        for (var i = 0; i < 10; i++)
+        {
+            // Each lookup supplies newly allocated arrays with the same values.
+#pragma warning disable CA1825 // The cache must also match distinct empty arrays.
+#pragma warning disable CA1861 // Each lookup must supply fresh arrays to exercise value equality.
+            KeyValuePair<string, object?>[] tags =
+            [
+                new("strings", new string?[] { "eu", null, "us" }),
+                new("booleans", new[] { true, false }),
+                new("integers", new[] { 1, 2 }),
+                new("longs", new[] { 1L, 2L }),
+                new("doubles", new[] { 1.0, double.NaN }),
+                new("floats", new[] { 1.0f, 2.0f }),
+                new("bytes", new byte[] { 1, 2 }),
+                new("shorts", new short[] { 1, 2 }),
+                new("chars", new[] { 'a', 'b' }),
+                new("empty", new string[0]),
+            ];
+#pragma warning restore CA1861 // Each lookup must supply fresh arrays to exercise value equality.
+#pragma warning restore CA1825 // The cache must also match distinct empty arrays.
+
+            var tracer = tracerProvider.GetTracer("test", "1.0.0", tags);
+            firstTracer ??= tracer;
+            Assert.Same(firstTracer, tracer);
+        }
+
+        Assert.Single(tracerProvider.Tracers!);
+    }
+
+    [Theory]
+    [InlineData(new[] { "eu", "us" }, new[] { "eu", "uk" })]
+    [InlineData(new[] { "eu", "us" }, new[] { "us", "eu" })]
+    [InlineData(new[] { "eu", "us" }, new[] { "eu" })]
+    [InlineData(new[] { "eu" }, "eu")]
+    [InlineData(new[] { "eu" }, null)]
+    [InlineData(new[] { 1, 2 }, new[] { 1L, 2L })]
+    [InlineData(new int[0], new long[0])]
+    public void GetTracer_WithDifferentArrayTags_ReturnsDifferentInstances(object? value1, object? value2)
+    {
+        using var tracerProvider = new TestTracerProvider();
+        var tracer1 = tracerProvider.GetTracer("test", "1.0.0", tags: [new("regions", value1)]);
+        var tracer2 = tracerProvider.GetTracer("test", "1.0.0", tags: [new("regions", value2)]);
+
+        Assert.NotSame(tracer1, tracer2);
+    }
+
+    [Fact]
+    public void GetTracer_WithArrayTags_SnapshotsCallerValues()
+    {
+        using var tracerProvider = new TestTracerProvider();
+        var value = new[] { "eu", "us" };
+        KeyValuePair<string, object?>[] tags = [new("regions", value)];
+        var tracer1 = tracerProvider.GetTracer("test", "1.0.0", tags);
+
+        value[1] = "uk";
+        var tracer2 = tracerProvider.GetTracer("test", "1.0.0", tags);
+
+        value[1] = "us";
+        var tracer3 = tracerProvider.GetTracer("test", "1.0.0", tags);
+
+        Assert.NotSame(tracer1, tracer2);
+        Assert.Same(tracer1, tracer3);
+        Assert.Equal(2, tracerProvider.Tracers!.Count);
+
+        var sourceValue = Assert.IsType<string[]>(Assert.Single(tracer1.ActivitySource!.Tags!).Value);
+        Assert.NotSame(value, sourceValue);
+        Assert.Equal("eu", sourceValue[0]);
+        Assert.Equal("us", sourceValue[1]);
+    }
+
+    [Fact]
+    public void GetTracer_WithArrayTags_SourceMutationDoesNotChangeCacheKey()
+    {
+        using var tracerProvider = new TestTracerProvider();
+        var value = new[] { "eu", "us" };
+        KeyValuePair<string, object?>[] tags = [new("regions", value)];
+        var tracer1 = tracerProvider.GetTracer("test", "1.0.0", tags);
+
+        var sourceValue = Assert.IsType<string[]>(Assert.Single(tracer1.ActivitySource!.Tags!).Value);
+        sourceValue[1] = "uk";
+
+        var tracer2 = tracerProvider.GetTracer("test", "1.0.0", tags);
+
+        Assert.Same(tracer1, tracer2);
+        Assert.Single(tracerProvider.Tracers!);
+        Assert.Equal("us", value[1]);
+    }
+
+    [Fact]
+    public void GetTracer_WithMultidimensionalArrayTags_PreservesShape()
+    {
+        using var tracerProvider = new TestTracerProvider();
+        var value = Array.CreateInstance(typeof(int), 1, 2);
+        value.SetValue(1, 0, 0);
+        value.SetValue(2, 0, 1);
+        var differentShape = Array.CreateInstance(typeof(int), 2, 1);
+        differentShape.SetValue(1, 0, 0);
+        differentShape.SetValue(2, 1, 0);
+        var tracer1 = tracerProvider.GetTracer("test", "1.0.0", tags: [new("values", value)]);
+        var tracer2 = tracerProvider.GetTracer("test", "1.0.0", tags: [new("values", value.Clone())]);
+        var tracer3 = tracerProvider.GetTracer("test", "1.0.0", tags: [new("values", differentShape)]);
+
+        Assert.Same(tracer1, tracer2);
+        Assert.NotSame(tracer1, tracer3);
+    }
+
+    [Fact]
+    public void GetTracer_WithSelfReferentialArrayTag_DoesNotRecurse()
+    {
+        using var tracerProvider = new TestTracerProvider();
+        var value = new object[1];
+        value[0] = value;
+
+        var tracer1 = tracerProvider.GetTracer("test", "1.0.0", tags: [new("values", value)]);
+        var tracer2 = tracerProvider.GetTracer("test", "1.0.0", tags: [new("values", value)]);
+
+        Assert.Same(tracer1, tracer2);
+        Assert.Single(tracerProvider.Tracers!);
+    }
+
+    [Fact]
     public void GetTracer_WithoutTags_ReturnsSameInstance()
     {
         using var tracerProvider = new TestTracerProvider();

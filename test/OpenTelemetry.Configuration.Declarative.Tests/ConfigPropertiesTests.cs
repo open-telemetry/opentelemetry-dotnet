@@ -1079,9 +1079,9 @@ public sealed class ConfigPropertiesTests
     }
 
     [Fact]
-    public void Create_CopiesSourceDictionary()
+    public void Create_CopiesSourceDictionaryWithOrdinalComparison()
     {
-        var source = new Dictionary<string, ConfigValue>(StringComparer.Ordinal)
+        var source = new Dictionary<string, ConfigValue>(StringComparer.OrdinalIgnoreCase)
         {
             ["k"] = ConfigValue.String("original"),
         };
@@ -1091,7 +1091,29 @@ public sealed class ConfigPropertiesTests
         source["added"] = ConfigValue.String("new");
 
         Assert.Equal("original", properties.GetString("k").Value);
+        Assert.Equal(ConfigValueOutcome.Absent, properties.GetString("K").Outcome);
         Assert.Equal(ConfigValueOutcome.Absent, properties.GetString("added").Outcome);
+    }
+
+    [Fact]
+    public void Create_CopiesKeyPositionsWithOrdinalComparison()
+    {
+        var values = new Dictionary<string, ConfigValue>
+        {
+            ["Key"] = ConfigValue.String("original"),
+        };
+        var positions = new Dictionary<string, ConfigValuePosition>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["Key"] = new(3, 5),
+        };
+
+        var properties = ConfigProperties.Create(values, positions);
+        positions["Key"] = new(7, 9);
+        positions["added"] = new(11, 13);
+
+        Assert.Equal(new ConfigValuePosition(3, 5), properties.GetKeyPosition("Key"));
+        Assert.Equal(ConfigValuePosition.Unknown, properties.GetKeyPosition("key"));
+        Assert.Equal(ConfigValuePosition.Unknown, properties.GetKeyPosition("added"));
     }
 
     [Fact]

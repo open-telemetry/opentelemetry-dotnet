@@ -37,7 +37,7 @@ jobs:
           show-progress: false
 
       - name: Setup .NET
-        uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        uses: actions/setup-dotnet@0f4a354dd5547a28c70b7853dbd95d5b67886e73 # v6.1.0
 
       - name: Restore workloads
         run: dotnet workload restore ./OpenTelemetry.Extended.slnx
@@ -46,6 +46,6 @@ jobs:
         run: dotnet restore ./OpenTelemetry.Extended.slnx
 
       - name: Component detection
-        uses: advanced-security/component-detection-dependency-submission-action@b282c67b1008fde9b60da4bdfcd8849613e293b2 # v0.1.6
+        uses: advanced-security/component-detection-dependency-submission-action@a02aeda7a175ad4dd38a13c4d3ff2df9da8f2cf0 # v0.2.0
         with:
           detectorsCategories: NuGet

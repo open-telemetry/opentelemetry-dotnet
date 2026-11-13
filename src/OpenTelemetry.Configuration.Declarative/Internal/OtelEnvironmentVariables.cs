@@ -1,6 +1,8 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Runtime.InteropServices;
+
 namespace OpenTelemetry.Configuration.Declarative;
 
 /// <summary>
@@ -20,6 +22,21 @@ internal static class OtelEnvironmentVariables
     internal const string ResourceAttributes = "OTEL_RESOURCE_ATTRIBUTES";
 
     /// <summary>
+    /// The <c>service.name</c> resource attribute.
+    /// </summary>
+    internal const string ServiceName = "OTEL_SERVICE_NAME";
+
+    /// <summary>
+    /// The sampler selected by name.
+    /// </summary>
+    internal const string TracesSampler = "OTEL_TRACES_SAMPLER";
+
+    /// <summary>
+    /// The argument of the sampler selected by <see cref="TracesSampler"/>.
+    /// </summary>
+    internal const string TracesSamplerArg = "OTEL_TRACES_SAMPLER_ARG";
+
+    /// <summary>
     /// Path to the declarative configuration YAML file.
     /// </summary>
     internal const string ConfigFile = "OTEL_CONFIG_FILE";
@@ -34,4 +51,7 @@ internal static class OtelEnvironmentVariables
     /// mode masking until each graduates into the declarative configuration document.
     /// </summary>
     internal const string DotNetPrefix = "OTEL_DOTNET_";
+
+    internal static StringComparer NameComparer { get; } =
+        RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? StringComparer.OrdinalIgnoreCase : StringComparer.Ordinal;
 }

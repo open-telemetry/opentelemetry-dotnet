@@ -1,0 +1,22 @@
+file_format: "1.2"
+resource:
+  attributes:
+    - name: service.name
+      value: declarative-config-example
+tracer_provider:
+  processors:
+    - simple:
+        exporter:
+          console:
+  sampler:
+    parent_based:
+      root:
+        always_on:
+  # Remove this block to listen to every source, including the .NET runtime's.
+  tracer_configurator/development:
+    default_config:
+      enabled: false
+    tracers:
+      - name: Examples.DeclarativeConfiguration
+        config:
+          enabled: true

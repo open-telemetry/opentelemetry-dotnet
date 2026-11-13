@@ -1,6 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Buffers.Binary;
 using System.Globalization;
 using OpenTelemetry.Internal;
 
@@ -51,6 +52,11 @@ public sealed class TraceIdRatioBasedSampler
     /// <inheritdoc />
     public override SamplingResult ShouldSample(in SamplingParameters samplingParameters)
     {
+        if (this.IsShutdown)
+        {
+            return new SamplingResult(SamplingDecision.Drop);
+        }
+
         // Always sample if we are within probability range. This is true even for child activities (that
         // may have had a different sampling decision made) to allow for different sampling policies,
         // and dynamic increases to sampling probabilities for debugging purposes.
@@ -60,7 +66,7 @@ public sealed class TraceIdRatioBasedSampler
         // while allowing for a (very) small chance of *not* sampling if the id == Long.MAX_VALUE.
         // This is considered a reasonable trade-off for the simplicity/performance requirements (this
         // code is executed in-line for every Activity creation).
-#if NET9_0_OR_GREATER
+#if NET
         // This optimization can be removed once https://github.com/dotnet/runtime/pull/134135
         // is available in a future version of System.Diagnostics.DiagnosticSource.
         Span<byte> traceIdBytes = stackalloc byte[8];
@@ -73,20 +79,7 @@ public sealed class TraceIdRatioBasedSampler
         Span<byte> traceIdBytes = stackalloc byte[16];
         samplingParameters.TraceId.CopyTo(traceIdBytes);
 #endif
-        return new SamplingResult((GetLowerLong(traceIdBytes) & long.MaxValue) < this.idUpperBound);
-    }
 
-    private static long GetLowerLong(ReadOnlySpan<byte> bytes)
-    {
-        long result = 0;
-        for (var i = 0; i < 8; i++)
-        {
-            result <<= 8;
-#pragma warning disable CS0675 // Bitwise-or operator used on a sign-extended operand
-            result |= bytes[i] & 0xff;
-#pragma warning restore CS0675 // Bitwise-or operator used on a sign-extended operand
-        }
-
-        return result;
+        return new SamplingResult((BinaryPrimitives.ReadInt64BigEndian(traceIdBytes) & long.MaxValue) < this.idUpperBound);
     }
 }

@@ -1,0 +1,15 @@
+file_format: "1.2"
+
+meter_provider:
+  readers:
+    - periodic:
+        exporter:
+          console:
+  meter_configurator/development:
+    # SNIPPET_START
+    default_config:
+      enabled: false
+    meters:
+      - name: io.opentelemetry.contrib.*
+        config:
+          enabled: true

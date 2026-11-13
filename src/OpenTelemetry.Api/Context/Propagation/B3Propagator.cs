@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics;
-using System.Text;
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Context.Propagation;
@@ -36,9 +35,11 @@ public sealed class B3Propagator : TextMapPropagator
     // "Debug" sampled value.
     internal const string FlagsValue = "1";
 
+    private const string XB3CombinedDelimiterString = "-";
+
     private static readonly HashSet<string> AllFields = [XB3TraceId, XB3SpanId, XB3ParentSpanId, XB3Sampled, XB3Flags];
 
-    private static readonly HashSet<string> SampledValues = new(StringComparer.Ordinal) { SampledValue, LegacySampledValue };
+    private static readonly HashSet<string> SampledValues = [with(StringComparer.Ordinal), SampledValue, LegacySampledValue];
 
     private readonly bool singleHeader;
 
@@ -120,17 +121,14 @@ public sealed class B3Propagator : TextMapPropagator
 
         if (this.singleHeader)
         {
-            var sb = new StringBuilder();
-            sb.Append(context.ActivityContext.TraceId.ToHexString());
-            sb.Append(XB3CombinedDelimiter);
-            sb.Append(context.ActivityContext.SpanId.ToHexString());
-            if ((context.ActivityContext.TraceFlags & ActivityTraceFlags.Recorded) != 0)
-            {
-                sb.Append(XB3CombinedDelimiter);
-                sb.Append(SampledValueChar);
-            }
+            var traceId = context.ActivityContext.TraceId.ToHexString();
+            var spanId = context.ActivityContext.SpanId.ToHexString();
 
-            setter(carrier, XB3Combined, sb.ToString());
+            var value = (context.ActivityContext.TraceFlags & ActivityTraceFlags.Recorded) != 0
+                ? string.Concat(traceId, XB3CombinedDelimiterString, spanId, XB3CombinedDelimiterString + SampledValue)
+                : string.Concat(traceId, XB3CombinedDelimiterString, spanId);
+
+            setter(carrier, XB3Combined, value);
         }
         else
         {
@@ -246,10 +244,10 @@ public sealed class B3Propagator : TextMapPropagator
             return header is not { Length: > 0 } || string.IsNullOrWhiteSpace(header)
                 ? context
                 : !TryExtractSingleHeaderContext(header, out var traceId, out var spanId, out var traceOptions)
-                ? context
-                : new PropagationContext(
-                    new ActivityContext(traceId, spanId, traceOptions, isRemote: true),
-                    context.Baggage);
+                    ? context
+                    : new PropagationContext(
+                        new ActivityContext(traceId, spanId, traceOptions, isRemote: true),
+                        context.Baggage);
         }
         catch (Exception e)
         {

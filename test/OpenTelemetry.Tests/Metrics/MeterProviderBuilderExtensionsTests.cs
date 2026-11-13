@@ -5,9 +5,11 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using OpenTelemetry.Resources;
+using OpenTelemetry.Tests;
 
 namespace OpenTelemetry.Metrics.Tests;
 
+[Collection(EnvVarsCollectionDefinition.Name)]
 public class MeterProviderBuilderExtensionsTests
 {
     [Fact]
@@ -352,8 +354,8 @@ public class MeterProviderBuilderExtensionsTests
         Assert.True(configureServicesCalled);
         Assert.Equal(3, configureBuilderInvocations);
 
-        Assert.Single(provider.Instrumentations);
-        Assert.True(provider.Instrumentations[0] is MyInstrumentation);
+        var instrumentation = Assert.Single(provider.Instrumentations);
+        Assert.True(instrumentation is MyInstrumentation);
         Assert.True(provider.Reader is MyReader);
 
         postAction(provider);

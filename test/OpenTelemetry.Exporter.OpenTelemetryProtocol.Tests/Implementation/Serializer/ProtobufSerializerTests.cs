@@ -773,6 +773,21 @@ public class ProtobufSerializerTests
     }
 
     [Fact]
+    public void IncreaseBufferSize_ClearsReplacedBuffer()
+    {
+        var pool = new TrackingArrayPool();
+        var buffer = pool.Rent(1024);
+        var original = buffer;
+
+        var increased = ProtobufSerializer.IncreaseBufferSize(pool, ref buffer, OtlpSignalType.Traces);
+
+        Assert.True(increased);
+        Assert.NotSame(original, buffer);
+        Assert.Same(original, pool.ReturnedArray);
+        Assert.True(pool.ClearArray);
+    }
+
+    [Fact]
     public void ReturnBuffer_ClearsReturnedBuffer()
     {
         var pool = new TrackingArrayPool();
@@ -801,6 +816,33 @@ public class ProtobufSerializerTests
         finally
         {
             ProtobufSerializer.ReturnBuffer(buffer);
+        }
+    }
+
+    [Fact]
+    public void ComputeVarInt64Size_MatchesEncodedLength()
+    {
+        // Every bit length from 0 to 64, with the smallest and largest value of that length.
+        for (var bits = 0; bits <= 64; bits++)
+        {
+            var smallest = bits == 0 ? 0UL : 1UL << (bits - 1);
+            var largest = bits == 64 ? ulong.MaxValue : (1UL << bits) - 1;
+
+            Assert.Equal(EncodedVarIntLength(smallest), ProtobufSerializer.ComputeVarInt64Size(smallest));
+            Assert.Equal(EncodedVarIntLength(largest), ProtobufSerializer.ComputeVarInt64Size(largest));
+        }
+    }
+
+    [Fact]
+    public void ComputeVarInt32Size_MatchesEncodedLength()
+    {
+        for (var bits = 0; bits <= 32; bits++)
+        {
+            var smallest = bits == 0 ? 0U : 1U << (bits - 1);
+            var largest = bits == 32 ? uint.MaxValue : (1U << bits) - 1;
+
+            Assert.Equal(EncodedVarIntLength(smallest), ProtobufSerializer.ComputeVarInt32Size(smallest));
+            Assert.Equal(EncodedVarIntLength(largest), ProtobufSerializer.ComputeVarInt32Size(largest));
         }
     }
 
@@ -873,12 +915,24 @@ public class ProtobufSerializerTests
         return (value, position);
     }
 
+    private static int EncodedVarIntLength(ulong value)
+    {
+        var buffer = new byte[10];
+        return ProtobufSerializer.WriteVarInt64(buffer, 0, value);
+    }
+
     private sealed class TrackingArrayPool : ArrayPool<byte>
     {
         public bool ClearArray { get; private set; }
 
+        public byte[]? ReturnedArray { get; private set; }
+
         public override byte[] Rent(int minimumLength) => new byte[minimumLength];
 
-        public override void Return(byte[] array, bool clearArray = false) => this.ClearArray = clearArray;
+        public override void Return(byte[] array, bool clearArray = false)
+        {
+            this.ReturnedArray = array;
+            this.ClearArray = clearArray;
+        }
     }
 }

@@ -78,10 +78,7 @@ public class TraceContextPropagatorTests
 
         Assert.Equal(ActivityTraceId.CreateFromString(TraceId.AsSpan()), context.ActivityContext.TraceId);
         Assert.Equal(ActivitySpanId.CreateFromString(SpanId.AsSpan()), context.ActivityContext.SpanId);
-
-        // https://github.com/open-telemetry/opentelemetry-dotnet/pull/6899
-        // will change this to use ActivityTraceFlags.RandomTraceId instead.
-        Assert.Equal((ActivityTraceFlags)2, context.ActivityContext.TraceFlags);
+        Assert.Equal(ActivityTraceFlags.RandomTraceId, context.ActivityContext.TraceFlags);
 
         Assert.True(context.ActivityContext.IsValid());
     }
@@ -101,10 +98,7 @@ public class TraceContextPropagatorTests
         Assert.Equal(ActivitySpanId.CreateFromString(SpanId.AsSpan()), context.ActivityContext.SpanId);
 
         Assert.True(context.ActivityContext.TraceFlags.HasFlag(ActivityTraceFlags.Recorded));
-
-        // https://github.com/open-telemetry/opentelemetry-dotnet/pull/6899
-        // will change this to use ActivityTraceFlags.RandomTraceId instead.
-        Assert.True(context.ActivityContext.TraceFlags.HasFlag((ActivityTraceFlags)2));
+        Assert.True(context.ActivityContext.TraceFlags.HasFlag(ActivityTraceFlags.RandomTraceId));
 
         Assert.True(context.ActivityContext.IsValid());
     }
@@ -288,6 +282,66 @@ public class TraceContextPropagatorTests
         Assert.False(context.ActivityContext.IsValid());
     }
 
+    [Theory]
+    [InlineData(3, 32)]
+    [InlineData(36, 16)]
+    public void Extract_ValidatesEveryIdCharacter(int start, int length)
+    {
+        var propagator = new TraceContextPropagator();
+        var headers = new Dictionary<string, string>();
+        var traceparent = $"00-{TraceId}-{SpanId}-01".ToCharArray();
+
+        for (var offset = 0; offset < length; offset++)
+        {
+            var index = start + offset;
+            var original = traceparent[index];
+
+            // Exercise ASCII and non-ASCII characters at every position, including vector boundaries.
+            foreach (var character in "0123456789abcdefABCDEFgG/:@\u0000\u007f\u0080\uff10\uff46")
+            {
+                traceparent[index] = character;
+                headers[TraceParent] = new string(traceparent);
+
+                var context = propagator.Extract(default, headers, Getter);
+                var expectedValid = character is (>= '0' and <= '9') or (>= 'a' and <= 'f');
+
+                Assert.Equal(expectedValid, context.ActivityContext.IsValid());
+                if (expectedValid)
+                {
+                    Assert.Equal(new string(traceparent, 3, 32), context.ActivityContext.TraceId.ToHexString());
+                    Assert.Equal(new string(traceparent, 36, 16), context.ActivityContext.SpanId.ToHexString());
+                }
+            }
+
+            traceparent[index] = original;
+        }
+    }
+
+    [Theory]
+    [InlineData(3, 32)]
+    [InlineData(36, 16)]
+    public void Extract_AcceptsIdWithSingleNonzeroNibble(int start, int length)
+    {
+        var propagator = new TraceContextPropagator();
+        var headers = new Dictionary<string, string>();
+        var traceparent = $"00-{TraceId}-{SpanId}-01".ToCharArray();
+        traceparent.AsSpan(start, length).Fill('0');
+
+        for (var offset = 0; offset < length; offset++)
+        {
+            traceparent[start + offset] = '1';
+            headers[TraceParent] = new string(traceparent);
+
+            var context = propagator.Extract(default, headers, Getter);
+
+            Assert.True(context.ActivityContext.IsValid(), $"Rejected nonzero nibble at position {start + offset}.");
+            Assert.Equal(new string(traceparent, 3, 32), context.ActivityContext.TraceId.ToHexString());
+            Assert.Equal(new string(traceparent, 36, 16), context.ActivityContext.SpanId.ToHexString());
+
+            traceparent[start + offset] = '0';
+        }
+    }
+
     [Fact]
     public void TracestateToStringEmpty()
     {
@@ -454,6 +508,21 @@ public class TraceContextPropagatorTests
         Assert.Equal($"{key}=1", actual);
     }
 
+    [Theory]
+    [InlineData(1)]
+    [InlineData(125)]
+    [InlineData(251)]
+    [InlineData(252)]
+    [InlineData(256)]
+    public void TryExtractTracestate_NormalizesWhitespaceAndDuplicateKeys(int valueLength)
+    {
+        var value = new string('v', valueLength);
+        var header = $" , a={value} , , a=ignored,b={value},c=3, ";
+
+        Assert.True(TraceContextPropagator.TryExtractTracestate([header], out var actual));
+        Assert.Equal($"a={value},b={value},c=3", actual);
+    }
+
     [Fact]
     public async Task Extract_DoesNotHangWhenLaterKeyAppearsInsideEarlierValue()
     {
@@ -576,9 +645,7 @@ public class TraceContextPropagatorTests
             { TraceState, $"congo=lZWRzIHRoNhcm5hbCBwbGVhc3VyZS4,rojo=00-{traceId}-00f067aa0ba902b7-02" },
         };
 
-        // https://github.com/open-telemetry/opentelemetry-dotnet/pull/6899
-        // will change this to use ActivityTraceFlags.RandomTraceId instead.
-        var activityContext = new ActivityContext(traceId, spanId, (ActivityTraceFlags)2, expectedHeaders[TraceState]);
+        var activityContext = new ActivityContext(traceId, spanId, ActivityTraceFlags.RandomTraceId, expectedHeaders[TraceState]);
         var propagationContext = new PropagationContext(activityContext, default);
         var carrier = new Dictionary<string, string>();
         var propagator = new TraceContextPropagator();
@@ -731,7 +798,7 @@ public class TraceContextPropagatorTests
             "bar01=01,bar02=02,bar03=03,bar04=04,bar05=05,bar06=06,bar07=07,bar08=08,bar09=09,bar10=10",
             "bar11=11,bar12=12,bar13=13,bar14=14,bar15=15,bar16=16,bar17=17,bar18=18,bar19=19,bar20=20",
             "bar21=21,bar22=22,bar23=23,bar24=24,bar25=25,bar26=26,bar27=27,bar28=28,bar29=29,bar30=30",
-            "bar31=31,bar32=32"
+            "bar31=31,bar32=32",
         ]);
         var expected =
             "bar01=01,bar02=02,bar03=03,bar04=04,bar05=05,bar06=06,bar07=07,bar08=08,bar09=09,bar10=10" + "," +
@@ -745,7 +812,7 @@ public class TraceContextPropagatorTests
             "bar01=01,bar02=02,bar03=03,bar04=04,bar05=05,bar06=06,bar07=07,bar08=08,bar09=09,bar10=10",
             "bar11=11,bar12=12,bar13=13,bar14=14,bar15=15,bar16=16,bar17=17,bar18=18,bar19=19,bar20=20",
             "bar21=21,bar22=22,bar23=23,bar24=24,bar25=25,bar26=26,bar27=27,bar28=28,bar29=29,bar30=30",
-            "bar31=31,bar32=32,bar33=33"
+            "bar31=31,bar32=32,bar33=33",
         ]);
         Assert.Empty(output2);
     }

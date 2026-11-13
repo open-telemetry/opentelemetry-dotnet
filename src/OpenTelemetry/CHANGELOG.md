@@ -6,6 +6,245 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Add support for setting the operational criticality of a service using the
+  new `AddServiceCriticality()` extension method on `ResourceBuilder` with
+  the [`service.criticality` resource attribute](https://github.com/open-telemetry/semantic-conventions/blob/c381bc8a42ec5628bc7becdca4ce904ae0ed66c3/docs/registry/attributes/service.md#service-criticality).
+  ([#7725](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7725))
+
+## 1.21.0
+
+Released 2026-Nov-11
+
+* `OpenTelemetryLoggerOptions` is now bound from the `Logging:OpenTelemetry`
+  configuration section using the configuration binding source generator instead
+  of reflection, making it fully trim and Native AOT compatible. An empty value
+  for a boolean option is now ignored on all target frameworks rather than
+  throwing on some, depending on the version of
+  `Microsoft.Extensions.Configuration.Binder` in use.
+  ([#8100](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8100))
+
+* Fixed the self-diagnostics environment snapshot leaving a dangling comma in a
+  redacted `OTEL_RESOURCE_ATTRIBUTES` value when it contained empty entries.
+  ([#8104](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8104))
+
+## 1.21.0-rc.2
+
+Released 2026-Nov-09
+
+* Fixed an exception when downscaling empty exponential histogram buckets after
+  a reset.
+  ([#8064](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8064))
+
+* Fixed tracing callbacks continuing after provider shutdown or disposal on older
+  target frameworks.
+  ([#8065](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8065))
+
+* Fixed initialization failures when environment variable access is denied.
+  Configuration reloads retain the last successful values when access is denied.
+  ([#8070](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8070))
+
+* Fixed a source, meter or legacy activity name with a trailing line feed
+  matching a wildcard pattern which does not end in a wildcard.
+  ([#8074](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8074))
+
+* Fixed `OTEL_RESOURCE_ATTRIBUTES` values being decoded as form data, which
+  changed a `+` to a space. Values are now only percent-decoded, as defined by
+  the Resource SDK specification.
+  ([#8074](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8074))
+
+* Updated the schema URL of resources created by the SDK to use OpenTelemetry
+  Semantic Conventions version `1.45.0`.
+  ([#8079](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8079))
+
+* Added support for batching the metric points exported by
+  `PeriodicExportingMetricReader`. When a maximum export batch size is set,
+  using the new constructor overload or
+  `PeriodicExportingMetricReaderOptions.MaxExportBatchSize`, the metric
+  points of each collection are split into batches of at most that many
+  metric points, even if that splits up the metric points of a single
+  metric. The batches are exported serially with the export timeout
+  applying to each export. It can also be configured with the
+  `OTEL_METRIC_EXPORT_MAX_BATCH_SIZE` environment variable.
+  ([#8053](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8053))
+
+* Fixed `PeriodicExportingMetricReader` exporting a collection which was still
+  in progress when `Shutdown()` timed out to its exporter after the exporter
+  had been shut down.
+  ([#8053](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8053))
+
+* Fixed `PeriodicExportingMetricReader` not making its final collection when
+  `Shutdown()` was called before its background task had started running on
+  platforms where threading is not available, such as browsers.
+  ([#8053](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8053))
+
+* `OTEL_DIAGNOSTICS.json` now uses the `SelfDiagnosticsOptions` pipeline,
+  adding configuration warnings and a redacted environment snapshot to each
+  file's preamble. `Verbose` and `LogAlways` also log loaded assemblies.
+  File-open failures are reported on standard error.
+  ([#7997](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7997))
+
+* **Breaking Change** `OTEL_DIAGNOSTICS.json` now writes rolling
+  `otel-dotnet-*.log` files in the standard entry format instead of a circular
+  `{executable}.{pid}.log` file. `FileSize` is split evenly across two
+  retained files, so total disk usage stays close to the configured limit.
+  `FormatMessage` is now ignored; messages are always formatted.
+  Provider-configured sinks, including those enabled through environment
+  variables, override the JSON configuration with a warning event. Writes are
+  asynchronous and may drop entries when the bounded queue fills.
+  ([#7997](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7997))
+
+* Added `Sampler.Shutdown` and the overridable `Sampler.OnShutdown` to allow
+  samplers to release resources, as described in the
+  [specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk.md#shutdown-1).
+  `TracerProvider` now calls `Shutdown` on its sampler when it is shut down or
+  disposed, and `ParentBasedSampler` and `AlwaysRecordSampler` call `Shutdown`
+  on the samplers they delegate to.
+  ([#8060](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8060))
+
+* The `TracerProvider` now disposes of its sampler after its listener has
+  stopped calling the sampler, rather than before the processors are shut down.
+  ([#8060](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8060))
+
+## 1.21.0-rc.1
+
+Released 2026-Oct-28
+
+* Fixed a race in the self-diagnostics sink dispatcher where disposing it
+  while its pump thread was exiting could throw `ArgumentNullException` on
+  .NET Framework.
+  ([#7983](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7983))
+
+* `SelfDiagnosticsOptions` is now automatically bound from the
+  `OpenTelemetry:SelfDiagnostics` configuration section, when present.
+  ([#8008](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8008))
+
+* Fixed a race where collecting a metric with delta temporality concurrently
+  with the creation of a new `MetricPoint` could reclaim the `MetricPoint`
+  while it was being created, losing the measurement.
+  ([#8019](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8019))
+
+* Fixed a race where collecting a metric with delta temporality could export
+  the same series twice in a single collection.
+  ([#8019](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8019))
+
+* Fixed wildcard matching timeouts that could prevent configured source, meter,
+  legacy activity, or metric view patterns from matching.
+  ([#8014](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8014))
+
+* The timeout passed to `MetricReader.Collect()` (for example by
+  `MeterProvider.ForceFlush()`), the `ExportTimeoutMilliseconds` of
+  `PeriodicExportingMetricReader` and the `ExporterTimeoutMilliseconds` of
+  `BatchExportProcessor<T>` are now made available to the exporter instead of
+  being ignored once the export has started, so that the OTLP exporter can
+  cancel an export which runs past the timeout. The `ExportTimeoutMilliseconds`
+  of `PeriodicExportingMetricReader` now also limits exports which are not
+  started by the reader itself, such as those of `MeterProvider.ForceFlush()`.
+  ([#7996](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7996))
+
+* Fixed a race where collecting a cumulative metric concurrently with the
+  creation of a new `MetricPoint` could export a `MetricPoint` that was not yet
+  fully initialized, could case a `NullReferenceException` when enumerating `Tags`.
+  ([#8018](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8018))
+
+* **Breaking Change** Dropped support for `net8.0` and `net9.0`.
+  ([#6899](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6899))
+
+* Add support for .NET 11.0.
+  ([#6899](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6899))
+
+* Added support for enabling `ActivitySource`s from configuration using the
+  `Microsoft.Extensions.Diagnostics` tracing APIs introduced in .NET 11 (for
+  example, `services.AddTracing(b => b.AddConfiguration(section))`).
+  Activities from sources enabled this way are processed by the OpenTelemetry
+  `TracerProvider` registered through `AddOpenTelemetry().WithTracing()`.
+  Not supported when targeting `net10.0`.
+  ([#6899](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6899))
+
+## 1.20.1
+
+Released 2026-Oct-20
+
+## 1.20.1-rc.1
+
+Released 2026-Oct-20
+
+* Fixed a possible race condition on ARM64 when multiple threads record the
+  first measurement with no tags, or the first overflow measurement, that could
+  cause the measurement to be recorded incorrectly.
+  ([#7951](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7951))
+
+* Fixed self-diagnostics preamble redaction of quoted or encoded PEM material
+  and prefixed JWTs.
+  ([#7955](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7955))
+
+* Fixed default HTTP client log filtering when registering the OTLP log exporter
+  through `OpenTelemetryLoggerOptions`.
+  ([#7959](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7959))
+
+* Fixed legacy self-diagnostics logging terminating the process when the log
+  file is truncated or the log volume runs out of space.
+  ([#7956](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7956))
+
+* **Experimental (pre-release builds only):** Fixed `Logger.EmitLog` ignoring
+  instrumentation suppression, which could cause recursive exports or deadlocks.
+  ([#7961](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7961))
+
+* Fixed delta double counters losing subsequent measurements after a non-finite
+  or large value and idle metric points with a `NaN` value failing to be reclaimed.
+  ([#7963](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7963))
+
+* Improve the assignment of values to exponential histogram buckets when the
+  value is near a bucket boundary by using a pre-computed lookup table.
+  ([#7911](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7911))
+
+* Fixed `LogRecord`s being returned to the shared pool while still queued for
+  export when an exporter stops enumerating a single-item or array
+  `Batch<LogRecord>` early which could cause a `BatchLogRecordExportProcessor`
+  on the same provider to export missing or incorrect data.
+  ([#7965](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7965))
+
+* Fixed a `SuppressInstrumentationScope.Enter()` reference count never being
+  released when the `Activity` it was entered for is not recorded, which caused
+  all subsequent telemetry in that execution context to be suppressed.
+  ([#7966](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7966))
+
+* Self-diagnostics log files, whether configured through `OTEL_DIAGNOSTICS.json`
+  or `SelfDiagnosticsOptions`, are now always created as new files.
+  ([#7968](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7968))
+
+* Self-diagnostics messages written to the sinks configured by
+  `SelfDiagnosticsOptions` are now truncated to 16,384 characters so that the
+  memory used by entries waiting to be written is bounded.
+  ([#7969](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7969))
+
+* The self-diagnostics file sink now creates its log directory and log files
+  so that only the owner can access them (`0700`/`0600`) on Linux and macOS,
+  instead of inheriting the process umask.
+  ([#7967](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7967))
+
+* Fixed pooled log records retaining completed log data until reused.
+  ([#7978](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7978))
+
+* Fixed slow metric recording when distinct wide tag values, such as `long` or
+  `Guid`, share the same built-in hash code.
+  ([#7979](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7979))
+
+* Fixed `ObservableCounter` and `ObservableUpDownCounter` overflow points
+  reporting only the last observation instead of the sum for each collection.
+  ([#7985](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7985))
+
+* Fixed replaced log attributes being exported together with their original
+  values when buffering or updating `LogRecord.State`.
+  ([#7987](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7987))
+
+## 1.20.0
+
+Released 2026-Oct-15
+
+## 1.20.0-rc.1
+
+Released 2026-Oct-15
+
 * Fixed `SuppressInstrumentationScope` reference counts leaking between
   inherited asynchronous execution contexts.
   ([#7803](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7803))
@@ -28,10 +267,44 @@ Notes](../../RELEASENOTES.md).
   `IConfiguration` does not contain those settings.
   ([#7855](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7855))
 
-* Add support for setting the operational criticality of a service using the
-  new `AddServiceCriticality()` extension method on `ResourceBuilder` with
-  the [`service.criticality` resource attribute](https://github.com/open-telemetry/semantic-conventions/blob/c381bc8a42ec5628bc7becdca4ce904ae0ed66c3/docs/registry/attributes/service.md#service-criticality).
-  ([#7725](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7725))
+* Added improved self-diagnostics logging to improve the support experience.
+  The new `SelfDiagnosticsOptions` class configures a rolling file sink and a
+  console sink through the standard options pipeline. Sinks are off by default.
+  ([#7588](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7588))
+
+* Fixed a race that could incorrectly route a concurrent metric measurement to
+  the overflow point when its tag set was published as the cardinality limit was
+  reached.
+  ([#7804](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7804))
+
+* Added `OpenTelemetryLoggerOptions.Version` and
+  `OpenTelemetryLoggerOptions.SchemaUrl` options to set an
+  instrumentation library version and schema URL applied to logs emitted via
+  the `Microsoft.Extensions.Logging` `ILogger` integration.
+  ([#7727](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7727))
+
+* Fixed `LogRecord.CategoryName` resetting the current `Logger`'s `Version`
+  to `null` when set to a new value.
+  ([#7727](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7727))
+
+* Bounded the internal cache of `Logger` scopes keyed by instrumentation to
+  avoid unbounded growth.
+  ([#7727](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7727))
+
+* Fixed the `MeterProvider` and its `IServiceProvider` being kept alive after
+  the host is disposed when using `Microsoft.Extensions.Diagnostics` versions
+  prior to 9.0, which never dispose their `MetricsSubscriptionManager` (and its
+  underlying `MeterListener`).
+  ([#7924](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7924))
+
+* Fixed a race condition between recording a measurement and collecting a
+  histogram with delta temporality that could cause an empty data point
+  (with a count of zero) to be exported in the next collection cycle.
+  ([#7923](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7923))
+
+* Improved metric collection performance after metric streams are removed by
+  compacting metric storage during collection.
+  ([#7945](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7945))
 
 ## 1.19.1
 
@@ -356,7 +629,7 @@ Released 2025-Jan-22
 
 Released 2025-Jan-15
 
-* [Meter.Tags](https://learn.microsoft.com/en-us/dotnet/api/system.diagnostics.metrics.meter.tags?view=net-9.0)
+* [Meter.Tags](https://learn.microsoft.com/dotnet/api/system.diagnostics.metrics.meter.tags)
   will now be considered when resolving the SDK metric to update when
   measurements are recorded. Meters with the same name and different tags will
   now lead to unique metrics.

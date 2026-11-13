@@ -101,6 +101,10 @@ internal interface IOtlpExporterOptions
     /// cref="IServiceProvider"/> then an <see cref="HttpClient"/> will be
     /// created through the factory with the name "OtlpLogExporter" otherwise
     /// an <see cref="HttpClient"/> will be instantiated directly.</item>
+    /// <item>An <see cref="HttpClient"/> instantiated directly by the exporter
+    /// does not follow HTTP redirects. An <see cref="HttpClient"/> created
+    /// through an <c>IHttpClientFactory</c> or by a custom factory uses its own
+    /// redirect policy.</item>
     /// <item>
     /// Applications that use custom classes derived from <see cref="DelegatingHandler"/>
     /// in .NET 5 or later must override both the asynchronous

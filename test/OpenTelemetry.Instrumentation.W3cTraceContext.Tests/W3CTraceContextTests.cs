@@ -24,7 +24,7 @@ public sealed class W3CTraceContextTests : IDisposable
 
     static W3CTraceContextTests()
     {
-        // See https://learn.microsoft.com/en-us/dotnet/core/compatibility/core-libraries/10.0/default-trace-context-propagator
+        // See https://learn.microsoft.com/dotnet/core/compatibility/core-libraries/10.0/default-trace-context-propagator
         DistributedContextPropagator.Current = DistributedContextPropagator.CreatePreW3CPropagator();
     }
 
@@ -152,7 +152,13 @@ public sealed class W3CTraceContextTests : IDisposable
         }
 
         // The output ends with '\n', which should be ignored.
-        var lastNewLineCharacterPos = output.LastIndexOf('\n', output.Length - 2);
+        var lastNewLineCharacterPos =
+#if NET11_0_OR_GREATER
+            output.LastIndexOf('\n', output.Length - 2, StringComparison.Ordinal);
+#else
+            output.LastIndexOf('\n', output.Length - 2);
+#endif
+
         return output.Substring(lastNewLineCharacterPos + 1);
     }
 
@@ -186,9 +192,9 @@ public sealed class W3CTraceContextTests : IDisposable
         bool isRedirected,
         CancellationToken cancellationToken)
     {
-        return isRedirected ?
-            Task.Run(() => ProcessStream(reader, cancellationToken), cancellationToken) :
-            Task.FromResult(new StringBuilder(0));
+        return isRedirected
+            ? Task.Run(() => ProcessStream(reader, cancellationToken), cancellationToken)
+            : Task.FromResult(new StringBuilder(0));
 
         static async Task<StringBuilder> ProcessStream(
             StreamReader reader,

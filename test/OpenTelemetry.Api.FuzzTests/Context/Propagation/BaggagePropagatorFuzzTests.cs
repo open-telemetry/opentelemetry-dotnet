@@ -131,7 +131,7 @@ public class BaggagePropagatorFuzzTests
             var key = $"k{i:D4}";
             baggageLength += key.Length + values[i].Length + 2; // key, equals sign, value, and comma.
 
-            if (baggageLength >= MaxBaggageLength || expected.Count >= MaxBaggageItems)
+            if (baggageLength > MaxBaggageLength || expected.Count >= MaxBaggageItems)
             {
                 break;
             }

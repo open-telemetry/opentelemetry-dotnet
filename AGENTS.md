@@ -11,7 +11,7 @@ dotnet build OpenTelemetry.slnx --configuration Release
 **Test all:**
 
 ```sh
-dotnet test
+dotnet test OpenTelemetry.slnx
 ```
 
 **Test a single project:**
@@ -29,7 +29,14 @@ dotnet test test/OpenTelemetry.Tests/OpenTelemetry.Tests.csproj --filter "FullyQ
 **Test for a specific TFM** (Windows also supports `net472`):
 
 ```sh
-dotnet test --framework net10.0
+dotnet test test/OpenTelemetry.Tests/OpenTelemetry.Tests.csproj --framework net11.0
+```
+
+**Test all projects for a specific TFM** (as CI does, skipping the projects
+which do not target it):
+
+```sh
+dotnet build ./build/OpenTelemetry.proj -t:Test -p:Configuration=Release -p:TargetFramework=net11.0
 ```
 
 **Check code formatting:**
@@ -62,9 +69,16 @@ python3 ./build/scripts/sanitycheck.py
 - The .NET SDK version specified in `global.json` (or newer) is required.
 - `TreatWarningsAsErrors` is active in Release builds; StyleCop and nullable
   violations fail the build.
-- Tests run **serially** by default
-  (`build/xunit.runner.json`: `maxParallelThreads: 1`).
+- Test collections (one per test class unless `[Collection]` is used) run in
+  **parallel** (the xunit.net defaults); tests within a collection run serially.
+  Tests which touch process-wide state (environment variables, static
+  configuration, fixed ports) must not assume they run alone.
 - `net472` tests only run on Windows.
+- Tests use [Microsoft Testing Platform](https://aka.ms/dotnet-test/mtp) (the
+  `test.runner` setting in `global.json`), not VSTest. The test executables can
+  also be run directly (e.g. `dotnet OpenTelemetry.Tests.dll --filter "..."`).
+- `dotnet test ... --framework <tfm>` fails if any test project does
+  not target `<tfm>`; use the `Test` target shown above instead.
 
 ---
 
@@ -303,3 +317,29 @@ will cause a build error if used:
 
 See [`REVIEW.md`](./REVIEW.md) for guidance used by automated code review agents
 when reviewing pull requests in this repository.
+
+## Pull requests
+
+- Pull request descriptions **must** follow the [pull request template](.github/PULL_REQUEST_TEMPLATE.md).
+- Pull request descriptions authored by an agent **must** disclose which agent was
+  used to create the pull request. Add a note at the bottom of the description,
+  for example:
+
+  ```markdown
+  > [!NOTE]
+  > This PR description was generated with GitHub Copilot.
+  ```
+
+- The same applies to PR reviews, PR comments and issue comments posted by an
+  agent under a user's own account, rather than a dedicated bot account or app.
+- Replies to pull requests, comments, and issues **must** be made by the end-user
+  themselves, not autonomously by an agent.
+
+## Skills
+
+Agent skills for common tasks in this repository are in [`.github/skills`](.github/skills):
+
+- [`code-review`](.github/skills/code-review/SKILL.md) - review a pull request or
+  code change against this repository's conventions.
+- [`performance-benchmark`](.github/skills/performance-benchmark/SKILL.md) - write
+  and run BenchmarkDotNet benchmarks to validate the performance impact of a change.

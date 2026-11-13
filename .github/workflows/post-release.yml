@@ -58,7 +58,7 @@ jobs:
 
     steps:
     - name: Generate GitHub App token
-      uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+      uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
       id: otelbot-token
       with:
         client-id: ${{ vars.OTELBOT_DOTNET_CLIENT_ID }}
@@ -75,7 +75,7 @@ jobs:
         show-progress: false
 
     - name: Setup .NET
-      uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+      uses: actions/setup-dotnet@0f4a354dd5547a28c70b7853dbd95d5b67886e73 # v6.1.0
 
     - name: NuGet log in
       uses: NuGet/login@8d196754b4036150537f80ac539e15c2f1028841 # v1.2.0
@@ -122,7 +122,7 @@ jobs:
 
     steps:
     - name: Generate GitHub App token
-      uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+      uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
       id: otelbot-token
       with:
         client-id: ${{ vars.OTELBOT_DOTNET_CLIENT_ID }}
@@ -143,7 +143,7 @@ jobs:
         token: ${{ steps.otelbot-token.outputs.token }}
 
     - name: Setup .NET
-      uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+      uses: actions/setup-dotnet@0f4a354dd5547a28c70b7853dbd95d5b67886e73 # v6.1.0
       id: setup-dotnet
 
     - name: Create GitHub Pull Request to update stable build version in props
@@ -198,7 +198,7 @@ jobs:
 
     steps:
       - name: Setup .NET
-        uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        uses: actions/setup-dotnet@0f4a354dd5547a28c70b7853dbd95d5b67886e73 # v6.1.0
         with:
           dotnet-version: ${{ needs.post-release-published.outputs.dotnet-sdk-version }}
 
@@ -243,7 +243,7 @@ jobs:
           "published=true" >> ${env:GITHUB_OUTPUT}
 
       - name: Generate GitHub App token
-        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
         id: otelbot-token
         with:
           client-id: ${{ vars.OTELBOT_DOTNET_CLIENT_ID }}

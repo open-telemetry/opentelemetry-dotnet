@@ -34,7 +34,7 @@ internal sealed class TracerProviderBuilderSdk : TracerProviderBuilder, ITracerP
 
     public List<string> Sources { get; } = [];
 
-    public HashSet<string> LegacyActivityOperationNames { get; } = new(StringComparer.OrdinalIgnoreCase);
+    public HashSet<string> LegacyActivityOperationNames { get; } = [with(StringComparer.OrdinalIgnoreCase)];
 
     public Sampler? Sampler { get; private set; }
 
@@ -135,7 +135,9 @@ internal sealed class TracerProviderBuilderSdk : TracerProviderBuilder, ITracerP
     {
         Debug.Assert(configurator != null, "configurator was null");
 
+#pragma warning disable IDE0370 // Remove unnecessary suppression
         (this.samplerConfigurators ??= []).Add(configurator!);
+#pragma warning restore IDE0370 // Remove unnecessary suppression
 
         return this;
     }

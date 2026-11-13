@@ -2,6 +2,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Buffers;
+#if NET
+using System.Globalization;
+using System.Net;
+using System.Numerics;
+using System.Runtime.InteropServices;
+using System.Text;
+using System.Text.Unicode;
+#endif
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Serializer;
@@ -57,7 +65,7 @@ internal sealed class ProtobufOtlpTagWriter : TagWriter<ProtobufOtlpTagWriter.Ot
 
         if (!Instance.TryWriteTag(ref state, key, value, tagValueMaxLength))
         {
-            state.WritePosition = startPosition;
+            RollBackTo(ref state, startPosition);
             return false;
         }
 
@@ -124,6 +132,92 @@ internal sealed class ProtobufOtlpTagWriter : TagWriter<ProtobufOtlpTagWriter.Ot
             ProtobufOtlpCommonFieldNumberConstants.AnyValue_String_Value,
             value);
     }
+
+#if NET
+    protected override bool TryWriteUtf8SpanFormattableTag(ref OtlpTagWriterState state, string key, IUtf8SpanFormattable value, int? tagValueMaxLength)
+    {
+        const int MaxUtf8BytesPerChar = 3;
+
+        var useCompactLength = IsTypeSingleByteUtf8Length(value);
+        var reserveSizeForLength = useCompactLength ? ProtobufSerializer.ReserveSizeForCompactLength : ReserveSizeForLength;
+
+        var startPosition = state.WritePosition;
+        state.WritePosition = ProtobufSerializer.WriteStringWithTag(state.Buffer, state.WritePosition, ProtobufOtlpCommonFieldNumberConstants.KeyValue_Key, key);
+
+        state.WritePosition = ProtobufSerializer.WriteTag(state.Buffer, state.WritePosition, ProtobufOtlpCommonFieldNumberConstants.KeyValue_Value, ProtobufWireType.LEN);
+        var anyValueLengthPosition = state.WritePosition;
+        state.WritePosition += reserveSizeForLength;
+
+        state.WritePosition = ProtobufSerializer.WriteTag(state.Buffer, state.WritePosition, ProtobufOtlpCommonFieldNumberConstants.AnyValue_String_Value, ProtobufWireType.LEN);
+        var stringLengthPosition = state.WritePosition;
+        state.WritePosition += reserveSizeForLength;
+
+        if (tagValueMaxLength == 0)
+        {
+            EndUtf8StringTag(ref state, anyValueLengthPosition, stringLengthPosition, 0, useCompactLength);
+            return true;
+        }
+
+        var buffer = state.Buffer.AsSpan(state.WritePosition);
+
+        // If max attribute length is in place, we'll cap the buffer size to avoid very large values exhausting the buffer
+        // If the buffer isn't large enough to contain the max possible truncated output, we'll pass it as-is and grow it if the write fails
+        var isBufferCapped = false;
+        if (tagValueMaxLength.HasValue)
+        {
+            var maxUtf8Bytes = (long)tagValueMaxLength.Value * MaxUtf8BytesPerChar;
+            if (buffer.Length >= maxUtf8Bytes)
+            {
+                buffer = buffer[..(int)maxUtf8Bytes];
+                isBufferCapped = true;
+            }
+        }
+
+        // A formatter may use the whole destination as scratch space, whatever it reports writing.
+        ExtendDirtyLength(ref state, state.WritePosition + buffer.Length);
+
+        var formatted = false;
+        var bytesWritten = 0;
+        try
+        {
+            formatted = value.TryFormat(buffer, out bytesWritten, format: default, CultureInfo.InvariantCulture);
+        }
+        catch (Exception ex)
+        {
+            // Some formatters report a destination that is too short by throwing, as Span<T>.CopyTo does.
+            var isDestinationTooShort = ex is IndexOutOfRangeException or ArgumentException;
+
+            if (ex is OutOfMemoryException || (isDestinationTooShort && !isBufferCapped))
+            {
+                throw;
+            }
+
+            if (!isDestinationTooShort)
+            {
+                return this.LogUnsupportedTagTypeAndReturnFalse(key, value);
+            }
+        }
+
+        // TryFormat returned false, indicating insufficient buffer space. Throw to grow buffer.
+        if (!formatted && !isBufferCapped)
+        {
+            throw new ArgumentOutOfRangeException(nameof(state), "The buffer is too small to hold the data being written.");
+        }
+
+        // Invalid UTF-8 would make strict OTLP receivers reject the whole request. A byte count outside
+        // the destination is checked first, because slicing with it would throw and be taken as a full buffer.
+        if (formatted && (uint)bytesWritten <= (uint)buffer.Length && Utf8.IsValid(buffer[..bytesWritten]))
+        {
+            var truncatedLength = TruncateUtf8String(buffer[..bytesWritten], tagValueMaxLength).Length;
+            EndUtf8StringTag(ref state, anyValueLengthPosition, stringLengthPosition, truncatedLength, useCompactLength);
+            return true;
+        }
+
+        // Fallback: we'll just use the regular ToString() path
+        RollBackTo(ref state, startPosition);
+        return this.TryWriteToStringTag(ref state, key, value, tagValueMaxLength);
+    }
+#endif
 
     protected override void WriteArrayTag(ref OtlpTagWriterState state, string key, ref OtlpTagWriterArrayState value)
     {
@@ -201,7 +295,7 @@ internal sealed class ProtobufOtlpTagWriter : TagWriter<ProtobufOtlpTagWriter.Ot
                 // Drop a tag if we fail to write it, and reset the position to the start of the entry to overwrite the reserved tag and length for the next entry.
                 if (!this.TryWriteTag(ref state, kvp.Key, kvp.Value, tagValueMaxLength))
                 {
-                    state.WritePosition = startEntryPosition;
+                    RollBackTo(ref state, startEntryPosition);
                     continue;
                 }
 
@@ -210,7 +304,7 @@ internal sealed class ProtobufOtlpTagWriter : TagWriter<ProtobufOtlpTagWriter.Ot
         }
         catch (Exception)
         {
-            state.WritePosition = startPosition;
+            RollBackTo(ref state, startPosition);
 
             throw;
         }
@@ -220,9 +314,102 @@ internal sealed class ProtobufOtlpTagWriter : TagWriter<ProtobufOtlpTagWriter.Ot
         ProtobufSerializer.WriteReservedLength(state.Buffer, anyValueLengthPos, state.WritePosition - (anyValueLengthPos + ReserveSizeForLength));
     }
 
+#if NET
+    private static void EndUtf8StringTag(ref OtlpTagWriterState state, int anyValueLengthPosition, int stringLengthPosition, int utf8Length, bool useCompactLength)
+    {
+        state.WritePosition += utf8Length;
+
+        if (useCompactLength)
+        {
+            state.WritePosition = ProtobufSerializer.WriteCompactLength(state.Buffer, stringLengthPosition, state.WritePosition);
+            state.WritePosition = ProtobufSerializer.WriteCompactLength(state.Buffer, anyValueLengthPosition, state.WritePosition);
+            return;
+        }
+
+        ProtobufSerializer.WriteReservedLength(state.Buffer, stringLengthPosition, utf8Length);
+        ProtobufSerializer.WriteReservedLength(state.Buffer, anyValueLengthPosition, state.WritePosition - (anyValueLengthPosition + ReserveSizeForLength));
+    }
+
+    /// <summary>
+    /// Whether a value is a built-in type whose invariant-culture, default-format output is short
+    /// enough that both its string and <c>AnyValue</c> length prefixes always fit in one byte.
+    /// </summary>
+    /// <remarks>
+    /// Only includes BCL types that don't have dedicated support in TagWriter (i.e. types that would be serialized as IUtf8SpanFormattable).
+    /// </remarks>
+    private static bool IsTypeSingleByteUtf8Length(IUtf8SpanFormattable value) => value is
+        Complex or
+        DateOnly or
+        Half or
+        Int128 or
+        IPNetwork or
+        nint or
+        NFloat or
+        nuint or
+        Rune or
+        TimeOnly or
+        UInt128;
+
+    /// <summary>
+    /// Truncates UTF-8 text to at most <paramref name="maxLength"/> UTF-16 chars, on whole code
+    /// points, so a UTF-8 sequence or surrogate pair is never split.
+    /// </summary>
+    /// <param name="value">The UTF-8 text to truncate.</param>
+    /// <param name="maxLength">The maximum length in UTF-16 chars, if any.</param>
+    /// <returns>The leading part of <paramref name="value"/> that fits within the limit.</returns>
+    private static ReadOnlySpan<byte> TruncateUtf8String(ReadOnlySpan<byte> value, int? maxLength)
+    {
+        if (!maxLength.HasValue || value.Length <= maxLength)
+        {
+            return value;
+        }
+
+        int bytes = 0, chars = 0;
+
+        while (bytes < value.Length)
+        {
+            Rune.DecodeFromUtf8(value[bytes..], out var rune, out var consumed);
+            if (chars + rune.Utf16SequenceLength > maxLength)
+            {
+                break;
+            }
+
+            chars += rune.Utf16SequenceLength;
+            bytes += consumed;
+        }
+
+        return value[..bytes];
+    }
+#endif
+
+    private static void RollBackTo(ref OtlpTagWriterState state, int startPosition)
+    {
+        ExtendDirtyLength(ref state, state.WritePosition);
+        state.WritePosition = startPosition;
+    }
+
+    /// <summary>
+    /// Records that bytes up to <paramref name="position"/> may have been written, unless the
+    /// dirty length is already further along.
+    /// </summary>
+    /// <remarks>
+    /// Clamped to the buffer, because reserving a length can advance the write position past its end.
+    /// </remarks>
+    /// <param name="state">The writer state whose dirty length is extended.</param>
+    /// <param name="position">The position up to which bytes may have been written.</param>
+    private static void ExtendDirtyLength(ref OtlpTagWriterState state, int position)
+        => state.DirtyLength = Math.Max(state.DirtyLength, Math.Min(position, state.Buffer.Length));
+
     internal struct OtlpTagWriterState
     {
         public byte[] Buffer;
+
+        /// <summary>
+        /// The number of leading bytes of <see cref="Buffer"/> that may have been written, which can
+        /// reach past <see cref="WritePosition"/> after a rollback or a formatter's scratch writes.
+        /// Everything before it must be cleared before the buffer is reused.
+        /// </summary>
+        public int DirtyLength;
         public int DroppedTagCount;
         public int TagCount;
         public int WritePosition;

@@ -26,6 +26,10 @@ internal static class InterlockedHelper
     public static double Read(ref double location)
         => Interlocked.CompareExchange(ref location, double.NaN, double.NaN);
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static bool AreSame(double left, double right)
+        => BitConverter.DoubleToInt64Bits(left) == BitConverter.DoubleToInt64Bits(right);
+
     [MethodImpl(MethodImplOptions.NoInlining)]
     private static void AddRare(ref double location, double value, double currentValue)
     {
@@ -43,8 +47,4 @@ internal static class InterlockedHelper
             currentValue = returnedValue;
         }
     }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static bool AreSame(double left, double right)
-        => BitConverter.DoubleToInt64Bits(left) == BitConverter.DoubleToInt64Bits(right);
 }

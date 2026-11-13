@@ -74,6 +74,7 @@ variables.
 * `DisableTimestamp`: Whether to disable the timestamp for metrics (default `false`).
 * `ConfigureHttpListener`: A delegate that can be used to apply custom configuration
   to the `HttpListener` instance used by the exporter before use.
+  See [ConfigureHttpListener](#configurehttplistener) below.
 
 ### Configuration using Dependency Injection
 
@@ -175,6 +176,43 @@ one requesting `underscores`. For a counter named `foo.bar` with unit `By`:
 The classic (pre-1.0.0) text formats do not support escaping negotiation and are
 always emitted using underscore escaping; the suffix choice applies to every
 format.
+
+### ConfigureHttpListener
+
+A callback that receives the options and the `HttpListener` instance used by
+the exporter. It is invoked after the exporter has added its own prefix
+(`http://{Host}:{Port}{ScrapeEndpointPath}/`) and before the listener is
+started, so it can change the prefixes the listener binds to.
+
+For example, to accept scrapes from other hosts, such as when Prometheus scrapes
+an application running in a container, replace the default prefix with a
+wildcard prefix. On Linux, this binds all IPv4 interfaces:
+
+```csharp
+var meterProvider = Sdk.CreateMeterProviderBuilder()
+    .AddMeter(MyMeter.Name)
+    .AddPrometheusHttpListener(options =>
+    {
+        options.ConfigureHttpListener = static (options, listener) =>
+        {
+            listener.Prefixes.Clear();
+            listener.Prefixes.Add($"http://+:{options.Port}/metrics/");
+        };
+    })
+    .Build();
+```
+
+Call `Prefixes.Clear()` before adding the wildcard prefix. If the default
+`localhost` prefix is left in place, the listener binds both prefixes, and on
+Linux it fails to start with `Address already in use` when the first address
+returned for `localhost` is `127.0.0.1` (for example, when `/etc/hosts` maps
+`localhost` only to `127.0.0.1`).
+
+On Windows, `HttpListener` uses HTTP.sys, and registering a wildcard prefix
+requires administrator rights or a URL reservation (`netsh http add urlacl`).
+
+A wildcard prefix exposes the scraping endpoint beyond loopback, so consider the
+security note at the top of this document before using one.
 
 ## Troubleshooting
 

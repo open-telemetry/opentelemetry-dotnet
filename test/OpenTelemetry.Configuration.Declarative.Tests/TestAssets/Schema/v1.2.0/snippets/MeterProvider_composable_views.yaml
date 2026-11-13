@@ -1,0 +1,23 @@
+file_format: "1.2"
+
+meter_provider:
+  # SNIPPET_START
+  # By default, an instrument named "my_instrument" would match both of the registered views
+  # and output two metrics, one with description "first view description", the other with
+  # the original description and a cardinality limit of 1000. By setting the matching mode to
+  # composable, the matching views are merged together and one metric output with description
+  # "first view description" AND cardinality limit of 1000.
+  readers:
+    - periodic:
+        exporter:
+          console:
+  views:
+    - selector:
+        instrument_name: my_instrument
+      stream:
+        description: first view description
+    - selector:
+        instrument_name: my_instrument
+      stream:
+        aggregation_cardinality_limit: 1000
+  view_matching_mode/development: composable

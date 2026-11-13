@@ -151,6 +151,7 @@ internal static class OtlpSecureHttpClientFactory
             this.caCertificateData = caCertificateData;
             this.clientCertificate = clientCertificate;
 
+            this.AllowAutoRedirect = false;
             this.CheckCertificateRevocationList = true;
 
             if (this.clientCertificate != null)
@@ -180,7 +181,7 @@ internal static class OtlpSecureHttpClientFactory
         {
             if (this.certificateAuthorityCertificate == null)
             {
-#if NET9_0_OR_GREATER
+#if NET
                 var certificate = X509CertificateLoader.LoadCertificate(this.caCertificateData!);
 #else
                 var certificate = new X509Certificate2(this.caCertificateData!);

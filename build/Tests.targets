@@ -1,0 +1,95 @@
+<Project>
+
+  <PropertyGroup>
+    <RepoRoot Condition="'$(RepoRoot)' == ''">$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..'))</RepoRoot>
+    <TestResultsDirectory Condition="'$(TestResultsDirectory)' == ''">$(RepoRoot)\TestResults</TestResultsDirectory>
+    <_TestDiagnosticsDirectory>$([System.IO.Path]::Combine('$(TestResultsDirectory)', 'diag'))</_TestDiagnosticsDirectory>
+    <_DotNetHostPath Condition="'$(DOTNET_HOST_PATH)' != ''">$(DOTNET_HOST_PATH)</_DotNetHostPath>
+    <_DotNetHostPath Condition="'$(_DotNetHostPath)' == ''">dotnet</_DotNetHostPath>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(TargetFramework)' != ''">
+    <_TestFrameworkArgument>--framework $(TargetFramework)</_TestFrameworkArgument>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(TestFilter)' != ''">
+    <!--
+      Ignoring exit code 8 stops dotnet test failing if a filter does not match any tests.
+    -->
+    <_TestFilterArgument>--filter &quot;$(TestFilter)&quot; --ignore-exit-code 8</_TestFilterArgument>
+  </PropertyGroup>
+
+  <Target Name="Test" DependsOnTargets="_GetAllTestProjectTargetFrameworks">
+    <!--
+      When a TargetFramework is requested, only the test projects which target
+      it are built and run, for that framework only. Otherwise every test
+      project is built and run for all of its target frameworks in one
+      `dotnet test` invocation per project, which runs the frameworks in
+      parallel (see the max-parallel-test-modules option of `dotnet test`).
+    -->
+    <ItemGroup Condition="'$(TargetFramework)' != ''">
+      <_MatchingTestProjectTargetFramework Include="@(_AllTestProjectTargetFrameworks)" Condition="'%(Identity)' == '$(TargetFramework)'" />
+      <_SupportedTestProjects Include="@(_MatchingTestProjectTargetFramework->'%(MSBuildSourceProjectFile)')" />
+      <_SkippedTestProjects Include="@(TestProjects)" Exclude="@(_SupportedTestProjects)" />
+    </ItemGroup>
+
+    <!--
+      @(TestProjects) can contain projects which are not test projects
+      (benchmarks, stress tests, AOT test apps), for which the
+      GetTestProjectTargetFrameworks target returns nothing, so only the
+      projects which reported at least one target framework are run.
+    -->
+    <ItemGroup Condition="'$(TargetFramework)' == ''">
+      <_SupportedTestProjects Include="@(_AllTestProjectTargetFrameworks->'%(MSBuildSourceProjectFile)'->Distinct())" />
+      <_SkippedTestProjects Include="@(TestProjects)" Exclude="@(_SupportedTestProjects)" />
+    </ItemGroup>
+
+    <Message Importance="high"
+              Text="Skipping test execution for '%(_SkippedTestProjects.Identity)' because it does not contain the '$(TargetFramework)' target."
+              Condition="'$(TargetFramework)' != '' AND '@(_SkippedTestProjects)' != ''" />
+
+    <Message Importance="high"
+              Text="Skipping test execution for '%(_SkippedTestProjects.Identity)' because it is not a test project."
+              Condition="'$(TargetFramework)' == '' AND '@(_SkippedTestProjects)' != ''" />
+
+    <MSBuild Projects="@(_SupportedTestProjects)"
+      Targets="Build"
+      ContinueOnError="ErrorAndStop"
+      Condition="'@(_SupportedTestProjects)' != ''" />
+
+    <!--
+      Tests are run with `dotnet test` (the Microsoft.Testing.Platform runner
+      configured in global.json) rather than the InvokeTestingPlatform MSBuild
+      target. Driving the tests through MSBuild is not the supported way to run
+      Microsoft.Testing.Platform tests with the .NET 10 SDK, and it fails with
+      Microsoft.Testing.Platform.MSBuild 2.5.1 whenever an out-of-process
+      extension such as code coverage is enabled.
+
+      %(_SupportedTestProjects.Identity) below triggers MSBuild task batching -
+      one invocation per project - so each test project gets its own
+      report/coverage filename, rather than trying to write to the same one file.
+      The per-module results directory layout then puts each target framework's
+      reports in their own '<project>/<tfm>_<runtime>' subdirectory, so the
+      frameworks of one project do not overwrite each other's files either.
+
+      Artifact post-processing (merging the per-framework coverage and report
+      files into one) is disabled with the 'no-artifact-post-processing' option:
+      the merge step re-launches the test application without the 'diagnostic'
+      option but with 'diagnostic-output-directory', which Microsoft.Testing.Platform
+      2.5.2 rejects (exit code 5), failing the build after every test has passed.
+      The per-framework files are what the CI coverage and report uploads consume.
+    -->
+    <Exec Command="&quot;$(_DotNetHostPath)&quot; test --project &quot;%(_SupportedTestProjects.Identity)&quot; $(_TestFrameworkArgument) $(_TestMaxParallelTestModulesArgument) --configuration $(Configuration) --no-build --no-restore --results-directory &quot;$(TestResultsDirectory)&quot; --results-directory-layout per-module --diagnostic --diagnostic-output-directory &quot;$(_TestDiagnosticsDirectory)&quot; --hangdump --hangdump-timeout 10m --hangdump-type full --report-github --report-github-summary-include-passed false --report-xunit-junit --report-xunit-junit-filename &quot;junit-%(_SupportedTestProjects.Filename).xml&quot; --coverage --coverage-output-format cobertura --coverage-output &quot;Cobertura-%(_SupportedTestProjects.Filename).xml&quot; --no-artifact-post-processing $(_TestFilterArgument)"
+      ContinueOnError="ErrorAndStop"
+      Condition="'@(_SupportedTestProjects)' != ''" />
+  </Target>
+
+  <Target Name="_GetAllTestProjectTargetFrameworks" Returns="@(_AllTestProjectTargetFrameworks)">
+    <MSBuild Projects="@(TestProjects)"
+      Targets="GetTestProjectTargetFrameworks"
+      Properties="TargetFramework=;Configuration=$(Configuration)">
+      <Output TaskParameter="TargetOutputs" ItemName="_AllTestProjectTargetFrameworks" />
+    </MSBuild>
+  </Target>
+
+</Project>

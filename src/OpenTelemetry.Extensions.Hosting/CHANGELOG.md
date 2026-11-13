@@ -6,6 +6,55 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+## 1.21.0
+
+Released 2026-Nov-11
+
+## 1.21.0-rc.2
+
+Released 2026-Nov-09
+
+* Fixed host resource detection throwing `SecurityException` when configuration
+  values cannot be read.
+  ([#8070](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8070))
+
+* Updated the schema URL of resources created by the host environment resource
+  detector to use OpenTelemetry Semantic Conventions version `1.45.0`.
+  ([#8079](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8079))
+
+## 1.21.0-rc.1
+
+Released 2026-Oct-28
+
+* The OpenTelemetry providers are now initialized in
+  `IHostedLifecycleService.StartingAsync` instead of `IHostedService.StartAsync`
+  so that telemetry emitted by other hosted services during `StartingAsync` is
+  captured. `ITelemetryHostInitializer.Initialize()` is invoked only once per
+  host start.
+  ([#7998](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7998))
+
+* **Breaking Change** Dropped support for `net8.0` and `net9.0`.
+  ([#6899](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6899))
+
+* Add support for .NET 11.0.
+  ([#6899](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6899))
+
+## 1.20.1
+
+Released 2026-Oct-20
+
+## 1.20.1-rc.1
+
+Released 2026-Oct-20
+
+## 1.20.0
+
+Released 2026-Oct-15
+
+## 1.20.0-rc.1
+
+Released 2026-Oct-15
+
 ## 1.19.1
 
 Released 2026-Sep-21

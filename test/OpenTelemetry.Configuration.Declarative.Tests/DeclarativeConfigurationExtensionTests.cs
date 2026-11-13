@@ -9,6 +9,7 @@ using OpenTelemetry.Tests;
 
 namespace OpenTelemetry.Configuration.Declarative.Tests;
 
+[Collection(EnvVarsCollectionDefinition.Name)]
 public sealed class DeclarativeConfigurationExtensionTests
 {
     [Fact]
@@ -51,48 +52,22 @@ public sealed class DeclarativeConfigurationExtensionTests
         Assert.Equal(expected, config[OtelEnvironmentVariables.SdkDisabled]);
     }
 
-    [Fact]
-    public void AddOpenTelemetryDeclarativeConfiguration_Parameterless_NoEnvVar_IsNoOp()
-    {
-        using var envScope = EnvironmentVariableScope.Create(OtelEnvironmentVariables.ConfigFile, null);
-
-        var builder = new ConfigurationBuilder();
-        builder.AddOpenTelemetryDeclarativeConfiguration();
-
-        Assert.Empty(builder.Sources);
-    }
-
-    [Fact]
-    public void AddOpenTelemetryDeclarativeConfiguration_Parameterless_WhitespaceEnvVar_IsNoOp()
-    {
-        using var envScope = EnvironmentVariableScope.Create(OtelEnvironmentVariables.ConfigFile, "   ");
-
-        var builder = new ConfigurationBuilder();
-        builder.AddOpenTelemetryDeclarativeConfiguration();
-
-        Assert.Empty(builder.Sources);
-    }
-
     [Theory]
     [InlineData("")]
     [InlineData("   ")]
     public void AddOpenTelemetryDeclarativeConfiguration_WhitespaceFilePath_Throws(string filePath)
     {
         var builder = new ConfigurationBuilder();
-        Assert.ThrowsAny<ArgumentException>(() => builder.AddOpenTelemetryDeclarativeConfiguration(filePath));
+        var exception = Assert.ThrowsAny<ArgumentException>(() => builder.AddOpenTelemetryDeclarativeConfiguration(filePath));
+        Assert.Equal("filePath", exception.ParamName);
     }
 
     [Fact]
-    public void AddOpenTelemetryDeclarativeConfiguration_Parameterless_ReadsEnvVar()
+    public void AddOpenTelemetryDeclarativeConfiguration_NullFilePath_Throws()
     {
-        using var yamlFile = DeclarativeYamlTestFile.CreateDeclarativeYaml(disabled: true);
-        using var envScope = EnvironmentVariableScope.Create(OtelEnvironmentVariables.ConfigFile, yamlFile.Path);
-
-        var config = new ConfigurationBuilder()
-            .AddOpenTelemetryDeclarativeConfiguration()
-            .Build();
-
-        Assert.Equal("true", config[OtelEnvironmentVariables.SdkDisabled]);
+        var builder = new ConfigurationBuilder();
+        var exception = Assert.ThrowsAny<ArgumentException>(() => builder.AddOpenTelemetryDeclarativeConfiguration(null!));
+        Assert.Equal("filePath", exception.ParamName);
     }
 
     [Fact]
@@ -436,7 +411,8 @@ public sealed class DeclarativeConfigurationExtensionTests
 
         // ArgumentException.ThrowIfNullOrEmpty throws ArgumentNullException on modern .NET
         // and ArgumentException on .NET Framework, both of which satisfy this assertion.
-        Assert.ThrowsAny<ArgumentException>(() => builder.UseDeclarativeConfiguration(null!));
+        var exception = Assert.ThrowsAny<ArgumentException>(() => builder.UseDeclarativeConfiguration(null!));
+        Assert.Equal("filePath", exception.ParamName);
     }
 
     [Theory]
@@ -445,7 +421,8 @@ public sealed class DeclarativeConfigurationExtensionTests
     public void UseDeclarativeConfiguration_WhitespaceFilePath_Throws(string filePath)
     {
         var builder = new TestOpenTelemetryBuilder(new ServiceCollection());
-        Assert.ThrowsAny<ArgumentException>(() => builder.UseDeclarativeConfiguration(filePath));
+        var exception = Assert.ThrowsAny<ArgumentException>(() => builder.UseDeclarativeConfiguration(filePath));
+        Assert.Equal("filePath", exception.ParamName);
     }
 
     [Fact]

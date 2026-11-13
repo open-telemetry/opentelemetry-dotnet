@@ -23,10 +23,6 @@ on:
         default: '[ "windows-2025", "windows-11-arm", "ubuntu-26.04", "ubuntu-26.04-arm" ]'
         required: false
         type: string
-      tfm-list:
-        default: '[ "net472", "net8.0", "net9.0", "net10.0" ]'
-        required: false
-        type: string
       trigger:
         required: true
         type: string
@@ -42,23 +38,23 @@ jobs:
       fail-fast: ${{ inputs.trigger == 'merge_group' }}
       matrix:
         os: ${{ fromJSON(inputs.os-list) }}
-        version: ${{ fromJSON(inputs.tfm-list) }}
-        exclude:
-        # renovate: datasource=github-runners depType=github-runner
-        - os: ubuntu-26.04
-          version: net472
-        # renovate: datasource=github-runners depType=github-runner
-        - os: ubuntu-26.04-arm
-          version: net472
 
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 30
+    timeout-minutes: 45
 
     env:
-      DISABLE_APP_DOMAIN: ${{ matrix.version == 'net472' && 'false' || 'true' }}
+      DOTNET_DbgEnableMiniDump: 1
+      DOTNET_DbgMiniDumpType: 2
+      DOTNET_DbgMiniDumpName: ${{ github.workspace }}/TestResults/crash-%p.dmp
+      DOTNET_NOLOGO: true
+      DOTNET_SYSTEM_CONSOLE_ALLOW_ANSI_COLOR_REDIRECTION: 1
+      FORCE_COLOR: 3
+      NUGET_XMLDOC_MODE: skip
+      TERM: xterm
       PROJECT_NAME: ${{ inputs.project-name }}
       PROJECT_BUILD_COMMANDS: ${{ inputs.project-build-commands }}
-      TARGET_FRAMEWORK: ${{ matrix.version }}
+      # HACK Workaround for https://github.com/dotnet/runtime/issues/131636 - GCgen0size is a hex value: 4000000 = 64 MiB.
+      DOTNET_GCgen0size: ${{ matrix.os == 'windows-11-arm' && '4000000' || '' }}
 
     steps:
     - name: Checkout code
@@ -71,15 +67,12 @@ jobs:
         persist-credentials: false
         show-progress: false
 
-    - name: Setup previous .NET runtimes
-      uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
-      with:
-        dotnet-version: |
-          8.0.x
-          9.0.x
-
     - name: Setup .NET
-      uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+      uses: actions/setup-dotnet@0f4a354dd5547a28c70b7853dbd95d5b67886e73 # v6.1.0
+      with:
+        global-json-file: global.json
+        dotnet-version: |
+          10.0.x
 
     - name: dotnet restore ${{ inputs.project-name }}
       shell: pwsh
@@ -89,79 +82,60 @@ jobs:
       shell: pwsh
       run: dotnet build ${env:PROJECT_NAME} --configuration Release --no-restore ${env:PROJECT_BUILD_COMMANDS}
 
+    - name: Increase inotify instance limit
+      if: runner.os == 'Linux'
+      shell: bash
+      run: sudo sysctl -w fs.inotify.max_user_instances=8192
+
     - name: dotnet test ${{ inputs.project-name }}
       shell: pwsh
-      timeout-minutes: 20
-      env:
-        VSTEST_CONNECTION_TIMEOUT: 180
-      run: >
-        dotnet test ${env:PROJECT_NAME}
-        --blame-hang-dump-type full
-        --blame-hang-timeout 10m
-        --collect:"Code Coverage"
-        --diag:"TestResults/diag/log.txt;tracelevel=info"
-        --results-directory:TestResults
-        --settings:"${env:GITHUB_WORKSPACE}/build/CodeCoverage.runsettings"
-        --framework ${env:TARGET_FRAMEWORK}
-        --configuration Release
-        --no-restore
-        --no-build
-        --logger:"GitHubActions;report-warnings=false;summary-include-passed=false"
-        --logger:"junit;LogFilePath=${env:GITHUB_WORKSPACE}/TestResults/junit.xml"
-        --
-        RunConfiguration.DisableAppDomain=${env:DISABLE_APP_DOMAIN}
-        RunConfiguration.TestSessionTimeout=900000
+      timeout-minutes: 30
+      # Note: The Test target (see build/Tests.targets) runs `dotnet test` with
+      # the Microsoft.Testing.Platform runner for each test project, which runs
+      # the target frameworks of the project in parallel.
+      run: dotnet build ${env:PROJECT_NAME} -t:Test --no-restore -p:Configuration=Release ${env:PROJECT_BUILD_COMMANDS}
 
     - name: Upload hang dumps and test platform logs
       if: ${{ failure() || cancelled() }}
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
       with:
         if-no-files-found: ignore
-        name: hang-dumps-${{ inputs.code-cov-prefix }}-${{ inputs.code-cov-name }}-${{ matrix.os }}-${{ matrix.version }}-attempt-${{ github.run_attempt }}
+        name: hang-dumps-${{ inputs.code-cov-prefix }}-${{ inputs.code-cov-name }}-${{ matrix.os }}-attempt-${{ github.run_attempt }}
         retention-days: 7
         path: |
-          **/TestResults/**/*hangdump*.dmp
+          **/TestResults/**/*.log
+          **/TestResults/**/*.dmp
           **/TestResults/**/Sequence_*.xml
           **/TestResults/diag/*
 
-    - name: Install coverage tool
-      shell: pwsh
-      env:
-        # renovate: datasource=nuget depName=dotnet-coverage
-        DOTNET_COVERAGE_VERSION: '18.11.2'
-      run: dotnet tool install -g dotnet-coverage --version ${env:DOTNET_COVERAGE_VERSION}
-
-    - name: Merging test results
-      run: dotnet-coverage merge -f cobertura -o ./TestResults/Cobertura.xml ./TestResults/**/*.coverage
-
     - name: Upload code coverage ${{ inputs.code-cov-prefix }}-${{ inputs.code-cov-name }}
+      if: ${{ hashFiles('./TestResults/*/*/Cobertura-*.xml') != '' }}
       uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
       continue-on-error: true # Note: Don't fail for upload failures
       timeout-minutes: 5
       env:
         OS: ${{ matrix.os }}
-        TFM: ${{ matrix.version }}
       with:
         disable_search: true
         disable_telem: true
-        env_vars: OS,TFM
-        files: TestResults/Cobertura.xml
+        env_vars: OS
+        files: TestResults/*/*/Cobertura-*.xml
         flags: ${{ inputs.code-cov-prefix }}-${{ inputs.code-cov-name }}
-        name: Code Coverage for ${{ inputs.code-cov-prefix }}-${{ inputs.code-cov-name }} on [${{ matrix.os }}.${{ matrix.version }}]
+        name: Code Coverage for ${{ inputs.code-cov-prefix }}-${{ inputs.code-cov-name }} on [${{ matrix.os }}]
         codecov_yml_path: .github/codecov.yml
         token: ${{ secrets.CODECOV_TOKEN }}
 
     - name: Upload test results ${{ inputs.code-cov-prefix }}-${{ inputs.code-cov-name }}
-      if: ${{ !cancelled() && hashFiles('./TestResults/junit.xml') != '' }}
+      if: ${{ !cancelled() && hashFiles('./TestResults/*/*/junit-*.xml') != '' }}
       uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
       continue-on-error: true # Note: Don't fail for upload failures
       timeout-minutes: 5
       with:
         disable_search: true
         disable_telem: true
-        env_vars: OS,TFM
-        files: TestResults/junit.xml
+        env_vars: OS
+        files: TestResults/*/*/junit-*.xml
         flags: ${{ inputs.code-cov-prefix }}-${{ inputs.code-cov-name }}
-        name: Test results for ${{ inputs.code-cov-prefix }}-${{ inputs.code-cov-name }} on [${{ matrix.os }}.${{ matrix.version }}]
+        name: Test results for ${{ inputs.code-cov-prefix }}-${{ inputs.code-cov-name }} on [${{ matrix.os }}]
         report_type: test_results
         token: ${{ secrets.CODECOV_TOKEN }}

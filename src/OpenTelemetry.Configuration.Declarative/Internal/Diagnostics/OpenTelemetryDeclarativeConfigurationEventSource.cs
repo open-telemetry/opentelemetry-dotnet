@@ -14,11 +14,12 @@ internal sealed class OpenTelemetryDeclarativeConfigurationEventSource : EventSo
 {
     public static readonly OpenTelemetryDeclarativeConfigurationEventSource Log = new();
 
+    private const string StrictModeDocumentation = "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/src/OpenTelemetry.Configuration.Declarative/README.md#strict-mode";
+
     [Event(1, Message = "Declarative config file_format warning: {0}", Level = EventLevel.Warning)]
     public void FileFormatWarning(string message) => this.WriteEvent(1, message);
 
-    [Event(2, Message = "Declarative config: top-level section '{0}' is retained but not interpreted by this implementation.", Level = EventLevel.Warning)]
-    public void UnknownConfigurationSection(string sectionName) => this.WriteEvent(2, sectionName);
+    // Event 2 is retired. Events 42, 44 and 45 replace it.
 
     [Event(3, Message = "Declarative config: invalid resource attribute - {0}", Level = EventLevel.Warning)]
     public void InvalidResourceAttribute(string message) => this.WriteEvent(3, message);
@@ -35,8 +36,8 @@ internal sealed class OpenTelemetryDeclarativeConfigurationEventSource : EventSo
     [Event(7, Message = "Declarative config: UseDeclarativeConfiguration has already been called on this IServiceCollection with '{0}'; the request to use '{1}' will be ignored. Only the first registered file path applies.", Level = EventLevel.Warning)]
     public void DeclarativeConfigurationAlreadyRegistered(string originalFilePath, string newFilePath) => this.WriteEvent(7, originalFilePath, newFilePath);
 
-    [Event(8, Message = "Declarative config: overlay registration started for file '{0}'.", Level = EventLevel.Verbose)]
-    public void OverlayRegistrationStarted(string filePath) => this.WriteEvent(8, filePath);
+    [Event(8, Message = "Declarative config: registration started for file '{0}'.", Level = EventLevel.Verbose)]
+    public void RegistrationStarted(string filePath) => this.WriteEvent(8, filePath);
 
     [Event(9, Message = "Declarative config: source registered for file '{0}'.", Level = EventLevel.Verbose)]
     public void SourceRegistered(string filePath) => this.WriteEvent(9, filePath);
@@ -77,7 +78,7 @@ internal sealed class OpenTelemetryDeclarativeConfigurationEventSource : EventSo
     [Event(18, Message = "Declarative config: resource.attributes contains a duplicate name '{0}'; only the first occurrence is used and this entry will be skipped.", Level = EventLevel.Warning)]
     public void DuplicateResourceAttributeName(string name) => this.WriteEvent(18, name);
 
-    [Event(19, Message = "Declarative config: the existing IConfiguration descriptor could not be resolved to an IConfiguration instance when registering '{0}'; prior configuration will not be carried forward into the declarative configuration overlay.", Level = EventLevel.Warning)]
+    [Event(19, Message = "Declarative config: the existing IConfiguration descriptor could not be resolved to an IConfiguration instance when registering '{0}'; prior configuration will not be carried forward when declarative configuration is registered.", Level = EventLevel.Warning)]
     public void PriorConfigurationResolutionFailed(string filePath) => this.WriteEvent(19, filePath);
 
     [Event(20, Message = "Declarative config: no IConfiguration was registered at the time UseDeclarativeConfiguration was called for '{0}'. If host infrastructure registers IConfiguration after this call, it will take precedence and the declarative configuration source will be unreachable.", Level = EventLevel.Warning)]
@@ -94,8 +95,8 @@ internal sealed class OpenTelemetryDeclarativeConfigurationEventSource : EventSo
     [Event(24, Message = "Declarative config: '{0}' is not a complete environment variable substitution reference - there is no closing brace before the end of the value or the next '$$' escape - so it is left as literal text.", Level = EventLevel.Verbose)]
     public void UnresolvedSubstitutionExpression(string expression) => this.WriteEvent(24, expression);
 
-    [Event(25, Message = "Declarative config: property '{0}' is not supported by this declarative configuration implementation. The configuration is invalid; check for a misspelling.", Level = EventLevel.Warning)]
-    public void UnknownConfigurationProperty(string propertyPath) => this.WriteEvent(25, propertyPath);
+    [Event(25, Message = "Declarative config: property '{0}' (line {1}, column {2}) is not defined by the OpenTelemetry configuration schema and is not permitted at this location. Check for a misspelling.", Level = EventLevel.Error)]
+    public void UndefinedConfigurationProperty(string propertyPath, long line, long column) => this.WriteEvent(25, propertyPath, line, column);
 
     [Event(26, Message = "Declarative config: '{0}' has already been loaded. Declarative configuration is read once at start-up, so this reload had no effect and the configuration in use is unchanged.", Level = EventLevel.Warning)]
     public void ConfigurationReloadIgnored(string filePath) => this.WriteEvent(26, filePath);
@@ -134,4 +135,95 @@ internal sealed class OpenTelemetryDeclarativeConfigurationEventSource : EventSo
 
     [Event(35, Message = "Declarative config: resource.attributes entry '{0}' has an integer value '{1}' that exceeds the 64-bit integer range and will be skipped.", Level = EventLevel.Warning)]
     public void UnrepresentableResourceAttributeInteger(string name, string value) => this.WriteEvent(35, name, value);
+
+    [Event(
+        36,
+        Message = "Declarative config: strict mode is ignoring these OpenTelemetry settings because '{0}' is in use: {1}. See " + StrictModeDocumentation,
+        Level = EventLevel.Warning)]
+    public void StrictModeSettingsIgnored(string filePath, string keys) => this.WriteEvent(36, filePath, keys);
+
+    [Event(
+        37,
+        Message = "Declarative config: configuration provider '{1}' is not masked by '{0}' and can override the document for {2}. See " + StrictModeDocumentation,
+        Level = EventLevel.Warning)]
+    public void LaterSourceOverridesStrictMode(string filePath, string providerType, string keys) => this.WriteEvent(37, filePath, providerType, keys);
+
+    [Event(
+        38,
+        Message = "Declarative config: an environment variables configuration provider is not masked by '{0}' and can override the document for {1}. See " + StrictModeDocumentation,
+        Level = EventLevel.Warning)]
+    public void LaterEnvironmentVariablesOverrideStrictMode(string filePath, string keys) => this.WriteEvent(38, filePath, keys);
+
+    [Event(
+        39,
+        Message = "Declarative config: using '{0}' as passed to UseDeclarativeConfiguration; OTEL_CONFIG_FILE '{1}' is ignored.",
+        Level = EventLevel.Warning)]
+    public void ExplicitFilePathOverridesConfigFile(string filePath, string configFileValue) => this.WriteEvent(39, filePath, configFileValue);
+
+    [Event(40, Message = "Declarative config: strict mode diagnostics could not be evaluated: {0}", Level = EventLevel.Verbose)]
+    public void StrictModeDiagnosticsUnavailable(string reason) => this.WriteEvent(40, reason);
+
+    [Event(
+        41,
+        Message = "Declarative config: the source for '{0}' is not reachable from the application's IConfiguration, so strict mode cannot mask OTEL_* settings. See " + StrictModeDocumentation,
+        Level = EventLevel.Warning)]
+    public void StrictModeConfigurationSourceUnreachable(string filePath) => this.WriteEvent(41, filePath);
+
+    [Event(
+        42,
+        Message = "Declarative config: top-level property '{0}' is not defined by the OpenTelemetry configuration schema. It is retained but the SDK does not interpret it.",
+        Level = EventLevel.Informational)]
+    public void UndefinedRootPropertyRetained(string propertyPath) => this.WriteEvent(42, propertyPath);
+
+    [Event(
+        43,
+        Message = "Declarative config: property '{0}' is not defined by OpenTelemetry configuration schema {2}. It is retained but not applied: {3} (the document declares file_format '{1}').",
+        Level = EventLevel.Warning)]
+    public void UndefinedPropertyRetained(string propertyPath, string fileFormat, string schemaVersion, string reason) => this.WriteEvent(43, propertyPath, fileFormat, schemaVersion, reason);
+
+    [Event(
+        44,
+        Message = "Declarative config: '{1}' in '{0}' (line {2}, column {3}) is a Stable configuration setting that this version of the package does not apply. The setting has no effect.",
+        Level = EventLevel.Error)]
+    public void ConfiguredPropertyNotApplied(string filePath, string propertyPath, long line, long column) => this.WriteEvent(44, filePath, propertyPath, line, column);
+
+    [Event(
+        45,
+        Message = "Declarative config: '{1}' in '{0}' (line {2}, column {3}) is a Development configuration setting that this package does not implement. The setting has no effect.",
+        Level = EventLevel.Warning)]
+    public void DevelopmentPropertyNotApplied(string filePath, string propertyPath, long line, long column) => this.WriteEvent(45, filePath, propertyPath, line, column);
+
+    [Event(
+        46,
+        Message = "Declarative config: '{1}' in '{0}' (line {2}, column {3}) is 0. The batch span processor requires a configured schedule delay of at least 1 millisecond, so 1 millisecond is used instead.",
+        Level = EventLevel.Warning)]
+    public void ScheduleDelayZeroReplaced(string filePath, string propertyPath, long line, long column) => this.WriteEvent(46, filePath, propertyPath, line, column);
+
+    [Event(
+        47,
+        Message = "Declarative config: '{1}' in '{0}' (line {2}, column {3}) requests disabling tracers matching '{4}', but this package cannot fully apply the exclusion because {5}. Matching ActivitySource instances may still be listened to.",
+        Level = EventLevel.Warning)]
+    public void TracerExclusionNotApplied(string filePath, string entryPath, long line, long column, string name, string reason) => this.WriteEvent(47, filePath, entryPath, line, column, name, reason);
+
+    [NonEvent]
+    public void ComponentCleanupFailed(string componentType, Exception ex)
+    {
+        if (this.IsEnabled(EventLevel.Error, EventKeywords.All))
+        {
+            this.ComponentCleanupFailed(componentType, ex.ToInvariantString());
+        }
+    }
+
+    [Event(
+        48,
+        Message = "Declarative config: failed to clean up component '{0}' after tracer provider construction failed: {1}",
+        Level = EventLevel.Error)]
+    public void ComponentCleanupFailed(string componentType, string error) => this.WriteEvent(48, componentType, error);
+
+    [Event(
+        49,
+        Message = "Declarative config: the sampler in '{0}' ('{1}', line {2}, column {3}) is not used, because a sampler set in code takes precedence. The sampler in use is of type '{4}'.",
+        Level = EventLevel.Warning)]
+    public void SamplerReplacedByCode(string filePath, string propertyPath, long line, long column, string replacingSamplerType) =>
+        this.WriteEvent(49, filePath, propertyPath, line, column, replacingSamplerType);
 }

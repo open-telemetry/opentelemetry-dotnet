@@ -25,6 +25,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\OpenTelemetry\OpenTelemetry.csproj" />
+    <!-- TODO: Remove this reference once exporters ship their own component providers. See https://github.com/open-telemetry/opentelemetry-dotnet/issues/7824 -->
+    <ProjectReference Include="..\OpenTelemetry.Exporter.Console\OpenTelemetry.Exporter.Console.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -35,6 +37,10 @@
     <Compile Include="$(RepoRoot)\src\Shared\Shims\ExperimentalAttribute.cs" Link="Includes\Shims\ExperimentalAttribute.cs" />
     <Compile Include="$(RepoRoot)\src\Shared\Shims\IsExternalInit.cs" Link="Includes\Shims\IsExternalInit.cs" />
     <Compile Include="$(RepoRoot)\src\Shared\Shims\NullableAttributes.cs" Link="Includes\Shims\NullableAttributes.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Schema\opentelemetry_configuration.json" LogicalName="OpenTelemetry.Configuration.Declarative.Schema.opentelemetry_configuration.json" />
   </ItemGroup>
 
   <ItemGroup>

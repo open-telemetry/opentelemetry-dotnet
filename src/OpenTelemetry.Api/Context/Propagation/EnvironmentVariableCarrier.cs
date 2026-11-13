@@ -1,14 +1,19 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+#if NET
+using System.Buffers;
+#endif
 using System.Collections;
 using System.Collections.ObjectModel;
 using System.Runtime.CompilerServices;
+#if NETSTANDARD
+using System.Runtime.InteropServices;
+#endif
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Context.Propagation;
 
-#if EXPOSE_EXPERIMENTAL_FEATURES
 /// <summary>
 /// A class containing helper methods for using environment variables as context propagation carriers.
 /// </summary>
@@ -20,27 +25,32 @@ namespace OpenTelemetry.Context.Propagation;
 /// a key would otherwise start with a digit, and replacing an empty
 /// key with a single underscore.
 /// </remarks>
-[System.Diagnostics.CodeAnalysis.Experimental(DiagnosticDefinitions.EnvironmentVariableContextPropagationExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
-public
-#else
-internal
-#endif
-static class EnvironmentVariableCarrier
+public static class EnvironmentVariableCarrier
 {
+#if NET
+    private static readonly SearchValues<char> NormalizedChars = SearchValues.Create("ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_");
+#endif
+
     /// <summary>
     /// Gets a snapshot of the current process' environment variables.
     /// </summary>
     /// <remarks>
     /// This property is only initialized on the first access by an application.
+    /// Environment variable names are preserved and lookups use the platform's
+    /// case-sensitivity rules.
     /// </remarks>
     public static IReadOnlyDictionary<string, string?> CurrentProcess => field ??= CaptureFromCurrentProcess();
 
     /// <summary>
-    /// Captures a snapshot of the supplied environment variables using normalized
-    /// environment variable names.
+    /// Captures a snapshot of the supplied environment variables without changing
+    /// their names or values.
     /// </summary>
     /// <param name="environmentVariables">The environment variables to capture.</param>
     /// <returns>A read-only snapshot of the supplied environment variables.</returns>
+    /// <remarks>
+    /// The snapshot uses case-sensitive, ordinal key comparisons. Non-normalized
+    /// names are preserved but are not matched by <c>Get</c>.
+    /// </remarks>
     public static IReadOnlyDictionary<string, string?> Capture(IEnumerable<KeyValuePair<string, string?>> environmentVariables)
     {
         Guard.ThrowIfNull(environmentVariables);
@@ -51,7 +61,7 @@ static class EnvironmentVariableCarrier
 
         foreach (var environmentVariable in environmentVariables)
         {
-            carrier[NormalizeKey(environmentVariable.Key)] = environmentVariable.Value;
+            carrier[environmentVariable.Key] = environmentVariable.Value;
         }
 
 #if NET
@@ -80,6 +90,8 @@ static class EnvironmentVariableCarrier
     /// environment variable name is read from the carrier. A non-normalized
     /// carrier key is not matched, even when it would normalize to the
     /// requested key.
+    /// On case-insensitive carriers, including <c>CurrentProcess</c> on Windows,
+    /// a name differing from the normalized key only by case may be matched.
     /// </remarks>
     public static IEnumerable<string>? Get<T>(T carrier, string key)
         where T : IEnumerable<KeyValuePair<string, string?>>
@@ -152,11 +164,22 @@ static class EnvironmentVariableCarrier
     internal static ReadOnlyDictionary<string, string?> CaptureFromCurrentProcess()
     {
         var environmentVariables = Environment.GetEnvironmentVariables();
-        var carrier = new Dictionary<string, string?>(environmentVariables.Count, StringComparer.Ordinal);
+        var comparer =
+#if NET
+            OperatingSystem.IsWindows()
+#elif NETFRAMEWORK
+            Environment.OSVersion.Platform == PlatformID.Win32NT
+#else
+            RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+#endif
+                ? StringComparer.OrdinalIgnoreCase
+                : StringComparer.Ordinal;
+
+        var carrier = new Dictionary<string, string?>(environmentVariables.Count, comparer);
 
         foreach (DictionaryEntry environmentVariable in environmentVariables)
         {
-            carrier[NormalizeKey(Guard.ThrowIfNotOfType<string>(environmentVariable.Key))] = environmentVariable.Value?.ToString();
+            carrier[Guard.ThrowIfNotOfType<string>(environmentVariable.Key)] = environmentVariable.Value?.ToString();
         }
 
 #if NET
@@ -174,6 +197,9 @@ static class EnvironmentVariableCarrier
             return false;
         }
 
+#if NET
+        return !key.AsSpan().ContainsAnyExcept(NormalizedChars);
+#else
         foreach (var ch in key)
         {
             if (!IsNormalized(ch))
@@ -183,6 +209,7 @@ static class EnvironmentVariableCarrier
         }
 
         return true;
+#endif
     }
 
     private static string CreateNormalizedKey(string key)

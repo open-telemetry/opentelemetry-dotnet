@@ -17,20 +17,6 @@ namespace OpenTelemetry.Configuration.Declarative;
 /// <param name="context">The context for the parse this parser belongs to.</param>
 internal sealed class DeclarativeConfigurationParser(YamlParseContext context)
 {
-    private static readonly HashSet<string> KnownResourceKeys = new(StringComparer.Ordinal)
-    {
-        YamlKeys.Attributes,
-        YamlKeys.AttributesList,
-        YamlKeys.SchemaUrl,
-    };
-
-    private static readonly HashSet<string> KnownAttributeKeys = new(StringComparer.Ordinal)
-    {
-        YamlKeys.Name,
-        YamlKeys.Value,
-        YamlKeys.Type,
-    };
-
     private readonly YamlPropertyReader reader = new(context);
 
     /// <summary>
@@ -43,6 +29,7 @@ internal sealed class DeclarativeConfigurationParser(YamlParseContext context)
         new(fileFormat)
         {
             Disabled = this.ReadDisabled(root),
+            LogLevel = this.ReadLogLevel(root),
             Resource = this.ReadResource(root),
         };
 
@@ -68,22 +55,37 @@ internal sealed class DeclarativeConfigurationParser(YamlParseContext context)
     private ModelProperty<bool> ReadDisabled(YamlMappingNode node) =>
         this.reader.ReadBoolean(node, YamlKeys.Disabled);
 
+    private ModelProperty<SeverityNumber> ReadLogLevel(YamlMappingNode node)
+    {
+        if (!node.TryGetValueNode(YamlKeys.LogLevel, out var valueNode))
+        {
+            return ModelProperty<SeverityNumber>.Absent;
+        }
+
+        if (valueNode is not YamlScalarNode scalar)
+        {
+            throw SeverityNumberParser.CreateTypeMismatch(YamlKeys.LogLevel, valueNode.NodeType.ToString(), valueNode.Start);
+        }
+
+        var resolved = context.ResolveScalar(scalar);
+        return resolved.Kind switch
+        {
+            YamlScalarKind.Null => ModelProperty<SeverityNumber>.Null,
+            YamlScalarKind.String => ModelProperty<SeverityNumber>.Create(SeverityNumberParser.Parse(YamlKeys.LogLevel, resolved.Value, valueNode.Start)),
+            _ => throw SeverityNumberParser.CreateTypeMismatch(YamlKeys.LogLevel, resolved.Kind.GetYamlKindName(), valueNode.Start),
+        };
+    }
+
     private ModelProperty<ResourceConfiguration> ReadResource(YamlMappingNode node) =>
         this.reader.ReadMapping(node, YamlKeys.Resource, this.ReadResourceConfiguration);
 
-    private ResourceConfiguration ReadResourceConfiguration(YamlMappingNode node)
-    {
-        // Reported before the known fields are read so that a misspelling is still surfaced when a
-        // sibling field goes on to fail validation - the misspelling is often the actual cause.
-        node.EnsureNoUnrecognizedProperties(YamlKeys.Resource, KnownResourceKeys);
-
-        return new()
+    private ResourceConfiguration ReadResourceConfiguration(YamlMappingNode node) =>
+        new()
         {
             AttributesList = this.ReadAttributesList(node),
             Attributes = this.ReadAttributes(node),
             SchemaUrl = this.ReadSchemaUrl(node),
         };
-    }
 
     private ModelProperty<string> ReadAttributesList(YamlMappingNode node) =>
         this.reader.ReadString(node, YamlKeys.AttributesList);
@@ -124,7 +126,6 @@ internal sealed class DeclarativeConfigurationParser(YamlParseContext context)
             var path = YamlPath.Index(YamlPath.Child(YamlKeys.Resource, YamlKeys.Attributes), i);
             attributeNode.EnsureCoreCollectionTag(path);
             _ = context.ResolveMappingKeys(attributeNode, path);
-            attributeNode.EnsureNoUnrecognizedProperties(path, KnownAttributeKeys);
 
             var nameProperty = this.reader.ReadString(attributeNode, YamlKeys.Name);
             if (!nameProperty.TryGetValue(out var name))

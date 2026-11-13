@@ -366,7 +366,7 @@ public sealed class OtlpArrayTagWriterTests : IDisposable
             var buffer = ProtobufSerializer.RentBuffer(4096);
             try
             {
-                var writePosition = ProtobufOtlpTraceSerializer.WriteTraceData(ref buffer, 0, sdkOptions, ResourceBuilder.CreateEmpty().Build(), batch);
+                var writePosition = ProtobufOtlpTraceSerializer.WriteTraceData(ref buffer, 0, sdkOptions, ResourceBuilder.CreateEmpty().Build(), batch, out _);
                 using var stream = new MemoryStream(buffer, 0, writePosition);
                 var tracesData = OtlpTrace.TracesData.Parser.ParseFrom(stream);
                 var request = new OtlpCollector.ExportTraceServiceRequest();
@@ -375,10 +375,10 @@ public sealed class OtlpArrayTagWriterTests : IDisposable
                 // Buffer should be expanded to accommodate the large array.
                 Assert.True(buffer.Length > 4096);
 
-                Assert.Single(request.ResourceSpans);
-                var scopeSpans = request.ResourceSpans.First().ScopeSpans;
-                Assert.Single(scopeSpans);
-                var otlpSpan = scopeSpans.First().Spans.First();
+                var resourceSpan = Assert.Single(request.ResourceSpans);
+                var scopeSpans = resourceSpan.ScopeSpans;
+                var scopeSpan = Assert.Single(scopeSpans);
+                var otlpSpan = scopeSpan.Spans.First();
                 Assert.NotNull(otlpSpan);
 
                 // The string is too large, hence not evaluating the content.
@@ -397,7 +397,8 @@ public sealed class OtlpArrayTagWriterTests : IDisposable
     private static OtlpTrace.Span? ToOtlpSpan(SdkLimitOptions sdkOptions, Activity activity)
     {
         var buffer = new byte[4096];
-        var writePosition = ProtobufOtlpTraceSerializer.WriteSpan(buffer, 0, sdkOptions, activity);
+        var dirtyLength = 0;
+        var writePosition = ProtobufOtlpTraceSerializer.WriteSpan(buffer, 0, sdkOptions, activity, ref dirtyLength);
         using var stream = new MemoryStream(buffer, 0, writePosition);
         var scopeSpans = OtlpTrace.ScopeSpans.Parser.ParseFrom(stream);
         return scopeSpans.Spans.FirstOrDefault();
@@ -406,7 +407,8 @@ public sealed class OtlpArrayTagWriterTests : IDisposable
     private static OtlpTrace.Span? ToOtlpSpanWithExtendedBuffer(SdkLimitOptions sdkOptions, Activity activity)
     {
         var buffer = new byte[4194304];
-        var writePosition = ProtobufOtlpTraceSerializer.WriteSpan(buffer, 0, sdkOptions, activity);
+        var dirtyLength = 0;
+        var writePosition = ProtobufOtlpTraceSerializer.WriteSpan(buffer, 0, sdkOptions, activity, ref dirtyLength);
         using var stream = new MemoryStream(buffer, 0, writePosition);
         var scopeSpans = OtlpTrace.ScopeSpans.Parser.ParseFrom(stream);
         return scopeSpans.Spans.FirstOrDefault();

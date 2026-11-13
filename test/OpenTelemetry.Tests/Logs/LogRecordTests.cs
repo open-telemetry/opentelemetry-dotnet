@@ -618,9 +618,10 @@ public sealed class LogRecordTests
                 }
             },
             null);
-        Assert.Single(scopes);
+
+        var scope1 = Assert.Single(scopes);
         Assert.Equal(0, reachedDepth);
-        Assert.Equal("string_scope", scopes[0]);
+        Assert.Equal("string_scope", scope1);
 
         scopes.Clear();
 
@@ -759,8 +760,8 @@ public sealed class LogRecordTests
 
         Assert.Null(logRecord.State);
         Assert.NotNull(logRecord.StateValues);
-        Assert.Single(logRecord.StateValues);
-        Assert.Equal(new KeyValuePair<string, object?>("Key1", "Value1"), logRecord.StateValues[0]);
+        var state = Assert.Single(logRecord.StateValues);
+        Assert.Equal(new KeyValuePair<string, object?>("Key1", "Value1"), state);
     }
 
     [Fact]
@@ -781,8 +782,8 @@ public sealed class LogRecordTests
 
         Assert.Null(logRecord.State);
         Assert.NotNull(logRecord.StateValues);
-        Assert.Single(logRecord.StateValues);
-        Assert.Equal(new KeyValuePair<string, object?>("Key1", "Value1"), logRecord.StateValues[0]);
+        var state = Assert.Single(logRecord.StateValues);
+        Assert.Equal(new KeyValuePair<string, object?>("Key1", "Value1"), state);
     }
 
     [Fact]
@@ -803,8 +804,8 @@ public sealed class LogRecordTests
 
         Assert.Null(logRecord.State);
         Assert.NotNull(logRecord.StateValues);
-        Assert.Single(logRecord.StateValues);
-        Assert.Equal(new KeyValuePair<string, object?>("Key1", "Value1"), logRecord.StateValues[0]);
+        var state = Assert.Single(logRecord.StateValues);
+        Assert.Equal(new KeyValuePair<string, object?>("Key1", "Value1"), state);
     }
 
     [Fact]
@@ -857,9 +858,7 @@ public sealed class LogRecordTests
 
         Assert.Null(logRecord.State);
         Assert.NotNull(logRecord.StateValues);
-        Assert.Single(logRecord.StateValues);
-
-        var actualState = logRecord.StateValues[0];
+        var actualState = Assert.Single(logRecord.StateValues);
 
         Assert.Same("Value", actualState.Key);
         Assert.Same("Hello world", actualState.Value);
@@ -998,6 +997,66 @@ public sealed class LogRecordTests
     }
 
     [Fact]
+    public void LogRecordInstrumentationScopeVersionAndSchemaUrlTest()
+    {
+        using var loggerFactory = InitializeLoggerFactory(
+            out var exportedItems,
+            configure: o =>
+            {
+                o.Version = "1.0.0";
+                o.SchemaUrl = "https://opentelemetry.io/schemas/1.24.0";
+            });
+
+        var logger = loggerFactory.CreateLogger<LogRecordTests>();
+
+        logger.HelloWorld();
+
+        var logRecord = exportedItems.FirstOrDefault();
+
+        Assert.NotNull(logRecord);
+        Assert.NotNull(logRecord.Logger);
+        Assert.Equal("OpenTelemetry.Logs.Tests.LogRecordTests", logRecord.Logger.Name);
+        Assert.Equal("1.0.0", logRecord.Logger.Version);
+        Assert.Equal("https://opentelemetry.io/schemas/1.24.0", logRecord.Logger.SchemaUrl);
+    }
+
+    [Fact]
+    public void LogRecordInstrumentationScopeVersionAndSchemaUrlAreIsolatedPerProviderTest()
+    {
+        // Two providers configuring different Version/SchemaUrl for the
+        // same ILogger category name must not collide with each other.
+        var categoryName = Utils.GetCurrentMethodName();
+
+        using var loggerFactoryA = InitializeLoggerFactory(
+            out var exportedItemsA,
+            configure: o =>
+            {
+                o.Version = "1.0.0";
+                o.SchemaUrl = "https://opentelemetry.io/schemas/1.0.0";
+            });
+
+        using var loggerFactoryB = InitializeLoggerFactory(
+            out var exportedItemsB,
+            configure: o =>
+            {
+                o.Version = "2.0.0";
+                o.SchemaUrl = "https://opentelemetry.io/schemas/2.0.0";
+            });
+
+        loggerFactoryA.CreateLogger(categoryName).HelloWorld();
+        loggerFactoryB.CreateLogger(categoryName).HelloWorld();
+
+        var logRecordA = Assert.Single(exportedItemsA);
+        var logRecordB = Assert.Single(exportedItemsB);
+
+        Assert.Equal("1.0.0", logRecordA.Logger.Version);
+        Assert.Equal("https://opentelemetry.io/schemas/1.0.0", logRecordA.Logger.SchemaUrl);
+
+        Assert.Equal("2.0.0", logRecordB.Logger.Version);
+        Assert.Equal("https://opentelemetry.io/schemas/2.0.0", logRecordB.Logger.SchemaUrl);
+    }
+
+    [Fact]
     public void LogRecordCategoryNameAliasForInstrumentationScopeTests()
     {
         LogRecord logRecord = new();
@@ -1015,21 +1074,48 @@ public sealed class LogRecordTests
         Assert.Equal(string.Empty, logRecord.CategoryName);
         Assert.Equal(logRecord.CategoryName, logRecord.Logger.Name);
 
+        // AddInMemoryExporter copies each exported record. Holding on to the pooled
+        // records themselves is not safe once the provider has exported them: they go
+        // back to the process-wide pool, where a logger in a test running at the same
+        // time can rent and overwrite them before the assertions below run.
         var exportedItems = new List<LogRecord>();
         using (var loggerProvider = Sdk.CreateLoggerProviderBuilder()
-#pragma warning disable CA2000 // Dispose objects before losing scope
-            .AddProcessor(new BatchLogRecordExportProcessor(new InMemoryExporter<LogRecord>(exportedItems)))
-#pragma warning restore CA2000 // Dispose objects before losing scope
+            .AddInMemoryExporter(exportedItems)
             .Build())
         {
             var logger = loggerProvider.GetLogger("TestName");
             logger.EmitLog(default);
         }
 
-        Assert.Single(exportedItems);
+        var exportedItem = Assert.Single(exportedItems);
 
-        Assert.Equal("TestName", exportedItems[0].CategoryName);
-        Assert.Equal(exportedItems[0].CategoryName, exportedItems[0].Logger.Name);
+        Assert.Equal("TestName", exportedItem.CategoryName);
+        Assert.Equal(exportedItem.CategoryName, exportedItem.Logger.Name);
+
+        // Changing CategoryName must preserve the current logger's Version and
+        // SchemaUrl rather than resetting them to null.
+        var exportedItemsWithScope = new List<LogRecord>();
+        using (var loggerProvider = Sdk.CreateLoggerProviderBuilder()
+            .AddInMemoryExporter(exportedItemsWithScope)
+            .Build())
+        {
+            var logger = loggerProvider.GetLogger(new LoggerOptions
+            {
+                Name = "TestName",
+                Version = "1.0.0",
+                SchemaUrl = "https://opentelemetry.io/schemas/1.0.0",
+            });
+
+            logger.EmitLog(default);
+        }
+
+        var logRecordWithScope = Assert.Single(exportedItemsWithScope);
+
+        logRecordWithScope.CategoryName = "RenamedTestName";
+
+        Assert.Equal("RenamedTestName", logRecordWithScope.CategoryName);
+        Assert.Equal("1.0.0", logRecordWithScope.Logger.Version);
+        Assert.Equal("https://opentelemetry.io/schemas/1.0.0", logRecordWithScope.Logger.SchemaUrl);
     }
 
     [Theory]
@@ -1124,8 +1210,8 @@ public sealed class LogRecordTests
     public void BufferSnapshotsAttributeSourceCountOnce()
     {
         var attribute = new KeyValuePair<string, object?>("key", "value");
-        var attributeStorage = new List<KeyValuePair<string, object?>> { attribute };
-        var attributes = new CountOnceReadOnlyList<KeyValuePair<string, object?>>(attributeStorage);
+        var attributeStorage = new List<KeyValuePair<string, object?>>();
+        var attributes = new CountOnceReadOnlyList<KeyValuePair<string, object?>>([attribute]);
 
         var logRecord = new LogRecord
         {
@@ -1138,9 +1224,56 @@ public sealed class LogRecordTests
         Assert.Equal(1, attributes.CountAccesses);
         Assert.Same(attributeStorage, logRecord.Attributes);
 
+        Assert.Equal([attribute], attributeStorage);
+    }
+
+    [Fact]
+    public void BufferDoesNotRetainReplacedAttributes()
+    {
+        var attribute = new KeyValuePair<string, object?>("key", "value");
+        var attributeStorage = new List<KeyValuePair<string, object?>> { attribute };
+        var attributes = new CountOnceReadOnlyList<KeyValuePair<string, object?>>(attributeStorage);
+        var logRecord = new LogRecord
+        {
+            AttributeStorage = attributeStorage,
+            Attributes = attributes,
+        };
+
+        logRecord.Buffer();
+
+        Assert.NotSame(attributeStorage, logRecord.Attributes);
+        Assert.Same(logRecord.AttributeStorage, logRecord.Attributes);
+        Assert.Equal([attribute], logRecord.Attributes);
+        Assert.Equal([attribute], attributeStorage);
+
+        var bufferedAttributes = logRecord.Attributes;
+        logRecord.Buffer();
+
+        Assert.Same(bufferedAttributes, logRecord.Attributes);
+        Assert.Equal([attribute], logRecord.Attributes);
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(1)]
+    public void BufferReplacesAttributesWithFewerItems(int retainedAttributeCount)
+    {
+        var attributeStorage = new List<KeyValuePair<string, object?>>
+        {
+            new("user", "alice"),
+            new("password", "secret"),
+        };
+        var replacement = attributeStorage.Take(retainedAttributeCount).ToArray();
+        var logRecord = new LogRecord
+        {
+            AttributeStorage = attributeStorage,
+            Attributes = replacement,
+        };
+
+        logRecord.Buffer();
+
+        Assert.Equal(replacement, logRecord.Attributes);
         Assert.Equal(2, attributeStorage.Count);
-        Assert.Equal(attribute, attributeStorage[0]);
-        Assert.Equal(attribute, attributeStorage[1]);
     }
 
     private static ILoggerFactory InitializeLoggerFactory(out List<LogRecord> exportedItems, Action<OpenTelemetryLoggerOptions>? configure = null)
@@ -1266,19 +1399,19 @@ public sealed class LogRecordTests
             this.fieldToUpdate = fieldToUpdate;
         }
 
-        public override void OnEnd(LogRecord logRecord)
+        public override void OnEnd(LogRecord data)
         {
             if (this.fieldToUpdate == Field.State)
             {
-                logRecord.State = new List<KeyValuePair<string, object?>> { new("newStateKey", "newStateValue") };
+                data.State = new List<KeyValuePair<string, object?>> { new("newStateKey", "newStateValue") };
             }
             else if (this.fieldToUpdate == Field.StateValues)
             {
-                logRecord.StateValues = [new("newStateValueKey", "newStateValueValue")];
+                data.StateValues = [new("newStateValueKey", "newStateValueValue")];
             }
             else
             {
-                logRecord.FormattedMessage = "OpenTelemetry Good Night!";
+                data.FormattedMessage = "OpenTelemetry Good Night!";
             }
         }
     }

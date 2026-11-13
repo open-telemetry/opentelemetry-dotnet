@@ -19,6 +19,7 @@ public sealed class LoggerProviderTests
 
         Assert.Equal(string.Empty, logger.Name);
         Assert.Null(logger.Version);
+        Assert.Null(logger.SchemaUrl);
     }
 
     [Fact]
@@ -33,6 +34,7 @@ public sealed class LoggerProviderTests
 
         Assert.Equal("TestLogger", logger.Name);
         Assert.Equal("Version", logger.Version);
+        Assert.Null(logger.SchemaUrl);
 
         logger = provider.GetLogger(name: "TestLogger");
 
@@ -41,6 +43,7 @@ public sealed class LoggerProviderTests
 
         Assert.Equal("TestLogger", logger.Name);
         Assert.Null(logger.Version);
+        Assert.Null(logger.SchemaUrl);
 
         logger = provider.GetLogger();
 
@@ -49,11 +52,32 @@ public sealed class LoggerProviderTests
 
         Assert.Equal(string.Empty, logger.Name);
         Assert.Null(logger.Version);
+        Assert.Null(logger.SchemaUrl);
     }
 
-    private sealed class NoopLoggerProvider : LoggerProvider
+    [Fact]
+    public void LoggerReturnedWithInstrumentationScopeIncludingSchemaUrlTest()
     {
+        using var provider = new TestLoggerProvider();
+
+        var options = new LoggerOptions()
+        {
+            Name = "TestLogger",
+            Version = "Version",
+            SchemaUrl = "https://example.com/schema",
+        };
+
+        var logger = provider.GetLogger(options);
+
+        Assert.NotNull(logger);
+        Assert.Equal(typeof(TestLogger), logger.GetType());
+
+        Assert.Equal("TestLogger", logger.Name);
+        Assert.Equal("Version", logger.Version);
+        Assert.Equal("https://example.com/schema", logger.SchemaUrl);
     }
+
+    private sealed class NoopLoggerProvider : LoggerProvider;
 
     private sealed class TestLoggerProvider : LoggerProvider
     {
@@ -62,11 +86,12 @@ public sealed class LoggerProviderTests
 #else
         internal override bool TryCreateLogger(
 #endif
-            string? name,
+            LoggerOptions options,
             [NotNullWhen(true)]
             out Logger? logger)
         {
-            logger = new TestLogger(name);
+            logger = new TestLogger(options.Name);
+            logger.SetInstrumentationScope(options.Version, options.SchemaUrl);
             return true;
         }
     }

@@ -3,13 +3,13 @@
   <PropertyGroup>
     <Description>Unit test project for Zipkin Exporter for OpenTelemetry</Description>
     <TargetFrameworks>$(TargetFrameworksForTests)</TargetFrameworks>
-    <!-- Avoid conflicting port registrations if TFMs tested in parallel -->
-    <TestTfmsInParallel>false</TestTfmsInParallel>
     <!-- CS0618: Do not use Obsolete classes/methods. Zipkin exporter is deprecated and marked as Obsolete.-->
     <NoWarn>$(NoWarn);CS0618</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Shared\EnvVarsCollectionDefinition.cs" Link="Includes\EnvVarsCollectionDefinition.cs" />
+    <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Shared\EventSourceCollectionDefinition.cs" Link="Includes\EventSourceCollectionDefinition.cs" />
     <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Shared\TcpPortProvider.cs" Link="Includes\TcpPortProvider.cs" />
     <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Shared\TestHttpServer.cs" Link="Includes\TestHttpServer.cs" />
     <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Shared\EventSourceTestHelper.cs" Link="Includes\EventSourceTestHelper.cs" />

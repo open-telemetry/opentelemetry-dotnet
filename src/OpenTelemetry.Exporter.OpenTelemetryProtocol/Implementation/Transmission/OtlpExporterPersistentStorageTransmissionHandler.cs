@@ -21,9 +21,9 @@ internal sealed class OtlpExporterPersistentStorageTransmissionHandler : OtlpExp
     private readonly PersistentBlobProvider persistentBlobProvider;
     private bool disposed;
 
-    public OtlpExporterPersistentStorageTransmissionHandler(IExportClient exportClient, double timeoutMilliseconds, string storagePath)
+    public OtlpExporterPersistentStorageTransmissionHandler(IExportClient exportClient, double timeoutMilliseconds, string storagePath, bool checkPermissions = true)
 #pragma warning disable CA2000 // Dispose objects before losing scope
-        : this(new FileBlobProvider(storagePath), exportClient, timeoutMilliseconds)
+        : this(new FileBlobProvider(storagePath, checkPermissions), exportClient, timeoutMilliseconds)
 #pragma warning restore CA2000 // Dispose objects before losing scope
     {
     }
@@ -137,7 +137,7 @@ internal sealed class OtlpExporterPersistentStorageTransmissionHandler : OtlpExp
                     {
                         if (blob.TryLease((int)this.TimeoutMilliseconds) && blob.TryRead(out var data))
                         {
-                            var deadlineUtc = DateTime.UtcNow.AddMilliseconds(this.TimeoutMilliseconds);
+                            var deadlineUtc = this.GetDeadlineUtc(DateTime.MaxValue);
 
                             // Note: The deadline is intentionally ignored when deciding whether to keep
                             // the blob. A retry attempt that exhausts the deadline should not cause the

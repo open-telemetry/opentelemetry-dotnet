@@ -14,8 +14,9 @@ internal sealed class PrometheusCollectionManager
     private const int MaxCachedMetrics = 1024;
 
     // Upper bound on how many times entering a collection will retry while
-    // resolving races with concurrent scrapes (a collection completing, active
-    // readers draining, or a collection this scrape could not register with).
+    // resolving races with concurrent scrapes (a collection completing, a
+    // response buffer being freed, or a collection this scrape could not
+    // register with).
     // In practice only a couple of iterations ever run; the cap exists purely so
     // a pathological interleaving of concurrent scrapes cannot starve one into
     // looping forever.
@@ -31,6 +32,8 @@ internal sealed class PrometheusCollectionManager
     private readonly long baseTimestamp = Stopwatch.GetTimestamp();
     private readonly PrometheusExporter.ExportFunc onCollectRef;
     private readonly Dictionary<Metric, PrometheusMetric> metricsCache;
+    private readonly SeriesRegistry series = new(); // Only used while a response is being written, which is never concurrent.
+    private readonly TagKeyTracker tagKeys = new(); // As above.
     private readonly int maxBufferSize;
 
     private int metricsCacheCount;
@@ -40,6 +43,7 @@ internal sealed class PrometheusCollectionManager
     private CollectionContext? collectionContext;
     private CollectionContext? onCollectContext;
     private CollectionExecutionResult collectionExecutionResult;
+    private TimeSpan? lastCollectionCompletedElapsed;
 
     public PrometheusCollectionManager(PrometheusExporter exporter)
     {
@@ -58,11 +62,41 @@ internal sealed class PrometheusCollectionManager
 
     internal Func<TimeSpan> GetElapsedTime { get; set; }
 
+    /// <summary>
+    /// Gets the number of scrapes which have entered a collection and not yet
+    /// exited it, across all protocols. Exposed for tests, which use it to tell
+    /// when a scrape has joined an in-flight collection.
+    /// </summary>
+    internal int ActiveReaderCount
+    {
+        get
+        {
+            var count = 0;
+
+            foreach (var state in this.protocolStates.Values)
+            {
+                count += state.ReaderCount;
+            }
+
+            return count;
+        }
+    }
+
 #if NET
     public ValueTask<CollectionResponse> EnterCollect(in PrometheusProtocol protocol, CancellationToken cancellationToken = default)
 #else
     public Task<CollectionResponse> EnterCollect(in PrometheusProtocol protocol, CancellationToken cancellationToken = default)
 #endif
+        => this.EnterCollect(protocol, scrapeTimeout: null, cancellationToken);
+
+#if NET
+    public ValueTask<CollectionResponse> EnterCollect(
+#else
+    public Task<CollectionResponse> EnterCollect(
+#endif
+        in PrometheusProtocol protocol,
+        TimeSpan? scrapeTimeout,
+        CancellationToken cancellationToken = default)
     {
         var step = this.TryEnterCollect(protocol);
 
@@ -75,12 +109,31 @@ internal sealed class PrometheusCollectionManager
 #endif
         }
 
-        return this.WaitForCollectionResponseAsync(protocol, step, cancellationToken);
+        // Reserve part of the waiting scrape's budget for collecting and sending its response.
+        // Very short client deadlines must not impose a subsecond idle limit on other clients.
+        var writerIdleTimeout = scrapeTimeout is { } timeout
+            ? TimeSpan.FromTicks(Math.Max(timeout.Ticks / 2, TimeSpan.TicksPerSecond))
+            : (TimeSpan?)null;
+
+        return this.WaitForCollectionResponseAsync(protocol, step, writerIdleTimeout, cancellationToken);
     }
 
+    /// <summary>
+    /// Releases the response buffer which <paramref name="response"/> was read from, so that
+    /// a later collection can write to it again.
+    /// </summary>
+    /// <param name="response">The response returned by <c>EnterCollect</c>.</param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void ExitCollect(in PrometheusProtocol protocol)
-        => this.GetProtocolState(protocol).DecrementReaderCount();
+#pragma warning disable CA1822 // Mark members as static - an instance member pairs with EnterCollect
+    public void ExitCollect(in CollectionResponse response)
+#pragma warning restore CA1822 // Mark members as static
+        => response.Buffer?.DecrementReaderCount();
+
+    internal ResponseWriter BeginResponseWrite(in CollectionResponse response)
+    {
+        Debug.Assert(response.Buffer is not null, "Only a leased response can be written.");
+        return new ResponseWriter(this, response.Buffer!);
+    }
 
 #if !NET
     /// <summary>
@@ -106,13 +159,28 @@ internal sealed class PrometheusCollectionManager
 
         return await task.ConfigureAwait(false);
     }
+
+    private static async Task WaitForTask(Task<bool> task, TimeSpan timeout, CancellationToken cancellationToken)
+    {
+        using var timeoutCancellation = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        timeoutCancellation.CancelAfter(timeout);
+
+        try
+        {
+            await WaitForTask(task, timeoutCancellation.Token).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+        {
+            throw new TimeoutException();
+        }
+    }
 #endif
 
     /// <summary>
     /// Performs a single synchronous attempt to enter a collection. Returns a
-    /// completed response when one is immediately available (served from the
-    /// cache, or produced by a collection executed on this thread), otherwise
-    /// returns the in-flight collection task the caller must await.
+    /// completed response when one is immediately available from the cache,
+    /// otherwise returns the in-flight collection task, or the task for a response
+    /// buffer being freed, which the caller must await.
     /// </summary>
     /// <param name="protocol">The protocol for which the collection is being attempted.</param>
     /// <returns>
@@ -120,28 +188,31 @@ internal sealed class PrometheusCollectionManager
     /// </returns>
     private CollectStep TryEnterCollect(in PrometheusProtocol protocol)
     {
-        CollectionResponse? cachedResponse = null;
+        CollectionResponse? immediateResponse = null;
         Task<CollectionResult>? pendingCollectionTask = null;
         CollectionContext? activeCollectionContext = null;
-        var joinedActiveCollection = false;
+        ResponseBuffer? lease = null;
         var resolved = false;
 
         for (var attempt = 0; attempt < MaxCollectAttempts; attempt++)
         {
             pendingCollectionTask = null;
-            joinedActiveCollection = false;
+            lease = null;
             var retry = false;
 
             this.EnterGlobalLock();
 
             try
             {
+                var state = this.GetProtocolState(protocol);
+
+                state.OnRequested(this.IsNearCollection());
+
                 // If we are within {ScrapeResponseCacheDurationMilliseconds} of the
                 // last successful collect, return the previous view.
                 if (this.TryGetCachedResponse(protocol, out var response))
                 {
-                    cachedResponse = response;
-                    this.IncrementReaderCount(protocol);
+                    immediateResponse = response;
                     resolved = true;
                     break;
                 }
@@ -149,11 +220,10 @@ internal sealed class PrometheusCollectionManager
                 if (this.collectionContext is { } currentCollectionContext)
                 {
                     pendingCollectionTask = currentCollectionContext.Task;
-                    joinedActiveCollection = currentCollectionContext.TryRegisterProtocol(protocol, this.HasActiveReaders(protocol));
 
-                    if (joinedActiveCollection)
+                    if (currentCollectionContext.TryRegisterProtocol(protocol, state))
                     {
-                        this.IncrementReaderCount(protocol);
+                        lease = state.AcquireTargetBuffer();
                         resolved = true;
                         break;
                     }
@@ -189,10 +259,11 @@ internal sealed class PrometheusCollectionManager
 
             try
             {
+                var state = this.GetProtocolState(protocol);
+
                 if (this.TryGetCachedResponse(protocol, out var response))
                 {
-                    cachedResponse = response;
-                    this.IncrementReaderCount(protocol);
+                    immediateResponse = response;
                     resolved = true;
                     break;
                 }
@@ -200,11 +271,10 @@ internal sealed class PrometheusCollectionManager
                 if (this.collectionContext is { } currentCollectionContext)
                 {
                     pendingCollectionTask = currentCollectionContext.Task;
-                    joinedActiveCollection = currentCollectionContext.TryRegisterProtocol(protocol, this.HasActiveReaders(protocol));
 
-                    if (joinedActiveCollection)
+                    if (currentCollectionContext.TryRegisterProtocol(protocol, state))
                     {
-                        this.IncrementReaderCount(protocol);
+                        lease = state.AcquireTargetBuffer();
                         resolved = true;
                         break;
                     }
@@ -225,15 +295,25 @@ internal sealed class PrometheusCollectionManager
                 }
 
                 // No collection is in flight, so this scrape has to start one
-                if (this.GetReadersDrainedTask(protocol) is { } readersDrainedTask)
+                if (!state.TryReserveBuffer())
                 {
-                    return CollectStep.WaitingForReaders(readersDrainedTask);
+                    // Both buffers are leased and any cached response has expired. Wait for
+                    // capacity rather than returning stale metrics or overwriting leased bytes.
+                    // The asynchronous wait can cancel idle response writers, but a buffer only
+                    // becomes reusable after their ExitCollect calls have actually released it.
+                    if (state.GetBufferFreedTask() is { } bufferFreedTask)
+                    {
+                        return CollectStep.WaitingForBuffer(bufferFreedTask);
+                    }
+
+                    // A buffer was freed in the meantime, so try to reserve it
+                    continue;
                 }
 
                 activeCollectionContext = new CollectionContext(protocol);
                 this.collectionContext = activeCollectionContext;
 
-                this.IncrementReaderCount(protocol);
+                lease = state.AcquireTargetBuffer();
                 resolved = true;
                 break;
             }
@@ -243,25 +323,25 @@ internal sealed class PrometheusCollectionManager
             }
         }
 
+        if (immediateResponse is { } collectionResponse)
+        {
+            return CollectStep.Completed(collectionResponse);
+        }
+
         if (!resolved)
         {
             // The attempt budget was exhausted while contending with concurrent
             // scrapes. Degrade to a failed (empty) response rather than spinning
             // forever - this mirrors how an unsuccessful collection is reported.
-            this.IncrementReaderCount(protocol);
+            Debug.Assert(lease is null, "A response buffer was acquired without a collection to write it.");
             PrometheusExporterEventSource.Log.CollectFailed();
 
             return CollectStep.Completed(default);
         }
 
-        if (cachedResponse is { } collectionResponse)
-        {
-            return CollectStep.Completed(collectionResponse);
-        }
-
         if (pendingCollectionTask is not null)
         {
-            return CollectStep.Pending(pendingCollectionTask, joinedActiveCollection);
+            return CollectStep.Pending(pendingCollectionTask, lease);
         }
 
         // Queue the collection (which invokes user-controlled observable instrument
@@ -273,7 +353,7 @@ internal sealed class PrometheusCollectionManager
         var collectionContextToRun = activeCollectionContext!;
         this.QueueCollectAndPublish(collectionContextToRun);
 
-        return CollectStep.Pending(collectionContextToRun.Task, joinedActiveCollection: true);
+        return CollectStep.Pending(collectionContextToRun.Task, lease);
     }
 
     /// <summary>
@@ -335,6 +415,13 @@ internal sealed class PrometheusCollectionManager
             {
                 this.collectionContext = null;
             }
+
+            this.lastCollectionCompletedElapsed = this.GetElapsedTime();
+
+            foreach (var protocol in collectionContext.FreezeProtocols())
+            {
+                this.GetProtocolState(protocol).OnWritten(collectionContext.IsSpeculative(protocol));
+            }
         }
         finally
         {
@@ -345,13 +432,19 @@ internal sealed class PrometheusCollectionManager
     }
 
 #if NET
-    private async ValueTask<CollectionResponse> WaitForCollectionResponseAsync(PrometheusProtocol protocol, CollectStep step, CancellationToken cancellationToken)
+    private async ValueTask<CollectionResponse> WaitForCollectionResponseAsync(
 #else
-    private async Task<CollectionResponse> WaitForCollectionResponseAsync(PrometheusProtocol protocol, CollectStep step, CancellationToken cancellationToken)
+    private async Task<CollectionResponse> WaitForCollectionResponseAsync(
 #endif
+        PrometheusProtocol protocol,
+        CollectStep step,
+        TimeSpan? writerIdleTimeout,
+        CancellationToken cancellationToken)
     {
         for (var attempt = 0; attempt < MaxCollectAttempts; attempt++)
         {
+            CollectionResult collectionResult = default;
+
             try
             {
                 if (step.PendingCollectionTask is { } pendingCollectionTask)
@@ -362,51 +455,42 @@ internal sealed class PrometheusCollectionManager
                     // and ExecuteCollectAndPublish still publishes its result and clears
                     // collectionContext whenever (if ever) it completes.
 #if NET
-                    var collectionResult = await pendingCollectionTask.WaitAsync(cancellationToken).ConfigureAwait(false);
+                    collectionResult = await pendingCollectionTask.WaitAsync(cancellationToken).ConfigureAwait(false);
 #else
-                    var collectionResult = await WaitForTask(pendingCollectionTask, cancellationToken).ConfigureAwait(false);
+                    collectionResult = await WaitForTask(pendingCollectionTask, cancellationToken).ConfigureAwait(false);
 #endif
-
-                    if (step.JoinedActiveCollection)
-                    {
-                        // This scrape shared the collection, so the collection's outcome is
-                        // this scrape's outcome. When it produced no response for this
-                        // protocol it failed, and this scrape reports that failure rather
-                        // than collecting again: a retry cannot reuse the collection it just
-                        // shared, so it would have to start a new one, and every scrape
-                        // sharing the failure would queue up behind the active readers to do so.
-                        if (!collectionResult.TryGetResponse(protocol, out var response))
-                        {
-                            PrometheusExporterEventSource.Log.CollectFailed();
-
-                            // The reader slot taken when joining is left outstanding for the
-                            // caller's ExitCollect to release.
-                            return default;
-                        }
-
-                        return response;
-                    }
-
-                    // This scrape never registered with the collection it observed, so that
-                    // collection was never going to produce a response for it: make another
-                    // attempt. Loop here (bounded by MaxCollectAttempts) rather than
-                    // recursing back into EnterCollect: when the awaited collection
-                    // completes synchronously the continuation runs inline, so a recursive
-                    // retry would grow the stack on every iteration and eventually overflow
-                    // under contention.
                 }
-                else if (step.ReadersDrainedTask is { } readersDrainedTask)
+                else
                 {
-                    // Awaiting the readers releases this thread while they finish. Spinning
-                    // until they drain would instead hold it, and holding it can starve the
-                    // very scrapes being waited on: each of them needs a thread to resume on
-                    // before it can release its reader slot. Bounded by cancellationToken for
-                    // the same reason as the pending-collection wait above.
+                    if (writerIdleTimeout is { } idleTimeout)
+                    {
+                        cancellationToken.ThrowIfCancellationRequested();
+                        var delay = this.GetProtocolState(protocol).CancelIdleWriters(this.GetElapsedTime(), idleTimeout);
+
+                        try
+                        {
 #if NET
-                    await readersDrainedTask.WaitAsync(cancellationToken).ConfigureAwait(false);
+                            await step.BufferFreedTask!.WaitAsync(delay, cancellationToken).ConfigureAwait(false);
 #else
-                    await WaitForTask(readersDrainedTask, cancellationToken).ConfigureAwait(false);
+                            await WaitForTask(step.BufferFreedTask!, delay, cancellationToken).ConfigureAwait(false);
 #endif
+                        }
+                        catch (TimeoutException)
+                        {
+                            // Recheck each writer's last completed write, including writers that
+                            // started after this wait. Cancellation never releases their leases.
+                            continue;
+                        }
+                    }
+                    else
+                    {
+                        // Non-HTTP callers without a scrape budget only wait for readers to exit.
+#if NET
+                        await step.BufferFreedTask!.WaitAsync(cancellationToken).ConfigureAwait(false);
+#else
+                        await WaitForTask(step.BufferFreedTask!, cancellationToken).ConfigureAwait(false);
+#endif
+                    }
                 }
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
@@ -416,17 +500,49 @@ internal sealed class PrometheusCollectionManager
                 // collection failure, so this is not logged as one; the caller already
                 // reports the cancellation itself (e.g. ScrapeTimedOut). Degrade to a failed
                 // response (mirroring the MaxCollectAttempts exhaustion path below) instead
-                // of continuing to wait indefinitely.
-                if (!step.JoinedActiveCollection)
-                {
-                    // No reader slot was taken for what was being awaited; take one now so
-                    // the caller's unconditional ExitCollect has exactly one slot to release.
-                    this.IncrementReaderCount(protocol);
-                }
+                // of continuing to wait indefinitely. Nothing will be read from the response
+                // buffer taken when joining, so it is released now.
+                step.Lease?.DecrementReaderCount();
 
                 return default;
             }
 
+            if (step.Lease is { } lease)
+            {
+                // This scrape shared the collection, so the collection's outcome is
+                // this scrape's outcome. When it produced no response for this
+                // protocol it failed, and this scrape reports that failure rather
+                // than collecting again: a retry cannot reuse the collection it just
+                // shared, so it would have to start a new one, and every scrape
+                // sharing the failure would queue up to do so.
+                if (!collectionResult.TryGetResponse(protocol, out var response))
+                {
+                    lease.DecrementReaderCount();
+                    PrometheusExporterEventSource.Log.CollectFailed();
+
+                    return default;
+                }
+
+                if (!response.Succeeded)
+                {
+                    // Nothing will be read from the response buffer taken when joining
+                    lease.DecrementReaderCount();
+
+                    return response;
+                }
+
+                // The response buffer taken when joining is left outstanding for the
+                // caller's ExitCollect to release.
+                return new CollectionResponse(response.View, response.GeneratedAtUtc, response.FromCache, lease);
+            }
+
+            // This scrape never registered with the collection it observed, so that
+            // collection was never going to produce a response for it, or it was
+            // waiting for a response buffer to be freed: make another attempt. Loop
+            // here (bounded by MaxCollectAttempts) rather than recursing back into
+            // EnterCollect: when the awaited task completes synchronously the
+            // continuation runs inline, so a recursive retry would grow the stack on
+            // every iteration and eventually overflow under contention.
             step = this.TryEnterCollect(protocol);
 
             if (step.IsCompleted)
@@ -437,18 +553,10 @@ internal sealed class PrometheusCollectionManager
 
         // The retry budget was exhausted while contending with concurrent scrapes;
         // give up and degrade to a failed (empty) response instead of
-        // awaiting/retrying indefinitely.
-        //
-        // Leave exactly one reader slot outstanding for the caller's ExitCollect to
-        // release: when the last step joined the active collection, TryEnterCollect
-        // already took that slot, so take one only otherwise - taking a second here
-        // would leak, taking none would drive the count negative and hang every
-        // later scrape.
-        if (!step.JoinedActiveCollection)
-        {
-            this.IncrementReaderCount(protocol);
-            PrometheusExporterEventSource.Log.CollectFailed();
-        }
+        // awaiting/retrying indefinitely. The last attempt may have joined a
+        // collection which is not going to be awaited, so release what it took.
+        step.Lease?.DecrementReaderCount();
+        PrometheusExporterEventSource.Log.CollectFailed();
 
         return default;
     }
@@ -472,18 +580,6 @@ internal sealed class PrometheusCollectionManager
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void ExitGlobalLock()
         => Interlocked.Exchange(ref this.globalLockState, 0);
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void IncrementReaderCount(in PrometheusProtocol protocol)
-        => this.GetProtocolState(protocol).IncrementReaderCount();
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private bool HasActiveReaders(in PrometheusProtocol protocol)
-        => this.protocolStates.TryGetValue(protocol, out var state) && state.HasActiveReaders();
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private Task<bool>? GetReadersDrainedTask(in PrometheusProtocol protocol)
-        => this.GetProtocolState(protocol).GetReadersDrainedTask();
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private CollectionResult ExecuteCollect(CollectionContext collectionContext)
@@ -519,6 +615,19 @@ internal sealed class PrometheusCollectionManager
             return ExportResult.Failure;
         }
 
+        // Other formats are only registered once the metrics have been collected, so that their
+        // cached responses can still be served while observable instrument callbacks run.
+        this.EnterGlobalLock();
+
+        try
+        {
+            this.RegisterSpeculativeProtocols(collectionContext);
+        }
+        finally
+        {
+            this.ExitGlobalLock();
+        }
+
         var protocols = collectionContext.FreezeProtocols();
         HashSet<PrometheusProtocol>? successfulProtocols = null;
 
@@ -547,19 +656,40 @@ internal sealed class PrometheusCollectionManager
 
             var cursor = this.targetInfoEnabled ? this.WriteTargetInfo(serializer, state) : 0;
             var metricStates = this.GetMetricStates(serializer, metrics);
-            var options = new TextFormatSerializerOptions(
-                suppressScopeInfo: !this.scopeInfoEnabled,
-                resourceConstantLabels: this.GetResourceConstantLabels());
+
+            this.series.Clear();
+            this.tagKeys.ClearOutputKeys();
+
+            var suppressScopeInfo = !this.scopeInfoEnabled;
+            var resourceConstantLabels = this.GetResourceConstantLabels();
 
             foreach (var metricState in metricStates)
             {
+                if (metricState.WriteType)
+                {
+                    // This is the first metric of a new metric family, and only the metrics of a family can have the same series.
+                    this.series.StartFamily();
+                }
+
+                var metricStart = cursor;
+                var seriesMark = this.series.Mark();
+                var deduplicate = metricState.Deduplicate;
+
                 while (true)
                 {
                     try
                     {
+                        this.tagKeys.Reset();
+                        TextFormatSerializer.ResetReplacementCharacterWritten();
+
+                        // Series are only compared when they can be the same, as it is not free to do so.
+                        var options = deduplicate
+                            ? new TextFormatSerializerOptions(suppressScopeInfo, resourceConstantLabels, series: this.series)
+                            : new TextFormatSerializerOptions(suppressScopeInfo, resourceConstantLabels, tagKeys: this.tagKeys);
+
                         cursor = serializer.WriteMetric(
                             state.Buffer,
-                            cursor,
+                            metricStart,
                             metricState.Metric,
                             metricState.PrometheusMetric,
                             metricState.WriteType,
@@ -569,16 +699,34 @@ internal sealed class PrometheusCollectionManager
                             metricState.Help,
                             options);
 
+                        if (!deduplicate &&
+                            (serializer.HasCollidingTagKeys(this.tagKeys, metricState.Metric) ||
+                             TextFormatSerializer.WasReplacementCharacterWritten()))
+                        {
+                            // Tag keys or values of the metric can be the same once they are written, so the series of
+                            // different points can be too. The metric is written again without any that are.
+                            deduplicate = true;
+                            continue;
+                        }
+
                         break;
                     }
                     catch (Exception ex) when (ex is IndexOutOfRangeException or ArgumentException)
                     {
+                        // The metric is written again, so the series that it had written must be forgotten.
+                        this.series.Rollback(seriesMark);
+
                         if (!state.TryExpandBuffer())
                         {
                             throw;
                         }
                     }
                 }
+            }
+
+            if (this.series.DroppedCount > 0)
+            {
+                PrometheusExporterEventSource.Log.DuplicateSeriesDropped(this.series.DroppedCount, this.series.FirstDroppedMetricName!);
             }
 
             while (true)
@@ -660,18 +808,76 @@ internal sealed class PrometheusCollectionManager
 
     private bool TryGetCachedResponse(in PrometheusProtocol protocol, out CollectionResponse response)
     {
+        // A protocol registered with the in-flight collection may still have a cached view,
+        // but its buffer is being rewritten, so it must not be read from the cache. Other
+        // formats are only registered once the metrics have been collected (see OnCollect),
+        // so this never waits for observable instrument callbacks, only for serialization.
         if (this.protocolStates.TryGetValue(protocol, out var state) &&
-            state.GeneratedAt is { } generatedAt &&
-            state.GeneratedAtElapsed is { } generatedAtElapsed &&
-            this.scrapeResponseCacheDuration > TimeSpan.Zero &&
-            this.GetElapsedTime() - generatedAtElapsed < this.scrapeResponseCacheDuration)
+            this.IsCached(state, this.GetElapsedTime()) &&
+            this.collectionContext?.ContainsProtocol(protocol) is not true)
         {
-            response = new CollectionResponse(state.View, generatedAt, fromCache: true);
-            return true;
+            return state.TryAcquireView(fromCache: true, out response);
         }
 
         response = default;
         return false;
+    }
+
+    private bool IsCached(PrometheusProtocolState state, TimeSpan elapsed)
+        => state.GeneratedAtElapsed is { } generatedAtElapsed &&
+           this.scrapeResponseCacheDuration > TimeSpan.Zero &&
+           elapsed - generatedAtElapsed < this.scrapeResponseCacheDuration;
+
+    /// <summary>
+    /// Gets a value indicating whether a scrape arriving now would have been served by the
+    /// most recent collection, had that collection also written the scrape's format: either a
+    /// collection is in flight, or the last one completed within {ScrapeResponseCacheDurationMilliseconds}.
+    /// </summary>
+    /// <returns>
+    /// <see langword="true"/> if a scrape arriving now is near a collection; otherwise <see langword="false"/>.
+    /// </returns>
+    private bool IsNearCollection()
+        => this.collectionContext is not null ||
+           (this.lastCollectionCompletedElapsed is { } lastCollectionCompletedElapsed &&
+            this.GetElapsedTime() - lastCollectionCompletedElapsed < this.scrapeResponseCacheDuration);
+
+    /// <summary>
+    /// Registers other formats with a collection, so that scrapes which keep negotiating
+    /// different formats within one {ScrapeResponseCacheDurationMilliseconds} window share a
+    /// single collection rather than each of them collecting again for its own format.
+    /// </summary>
+    /// <remarks>
+    /// A format is registered when its most recent scrape arrived near a collection, so it
+    /// would have been served from the cache had that collection written it too. That holds
+    /// however long ago that scrape was, so scrapers which poll together at an interval longer
+    /// than the cache duration keep sharing collections. A format is not rewritten while its
+    /// response is still cached. A response written speculatively is not rewritten again until
+    /// it has been requested.
+    /// </remarks>
+    /// <param name="collectionContext">The collection context being executed.</param>
+    private void RegisterSpeculativeProtocols(CollectionContext collectionContext)
+    {
+        if (this.scrapeResponseCacheDuration <= TimeSpan.Zero)
+        {
+            return;
+        }
+
+        var elapsed = this.GetElapsedTime();
+
+        foreach (var entry in this.protocolStates)
+        {
+            var state = entry.Value;
+
+            if (!state.LastRequestNearCollection ||
+                this.IsCached(state, elapsed) ||
+                (!state.RequestedSinceWritten && state.WrittenSpeculatively))
+            {
+                continue;
+            }
+
+            // A protocol without a response buffer which is free to rewrite is not registered.
+            collectionContext.TryRegisterSpeculativeProtocol(entry.Key, state);
+        }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -684,7 +890,7 @@ internal sealed class PrometheusCollectionManager
 
     private IReadOnlyList<KeyValuePair<string, object>>? GetResourceConstantLabels()
     {
-        if (!this.resourceConstantLabelsComputed)
+        if (!this.resourceConstantLabelsComputed && this.exporter.ParentProvider != null)
         {
             if (this.resourceConstantLabelsFilter is { } filter)
             {
@@ -774,7 +980,7 @@ internal sealed class PrometheusCollectionManager
 
             if (metadataState.Type != prometheusMetric.Type)
             {
-                droppedMetricNames ??= new(StringComparer.Ordinal);
+                droppedMetricNames ??= [with(StringComparer.Ordinal)];
                 droppedMetricNames.Add(metadataName);
                 PrometheusExporterEventSource.Log.ConflictingType(metadataName, metadataState.Type, prometheusMetric.Type);
             }
@@ -818,28 +1024,91 @@ internal sealed class PrometheusCollectionManager
             return result != 0 ? result : string.CompareOrdinal(left.Metric.Name, right.Metric.Name);
         });
 
+        // The names of the samples that are written for a metric (such as the "_sum" of a histogram) cannot
+        // be the name of the samples of another metric family, so the family which has that name is dropped.
+        // The families are in order of their names, and the name of a sample is longer than that of its family, so
+        // whether a family has been dropped is known by the time that it is reached, and only the ones that were not reserve names.
+        for (var index = 0; index < precomputedMetricStates.Count; index++)
+        {
+            var precomputedMetricState = precomputedMetricStates[index];
+            var familyName = precomputedMetricState.MetadataName;
+
+            if (index > 0 && string.Equals(familyName, precomputedMetricStates[index - 1].MetadataName, StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            if (droppedMetricNames?.Contains(familyName) is true)
+            {
+                continue;
+            }
+
+            // The names which start with the name of the family follow it, so there is nothing to find unless the next one does.
+            var next = index + 1;
+
+            while (next < precomputedMetricStates.Count && string.Equals(precomputedMetricStates[next].MetadataName, familyName, StringComparison.Ordinal))
+            {
+                next++;
+            }
+
+            if (next == precomputedMetricStates.Count || !precomputedMetricStates[next].MetadataName.StartsWith(familyName, StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            foreach (var suffix in serializer.GetGeneratedSampleSuffixes(precomputedMetricState.PrometheusMetric))
+            {
+                var generatedName = familyName + suffix;
+
+                if (metadataStates.ContainsKey(generatedName))
+                {
+                    droppedMetricNames ??= [with(StringComparer.Ordinal)];
+                    droppedMetricNames.Add(generatedName);
+                    PrometheusExporterEventSource.Log.ConflictingSampleName(generatedName, familyName);
+                }
+            }
+        }
+
         var metricStates = new List<MetricState>(precomputedMetricStates.Count);
         var emittedMetricNames = new HashSet<string>(StringComparer.Ordinal);
 
-        foreach (var metricState in precomputedMetricStates)
+        for (var index = 0; index < precomputedMetricStates.Count; index++)
         {
+            var metricState = precomputedMetricStates[index];
+
             if (droppedMetricNames?.Contains(metricState.MetadataName) is true)
             {
                 continue;
             }
 
+            // A family which has more than one metric can have the same series for different metrics, such as when
+            // they are from different meters and the scope information that tells them apart is not written.
+            // The metrics of a family are together, as they are in order of their names.
+            var deduplicate =
+                (index > 0 && string.Equals(precomputedMetricStates[index - 1].MetadataName, metricState.MetadataName, StringComparison.Ordinal)) ||
+                (index + 1 < precomputedMetricStates.Count && string.Equals(precomputedMetricStates[index + 1].MetadataName, metricState.MetadataName, StringComparison.Ordinal));
+
             var writeMetadata = emittedMetricNames.Add(metricState.MetadataName);
             var metadataState = metadataStates[metricState.MetadataName];
+
+            // The unit is not appended to a name which already ends with it (e.g. "auth.failedlogins"
+            // with unit "logins"), is taken for the '_total' suffix of a counter, or may be changed by
+            // escaping. The UNIT metadata is optional, but a unit which is not an underscore-separated
+            // suffix of the name makes the whole OpenMetrics exposition invalid, so it is omitted then.
+            var writeUnit = writeMetadata &&
+                metadataState.Unit != null &&
+                PrometheusMetric.HasUnitSuffix(metricState.MetadataName, metadataState.Unit);
 
             metricStates.Add(
                 new MetricState(
                     metricState.Metric,
                     metricState.PrometheusMetric,
                     writeMetadata,
-                    writeMetadata && metadataState.Unit != null,
+                    writeUnit,
                     writeMetadata && metadataState.Help != null,
                     metadataState.Unit,
-                    metadataState.Help));
+                    metadataState.Help,
+                    deduplicate));
         }
 
         return metricStates;
@@ -848,11 +1117,17 @@ internal sealed class PrometheusCollectionManager
     public readonly struct CollectionResponse
     {
         public CollectionResponse(ArraySegment<byte> view, DateTime generatedAtUtc, bool fromCache)
+            : this(view, generatedAtUtc, fromCache, buffer: null)
+        {
+        }
+
+        internal CollectionResponse(ArraySegment<byte> view, DateTime generatedAtUtc, bool fromCache, ResponseBuffer? buffer)
         {
             this.View = view;
             this.GeneratedAtUtc = generatedAtUtc;
             this.FromCache = fromCache;
             this.Succeeded = true;
+            this.Buffer = buffer;
         }
 
         public readonly ArraySegment<byte> View { get; }
@@ -869,6 +1144,12 @@ internal sealed class PrometheusCollectionManager
         /// and a failed collection that produced no response.
         /// </remarks>
         public readonly bool Succeeded { get; }
+
+        /// <summary>
+        /// Gets the response buffer which <see cref="View"/> is read from, which is
+        /// released by <see cref="ExitCollect"/>.
+        /// </summary>
+        internal readonly ResponseBuffer? Buffer { get; }
     }
 
     private readonly struct CollectStep
@@ -876,42 +1157,42 @@ internal sealed class PrometheusCollectionManager
         private CollectStep(
             CollectionResponse response,
             Task<CollectionResult>? pendingCollectionTask,
-            Task<bool>? readersDrainedTask,
-            bool joinedActiveCollection)
+            Task<bool>? bufferFreedTask,
+            ResponseBuffer? lease)
         {
             this.Response = response;
             this.PendingCollectionTask = pendingCollectionTask;
-            this.ReadersDrainedTask = readersDrainedTask;
-            this.JoinedActiveCollection = joinedActiveCollection;
+            this.BufferFreedTask = bufferFreedTask;
+            this.Lease = lease;
         }
 
         // A non-null task means the caller must await the in-flight collection.
         public Task<CollectionResult>? PendingCollectionTask { get; }
 
-        // A non-null task means a collection could not be started because this
-        // protocol still has active readers, and the caller must await them
-        // draining before attempting to enter a collection again.
-        public Task<bool>? ReadersDrainedTask { get; }
+        // A non-null task means a collection could not be started because every
+        // response buffer for this protocol is still being read, and the caller must
+        // await one being freed before attempting to enter a collection again.
+        public Task<bool>? BufferFreedTask { get; }
 
         public CollectionResponse Response { get; }
 
         // True when there is nothing to await because Response already holds the answer.
-        public bool IsCompleted => this.PendingCollectionTask is null && this.ReadersDrainedTask is null;
+        public bool IsCompleted => this.PendingCollectionTask is null && this.BufferFreedTask is null;
 
-        // True when this scrape registered the protocol with the in-flight
-        // collection and took a reader slot for it (so the awaiting caller owns a
-        // reader count that must be released), false when it is only observing a
-        // collection it could not join.
-        public bool JoinedActiveCollection { get; }
+        // Non-null when this scrape registered the protocol with the in-flight
+        // collection and took a reader on the response buffer it writes (so the
+        // awaiting caller owns a reader that must be released), null when it is
+        // only observing a collection it could not join.
+        public ResponseBuffer? Lease { get; }
 
         public static CollectStep Completed(CollectionResponse response)
-            => new(response, pendingCollectionTask: null, readersDrainedTask: null, joinedActiveCollection: false);
+            => new(response, pendingCollectionTask: null, bufferFreedTask: null, lease: null);
 
-        public static CollectStep Pending(Task<CollectionResult> pendingCollectionTask, bool joinedActiveCollection)
-            => new(default, pendingCollectionTask, readersDrainedTask: null, joinedActiveCollection);
+        public static CollectStep Pending(Task<CollectionResult> pendingCollectionTask, ResponseBuffer? lease)
+            => new(default, pendingCollectionTask, bufferFreedTask: null, lease);
 
-        public static CollectStep WaitingForReaders(Task<bool> readersDrainedTask)
-            => new(default, pendingCollectionTask: null, readersDrainedTask, joinedActiveCollection: false);
+        public static CollectStep WaitingForBuffer(Task<bool> bufferFreedTask)
+            => new(default, pendingCollectionTask: null, bufferFreedTask, lease: null);
     }
 
     private readonly struct CollectionResult
@@ -944,7 +1225,8 @@ internal sealed class PrometheusCollectionManager
             bool writeUnit,
             bool writeHelp,
             string? unit,
-            string? help)
+            string? help,
+            bool deduplicate)
         {
             this.Metric = metric;
             this.PrometheusMetric = prometheusMetric;
@@ -953,6 +1235,7 @@ internal sealed class PrometheusCollectionManager
             this.WriteHelp = writeHelp;
             this.Unit = unit;
             this.Help = help;
+            this.Deduplicate = deduplicate;
         }
 
         public readonly Metric Metric { get; }
@@ -968,6 +1251,8 @@ internal sealed class PrometheusCollectionManager
         public readonly string? Unit { get; }
 
         public readonly string? Help { get; }
+
+        public readonly bool Deduplicate { get; }
     }
 
     private readonly struct PrecomputedMetricState
@@ -1015,12 +1300,191 @@ internal sealed class PrometheusCollectionManager
         public HashSet<PrometheusProtocol>? SuccessfulProtocols { get; }
     }
 
+    internal sealed class ResponseWriter : IDisposable
+    {
+        private readonly PrometheusCollectionManager manager;
+        private readonly ResponseBuffer buffer;
+        private readonly Lock gate = new();
+        private readonly CancellationTokenSource cancellation = new();
+        private TimeSpan lastProgress;
+        private bool cancelling;
+        private bool disposed;
+
+        public ResponseWriter(PrometheusCollectionManager manager, ResponseBuffer buffer)
+        {
+            this.manager = manager;
+            this.buffer = buffer;
+            this.lastProgress = manager.GetElapsedTime();
+            this.CancellationToken = this.cancellation.Token;
+            buffer.AddWriter(this);
+        }
+
+        public CancellationToken CancellationToken { get; }
+
+        public void RecordProgress()
+        {
+            lock (this.gate)
+            {
+                this.lastProgress = this.manager.GetElapsedTime();
+            }
+        }
+
+        public void Dispose()
+        {
+            lock (this.gate)
+            {
+                if (this.disposed)
+                {
+                    return;
+                }
+
+                this.disposed = true;
+                if (!this.cancelling)
+                {
+                    this.cancellation.Dispose();
+                }
+            }
+
+            this.buffer.RemoveWriter(this);
+        }
+
+        public TimeSpan CancelIfIdle(TimeSpan elapsed, TimeSpan idleTimeout)
+        {
+            lock (this.gate)
+            {
+                if (this.disposed || this.cancelling || this.cancellation.IsCancellationRequested)
+                {
+                    return idleTimeout;
+                }
+
+                var remaining = idleTimeout - (elapsed - this.lastProgress);
+                if (remaining > TimeSpan.Zero)
+                {
+                    return remaining < TimeSpan.FromMilliseconds(1) ? TimeSpan.FromMilliseconds(1) : remaining;
+                }
+
+                this.cancelling = true;
+            }
+
+            // Abort callbacks and their continuations must run without either the writer or
+            // buffer lock held. Defer CTS disposal until cancellation finishes on older TFMs too.
+            try
+            {
+                this.cancellation.Cancel();
+            }
+            catch (Exception ex)
+            {
+                PrometheusExporterEventSource.Log.FailedExport(ex);
+            }
+            finally
+            {
+                lock (this.gate)
+                {
+                    this.cancelling = false;
+                    if (this.disposed)
+                    {
+                        this.cancellation.Dispose();
+                    }
+                }
+            }
+
+            return idleTimeout;
+        }
+    }
+
+    /// <summary>
+    /// A buffer which a collection writes the response for a protocol to, and the
+    /// number of scrapes still reading the response written to it.
+    /// </summary>
+    /// <param name="size">The size of the response buffer.</param>
+    /// <param name="onReadersDrained">Invoked once the last scrape reading the buffer has finished.</param>
+    internal sealed class ResponseBuffer(int size, Action onReadersDrained)
+    {
+        private readonly Lock writersGate = new();
+        private readonly HashSet<ResponseWriter> writers = [];
+        private int readerCount;
+
+        public byte[] Buffer { get; private set; } = new byte[size];
+
+        public int ReaderCount
+            => Interlocked.CompareExchange(ref this.readerCount, 0, 0);
+
+        public void DecrementReaderCount()
+        {
+            if (Interlocked.Decrement(ref this.readerCount) < 1)
+            {
+                onReadersDrained();
+            }
+        }
+
+        public void IncrementReaderCount()
+            => Interlocked.Increment(ref this.readerCount);
+
+        public void AddWriter(ResponseWriter writer)
+        {
+            lock (this.writersGate)
+            {
+                this.writers.Add(writer);
+            }
+        }
+
+        public void RemoveWriter(ResponseWriter writer)
+        {
+            lock (this.writersGate)
+            {
+                this.writers.Remove(writer);
+            }
+        }
+
+        public TimeSpan CancelIdleWriters(TimeSpan elapsed, TimeSpan idleTimeout)
+        {
+            ResponseWriter[] activeWriters;
+            lock (this.writersGate)
+            {
+                activeWriters = [.. this.writers];
+            }
+
+            var nextCheck = idleTimeout;
+            foreach (var writer in activeWriters)
+            {
+                var delay = writer.CancelIfIdle(elapsed, idleTimeout);
+                if (delay < nextCheck)
+                {
+                    nextCheck = delay;
+                }
+            }
+
+            return nextCheck;
+        }
+
+        public bool TryExpand(int maxBufferSize)
+        {
+            if (this.Buffer.Length >= maxBufferSize)
+            {
+                return false;
+            }
+
+            // Grow by doubling, but never past the configured maximum. Clamping
+            // to the maximum (rather than refusing the grow outright when the
+            // doubled size would overshoot) means the entire configured budget
+            // is usable, with no unreachable remainder.
+            var newBufferSize = (int)Math.Min((long)this.Buffer.Length * 2, maxBufferSize);
+
+            var expanded = new byte[newBufferSize];
+            this.Buffer.CopyTo(expanded, 0);
+            this.Buffer = expanded;
+
+            return true;
+        }
+    }
+
     private sealed class CollectionContext
     {
         private readonly Lock gate = new();
         private readonly HashSet<PrometheusProtocol> protocols = [];
         private readonly TaskCompletionSource<CollectionResult> tcs = new(TaskCreationOptions.RunContinuationsAsynchronously);
-        private bool frozen;
+        private HashSet<PrometheusProtocol>? speculativeProtocols;
+        private PrometheusProtocol[]? frozenProtocols;
 
         public CollectionContext(in PrometheusProtocol protocol)
         {
@@ -1029,33 +1493,50 @@ internal sealed class PrometheusCollectionManager
 
         public Task<CollectionResult> Task => this.tcs.Task;
 
+        public bool ContainsProtocol(in PrometheusProtocol protocol)
+        {
+            lock (this.gate)
+            {
+                return this.protocols.Contains(protocol);
+            }
+        }
+
         public PrometheusProtocol[] FreezeProtocols()
         {
             lock (this.gate)
             {
-                this.frozen = true;
-                return [.. this.protocols];
+                return this.frozenProtocols ??= [.. this.protocols];
+            }
+        }
+
+        public bool IsSpeculative(in PrometheusProtocol protocol)
+        {
+            lock (this.gate)
+            {
+                return this.speculativeProtocols?.Contains(protocol) is true;
             }
         }
 
         public void SetResult(CollectionResult result)
             => this.tcs.SetResult(result);
 
-        public bool TryRegisterProtocol(in PrometheusProtocol protocol, bool hasActiveReaders)
+        public bool TryRegisterProtocol(in PrometheusProtocol protocol, PrometheusProtocolState state)
         {
             lock (this.gate)
             {
                 if (this.protocols.Contains(protocol))
                 {
+                    // A scrape is now waiting for this protocol, so it is no longer written speculatively.
+                    this.speculativeProtocols?.Remove(protocol);
                     return true;
                 }
 
-                if (this.frozen)
+                if (this.frozenProtocols is not null)
                 {
                     return false;
                 }
 
-                if (hasActiveReaders)
+                if (!state.TryReserveBuffer())
                 {
                     return false;
                 }
@@ -1064,20 +1545,50 @@ internal sealed class PrometheusCollectionManager
                 return true;
             }
         }
+
+        public void TryRegisterSpeculativeProtocol(in PrometheusProtocol protocol, PrometheusProtocolState state)
+        {
+            lock (this.gate)
+            {
+                if (this.frozenProtocols is not null || this.protocols.Contains(protocol) || !state.TryReserveBuffer())
+                {
+                    return;
+                }
+
+                this.protocols.Add(protocol);
+                this.speculativeProtocols ??= [];
+                this.speculativeProtocols.Add(protocol);
+            }
+        }
     }
 
     private sealed class PrometheusProtocolState
     {
         private const int InitialBufferSize = PrometheusExporterOptions.InitialScrapeResponseSizeBytes;
         private readonly int maxBufferSize;
-        private readonly Lock readersDrainedGate = new();
+        private readonly Action onReadersDrained;
+        private readonly Lock bufferFreedGate = new();
 
-        private TaskCompletionSource<bool>? readersDrained;
-        private int readerCount;
+        // The buffer which View is read from.
+        private ResponseBuffer published;
+
+        // A second buffer, only allocated once a collection has to write this protocol
+        // while scrapes are still reading the response in the published buffer. A
+        // collection never waits for those scrapes to finish, as how long they take is
+        // decided by their clients, so it writes the other buffer instead.
+        private ResponseBuffer? spare;
+
+        // The buffer which the in-flight collection writes this protocol to, if any.
+        private ResponseBuffer? target;
+
+        // Completed once a buffer is free again, for a scrape which has to wait for one.
+        private TaskCompletionSource<bool>? bufferFreed;
 
         public PrometheusProtocolState(int maxBufferSize)
         {
             this.maxBufferSize = Math.Max(maxBufferSize, InitialBufferSize);
+            this.onReadersDrained = this.OnReadersDrained;
+            this.published = new ResponseBuffer(InitialBufferSize, this.onReadersDrained);
         }
 
         public static ArraySegment<byte> EmptyView { get; } =
@@ -1087,7 +1598,10 @@ internal sealed class PrometheusCollectionManager
             new([]);
 #endif
 
-        public byte[] Buffer { get; private set; } = new byte[InitialBufferSize];
+        /// <summary>
+        /// Gets the buffer which the in-flight collection writes this protocol to.
+        /// </summary>
+        public byte[] Buffer => this.target!.Buffer;
 
         public ArraySegment<byte> View { get; private set; } = EmptyView;
 
@@ -1095,87 +1609,185 @@ internal sealed class PrometheusCollectionManager
 
         public TimeSpan? GeneratedAtElapsed { get; private set; }
 
-        public int DecrementReaderCount()
-        {
-            var readerCount = Interlocked.Decrement(ref this.readerCount);
-
-            if (readerCount < 1)
-            {
-                TaskCompletionSource<bool>? readersDrained;
-
-                lock (this.readersDrainedGate)
-                {
-                    readersDrained = this.readersDrained;
-                    this.readersDrained = null;
-                }
-
-                // Signalled outside the gate so that no continuation runs while it is held.
-                readersDrained?.TrySetResult(true);
-            }
-
-            return readerCount;
-        }
-
-        public bool HasActiveReaders()
-            => Interlocked.CompareExchange(ref this.readerCount, 0, 0) != 0;
-
-        public void IncrementReaderCount()
-            => Interlocked.Increment(ref this.readerCount);
+        /// <summary>
+        /// Gets a value indicating whether the most recent scrape for this protocol arrived near a collection.
+        /// </summary>
+        public bool LastRequestNearCollection { get; private set; }
 
         /// <summary>
-        /// Gets a task which completes once this protocol has no active readers, or
-        /// <see langword="null"/> when it has none right now.
+        /// Gets a value indicating whether this protocol has been requested since a collection last wrote it.
+        /// </summary>
+        public bool RequestedSinceWritten { get; private set; }
+
+        /// <summary>
+        /// Gets a value indicating whether the collection which last wrote this protocol did so
+        /// speculatively, rather than for a scrape which requested it.
+        /// </summary>
+        public bool WrittenSpeculatively { get; private set; }
+
+        public int ReaderCount
+            => this.published.ReaderCount + (this.spare?.ReaderCount ?? 0);
+
+        /// <summary>
+        /// Takes a reader on the buffer reserved for the in-flight collection, for a
+        /// scrape which will read the response the collection writes to it.
         /// </summary>
         /// <returns>
-        /// The task to wait on, or <see langword="null"/> when there is nothing to wait for.
+        /// The buffer the reader was taken on.
         /// </returns>
-        public Task<bool>? GetReadersDrainedTask()
+        public ResponseBuffer AcquireTargetBuffer()
         {
-            lock (this.readersDrainedGate)
-            {
-                // The reader count is published before DecrementReaderCount takes the
-                // gate, so a reader which has already drained is seen here and reported
-                // as nothing to wait for. Anything still active is guaranteed to signal.
-                if (!this.HasActiveReaders())
-                {
-                    return null;
-                }
-
-                this.readersDrained ??= new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
-
-                return this.readersDrained.Task;
-            }
+            var target = this.target!;
+            target.IncrementReaderCount();
+            return target;
         }
 
-        public bool TryExpandBuffer()
+        /// <summary>
+        /// Takes a reader on the published buffer and returns the response in it, if there is one.
+        /// </summary>
+        /// <param name="fromCache">Whether the response is being served from the cache.</param>
+        /// <param name="response">The response, when there is one.</param>
+        /// <returns>
+        /// <see langword="true"/> if there was a response; otherwise <see langword="false"/>.
+        /// </returns>
+        public bool TryAcquireView(bool fromCache, out CollectionResponse response)
         {
-            if (this.Buffer.Length >= this.maxBufferSize)
+            if (this.GeneratedAt is not { } generatedAt)
             {
+                response = default;
                 return false;
             }
 
-            // Grow by doubling, but never past the configured maximum. Clamping
-            // to the maximum (rather than refusing the grow outright when the
-            // doubled size would overshoot) means the entire configured budget
-            // is usable, with no unreachable remainder.
-            var newBufferSize = (int)Math.Min((long)this.Buffer.Length * 2, this.maxBufferSize);
-
-            var expanded = new byte[newBufferSize];
-            this.Buffer.CopyTo(expanded, 0);
-            this.Buffer = expanded;
+            this.published.IncrementReaderCount();
+            response = new CollectionResponse(this.View, generatedAt, fromCache, this.published);
 
             return true;
         }
 
-        public void ResetView() => this.View = EmptyView;
+        /// <summary>
+        /// Reserves a buffer which no scrape is reading for a collection to write this protocol to.
+        /// </summary>
+        /// <returns>
+        /// <see langword="true"/> if a buffer was reserved; <see langword="false"/> if
+        /// scrapes are still reading the responses in every buffer.
+        /// </returns>
+        public bool TryReserveBuffer()
+        {
+            Debug.Assert(this.target is null, "A buffer is already reserved for this protocol.");
+
+            // Rewrite the published buffer in place whenever possible, so the spare is only
+            // allocated for scrapes which overlap. A scrape cannot start reading it while it is
+            // reserved, as the protocol is registered with the in-flight collection until then.
+            if (this.published.ReaderCount == 0)
+            {
+                this.target = this.published;
+                return true;
+            }
+
+            // Scrapes only start reading a buffer while it is published, so the readers of the
+            // spare can only drain, and it becomes free again once they have all finished.
+            this.spare ??= new ResponseBuffer(this.published.Buffer.Length, this.onReadersDrained);
+
+            if (this.spare.ReaderCount == 0)
+            {
+                this.target = this.spare;
+                return true;
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Gets a task which completes once a buffer is free for a collection to write this
+        /// protocol to, or <see langword="null"/> when one is free right now.
+        /// </summary>
+        /// <returns>
+        /// The task to wait on, or <see langword="null"/> when there is nothing to wait for.
+        /// </returns>
+        public Task<bool>? GetBufferFreedTask()
+        {
+            lock (this.bufferFreedGate)
+            {
+                // A buffer's reader count is published before OnReadersDrained takes the
+                // gate, so a buffer which has already been freed is seen here and reported
+                // as nothing to wait for. Any reader still active is guaranteed to signal.
+                if (this.published.ReaderCount == 0 || this.spare is null || this.spare.ReaderCount == 0)
+                {
+                    return null;
+                }
+
+                this.bufferFreed ??= new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+
+                return this.bufferFreed.Task;
+            }
+        }
+
+        public TimeSpan CancelIdleWriters(TimeSpan elapsed, TimeSpan idleTimeout)
+        {
+            var published = this.published;
+            var spare = this.spare;
+            var delay = published.CancelIdleWriters(elapsed, idleTimeout);
+            var spareDelay = spare?.CancelIdleWriters(elapsed, idleTimeout) ?? idleTimeout;
+            return delay < spareDelay ? delay : spareDelay;
+        }
+
+        public void OnRequested(bool nearCollection)
+        {
+            this.LastRequestNearCollection = nearCollection;
+            this.RequestedSinceWritten = true;
+        }
+
+        public void OnWritten(bool speculative)
+        {
+            this.RequestedSinceWritten = false;
+            this.WrittenSpeculatively = speculative;
+            this.target = null;
+        }
+
+        public bool TryExpandBuffer()
+            => this.target!.TryExpand(this.maxBufferSize);
+
+        public void ResetView()
+        {
+            // A protocol registered with a collection while its previous view was still
+            // cached must not serve the empty view from the cache when the write fails.
+            this.View = EmptyView;
+            this.GeneratedAt = null;
+            this.GeneratedAtElapsed = null;
+        }
 
         public void UpdateView(int cursor)
-            => this.View = new ArraySegment<byte>(this.Buffer, 0, cursor);
+        {
+            var target = this.target!;
+
+            this.View = new ArraySegment<byte>(target.Buffer, 0, cursor);
+
+            if (!ReferenceEquals(target, this.published))
+            {
+                // Scrapes still reading the previous response keep the buffer it is in
+                this.spare = this.published;
+                this.published = target;
+            }
+        }
 
         public void UpdateTimestamps(DateTime timestamp, TimeSpan elapsed)
         {
             this.GeneratedAt = timestamp;
             this.GeneratedAtElapsed = elapsed;
+        }
+
+        private void OnReadersDrained()
+        {
+            TaskCompletionSource<bool>? bufferFreed;
+
+            lock (this.bufferFreedGate)
+            {
+                bufferFreed = this.bufferFreed;
+                this.bufferFreed = null;
+            }
+
+            // Signalled outside the gate so that no continuation runs while it is held.
+            bufferFreed?.TrySetResult(true);
         }
     }
 }

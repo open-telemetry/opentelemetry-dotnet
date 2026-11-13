@@ -197,4 +197,79 @@ public class ActivityExtensionsTests
         Assert.Null(activity.GetTagValue("tag1"));
         Assert.Null(activity.GetTagValue("Tag2"));
     }
+
+    [Fact]
+    public void SetStatusUnset()
+    {
+        using var activity = new Activity(ActivityName);
+
+        activity.SetStatus(Status.Unset);
+
+        Assert.Equal(ActivityStatusCode.Unset, activity.Status);
+        Assert.Equal(Status.Unset, activity.GetStatus());
+    }
+
+    [Theory]
+    [InlineData("OK", StatusCode.Ok, null)]
+    [InlineData("ok", StatusCode.Ok, null)]
+    [InlineData("ERROR", StatusCode.Error, "failed")]
+    [InlineData("UNSET", StatusCode.Unset, null)]
+    public void GetStatusFromStatusTags(string tagValue, StatusCode expectedCode, string? description)
+    {
+        using var activity = new Activity(ActivityName);
+        activity.SetTag(SpanAttributeConstants.StatusCodeKey, tagValue);
+        activity.SetTag(SpanAttributeConstants.StatusDescriptionKey, description);
+
+        var status = activity.GetStatus();
+
+        Assert.Equal(expectedCode, status.StatusCode);
+        Assert.Equal(description, status.Description);
+    }
+
+    [Fact]
+    public void GetStatusFromStatusTagsWithDescriptionBeforeCode()
+    {
+        using var activity = new Activity(ActivityName);
+        activity.SetTag("unrelated", "value");
+        activity.SetTag(SpanAttributeConstants.StatusDescriptionKey, "failed");
+        activity.SetTag(SpanAttributeConstants.StatusCodeKey, "ERROR");
+
+        var status = activity.GetStatus();
+
+        Assert.Equal(StatusCode.Error, status.StatusCode);
+        Assert.Equal("failed", status.Description);
+    }
+
+    [Fact]
+    public void GetStatusWithInvalidStatusCodeTagIsUnset()
+    {
+        using var activity = new Activity(ActivityName);
+        activity.SetTag(SpanAttributeConstants.StatusCodeKey, "not-a-status");
+        activity.SetTag(SpanAttributeConstants.StatusDescriptionKey, "ignored");
+
+        Assert.Equal(Status.Unset, activity.GetStatus());
+    }
+
+    [Fact]
+    public void NullActivityIsIgnored()
+    {
+        Activity? activity = null;
+
+        activity.SetStatus(Status.Ok);
+        activity.RecordException(new InvalidOperationException("error"));
+        activity.RecordException(new InvalidOperationException("error"), default);
+
+        Assert.Equal(Status.Unset, activity.GetStatus());
+    }
+
+    [Fact]
+    public void RecordNullExceptionIsIgnored()
+    {
+        using var activity = new Activity(ActivityName);
+
+        activity.RecordException(null);
+        activity.RecordException(null, default);
+
+        Assert.Empty(activity.Events);
+    }
 }

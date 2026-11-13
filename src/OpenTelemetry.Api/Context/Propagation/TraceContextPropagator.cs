@@ -17,6 +17,13 @@ namespace OpenTelemetry.Context.Propagation;
 /// </summary>
 public class TraceContextPropagator : TextMapPropagator
 {
+#if NET
+    internal static readonly SearchValues<char> TraceStateKeyFirstChars = SearchValues.Create("0123456789abcdefghijklmnopqrstuvwxyz");
+    internal static readonly SearchValues<char> TraceStateKeyChars = SearchValues.Create("0123456789abcdefghijklmnopqrstuvwxyz_-*/@");
+    internal static readonly SearchValues<char> TraceStateValueChars = CreateTraceStateValueChars(0x20);
+    internal static readonly SearchValues<char> TraceStateValueLastChars = CreateTraceStateValueChars(0x21);
+#endif
+
     private const string TraceParent = "traceparent";
     private const string TraceState = "tracestate";
 
@@ -27,11 +34,6 @@ public class TraceContextPropagator : TextMapPropagator
     private const int TraceStateMaxCombinedLength = 512;
     private const int TraceStateLargeEntryLength = 128;
 
-#if NET
-    private const int TraceIdSizeInBytes = 16;
-    private const int SpanIdSizeInBytes = 8;
-#endif
-
     private static readonly int VersionPrefixIdLength = "00-".Length;
     private static readonly int TraceIdLength = "0af7651916cd43dd8448eb211c80319c".Length;
     private static readonly int VersionAndTraceIdLength = "00-0af7651916cd43dd8448eb211c80319c-".Length;
@@ -41,10 +43,7 @@ public class TraceContextPropagator : TextMapPropagator
     private static readonly int TraceparentLengthV0 = "00-0af7651916cd43dd8448eb211c80319c-00f067aa0ba902b7-00".Length;
 
 #if NET
-    private static readonly SearchValues<char> TraceStateKeyFirstChars = SearchValues.Create("0123456789abcdefghijklmnopqrstuvwxyz");
-    private static readonly SearchValues<char> TraceStateKeyChars = SearchValues.Create("0123456789abcdefghijklmnopqrstuvwxyz_-*/@");
-    private static readonly SearchValues<char> TraceStateValueChars = CreateTraceStateValueChars(0x20);
-    private static readonly SearchValues<char> TraceStateValueLastChars = CreateTraceStateValueChars(0x21);
+    private static readonly SearchValues<char> LowerCaseHexChars = SearchValues.Create("0123456789abcdef");
     private static readonly ImmutableHashSet<string> AllFields = [TraceState, TraceParent];
 #else
     private static readonly HashSet<string> AllFields = [TraceState, TraceParent];
@@ -169,8 +168,6 @@ public class TraceContextPropagator : TextMapPropagator
 
             context.SpanId.ToHexString().CopyTo(destination.Slice(36));
 
-            // https://github.com/open-telemetry/opentelemetry-dotnet-contrib/pull/3867
-            // will change this code to use ActivityTraceFlags.RandomTraceId instead of 2.
             // If new enum values are added in the future the Fallback path will ensure
             // that the handling is functionally correct, but the condition should be updated
             // to include the new value(s) for better readability and performance where possible.
@@ -178,11 +175,11 @@ public class TraceContextPropagator : TextMapPropagator
             {
                 "-01".CopyTo(destination[52..]);
             }
-            else if (context.TraceFlags == (ActivityTraceFlags)2)
+            else if (context.TraceFlags == ActivityTraceFlags.RandomTraceId)
             {
                 "-02".CopyTo(destination[52..]);
             }
-            else if (context.TraceFlags == (ActivityTraceFlags.Recorded | (ActivityTraceFlags)2))
+            else if (context.TraceFlags == (ActivityTraceFlags.Recorded | ActivityTraceFlags.RandomTraceId))
             {
                 "-03".CopyTo(destination[52..]);
             }
@@ -197,8 +194,6 @@ public class TraceContextPropagator : TextMapPropagator
 #else
         static string FormatActivityTraceFlags(ActivityTraceFlags flags)
         {
-            // https://github.com/open-telemetry/opentelemetry-dotnet-contrib/pull/3867
-            // will change this code to use ActivityTraceFlags.RandomTraceId instead of 2.
             // If new enum values are added in the future the Fallback path will ensure
             // that the handling is functionally correct, but the switch should be updated
             // to include the new value(s) for better readability and performance where possible.
@@ -206,8 +201,8 @@ public class TraceContextPropagator : TextMapPropagator
             {
                 ActivityTraceFlags.None => "-00",
                 ActivityTraceFlags.Recorded => "-01",
-                (ActivityTraceFlags)2 => "-02",
-                ActivityTraceFlags.Recorded | (ActivityTraceFlags)2 => "-03",
+                ActivityTraceFlags.RandomTraceId => "-02",
+                ActivityTraceFlags.Recorded | ActivityTraceFlags.RandomTraceId => "-03",
                 _ => Fallback((byte)flags),
             };
 
@@ -277,16 +272,14 @@ public class TraceContextPropagator : TextMapPropagator
         }
 
 #if NET
-        // Fast path for .NET that can benefit from SearchValues to avoid exceptions on invalid input
-        Span<byte> idBytes = stackalloc byte[TraceIdSizeInBytes];
-
-        if (!TryParseLowerCaseHex(traceparent.AsSpan(VersionPrefixIdLength, TraceIdLength), idBytes))
+        var traceIdSpan = traceparent.AsSpan(VersionPrefixIdLength, TraceIdLength);
+        if (!IsValidId(traceIdSpan))
         {
             // it's ok to still parse tracestate
             return false;
         }
 
-        traceId = ActivityTraceId.CreateFromBytes(idBytes);
+        traceId = ActivityTraceId.CreateFromString(traceIdSpan);
 #else
         try
         {
@@ -305,16 +298,14 @@ public class TraceContextPropagator : TextMapPropagator
         }
 
 #if NET
-        // Fast path for .NET that can benefit from SearchValues to avoid exceptions on invalid input
-        var spanIdBytes = idBytes.Slice(0, SpanIdSizeInBytes);
-
-        if (!TryParseLowerCaseHex(traceparent.AsSpan(VersionAndTraceIdLength, SpanIdLength), spanIdBytes))
+        var spanIdSpan = traceparent.AsSpan(VersionAndTraceIdLength, SpanIdLength);
+        if (!IsValidId(spanIdSpan))
         {
             // it's ok to still parse tracestate
             return false;
         }
 
-        spanId = ActivitySpanId.CreateFromBytes(spanIdBytes);
+        spanId = ActivitySpanId.CreateFromString(spanIdSpan);
 #else
         try
         {
@@ -342,9 +333,7 @@ public class TraceContextPropagator : TextMapPropagator
 
         if ((optionsLowByte & 2) == 2)
         {
-            // https://github.com/open-telemetry/opentelemetry-dotnet/pull/6899
-            // will change this to use ActivityTraceFlags.RandomTraceId instead.
-            traceOptions |= (ActivityTraceFlags)2;
+            traceOptions |= ActivityTraceFlags.RandomTraceId;
         }
 
         if ((!bestAttempt) && (traceparent.Length != VersionAndTraceIdAndSpanIdLength + OptionsLength))
@@ -388,9 +377,9 @@ public class TraceContextPropagator : TextMapPropagator
 
             hasTraceState = true;
 
-            return list.Count == 1 ?
-                TryExtractSingleTracestate(list[0], out tracestateResult) :
-                TryExtractMultipleTracestate(list, out tracestateResult);
+            return list.Count == 1
+                ? TryExtractSingleTracestate(list[0], out tracestateResult)
+                : TryExtractMultipleTracestate(list, out tracestateResult);
         }
 
         if (tracestateCollection is IReadOnlyList<string> readOnlyList)
@@ -402,10 +391,9 @@ public class TraceContextPropagator : TextMapPropagator
 
             hasTraceState = true;
 
-            return
-                readOnlyList.Count == 1 ?
-                TryExtractSingleTracestate(readOnlyList[0], out tracestateResult) :
-                TryExtractMultipleTracestate(readOnlyList, out tracestateResult);
+            return readOnlyList.Count == 1
+                ? TryExtractSingleTracestate(readOnlyList[0], out tracestateResult)
+                : TryExtractMultipleTracestate(readOnlyList, out tracestateResult);
         }
 
         using var enumerator = tracestateCollection.GetEnumerator();
@@ -417,9 +405,9 @@ public class TraceContextPropagator : TextMapPropagator
         hasTraceState = true;
         var singleTraceState = enumerator.Current;
 
-        return enumerator.MoveNext() ?
-            TryExtractMultipleTracestate(EnumerateFrom(singleTraceState, enumerator), out tracestateResult) :
-            TryExtractSingleTracestate(singleTraceState, out tracestateResult);
+        return enumerator.MoveNext()
+            ? TryExtractMultipleTracestate(EnumerateFrom(singleTraceState, enumerator), out tracestateResult)
+            : TryExtractSingleTracestate(singleTraceState, out tracestateResult);
     }
 
     private static IEnumerable<string> EnumerateFrom(string first, IEnumerator<string> enumerator)
@@ -544,7 +532,6 @@ public class TraceContextPropagator : TextMapPropagator
         Span<int> memberStarts = stackalloc int[Limit];
         Span<int> memberLengths = stackalloc int[Limit];
         Span<int> keyLengths = stackalloc int[Limit];
-        Span<int> keyHashes = stackalloc int[Limit];
 
         var memberCount = 0;
         var totalLength = 0;
@@ -553,31 +540,22 @@ public class TraceContextPropagator : TextMapPropagator
 
         while (begin < tracestateSpan.Length)
         {
-            var end = begin;
-            while (end < tracestateSpan.Length && tracestateSpan[end] != ',')
-            {
-                end++;
-            }
+            var remaining = tracestateSpan.Slice(begin);
+            var separator = remaining.IndexOf(',');
+            var rawMember = separator < 0 ? remaining : remaining.Slice(0, separator);
+            var end = begin + rawMember.Length;
 
-            var memberStart = begin;
-            var memberEnd = end;
+            // Trim optional whitespace around the list member.
+            var listMember = rawMember.TrimStart();
+            var memberStart = begin + (rawMember.Length - listMember.Length);
+            listMember = listMember.TrimEnd();
 
-            while (memberStart < memberEnd && char.IsWhiteSpace(tracestateSpan[memberStart]))
-            {
-                memberStart++;
-            }
-
-            while (memberEnd > memberStart && char.IsWhiteSpace(tracestateSpan[memberEnd - 1]))
-            {
-                memberEnd--;
-            }
-
-            if (memberStart != begin || memberEnd != end)
+            if (listMember.Length != rawMember.Length)
             {
                 normalized = true;
             }
 
-            var memberLength = memberEnd - memberStart;
+            var memberLength = listMember.Length;
             if (memberLength > 0)
             {
                 if (memberCount >= Limit)
@@ -585,9 +563,8 @@ public class TraceContextPropagator : TextMapPropagator
                     return false;
                 }
 
-                var listMember = tracestateSpan.Slice(memberStart, memberLength);
                 var keyLength = listMember.IndexOf('=');
-                if (keyLength == listMember.Length || keyLength == -1)
+                if (keyLength == -1)
                 {
                     return false;
                 }
@@ -604,36 +581,23 @@ public class TraceContextPropagator : TextMapPropagator
                     return false;
                 }
 
+                // Duplicate detection: keys are short and few (at most 32), so a length and
+                // first-character filter followed by SequenceEqual is cheaper than hashing.
                 var duplicateKey = false;
-                var useHashedDuplicateCheck = keyLength <= Limit;
-                var keyHash = 0;
-                if (useHashedDuplicateCheck)
+                var firstKeyChar = key[0];
+                for (var i = 0; i < memberCount; i++)
                 {
-                    keyHash = GetKeyHashCode(key);
-                    for (var i = 0; i < memberCount; i++)
+                    if (keyLengths[i] != keyLength)
                     {
-                        if (keyHashes[i] != keyHash || keyLengths[i] != keyLength)
-                        {
-                            continue;
-                        }
-
-                        if (key.SequenceEqual(tracestateSpan.Slice(memberStarts[i], keyLength)))
-                        {
-                            duplicateKey = true;
-                            break;
-                        }
+                        continue;
                     }
-                }
-                else
-                {
-                    for (var i = 0; i < memberCount; i++)
+
+                    var previousStart = memberStarts[i];
+                    if (tracestateSpan[previousStart] == firstKeyChar &&
+                        key.SequenceEqual(tracestateSpan.Slice(previousStart, keyLength)))
                     {
-                        if (keyLengths[i] == keyLength &&
-                            key.SequenceEqual(tracestateSpan.Slice(memberStarts[i], keyLength)))
-                        {
-                            duplicateKey = true;
-                            break;
-                        }
+                        duplicateKey = true;
+                        break;
                     }
                 }
 
@@ -647,7 +611,6 @@ public class TraceContextPropagator : TextMapPropagator
                 memberStarts[memberCount] = memberStart;
                 memberLengths[memberCount] = memberLength;
                 keyLengths[memberCount] = keyLength;
-                keyHashes[memberCount] = keyHash;
 
                 memberCount++;
                 totalLength += memberLength;
@@ -671,19 +634,26 @@ public class TraceContextPropagator : TextMapPropagator
             return true;
         }
 
-        var result = new StringBuilder(totalLength + memberCount - 1);
+        // Cap the stack usage at the W3C limit for the combined tracestate (512 characters).
+        // Longer values are not rejected here, so they are normalized on the heap instead.
+        const int StackallocCharThreshold = 512;
+
+        var resultLength = totalLength + memberCount - 1;
+        Span<char> result = resultLength <= StackallocCharThreshold
+            ? stackalloc char[resultLength]
+            : new char[resultLength];
+
+        var position = 0;
+
         for (var i = 0; i < memberCount; i++)
         {
             if (i > 0)
             {
-                result.Append(',');
+                result[position++] = ',';
             }
 
-#if NET
-            result.Append(tracestateSpan.Slice(memberStarts[i], memberLengths[i]));
-#else
-            result.Append(tracestate.Substring(memberStarts[i], memberLengths[i]));
-#endif
+            tracestateSpan.Slice(memberStarts[i], memberLengths[i]).CopyTo(result.Slice(position));
+            position += memberLengths[i];
         }
 
         tracestateResult = result.ToString();
@@ -757,90 +727,20 @@ public class TraceContextPropagator : TextMapPropagator
 
 #if NET
     /// <summary>
-    /// Parses lower-case hexadecimal characters into bytes, rejecting any other character
-    /// and rejecting an all-zero result. These are the same constraints
+    /// Validates lower-case hexadecimal characters, rejecting any other character
+    /// and rejecting an all-zero id. These are the same constraints
     /// <see cref="ActivityTraceId.CreateFromString"/> and
     /// <see cref="ActivitySpanId.CreateFromString"/> enforce by throwing.
     /// </summary>
-    /// <param name="source">The characters to parse. Must be twice the length of <paramref name="destination"/>.</param>
-    /// <param name="destination">Receives the parsed bytes.</param>
+    /// <param name="source">The characters to validate.</param>
     /// <returns><see langword="true"/> if the characters form a valid, non-zero id; otherwise, <see langword="false"/>.</returns>
-    private static bool TryParseLowerCaseHex(ReadOnlySpan<char> source, Span<byte> destination)
-    {
-        Debug.Assert(source.Length == destination.Length * 2, "source was not twice the length of destination");
-
-        var allZero = true;
-
-        for (var i = 0; i < destination.Length; i++)
-        {
-            var high = HexCharToNibble(source[i * 2]);
-            var low = HexCharToNibble(source[(i * 2) + 1]);
-
-            // A non-hex character yields -1, so the sign bit of either nibble marks failure.
-            if ((high | low) < 0)
-            {
-                return false;
-            }
-
-            var value = (byte)((high << 4) | low);
-
-            destination[i] = value;
-            allZero &= value == 0;
-        }
-
-        return !allZero;
-    }
-
-    /// <summary>
-    /// Converts a lower-case hexadecimal character to its value, or -1 when the character
-    /// is not lower-case hexadecimal.
-    /// </summary>
-    /// <param name="c">The character to convert.</param>
-    /// <returns>The value of the character, or -1.</returns>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static int HexCharToNibble(char c)
-    {
-        var digit = (uint)(c - '0');
-
-        if (digit <= 9)
-        {
-            return (int)digit;
-        }
-
-        var letter = (uint)(c - 'a');
-
-        return letter <= 5 ? (int)letter + 10 : -1;
-    }
+    private static bool IsValidId(ReadOnlySpan<char> source)
+        => !source.ContainsAnyExcept(LowerCaseHexChars) && source.ContainsAnyExcept('0');
 #else
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static bool IsAsciiLetterOrDigitLower(char c)
         => char.IsAsciiDigit(c) || char.IsAsciiLetterLower(c);
 #endif
-
-    private static int GetKeyHashCode(ReadOnlySpan<char> key)
-    {
-#if NET
-        HashCode hash = default;
-
-        for (var i = 0; i < key.Length; i++)
-        {
-            hash.Add(key[i]);
-        }
-
-        return hash.ToHashCode();
-#else
-        unchecked
-        {
-            var hash = (int)2166136261;
-            for (var i = 0; i < key.Length; i++)
-            {
-                hash = (hash ^ key[i]) * 16777619;
-            }
-
-            return hash;
-        }
-#endif
-    }
 
 #if NET
     private static SearchValues<char> CreateTraceStateValueChars(int firstCharacter)

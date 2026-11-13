@@ -135,12 +135,12 @@ public static class ResourceBuilderExtensions
     {
         Guard.ThrowIfNull(resourceBuilder);
         var environmentConfiguration = new Lazy<IConfiguration>(
-            () => new ConfigurationBuilder().AddEnvironmentVariables().Build());
+            EnvironmentVariablesConfiguration.Create);
 
         IConfiguration GetConfiguration(IServiceProvider? serviceProvider, string key)
         {
             var hostConfiguration = serviceProvider?.GetService<IConfiguration>();
-            if (hostConfiguration != null && hostConfiguration[key] != null)
+            if (hostConfiguration != null && hostConfiguration.GetStringValue(key) != null)
             {
                 return hostConfiguration;
             }

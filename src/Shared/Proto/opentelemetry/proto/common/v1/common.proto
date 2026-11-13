@@ -45,7 +45,9 @@ message AnyValue {
     // Profiling signal and process the data as if this value were absent or
     // empty, ignoring its semantic content for the non-Profiling signal.
     //
-    // Status: [Development]
+    // Status: [Alpha]
+    //
+    // [Since v1.10.0]
     int32 string_value_strindex = 8;
   }
 }
@@ -76,7 +78,7 @@ message KeyValueList {
 // attributes, etc.
 message KeyValue {
   // The key name of the pair.
-  // key_ref MUST NOT be set if key is used.
+  // key_strindex MUST NOT be set if key is used.
   string key = 1;
 
   // The value of the pair.
@@ -92,7 +94,9 @@ message KeyValue {
   // Profiling signal and process the data as if this value were absent or
   // empty, ignoring its semantic content for the non-Profiling signal.
   //
-  // Status: [Development]
+  // Status: [Alpha]
+  //
+  // [Since v1.10.0]
   int32 key_strindex = 3;
 }
 
@@ -123,6 +127,8 @@ message InstrumentationScope {
 // Entity represents an object of interest associated with produced telemetry: e.g spans, metrics, profiles, or logs.
 //
 // Status: [Development]
+//
+// [Since v1.6.0]
 message EntityRef {
   // The Schema URL, if known. This is the identifier of the Schema that the entity data
   // is recorded in. To learn more about Schema URL see

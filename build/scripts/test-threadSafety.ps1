@@ -45,8 +45,8 @@ if ($LASTEXITCODE -ne 0) {
 }
 
 Write-Information "Executing re-written binary..."
-dotnet test "$artifactsPath/$testProjectName.dll" --framework $targetFramework --filter CategoryName=$categoryName
+dotnet "$artifactsPath/$testProjectName.dll" --filter "CategoryName=$categoryName"
 
 if ($LASTEXITCODE -ne 0) {
-    throw "dotnet test failed with exit code $LASTEXITCODE"
+    throw "Test run failed with exit code $LASTEXITCODE"
 }

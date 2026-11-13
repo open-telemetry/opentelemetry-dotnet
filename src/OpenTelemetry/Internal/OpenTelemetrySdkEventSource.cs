@@ -86,15 +86,6 @@ internal sealed class OpenTelemetrySdkEventSource : EventSource, IConfigurationE
     }
 
     [NonEvent]
-    public void SelfDiagnosticsFileCreateException(string logDirectory, Exception ex)
-    {
-        if (this.IsEnabled(EventLevel.Warning, EventKeywords.All))
-        {
-            this.SelfDiagnosticsFileCreateException(logDirectory, ex.ToInvariantString());
-        }
-    }
-
-    [NonEvent]
     public void TracerProviderException(string evnt, Exception ex)
     {
         if (this.IsEnabled(EventLevel.Error, EventKeywords.All))
@@ -212,10 +203,6 @@ internal sealed class OpenTelemetrySdkEventSource : EventSource, IConfigurationE
     [Event(25, Message = "Activity stopped. Name = '{0}', Id = '{1}'.", Level = EventLevel.Verbose)]
     public void ActivityStopped(string name, string? id)
         => this.WriteEvent(25, name, id);
-
-    [Event(26, Message = "Failed to create file. LogDirectory ='{0}', Id = '{1}'.", Level = EventLevel.Warning)]
-    public void SelfDiagnosticsFileCreateException(string logDirectory, string exception)
-        => this.WriteEvent(26, logDirectory, exception);
 
     [Event(28, Message = "Unknown error in TracerProvider '{0}': '{1}'.", Level = EventLevel.Error)]
     public void TracerProviderException(string evnt, string ex)
@@ -348,6 +335,10 @@ internal sealed class OpenTelemetrySdkEventSource : EventSource, IConfigurationE
     public void ResourceSchemaUrlMergeConflict(string oldSchemaUrl, string updatingSchemaUrl)
         => this.WriteEvent(59, oldSchemaUrl, updatingSchemaUrl);
 
+    [Event(60, Message = "OTEL_DIAGNOSTICS.json at '{0}' was ignored because self-diagnostics sinks are configured through SelfDiagnosticsOptions or OTEL_DOTNET_SELF_DIAGNOSTICS_* environment variables.", Level = EventLevel.Warning)]
+    public void SelfDiagnosticsLegacyConfigIgnored(string configFilePath)
+        => this.WriteEvent(60, configFilePath);
+
     void IConfigurationExtensionsLogger.LogInvalidConfigurationValue(string key, string value)
         => this.InvalidConfigurationValue(key, value);
 
@@ -378,25 +369,39 @@ internal sealed class OpenTelemetrySdkEventSource : EventSource, IConfigurationE
         {
             if (eventSource.Name.StartsWith("OpenTelemetry", StringComparison.OrdinalIgnoreCase))
             {
-                this.eventSources.Add(eventSource.Name, eventSource);
+                // Indexer not Add: duplicate names are possible (recreated source, test fixture)
+                // and Add throws inside EventSource.Initialize, permanently disabling the source.
+                this.eventSources[eventSource.Name] = eventSource;
                 this.EnableEvents(eventSource, EventLevel.Verbose, EventKeywords.All);
             }
 
             base.OnEventSourceCreated(eventSource);
         }
 
-        protected override void OnEventWritten(EventWrittenEventArgs e)
+        protected override void OnEventWritten(EventWrittenEventArgs eventData)
         {
-            if (!this.eventSources.ContainsKey(e.EventSource.Name))
+            if (!this.eventSources.ContainsKey(eventData.EventSource.Name))
             {
                 return;
             }
 
-            var message = e.Message != null && e.Payload != null && e.Payload.Count > 0
-                ? string.Format(CultureInfo.CurrentCulture, e.Message, [.. e.Payload])
-                : e.Message;
+            var message = eventData.Message;
 
-            Debug.WriteLine($"{e.EventSource.Name} - Level: [{e.Level}], EventId: [{e.EventId}], EventName: [{e.EventName}], Message: [{message}]");
+            if (message != null && eventData.Payload != null && eventData.Payload.Count > 0)
+            {
+                try
+                {
+                    message = string.Format(CultureInfo.CurrentCulture, message, [.. eventData.Payload]);
+                }
+                catch (FormatException)
+                {
+                    // The manifest message and its payload disagree. Left unguarded this escapes
+                    // OnEventWritten, and on .NET Framework the runtime rethrows it as an
+                    // EventSourceException at the SDK's own WriteEvent call site.
+                }
+            }
+
+            Debug.WriteLine($"{eventData.EventSource.Name} - Level: [{eventData.Level}], EventId: [{eventData.EventId}], EventName: [{eventData.EventName}], Message: [{message}]");
         }
     }
 #endif

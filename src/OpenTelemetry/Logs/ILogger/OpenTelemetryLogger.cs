@@ -36,7 +36,12 @@ internal sealed class OpenTelemetryLogger : ILogger
         this.provider = provider;
         this.options = options;
 
-        this.instrumentationScope = InstrumentationScopeLogger.GetInstrumentationScopeLoggerForName(categoryName);
+        this.instrumentationScope = InstrumentationScopeLogger.GetInstrumentationScopeLogger(new()
+        {
+            Name = categoryName,
+            Version = options.Version,
+            SchemaUrl = options.SchemaUrl,
+        });
     }
 
     internal IExternalScopeProvider? ScopeProvider { get; set; }
@@ -178,8 +183,9 @@ internal sealed class OpenTelemetryLogger : ILogger
             iLoggerData.State = !parseStateValues ? stateValues : null;
 
             var attributeStorage = logRecord.AttributeStorage;
-            if (attributeStorage == null)
+            if (attributeStorage == null || attributeStorage.Count > 0)
             {
+                // A replacement State may enumerate the previous attributes.
                 return logRecord.AttributeStorage = [.. stateValues];
             }
             else

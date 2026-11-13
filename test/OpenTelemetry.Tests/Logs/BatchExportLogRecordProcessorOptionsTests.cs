@@ -2,9 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using Microsoft.Extensions.Configuration;
+using OpenTelemetry.Tests;
 
 namespace OpenTelemetry.Logs.Tests;
 
+[Collection(EnvVarsCollectionDefinition.Name)]
 public sealed class BatchExportLogRecordProcessorOptionsTests : IDisposable
 {
     public BatchExportLogRecordProcessorOptionsTests()

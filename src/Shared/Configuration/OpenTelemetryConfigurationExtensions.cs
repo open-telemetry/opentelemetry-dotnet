@@ -13,13 +13,26 @@ internal static class OpenTelemetryConfigurationExtensions
         [NotNullWhen(true)]
         out T? parsedValue);
 
+    public static string? GetStringValue(this IConfiguration configuration, string key)
+    {
+        try
+        {
+            return configuration[key];
+        }
+        catch (System.Security.SecurityException)
+        {
+            // A configuration provider may defer reading a restricted environment variable.
+            return null;
+        }
+    }
+
     public static bool TryGetStringValue(
         this IConfiguration configuration,
         string key,
         [NotNullWhen(true)]
         out string? value)
     {
-        value = configuration[key];
+        value = configuration.GetStringValue(key);
         return !string.IsNullOrWhiteSpace(value);
     }
 
@@ -38,7 +51,9 @@ internal static class OpenTelemetryConfigurationExtensions
 
         if (!Uri.TryCreate(stringValue, UriKind.Absolute, out value))
         {
-            logger.LogInvalidConfigurationValue(key, stringValue);
+            // A URI may carry credentials in its userinfo, path, or query and one
+            // which cannot be parsed cannot be reduced to the parts safe to log.
+            logger.LogInvalidConfigurationValue(key, "[REDACTED]");
             return false;
         }
 

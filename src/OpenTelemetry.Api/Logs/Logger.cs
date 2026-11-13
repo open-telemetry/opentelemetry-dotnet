@@ -13,7 +13,7 @@ namespace OpenTelemetry.Logs;
 /// Logger is the class responsible for creating log records.
 /// </summary>
 /// <remarks><b>WARNING</b>: This is an experimental API which might change or be removed in the future. Use at your own risk.</remarks>
-[Experimental(DiagnosticDefinitions.LogsBridgeExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
+[Experimental(DiagnosticDefinitions.LogsExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
 public
 #else
 /// <summary>
@@ -31,7 +31,7 @@ abstract class Logger
     {
         this.Name = string.IsNullOrWhiteSpace(name)
             ? string.Empty
-#if NET10_0_OR_GREATER
+#if NET
             : name;
 #else
             : name!;
@@ -47,6 +47,13 @@ abstract class Logger
     /// Gets the version of the instrumentation library.
     /// </summary>
     public string? Version { get; private set; }
+
+#pragma warning disable CA1056 // URI-like properties should not be strings
+    /// <summary>
+    /// Gets the schema URL of the instrumentation library.
+    /// </summary>
+    public string? SchemaUrl { get; private set; }
+#pragma warning restore CA1056 // URI-like properties should not be strings
 
     /// <summary>
     /// Emit a log.
@@ -64,5 +71,9 @@ abstract class Logger
         in LogRecordData data,
         in LogRecordAttributeList attributes);
 
-    internal void SetInstrumentationScope(string? version) => this.Version = version;
+    internal void SetInstrumentationScope(string? version, string? schemaUrl)
+    {
+        this.Version = version;
+        this.SchemaUrl = schemaUrl;
+    }
 }

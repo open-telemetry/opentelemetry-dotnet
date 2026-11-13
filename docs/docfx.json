@@ -22,6 +22,9 @@
         "files": [
           "**.md",
           "toc.yml"
+        ],
+        "exclude": [
+          "AGENTS.md"
         ]
       }
     ],

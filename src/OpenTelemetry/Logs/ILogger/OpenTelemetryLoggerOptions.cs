@@ -13,6 +13,7 @@ namespace OpenTelemetry.Logs;
 public class OpenTelemetryLoggerOptions
 {
     internal readonly List<Func<IServiceProvider, BaseProcessor<LogRecord>>> ProcessorFactories = [];
+    internal readonly List<Action<Microsoft.Extensions.Logging.LoggerFilterOptions>> LoggerFilterConfigurations = [];
     internal ResourceBuilder? ResourceBuilder;
 
     /// <summary>
@@ -61,6 +62,22 @@ public class OpenTelemetryLoggerOptions
     /// </list>
     /// </remarks>
     public bool ParseStateValues { get; set; }
+
+    /// <summary>
+    /// Gets or sets the optional schema URL of the instrumentation library reported
+    /// for logs produced via the <see cref="Microsoft.Extensions.Logging.ILogger"/>
+    /// integration. Default value: <see langword="null"/>.
+    /// </summary>
+#pragma warning disable CA1056 // Change the type of property from 'string' to 'System.Uri'
+    public string? SchemaUrl { get; set; }
+#pragma warning restore CA1056 // Change the type of property from 'string' to 'System.Uri'
+
+    /// <summary>
+    /// Gets or sets the optional version of the instrumentation library reported
+    /// for logs produced via the <see cref="Microsoft.Extensions.Logging.ILogger"/>
+    /// integration. Default value: <see langword="null"/>.
+    /// </summary>
+    public string? Version { get; set; }
 
     /// <summary>
     /// Gets or sets a value indicating whether or not attributes specified
@@ -131,5 +148,7 @@ public class OpenTelemetryLoggerOptions
         ParseStateValues = this.ParseStateValues,
         IncludeAttributes = this.IncludeAttributes,
         IncludeTraceState = this.IncludeTraceState,
+        SchemaUrl = this.SchemaUrl,
+        Version = this.Version,
     };
 }

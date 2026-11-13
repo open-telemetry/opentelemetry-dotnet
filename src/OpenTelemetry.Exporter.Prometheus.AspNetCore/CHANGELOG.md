@@ -7,12 +7,94 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+## 1.21.0-beta.1
+
+Released 2026-Nov-11
+
+* Fixed OpenMetrics scrape responses containing a `# UNIT` line whose unit is
+  not an underscore-separated suffix of the metric family name (for example
+  `auth.failedlogins` with the unit `logins`), which caused scrapers such as
+  Prometheus to reject the whole response. The `# UNIT` line is now omitted
+  for such metrics; exported metric names are unchanged.
+  ([#7993](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7993))
+
+* Fixed scrapes that negotiate different response formats within the
+  `ScrapeResponseCacheDurationMilliseconds` window each triggering their own
+  metrics collection. A collection now also writes the response for other
+  formats whose scrapes arrived alongside a previous collection, so scrapes
+  that keep arriving together are served from the cache. Fresh cached responses
+  remain available while another format is serialized, even if that
+  serialization fails.
+  ([#7994](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7994))
+
+* Fixed array- and map-valued attributes being serialized as the .NET type
+  name (e.g. `System.Byte[]`, `System.Int32[]`) instead of being JSON-encoded
+  as per the specification. `byte[]`-valued attributes are now
+  Base64-encoded, and other array- and map-valued attributes are now
+  JSON-encoded.
+  ([#7694](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7694))
+
+* Fixed arrays of string-valued key/value pairs being
+  serialized as JSON arrays of strings instead of JSON objects.
+  ([#7694](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7694))
+
+* Fixed scrape clients which stop reading their response delaying other
+  scrapes until `ScrapeResponseTimeoutMilliseconds` elapses.
+  ([#8041](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8041))
+
+* **Breaking Change** Dropped support for `net8.0` and `net9.0`.
+  ([#6899](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6899))
+
+* Add support for .NET 11.0.
+  ([#6899](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6899))
+
+* Fixed a scrape response containing the same series (metric name and labels)
+  more than once, which causes Prometheus to reject the whole response, such as
+  when metric or tag names are the same once escaped, tag names become the same
+  when UTF-8 encoded, or the scope information is disabled. Duplicate series are
+  now dropped, and a warning event is written.
+  A metric which has the name of a sample that is generated for another one
+  (for example `_sum` of a histogram) is now dropped, and a warning event is
+  written.
+  ([#8076](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8076))
+
+* An `OutOfMemoryException` thrown while converting an attribute value to a
+  string is no longer swallowed and the attribute dropped; it now propagates.
+  ([#7929](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7929))
+
+* Updated OpenTelemetry core component version(s) to `1.21.0`.
+  ([#8119](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8119))
+
+## 1.20.1-beta.1
+
+Released 2026-Oct-20
+
+* Fixed scrape responses being handed to the server in a single write, which
+  made the server buffer a full copy of the response for each client that did
+  not read it until the request completed or timed out. Responses are now
+  written in bounded slices so the server's back-pressure applies.
+  ([#7957](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7957))
+
+* Fixed startup scrapes permanently omitting `target_info` and configured
+  resource constant labels from subsequent scrape responses.
+  ([#7984](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7984))
+
+* Updated OpenTelemetry core component version(s) to `1.20.1`.
+  ([#7990](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7990))
+
+## 1.20.0-beta.1
+
+Released 2026-Oct-15
+
 * A scrape request whose connection is aborted, or whose
   `X-Prometheus-Scrape-Timeout-Seconds` deadline elapses, now stops waiting
   for an in-progress metrics collection instead of continuing to wait for it
   to finish. The collection itself is not cancelled and continues running in
   the background.
   ([#7856](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7856))
+
+* Updated OpenTelemetry core component version(s) to `1.20.0`.
+  ([#7950](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7950))
 
 ## 1.19.1-beta.1
 

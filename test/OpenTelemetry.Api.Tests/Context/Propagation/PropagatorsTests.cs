@@ -1,8 +1,11 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using OpenTelemetry.Tests;
+
 namespace OpenTelemetry.Context.Propagation.Tests;
 
+[Collection(PropagatorsCollectionDefinition.Name)]
 public sealed class PropagatorsTests : IDisposable
 {
     public PropagatorsTests()

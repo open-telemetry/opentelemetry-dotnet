@@ -17,11 +17,14 @@ internal static class PeriodicExportingMetricReaderHelper
         var exportIntervalMilliseconds = options.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds ?? defaultExportIntervalMilliseconds;
         var exportTimeoutMilliseconds = options.PeriodicExportingMetricReaderOptions.ExportTimeoutMilliseconds ?? defaultExportTimeoutMilliseconds;
 
-        var metricReader = new PeriodicExportingMetricReader(exporter, exportIntervalMilliseconds, exportTimeoutMilliseconds)
-        {
-            TemporalityPreference = options.TemporalityPreference,
-            DefaultHistogramAggregation = options.DefaultHistogramAggregation,
-        };
+        var metricReader = new PeriodicExportingMetricReader(
+            exporter,
+            exportIntervalMilliseconds,
+            exportTimeoutMilliseconds,
+            options.PeriodicExportingMetricReaderOptions.MaxExportBatchSize);
+
+        metricReader.TemporalityPreference = options.TemporalityPreference;
+        metricReader.DefaultHistogramAggregation = options.DefaultHistogramAggregation;
 
         return metricReader;
     }

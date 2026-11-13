@@ -33,7 +33,5 @@ public abstract class ConsoleExporter<T> : BaseExporter<T>
     private void OnUnsupportedTagDropped(
         string tagKey,
         string tagValueTypeFullName)
-    {
-        this.WriteLine($"Unsupported attribute value type '{tagValueTypeFullName}' for '{tagKey}'.");
-    }
+        => this.WriteLine($"Unsupported attribute value type '{tagValueTypeFullName}' for '{tagKey}'.");
 }

@@ -123,10 +123,12 @@ public sealed class AppleEndToEndTests(AppleAppFixture fixture) : IClassFixture<
         resource.Attributes.Any((p) => p.Key == "service.name" && p.Value?.StringValue == ServiceName);
 
     private static List<(string Scope, Proto.Trace.V1.Span Span)> GetSpans(OtlpHttpCollector collector) =>
-        [.. collector.GetTraceRequests()
-            .SelectMany((p) => p.ResourceSpans)
-            .SelectMany((p) => p.ScopeSpans)
-            .SelectMany((p) => p.Spans.Select((r) => (p.Scope?.Name ?? string.Empty, r)))];
+        [
+            .. collector.GetTraceRequests()
+                .SelectMany((p) => p.ResourceSpans)
+                .SelectMany((p) => p.ScopeSpans)
+                .SelectMany((p) => p.Spans.Select((r) => (p.Scope?.Name ?? string.Empty, r))),
+        ];
 
     private static HashSet<string> GetMetricNames(OtlpHttpCollector collector) =>
         collector.GetMetricsRequests()
@@ -137,10 +139,12 @@ public sealed class AppleEndToEndTests(AppleAppFixture fixture) : IClassFixture<
             .ToHashSet(StringComparer.Ordinal);
 
     private static List<LogRecord> GetLogRecords(OtlpHttpCollector collector) =>
-        [.. collector.GetLogsRequests()
-            .SelectMany((p) => p.ResourceLogs)
-            .SelectMany((p) => p.ScopeLogs)
-            .SelectMany((p) => p.LogRecords)];
+        [
+            .. collector.GetLogsRequests()
+                .SelectMany((p) => p.ResourceLogs)
+                .SelectMany((p) => p.ScopeLogs)
+                .SelectMany((p) => p.LogRecords),
+        ];
 
     private string Detail(OtlpHttpCollector collector) =>
         $"Spans seen: {string.Join(", ", GetSpans(collector).Select(t => $"{t.Scope}/{t.Span.Name}"))}." +

@@ -77,9 +77,8 @@ public class MetricExemplarTests : MetricTestsBase
             .SetExemplarFilter(ExemplarFilterType.AlwaysOn)
             .AddView(i =>
             {
-                return
-                    i.Name.StartsWith("testCounter", StringComparison.Ordinal) ?
-                    new MetricStreamConfiguration
+                return i.Name.StartsWith("testCounter", StringComparison.Ordinal)
+                    ? new MetricStreamConfiguration
                     {
                         ExemplarReservoirFactory = () => new SimpleFixedSizeExemplarReservoir(3),
                     }
@@ -185,7 +184,7 @@ public class MetricExemplarTests : MetricTestsBase
         (double Value, bool ExpectTraceId)[] measurementValues =
         [
             (18D, false),
-            (19D, false)
+            (19D, false),
         ];
 
         var measurementIndex = 0;
@@ -742,9 +741,7 @@ public class MetricExemplarTests : MetricTestsBase
 
             var exemplars = GetExemplars(metricPoint.Value);
             Assert.NotNull(exemplars);
-            Assert.Single(exemplars);
-
-            var exemplar = exemplars[0];
+            var exemplar = Assert.Single(exemplars);
 
             if (!enableTagFiltering)
             {
@@ -785,10 +782,9 @@ public class MetricExemplarTests : MetricTestsBase
                     TagKeys = enableTagFiltering ? ["key1"] : null,
                     ExemplarReservoirFactory = () =>
                     {
-                        return
-                            testExemplarReservoir != null ?
-                            throw new InvalidOperationException() :
-                            (ExemplarReservoir)(testExemplarReservoir = new TestExemplarReservoir());
+                        return testExemplarReservoir != null
+                            ? throw new InvalidOperationException()
+                            : (ExemplarReservoir)(testExemplarReservoir = new TestExemplarReservoir());
                     },
                 })
             .AddInMemoryExporter(exportedItems));
@@ -873,9 +869,7 @@ public class MetricExemplarTests : MetricTestsBase
 
         var exemplars = GetExemplars(metricPoint.Value);
         Assert.NotNull(exemplars);
-        Assert.Single(exemplars);
-
-        var exemplar = exemplars[0];
+        var exemplar = Assert.Single(exemplars);
 
         if (!enableTagFiltering)
         {
@@ -893,6 +887,32 @@ public class MetricExemplarTests : MetricTestsBase
             Assert.DoesNotContain(new("key2", "value2"), filteredTags);
             Assert.DoesNotContain(new("key3", "value3"), filteredTags);
         }
+    }
+
+    [Fact]
+    public void ExemplarsThatWereNotOfferedMeasurementsAreCollectedAsEmpty()
+    {
+        var running = default(Exemplar);
+        var snapshot = default(Exemplar);
+
+        // An exemplar that has never been offered a measurement is collected as empty.
+        running.Collect(ref snapshot, reset: true);
+        Assert.Equal(default, snapshot.Timestamp);
+
+        running.Update(new ExemplarMeasurement<long>(42, []));
+
+        running.Collect(ref snapshot, reset: false);
+        Assert.NotEqual(default, snapshot.Timestamp);
+        Assert.Equal(42, snapshot.LongValue);
+
+        // The measurement is retained when the exemplar is not reset.
+        running.Collect(ref snapshot, reset: true);
+        Assert.NotEqual(default, snapshot.Timestamp);
+        Assert.Equal(42, snapshot.LongValue);
+
+        // Once it has been reset, a snapshot that has a measurement from an earlier collection is cleared.
+        running.Collect(ref snapshot, reset: true);
+        Assert.Equal(default, snapshot.Timestamp);
     }
 
     [Fact]
@@ -929,9 +949,7 @@ public class MetricExemplarTests : MetricTestsBase
 
         var exemplars = GetExemplars(metricPoint.Value);
         Assert.NotNull(exemplars);
-        Assert.Single(exemplars);
-
-        var exemplar = exemplars[0];
+        var exemplar = Assert.Single(exemplars);
 
         Assert.Equal(2, exemplar.FilteredTags.MaximumCount);
 
@@ -1012,9 +1030,7 @@ public class MetricExemplarTests : MetricTestsBase
             Assert.NotNull(metricPoint);
 
             var exemplars = GetExemplars(metricPoint.Value);
-            Assert.Single(exemplars);
-
-            return exemplars[0];
+            return Assert.Single(exemplars);
         }
     }
 

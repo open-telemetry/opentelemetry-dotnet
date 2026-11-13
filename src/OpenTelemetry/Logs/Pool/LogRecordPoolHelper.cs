@@ -10,6 +10,11 @@ internal static class LogRecordPoolHelper
 
     public static void Clear(LogRecord logRecord)
     {
+        // Release the completed log's payload while keeping reusable storage.
+        logRecord.Data = default;
+        logRecord.ILoggerData = default;
+        logRecord.AttributeData = null;
+
         var attributeStorage = logRecord.AttributeStorage;
         if (attributeStorage != null)
         {

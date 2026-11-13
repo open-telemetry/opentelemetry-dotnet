@@ -21,13 +21,18 @@ internal static class Generators
     private static readonly Gen<char> OpaqueValueChar = Gen.Elements("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 \t!@#$%^&*()_-+=[]{}|;:',.<>/?`~\u0000\u0001\u007f\u0080".ToCharArray());
     private static readonly Gen<char> HeaderValueChar = Gen.Elements("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_=,;: ./@".ToCharArray());
 
-    public static Arbitrary<ActivityContext> ActivityContextArbitrary()
+    public static Arbitrary<ActivityContext> ActivityContextArbitrary(bool supportsRandomTraceId = true)
     {
 #if NET
         var allTraceFlags = Enum.GetValues<ActivityTraceFlags>();
 #else
         var allTraceFlags = Enum.GetValues(typeof(ActivityTraceFlags)).OfType<ActivityTraceFlags>().ToArray();
 #endif
+
+        if (!supportsRandomTraceId)
+        {
+            allTraceFlags = [.. allTraceFlags.Where(flag => flag != ActivityTraceFlags.RandomTraceId)];
+        }
 
         var gen =
             from traceFlags in Gen

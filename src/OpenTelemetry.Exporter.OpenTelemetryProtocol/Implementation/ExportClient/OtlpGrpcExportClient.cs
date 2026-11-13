@@ -68,7 +68,7 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
                 httpRequest.Headers.TryAddWithoutValidation("grpc-encoding", "gzip");
             }
 
-            httpResponse = this.SendHttpRequest(httpRequest, cancellationToken);
+            httpResponse = this.SendHttpRequest(httpRequest, deadlineUtc, cancellationToken);
 
             if (this.IsResponseTooLarge(httpResponse, out var responseTooLarge))
             {
@@ -81,7 +81,26 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
                     grpcStatusDetailsHeader: null);
             }
 
-            httpResponse.EnsureSuccessStatusCode();
+            if (!httpResponse.IsSuccessStatusCode)
+            {
+                // Handle non-retryable HTTP errors.
+                var ex = CreateStatusCodeException(httpResponse);
+
+                if (OpenTelemetryProtocolExporterEventSource.Log.IsEnabled(EventLevel.Error, EventKeywords.All))
+                {
+                    // The body was buffered with the response, as CompletionOption is ResponseContentRead,
+                    // so reading it cannot block and does not need to be bounded by the deadline.
+                    var response = TryGetResponseBody(httpResponse, Math.Min(this.MaxResponseSizeBytes, MaxLoggedResponseSizeBytes), cancellationToken);
+                    OpenTelemetryProtocolExporterEventSource.Log.HttpRequestFailed(this.Endpoint, response, ex);
+                }
+
+                return new ExportClientGrpcResponse(
+                    success: false,
+                    deadlineUtc: deadlineUtc,
+                    exception: ex,
+                    status: null,
+                    grpcStatusDetailsHeader: null);
+            }
 
             var trailingHeaders = httpResponse.TrailingHeaders();
             var status = GrpcProtocolHelpers.GetResponseStatus(httpResponse, trailingHeaders);
@@ -158,7 +177,7 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
             // Handle non-retryable HTTP errors.
             if (OpenTelemetryProtocolExporterEventSource.Log.IsEnabled(EventLevel.Error, EventKeywords.All))
             {
-                var response = TryGetResponseBody(httpResponse, this.MaxResponseSizeBytes, cancellationToken);
+                var response = TryGetResponseBody(httpResponse, Math.Min(this.MaxResponseSizeBytes, MaxLoggedResponseSizeBytes), cancellationToken);
                 OpenTelemetryProtocolExporterEventSource.Log.HttpRequestFailed(this.Endpoint, response, ex);
             }
 
@@ -265,7 +284,10 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
 
         compressedStream.Position = 0;
 
-        OpenTelemetryProtocolExporterEventSource.Log.CompressedGrpcPayload("gzip", contentLength, compressedStream.Length);
+        if (OpenTelemetryProtocolExporterEventSource.Log.IsEnabled(EventLevel.Verbose, EventKeywords.All))
+        {
+            OpenTelemetryProtocolExporterEventSource.Log.CompressedGrpcPayload("gzip", contentLength, compressedStream.Length);
+        }
 
         var content = new StreamContent(compressedStream);
         content.Headers.ContentType = this.MediaTypeHeader;

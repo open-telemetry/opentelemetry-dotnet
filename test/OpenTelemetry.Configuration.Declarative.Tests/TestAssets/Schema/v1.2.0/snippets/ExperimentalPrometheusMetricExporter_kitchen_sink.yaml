@@ -1,0 +1,18 @@
+file_format: "1.2"
+
+meter_provider:
+  readers:
+    - pull:
+        exporter:
+          prometheus/development:
+            # SNIPPET_START
+            host: localhost
+            port: 9464
+            scope_info_enabled: true
+            target_info_enabled/development: true
+            resource_constant_labels:
+              included:
+                - "service*"
+              excluded:
+                - "service.attr1"
+            translation_strategy: underscore_escaping_with_suffixes

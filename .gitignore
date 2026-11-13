@@ -360,3 +360,6 @@ build/scripts/tests/testResults.xml
 
 # Verify snapshots
 *.received.*
+
+# Nightly builds of .NET
+.dotnet/

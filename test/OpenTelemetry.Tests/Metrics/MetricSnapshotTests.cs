@@ -32,18 +32,16 @@ public class MetricSnapshotTests
         meterProvider.ForceFlush();
 
         // Verify Metric 1
-        Assert.Single(exportedMetrics);
-        var metric1 = exportedMetrics[0];
+        var metric1 = Assert.Single(exportedMetrics);
         var metricPoints1Enumerator = metric1.GetMetricPoints().GetEnumerator();
         Assert.True(metricPoints1Enumerator.MoveNext());
         ref readonly var metricPoint1 = ref metricPoints1Enumerator.Current;
         Assert.Equal(10, metricPoint1.GetSumLong());
 
         // Verify Snapshot 1
-        Assert.Single(exportedSnapshots);
-        var snapshot1 = exportedSnapshots[0];
-        Assert.Single(snapshot1.MetricPoints);
-        Assert.Equal(10, snapshot1.MetricPoints[0].GetSumLong());
+        var snapshot1 = Assert.Single(exportedSnapshots);
+        var point = Assert.Single(snapshot1.MetricPoints);
+        Assert.Equal(10, point.GetSumLong());
 
         // Verify Metric == Snapshot
         Assert.Equal(metric1.Name, snapshot1.Name);
@@ -78,9 +76,8 @@ public class MetricSnapshotTests
         Assert.Equal(2, exportedSnapshots.Count);
         var snapshot2 = exportedSnapshots[1];
 
-        Assert.Single(snapshot2.MetricPoints);
-
-        Assert.Equal(15, snapshot2.MetricPoints[0].GetSumLong());
+        point = Assert.Single(snapshot2.MetricPoints);
+        Assert.Equal(15, point.GetSumLong());
     }
 
     [Fact]
@@ -102,8 +99,7 @@ public class MetricSnapshotTests
         meterProvider.ForceFlush();
 
         // Verify Metric 1
-        Assert.Single(exportedMetrics);
-        var metric1 = exportedMetrics[0];
+        var metric1 = Assert.Single(exportedMetrics);
         var metricPoints1Enumerator = metric1.GetMetricPoints().GetEnumerator();
         Assert.True(metricPoints1Enumerator.MoveNext());
         ref readonly var metricPoint1 = ref metricPoints1Enumerator.Current;
@@ -114,12 +110,11 @@ public class MetricSnapshotTests
         Assert.Equal(10, max);
 
         // Verify Snapshot 1
-        Assert.Single(exportedSnapshots);
-        var snapshot1 = exportedSnapshots[0];
-        Assert.Single(snapshot1.MetricPoints);
-        Assert.Equal(1, snapshot1.MetricPoints[0].GetHistogramCount());
-        Assert.Equal(10, snapshot1.MetricPoints[0].GetHistogramSum());
-        snapshot1.MetricPoints[0].TryGetHistogramMinMaxValues(out min, out max);
+        var snapshot1 = Assert.Single(exportedSnapshots);
+        var point = Assert.Single(snapshot1.MetricPoints);
+        Assert.Equal(1, point.GetHistogramCount());
+        Assert.Equal(10, point.GetHistogramSum());
+        point.TryGetHistogramMinMaxValues(out min, out max);
         Assert.Equal(10, min);
         Assert.Equal(10, max);
 
@@ -166,10 +161,10 @@ public class MetricSnapshotTests
         // Verify Snapshot 2
         Assert.Equal(2, exportedSnapshots.Count);
         var snapshot2 = exportedSnapshots[1];
-        Assert.Single(snapshot2.MetricPoints);
-        Assert.Equal(2, snapshot2.MetricPoints[0].GetHistogramCount());
-        Assert.Equal(15, snapshot2.MetricPoints[0].GetHistogramSum());
-        snapshot2.MetricPoints[0].TryGetHistogramMinMaxValues(out min, out max);
+        point = Assert.Single(snapshot2.MetricPoints);
+        Assert.Equal(2, point.GetHistogramCount());
+        Assert.Equal(15, point.GetHistogramSum());
+        point.TryGetHistogramMinMaxValues(out min, out max);
         Assert.Equal(5, min);
         Assert.Equal(10, max);
     }
@@ -196,8 +191,7 @@ public class MetricSnapshotTests
         meterProvider.ForceFlush();
 
         // Verify Metric 1
-        Assert.Single(exportedMetrics);
-        var metric1 = exportedMetrics[0];
+        var metric1 = Assert.Single(exportedMetrics);
         var metricPoints1Enumerator = metric1.GetMetricPoints().GetEnumerator();
         Assert.True(metricPoints1Enumerator.MoveNext());
         ref readonly var metricPoint1 = ref metricPoints1Enumerator.Current;
@@ -209,12 +203,11 @@ public class MetricSnapshotTests
         AggregatorTests.AssertExponentialBucketsAreCorrect(expectedHistogram, metricPoint1.GetExponentialHistogramData());
 
         // Verify Snapshot 1
-        Assert.Single(exportedSnapshots);
-        var snapshot1 = exportedSnapshots[0];
-        Assert.Single(snapshot1.MetricPoints);
-        Assert.Equal(1, snapshot1.MetricPoints[0].GetHistogramCount());
-        Assert.Equal(10, snapshot1.MetricPoints[0].GetHistogramSum());
-        snapshot1.MetricPoints[0].TryGetHistogramMinMaxValues(out min, out max);
+        var snapshot1 = Assert.Single(exportedSnapshots);
+        var point = Assert.Single(snapshot1.MetricPoints);
+        Assert.Equal(1, point.GetHistogramCount());
+        Assert.Equal(10, point.GetHistogramSum());
+        point.TryGetHistogramMinMaxValues(out min, out max);
         Assert.Equal(10, min);
         Assert.Equal(10, max);
         AggregatorTests.AssertExponentialBucketsAreCorrect(expectedHistogram, snapshot1.MetricPoints[0].GetExponentialHistogramData());
@@ -264,12 +257,69 @@ public class MetricSnapshotTests
         // Verify Snapshot 2
         Assert.Equal(2, exportedSnapshots.Count);
         var snapshot2 = exportedSnapshots[1];
-        Assert.Single(snapshot2.MetricPoints);
-        Assert.Equal(2, snapshot2.MetricPoints[0].GetHistogramCount());
-        Assert.Equal(15, snapshot2.MetricPoints[0].GetHistogramSum());
-        snapshot2.MetricPoints[0].TryGetHistogramMinMaxValues(out min, out max);
+        point = Assert.Single(snapshot2.MetricPoints);
+        Assert.Equal(2, point.GetHistogramCount());
+        Assert.Equal(15, point.GetHistogramSum());
+        point.TryGetHistogramMinMaxValues(out min, out max);
         Assert.Equal(5, min);
         Assert.Equal(10, max);
         AggregatorTests.AssertExponentialBucketsAreCorrect(expectedHistogram, snapshot2.MetricPoints[0].GetExponentialHistogramData());
+    }
+
+    [Fact]
+    public void VerifySnapshot_ExponentialHistogram_ZeroOnlyThenPositiveThenZeroOnly()
+    {
+        var snapshots = new List<MetricSnapshot>();
+
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+        var histogram = meter.CreateHistogram<int>("histogram");
+        using var meterProvider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddView("histogram", new Base2ExponentialBucketHistogramConfiguration())
+            .AddInMemoryExporter(snapshots, options => options.TemporalityPreference = MetricReaderTemporalityPreference.Delta)
+            .Build();
+
+        // Only zeros, so there are no positive buckets to snapshot
+        histogram.Record(0);
+        histogram.Record(0);
+        Assert.True(meterProvider.ForceFlush());
+
+        var zero = Assert.Single(Assert.Single(snapshots).MetricPoints);
+        Assert.Equal(2, zero.GetHistogramCount());
+        Assert.Equal(0, zero.GetHistogramSum());
+        Assert.Equal(2, zero.GetExponentialHistogramData().ZeroCount);
+        Assert.False(zero.GetExponentialHistogramData().PositiveBuckets.GetEnumerator().MoveNext());
+
+        // Positive values must allocate and copy their buckets
+        histogram.Record(1);
+        histogram.Record(2);
+        Assert.True(meterProvider.ForceFlush());
+
+        var positive = Assert.Single(snapshots[1].MetricPoints);
+        Assert.Equal(2, positive.GetHistogramCount());
+        Assert.Equal(3, positive.GetHistogramSum());
+        Assert.Equal(0, positive.GetExponentialHistogramData().ZeroCount);
+
+        long bucketCount = 0;
+        foreach (var count in positive.GetExponentialHistogramData().PositiveBuckets)
+        {
+            bucketCount += count;
+        }
+
+        Assert.Equal(2, bucketCount);
+
+        // Back to only zeros, so no counts from the previous collection are carried forward
+        histogram.Record(0);
+        Assert.True(meterProvider.ForceFlush());
+
+        var zeroAgain = Assert.Single(snapshots[2].MetricPoints);
+        Assert.Equal(1, zeroAgain.GetHistogramCount());
+        Assert.Equal(0, zeroAgain.GetHistogramSum());
+        Assert.Equal(1, zeroAgain.GetExponentialHistogramData().ZeroCount);
+        Assert.False(zeroAgain.GetExponentialHistogramData().PositiveBuckets.GetEnumerator().MoveNext());
+
+        // Earlier snapshots retain their original contents
+        Assert.Equal(2, zero.GetExponentialHistogramData().ZeroCount);
+        Assert.True(positive.GetExponentialHistogramData().PositiveBuckets.GetEnumerator().MoveNext());
     }
 }

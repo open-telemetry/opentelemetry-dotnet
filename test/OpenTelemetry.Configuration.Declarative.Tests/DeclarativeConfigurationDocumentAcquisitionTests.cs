@@ -9,6 +9,7 @@ using OpenTelemetry.Tests;
 
 namespace OpenTelemetry.Configuration.Declarative.Tests;
 
+[Collection(EventSourceCollectionDefinition.Name)]
 public sealed class DeclarativeConfigurationDocumentAcquisitionTests
 {
     private const int FailedToLoadConfigurationEventId = 12;
@@ -94,21 +95,6 @@ public sealed class DeclarativeConfigurationDocumentAcquisitionTests
     }
 
     [Fact]
-    public void GetOpenTelemetryDeclarativeConfiguration_ConfigureAppConfiguration_ReturnsProviderDocument()
-    {
-        using var yamlFile = DeclarativeYamlTestFile.CreateDeclarativeYaml(disabled: true);
-
-        using var host = new HostBuilder()
-            .ConfigureAppConfiguration(builder =>
-                builder.AddOpenTelemetryDeclarativeConfiguration(yamlFile.Path))
-            .Build();
-
-        Assert.Same(
-            GetProviderDocument(host.Services),
-            host.Services.GetOpenTelemetryDeclarativeConfiguration());
-    }
-
-    [Fact]
     public void GetOpenTelemetryDeclarativeConfiguration_ConfigurationRoot_ReturnsSameDocumentOnRepeatedCalls()
     {
         using var yamlFile = DeclarativeYamlTestFile.CreateDeclarativeYaml(disabled: true);
@@ -125,15 +111,16 @@ public sealed class DeclarativeConfigurationDocumentAcquisitionTests
     }
 
     [Fact]
-    public void GetOpenTelemetryDeclarativeConfiguration_ConfigurationManager_RegistrationTimeRead_ReturnsDocument()
+    public void GetOpenTelemetryDeclarativeConfiguration_HostApplicationBuilder_RegistrationTimeRead_ReturnsDocument()
     {
-        // The IConfiguration overload must work before a service provider exists, which is the only
-        // way to read the document at registration time on the source-only integration path.
+        // The IConfigurationRoot overload must work before a service provider exists, which is the
+        // only way to read the document during registration.
         using var yamlFile = DeclarativeYamlTestFile.CreateDeclarativeYaml(disabled: true);
-        using var configuration = new ConfigurationManager();
-        configuration.AddOpenTelemetryDeclarativeConfiguration(yamlFile.Path);
 
-        var document = configuration.GetOpenTelemetryDeclarativeConfiguration();
+        var builder = Host.CreateApplicationBuilder();
+        builder.AddOpenTelemetry().UseDeclarativeConfiguration(yamlFile.Path);
+
+        var document = builder.Configuration.GetOpenTelemetryDeclarativeConfiguration();
 
         Assert.NotNull(document);
         Assert.Equal(
@@ -142,20 +129,19 @@ public sealed class DeclarativeConfigurationDocumentAcquisitionTests
     }
 
     [Fact]
-    public void GetOpenTelemetryDeclarativeConfiguration_ServiceProvider_ParseFailure_Throws()
+    public void UseDeclarativeConfiguration_ServiceCollection_ParseFailure_ThrowsFromTheCall()
     {
         using var yamlFile = DeclarativeYamlTestFile.CreateDeclarativeYaml(fileFormat: "99.0");
 
         var services = new ServiceCollection();
-        new TestOpenTelemetryBuilder(services).UseDeclarativeConfiguration(yamlFile.Path);
-        using var sp = services.BuildServiceProvider();
+        var builder = new TestOpenTelemetryBuilder(services);
 
         using var listener = CreateErrorListener();
 
-        var ex1 = Assert.Throws<DeclarativeConfigurationException>(sp.GetOpenTelemetryDeclarativeConfiguration);
-        var ex2 = Assert.Throws<DeclarativeConfigurationException>(sp.GetOpenTelemetryDeclarativeConfiguration);
+        // The document is read during the call, so a broken file fails registration rather than the
+        // first resolve of the configuration.
+        Assert.Throws<DeclarativeConfigurationException>(() => builder.UseDeclarativeConfiguration(yamlFile.Path));
 
-        Assert.Same(ex1, ex2);
         Assert.Single(listener.Messages, e => e.EventId == FailedToLoadConfigurationEventId);
     }
 
@@ -229,7 +215,7 @@ public sealed class DeclarativeConfigurationDocumentAcquisitionTests
             serviceProvider.GetRequiredService<IConfiguration>(),
             exactMatch: false);
         var provider = Assert.Single(configuration.Providers.OfType<DeclarativeConfigurationProvider>());
-        return provider.Accessor.GetDocumentForProvider();
+        return provider.Accessor.GetDocumentForPipeline();
     }
 
     private static TestEventListener CreateVerboseListener()

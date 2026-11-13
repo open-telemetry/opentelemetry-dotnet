@@ -363,6 +363,51 @@ internal sealed class OpenTelemetryProtocolExporterEventSource : EventSource, IC
     internal void RequestDiscardedDueToSizeLimit(string signalType, long itemCount, int requestSizeBytes, int maxRequestSizeBytes)
         => this.WriteEvent(41, signalType, itemCount, requestSizeBytes, maxRequestSizeBytes);
 
+    [NonEvent]
+    internal void HttpClientFactoryUnavailable(string httpClientName, Exception ex)
+    {
+        if (Log.IsEnabled(EventLevel.Warning, EventKeywords.All))
+        {
+            this.HttpClientFactoryUnavailable(httpClientName, ex.ToInvariantString());
+        }
+    }
+
+    [Event(
+        42,
+        Message = "IHttpClientFactory could not be resolved to create the HttpClient named '{0}' because the IServiceProvider has been disposed. The default HttpClient will be used instead. Exception: {1}",
+        Level = EventLevel.Warning)]
+    internal void HttpClientFactoryUnavailable(string httpClientName, string exceptionMessage)
+        => this.WriteEvent(42, httpClientName, exceptionMessage);
+
+    [Event(
+        43,
+        Message = "The export deadline was reached while retrying a request. The data will not be sent.",
+        Level = EventLevel.Warning)]
+    internal void RetryDeadlineExceeded()
+        => this.WriteEvent(43);
+
+    [Event(
+        44,
+        Message = "The gRPC status code {0} of the response is contradicted by the status code {1} in the gRPC status details. The status details will be ignored.",
+        Level = EventLevel.Warning)]
+    internal void GrpcStatusDetailsCodeMismatch(int grpcStatusCode, int detailsStatusCode)
+        => this.WriteEvent(44, grpcStatusCode, detailsStatusCode);
+
     private static string RedactEndpointUri(Uri endpoint)
-        => endpoint.GetComponents(UriComponents.SchemeAndServer | UriComponents.Path, UriFormat.UriEscaped);
+    {
+        var authority = endpoint.GetComponents(UriComponents.SchemeAndServer, UriFormat.UriEscaped);
+        var path = endpoint.AbsolutePath;
+
+        return path switch
+        {
+            "" or "/" => authority,
+            "/v1/traces"
+                or "/v1/metrics"
+                or "/v1/logs"
+                or "/opentelemetry.proto.collector.trace.v1.TraceService/Export"
+                or "/opentelemetry.proto.collector.metrics.v1.MetricsService/Export"
+                or "/opentelemetry.proto.collector.logs.v1.LogsService/Export" => string.Concat(authority, path),
+            _ => string.Concat(authority, path[0] == '/' ? "/[REDACTED]" : "[REDACTED]"),
+        };
+    }
 }

@@ -8,6 +8,7 @@ using OpenTelemetry.Tests;
 
 namespace OpenTelemetry.Resources.Tests;
 
+[Collection(EnvVarsCollectionDefinition.Name)]
 public sealed class ResourceTests : IDisposable
 {
     private const string KeyName = "key";
@@ -53,9 +54,8 @@ public sealed class ResourceTests : IDisposable
         var resource = new Resource(attributes);
 
         // Assert
-        Assert.Single(resource.Attributes);
 
-        var attribute = resource.Attributes.Single();
+        var attribute = Assert.Single(resource.Attributes);
         Assert.Empty(attribute.Key);
         Assert.Equal("value", attribute.Value);
     }

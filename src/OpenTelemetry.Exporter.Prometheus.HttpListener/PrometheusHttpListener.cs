@@ -40,7 +40,9 @@ internal sealed class PrometheusHttpListener : IDisposable
 
         var path = options.ScrapeEndpointPath ?? PrometheusHttpListenerOptions.DefaultScrapeEndpointPath;
 
-#if NET
+#if NET11_0_OR_GREATER
+        if (!path.StartsWith('/', StringComparison.Ordinal))
+#elif NET
         if (!path.StartsWith('/'))
 #else
         if (!path.StartsWith("/", StringComparison.Ordinal))
@@ -49,7 +51,9 @@ internal sealed class PrometheusHttpListener : IDisposable
             path = $"/{path}";
         }
 
-#if NET
+#if NET11_0_OR_GREATER
+        if (!path.EndsWith('/', StringComparison.Ordinal))
+#elif NET
         if (!path.EndsWith('/'))
 #else
         if (!path.EndsWith("/", StringComparison.Ordinal))
@@ -89,9 +93,9 @@ internal sealed class PrometheusHttpListener : IDisposable
             this.httpListener.Start();
 
             // link the passed in token if not null
-            this.tokenSource = token == CancellationToken.None ?
-                new CancellationTokenSource() :
-                CancellationTokenSource.CreateLinkedTokenSource(token);
+            this.tokenSource = token == CancellationToken.None
+                ? new CancellationTokenSource()
+                : CancellationTokenSource.CreateLinkedTokenSource(token);
 
             var workerToken = this.tokenSource.Token;
             this.workerThread = Task.Factory.StartNew(
@@ -243,6 +247,17 @@ internal sealed class PrometheusHttpListener : IDisposable
 
     private async Task ProcessRequestAsync(HttpListenerContext context, CancellationToken cancellationToken)
     {
+        if (context.Request.HasEntityBody)
+        {
+            // A scrape has no request body, and nothing here reads one. Do not keep the connection
+            // alive for such a request. On the managed (non-Windows) HttpListener implementation,
+            // Response.Close() on a keep-alive connection first synchronously drains any unread
+            // request body, waiting up to a second for each read, so a client that announces a body
+            // and trickles it in could hold a thread pool thread indefinitely after its response has
+            // been sent, beyond the reach of the scrape timeout.
+            context.Response.KeepAlive = false;
+        }
+
         if (this.disposed || cancellationToken.IsCancellationRequested)
         {
             context.Response.StatusCode = 503;
@@ -264,7 +279,7 @@ internal sealed class PrometheusHttpListener : IDisposable
             using var requestCancelled = new CancellationTokenSource();
 
             // Always bound the request. A client that never drains the response body must not be
-            // able to hold the shared collection reader slot indefinitely. A client-supplied
+            // able to hold the response buffer it is read from indefinitely. A client-supplied
             // X-Prometheus-Scrape-Timeout-Seconds may only shorten this limit, never extend it.
             var scrapeTimeout = this.scrapeResponseTimeout;
             if (TryGetScrapeTimeout(context.Request.Headers, out var clientTimeout) &&
@@ -282,7 +297,12 @@ internal sealed class PrometheusHttpListener : IDisposable
                 Negotiate(context.Request),
                 this.exporter.TranslationStrategy);
 
-            var collectionResponse = await this.exporter.CollectionManager.EnterCollect(protocol, linkedCts.Token).ConfigureAwait(false);
+            var collectionResponse = await this.exporter.CollectionManager.EnterCollect(
+                protocol,
+                scrapeTimeout,
+                linkedCts.Token).ConfigureAwait(false);
+
+            var writerCancellation = CancellationToken.None;
 
             try
             {
@@ -336,11 +356,16 @@ internal sealed class PrometheusHttpListener : IDisposable
                         // write, so Abort() falls straight through to closing the socket.
                         context.Response.ContentLength64 = dataView.Count;
 
-                        // HttpListener's response stream does not reliably observe a CancellationToken once
-                        // a write is in flight to HTTP.sys, so abort the response if the deadline elapses
-                        // mid-write. This unblocks a write stalled because the client stopped reading the
-                        // body, so the collection reader slot is released and other scrapes are not blocked.
-                        using (requestCancelled.Token.Register(
+                        using var writer = this.exporter.CollectionManager.BeginResponseWrite(collectionResponse);
+                        writerCancellation = writer.CancellationToken;
+
+                        using var writeCancelled = CancellationTokenSource.CreateLinkedTokenSource(
+                            linkedCts.Token,
+                            writerCancellation);
+
+                        // HTTP.sys may not observe cancellation mid-write. Abort on cancellation so
+                        // the write completes and ExitCollect can safely release its buffer lease.
+                        using (writeCancelled.Token.Register(
                             static (state) =>
                             {
                                 try
@@ -354,11 +379,34 @@ internal sealed class PrometheusHttpListener : IDisposable
                             },
                             context))
                         {
+                            // Write the shared response buffer in slices, awaiting each one, rather than
+                            // in a single write. The managed (non-Windows) HttpListener copies the content
+                            // of the first write into a new buffer together with the response headers, so
+                            // writing the whole buffer at once would make every client that does not read
+                            // its response pin a private copy of the entire payload.
+                            var offset = 0;
+
+                            while (offset < dataView.Count)
+                            {
+                                var count = Math.Min(dataView.Count - offset, PrometheusExporter.MaximumResponseWriteSize);
+
 #if NET
-                            await context.Response.OutputStream.WriteAsync(dataView.Array.AsMemory(0, dataView.Count), linkedCts.Token).ConfigureAwait(false);
+                                await context.Response.OutputStream.WriteAsync(
+                                    dataView.Array.AsMemory(offset, count),
+                                    writeCancelled.Token).ConfigureAwait(false);
 #else
-                            await context.Response.OutputStream.WriteAsync(dataView.Array, 0, dataView.Count, linkedCts.Token).ConfigureAwait(false);
+                                await context.Response.OutputStream.WriteAsync(
+                                    dataView.Array,
+                                    offset,
+                                    count,
+                                    writeCancelled.Token).ConfigureAwait(false);
 #endif
+
+                                writeCancelled.Token.ThrowIfCancellationRequested();
+                                writer.RecordProgress();
+
+                                offset += count;
+                            }
                         }
                     }
                     else
@@ -369,17 +417,26 @@ internal sealed class PrometheusHttpListener : IDisposable
                     }
                 }
             }
-            catch (Exception) when (requestCancelled.IsCancellationRequested && !this.disposed && !cancellationToken.IsCancellationRequested)
+            catch (Exception) when ((requestCancelled.IsCancellationRequested || writerCancellation.IsCancellationRequested) &&
+                !this.disposed && !cancellationToken.IsCancellationRequested)
             {
-                // The request exceeded its deadline (a client-supplied timeout or the server
-                // maximum). The response may already have been aborted to unblock a stalled write,
+                // The request exceeded its deadline, or a waiting scrape cancelled its idle write.
+                // The response may already have been aborted to unblock a stalled write,
                 // so setting a status code can fail; that is fine, the client is no longer reading.
-                PrometheusExporterEventSource.Log.ScrapeTimedOut(scrapeTimeout.TotalSeconds);
+                if (requestCancelled.IsCancellationRequested)
+                {
+                    PrometheusExporterEventSource.Log.ScrapeTimedOut(scrapeTimeout.TotalSeconds);
+                }
+                else
+                {
+                    PrometheusExporterEventSource.Log.ScrapeAbandoned();
+                }
+
                 TrySetStatusCode(context, 408);
             }
             finally
             {
-                this.exporter.CollectionManager.ExitCollect(protocol);
+                this.exporter.CollectionManager.ExitCollect(collectionResponse);
             }
         }
         catch (OperationCanceledException) when (this.disposed || cancellationToken.IsCancellationRequested)

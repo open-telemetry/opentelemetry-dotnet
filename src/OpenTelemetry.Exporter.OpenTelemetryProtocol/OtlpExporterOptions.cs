@@ -67,7 +67,7 @@ public class OtlpExporterOptions : IOtlpExporterOptions
     private static readonly string BaseUserAgent = $"OTel-OTLP-Exporter-Dotnet/{typeof(OtlpExporterOptions).Assembly.GetPackageVersion()}";
     private static readonly KeyValuePair<string, string>[] DefaultHeaders =
     [
-        new("User-Agent", BaseUserAgent)
+        new("User-Agent", BaseUserAgent),
     ];
 
     private OtlpExportProtocol? protocol;
@@ -91,7 +91,7 @@ public class OtlpExporterOptions : IOtlpExporterOptions
     internal OtlpExporterOptions(
         OtlpExporterOptionsConfigurationType configurationType)
         : this(
-            configuration: new ConfigurationBuilder().AddEnvironmentVariables().Build(),
+            configuration: EnvironmentVariablesConfiguration.Create(),
             configurationType,
             defaultBatchOptions: new())
     {
@@ -127,11 +127,17 @@ public class OtlpExporterOptions : IOtlpExporterOptions
             }
 #endif
 
-            return new HttpClient
+#pragma warning disable CA5399 // HttpClient is created without enabling CheckCertificateRevocationList
+#pragma warning disable CA5400 // HttpClient is created without enabling CheckCertificateRevocationList
+            // CheckCertificateRevocationList is not explicitly enabled as it
+            // breaks TLS certificate validation in offline/air-gapped environments.
+            return new HttpClient(new HttpClientHandler { AllowAutoRedirect = false }, disposeHandler: true)
             {
                 MaxResponseContentBufferSize = this.MaxResponseSizeBytes,
                 Timeout = timeout,
             };
+#pragma warning restore CA5400 // HttpClient is created without enabling CheckCertificateRevocationList
+#pragma warning restore CA5399 // HttpClient is created without enabling CheckCertificateRevocationList
         };
 
         this.batchExportProcessorOptions = new(defaultBatchOptions);

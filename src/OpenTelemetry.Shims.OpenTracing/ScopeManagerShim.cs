@@ -28,12 +28,11 @@ internal sealed class ScopeManagerShim : IScopeManager
         get
         {
             var currentSpan = Tracer.CurrentSpan;
-            return
-                currentSpan == null || !currentSpan.Context.IsValid ?
-                null :
-                SpanScopeTable.TryGetValue(currentSpan, out var openTracingScope) ?
-                openTracingScope :
-                new ScopeInstrumentation(currentSpan);
+            return currentSpan == null || !currentSpan.Context.IsValid
+                ? null
+                : SpanScopeTable.TryGetValue(currentSpan, out var openTracingScope)
+                    ? openTracingScope
+                    : new ScopeInstrumentation(currentSpan);
         }
     }
 

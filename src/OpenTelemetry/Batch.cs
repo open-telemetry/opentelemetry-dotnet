@@ -220,7 +220,10 @@ public readonly struct Batch<T> : IDisposable
         /// <inheritdoc/>
         public void Dispose()
         {
-            if (typeof(T) == typeof(LogRecord))
+            // Only LogRecords read from a circular buffer carry a pool reference
+            // owned by the batch (BatchLogRecordExportProcessor adds it before
+            // enqueuing). A single item or an array is still owned by the caller.
+            if (typeof(T) == typeof(LogRecord) && this.circularBuffer != null)
             {
                 var currentItem = this.current;
                 if (currentItem != null)

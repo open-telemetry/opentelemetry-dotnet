@@ -1,10 +1,12 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using OpenTelemetry.Tests;
 using static OpenTelemetry.OpenTelemetrySdk;
 
 namespace OpenTelemetry.Trace.Tests;
 
+[Collection(EnvVarsCollectionDefinition.Name)]
 public sealed class TracerProviderBuilderBaseTests
 {
     [Theory]

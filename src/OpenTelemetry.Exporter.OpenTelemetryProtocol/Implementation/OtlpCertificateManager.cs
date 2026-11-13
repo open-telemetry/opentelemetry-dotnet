@@ -6,6 +6,7 @@
 using System.Net.Security;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
+using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 
@@ -38,7 +39,7 @@ internal static class OtlpCertificateManager
 
         try
         {
-#if NET9_0_OR_GREATER
+#if NET
             var caCertificate = X509CertificateLoader.LoadCertificateFromFile(caCertificatePath);
 #else
             var pemContents = File.ReadAllText(caCertificatePath);
@@ -88,11 +89,7 @@ internal static class OtlpCertificateManager
                 // Try to load as PKCS#12 first, then as PEM
                 try
                 {
-#if NET9_0_OR_GREATER
                     clientCertificate = X509CertificateLoader.LoadPkcs12FromFile(clientCertificatePath, null);
-#else
-                    clientCertificate = new X509Certificate2(clientCertificatePath);
-#endif
                 }
                 catch (Exception ex) when (ex is CryptographicException or InvalidDataException or FormatException)
                 {
@@ -306,10 +303,16 @@ internal static class OtlpCertificateManager
 
         if (!File.Exists(filePath))
         {
+            // Configuration may contain the certificate or key itself instead of a path.
+            // Redact inline material before writing either the event or the exception.
+            var displayPath = SensitiveDataHelper.ContainsInlineCertificateMaterial(filePath)
+                ? SensitiveDataHelper.RedactedValue
+                : filePath;
+
             OpenTelemetryProtocolExporterEventSource.Log.MtlsCertificateFileNotFound(
                 fileType,
-                filePath);
-            throw new FileNotFoundException($"{fileType} file not found at path: {filePath}", filePath);
+                displayPath);
+            throw new FileNotFoundException($"{fileType} file not found at path: {displayPath}", displayPath);
         }
     }
 }

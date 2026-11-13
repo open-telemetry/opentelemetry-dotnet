@@ -8,7 +8,7 @@ namespace OpenTelemetry.Metrics;
 
 internal sealed class OpenTelemetryMetricsListener : IMetricsListener, IDisposable
 {
-    private readonly MeterProviderSdk? meterProviderSdk;
+    private MeterProviderSdk? meterProviderSdk;
     private IObservableInstrumentsSource? observableInstrumentsSource;
 
     public OpenTelemetryMetricsListener(MeterProvider meterProvider)
@@ -24,10 +24,19 @@ internal sealed class OpenTelemetryMetricsListener : IMetricsListener, IDisposab
 
     public void Dispose()
     {
-        if (this.meterProviderSdk is { })
+        // References are released (not just the event unsubscribed) because
+        // versions of Microsoft.Extensions.Diagnostics prior to 9.0 never dispose
+        // the underlying MeterListener when the host is disposed. In that case the
+        // runtime keeps this listener rooted for the lifetime of the process.
+        // See https://github.com/open-telemetry/opentelemetry-dotnet/issues/6447.
+        var provider = Interlocked.Exchange(ref this.meterProviderSdk, null);
+
+        if (provider is { })
         {
-            this.meterProviderSdk.OnCollectObservableInstruments -= this.OnCollectObservableInstruments;
+            provider.OnCollectObservableInstruments -= this.OnCollectObservableInstruments;
         }
+
+        this.observableInstrumentsSource = null;
     }
 
     public MeasurementHandlers GetMeasurementHandlers() => new()
@@ -49,9 +58,9 @@ internal sealed class OpenTelemetryMetricsListener : IMetricsListener, IDisposab
         userState = null;
         var result = false;
 
-        if (this.meterProviderSdk is { })
+        if (this.meterProviderSdk is { } provider)
         {
-            userState = this.meterProviderSdk.InstrumentPublished(instrument, listeningIsManagedExternally: true);
+            userState = provider.InstrumentPublished(instrument, listeningIsManagedExternally: true);
             result = userState is not null;
         }
 

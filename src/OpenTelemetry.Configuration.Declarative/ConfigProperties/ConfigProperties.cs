@@ -1,6 +1,9 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+#if NET
+using System.Collections.Frozen;
+#endif
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Configuration.Declarative;
@@ -13,18 +16,35 @@ namespace OpenTelemetry.Configuration.Declarative;
 /// </remarks>
 public sealed class ConfigProperties
 {
+#if NET
+    private readonly FrozenDictionary<string, ConfigValue> values;
+#else
     private readonly Dictionary<string, ConfigValue> values;
+#endif
 
-    private ConfigProperties(Dictionary<string, ConfigValue> values)
+    private readonly Dictionary<string, ConfigValuePosition>? keyPositions;
+
+    private ConfigProperties(
+#if NET
+        FrozenDictionary<string, ConfigValue> values,
+#else
+        Dictionary<string, ConfigValue> values,
+#endif
+        Dictionary<string, ConfigValuePosition>? keyPositions)
     {
         this.values = values;
+        this.keyPositions = keyPositions;
     }
 
     /// <summary>
     /// Gets a shared empty <see cref="ConfigProperties"/> with no keys.
     /// </summary>
     public static ConfigProperties Empty { get; } =
-        new(new Dictionary<string, ConfigValue>(0, StringComparer.Ordinal));
+#if NET
+        new(FrozenDictionary<string, ConfigValue>.Empty, keyPositions: null);
+#else
+        new(new Dictionary<string, ConfigValue>(0, StringComparer.Ordinal), keyPositions: null);
+#endif
 
     /// <summary>
     /// Gets all keys present in this mapping.
@@ -416,8 +436,26 @@ public sealed class ConfigProperties
         return new(ConfigValueOutcome.TypeMismatch, default, value.Position);
     }
 
-    internal static ConfigProperties Create(Dictionary<string, ConfigValue> values)
-        => new(new Dictionary<string, ConfigValue>(values, StringComparer.Ordinal));
+    internal static ConfigProperties Create(
+        Dictionary<string, ConfigValue> values,
+        Dictionary<string, ConfigValuePosition>? keyPositions = null)
+        => new(
+#if NET
+            values.ToFrozenDictionary(StringComparer.Ordinal),
+#else
+            new Dictionary<string, ConfigValue>(values, StringComparer.Ordinal),
+#endif
+            keyPositions is null ? null : new Dictionary<string, ConfigValuePosition>(keyPositions, StringComparer.Ordinal));
+
+    /// <summary>
+    /// Gets the position at which <paramref name="key"/> was authored.
+    /// </summary>
+    /// <param name="key">The key to inspect.</param>
+    /// <returns>The key position, or <see cref="ConfigValuePosition.Unknown"/> when it is not recorded.</returns>
+    internal ConfigValuePosition GetKeyPosition(string key)
+        => this.keyPositions is not null && this.keyPositions.TryGetValue(key, out var position)
+            ? position
+            : ConfigValuePosition.Unknown;
 
     internal bool TryGetValue(string key, out ConfigValue value)
     {

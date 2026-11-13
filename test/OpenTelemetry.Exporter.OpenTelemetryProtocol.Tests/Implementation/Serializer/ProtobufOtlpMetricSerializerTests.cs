@@ -17,7 +17,7 @@ public static class ProtobufOtlpMetricSerializerTests
 {
     private const string HistogramName = "histogram";
 
-#if NET8_0_OR_GREATER
+#if NET
     [Fact]
     public static void WriteMetricsData_WithWarmedCacheDoesNotAllocate()
     {
@@ -27,14 +27,14 @@ public static class ProtobufOtlpMetricSerializerTests
         // Warm metadata caches and serializer pools before measuring repeated exports.
         for (var i = 0; i < 10000; i++)
         {
-            ProtobufOtlpMetricSerializer.WriteMetricsData(ref buffer, 0, Resource.Empty, metrics);
+            ProtobufOtlpMetricSerializer.WriteMetricsData(ref buffer, 0, Resource.Empty, metrics, out _);
         }
 
         var writePosition = 0;
         var allocatedBefore = GC.GetAllocatedBytesForCurrentThread();
         for (var i = 0; i < 1000; i++)
         {
-            writePosition = ProtobufOtlpMetricSerializer.WriteMetricsData(ref buffer, 0, Resource.Empty, metrics);
+            writePosition = ProtobufOtlpMetricSerializer.WriteMetricsData(ref buffer, 0, Resource.Empty, metrics, out _);
         }
 
         var allocated = GC.GetAllocatedBytesForCurrentThread() - allocatedBefore;
@@ -60,7 +60,8 @@ public static class ProtobufOtlpMetricSerializerTests
             ref buffer,
             0,
             Resource.Empty,
-            metrics);
+            metrics,
+            out _);
 
         Assert.True(writePosition > 0);
         Assert.True(writePosition <= buffer.Length);
@@ -98,6 +99,7 @@ public static class ProtobufOtlpMetricSerializerTests
             0,
             Resource.Empty,
             metrics,
+            out _,
             maxBufferSize));
 
         Assert.Equal("size", exception.ParamName);
@@ -118,6 +120,7 @@ public static class ProtobufOtlpMetricSerializerTests
             0,
             Resource.Empty,
             metrics,
+            out _,
             initialBuffer.Length);
         Assert.True(writePosition > 0);
 
@@ -128,6 +131,7 @@ public static class ProtobufOtlpMetricSerializerTests
             0,
             Resource.Empty,
             metrics,
+            out _,
             maxBufferSize));
 
         Assert.Equal("cachedMetadata", exception.ParamName);
@@ -230,10 +234,10 @@ public static class ProtobufOtlpMetricSerializerTests
         var metrics = GenerateMetricsWithTags();
 
         var first = new byte[64 * 1024];
-        var firstLength = ProtobufOtlpMetricSerializer.WriteMetricsData(ref first, 0, Resource.Empty, metrics);
+        var firstLength = ProtobufOtlpMetricSerializer.WriteMetricsData(ref first, 0, Resource.Empty, metrics, out _);
 
         var second = new byte[64 * 1024];
-        var secondLength = ProtobufOtlpMetricSerializer.WriteMetricsData(ref second, 0, Resource.Empty, metrics);
+        var secondLength = ProtobufOtlpMetricSerializer.WriteMetricsData(ref second, 0, Resource.Empty, metrics, out _);
 
         Assert.True(firstLength > 0);
         Assert.Equal(firstLength, secondLength);
@@ -253,7 +257,7 @@ public static class ProtobufOtlpMetricSerializerTests
         var metrics = GenerateMetricsWithTags();
 
         var buffer = new byte[64 * 1024];
-        var length = ProtobufOtlpMetricSerializer.WriteMetricsData(ref buffer, 0, Resource.Empty, metrics);
+        var length = ProtobufOtlpMetricSerializer.WriteMetricsData(ref buffer, 0, Resource.Empty, metrics, out _);
 
         using var stream = new MemoryStream(buffer, 0, length);
         var request = OtlpCollector.ExportMetricsServiceRequest.Parser.ParseFrom(stream);
@@ -267,7 +271,72 @@ public static class ProtobufOtlpMetricSerializerTests
         Assert.Equal(["/a", "/b"], routes);
     }
 
-    private static Batch<Metric> GenerateMetricsWithTags()
+    [Fact]
+    public static void WriteMetricsData_Keeps_ToString_Attributes_When_Buffer_Is_Resized()
+    {
+        const int DataPointCount = 32;
+
+        var metrics = GenerateMetricsWithTags(static counter =>
+        {
+            for (var i = 0; i < DataPointCount; i++)
+            {
+                counter.Add(
+                    1,
+                    new KeyValuePair<string, object?>("route", "/a"),
+                    new KeyValuePair<string, object?>("url", new Uri($"http://localhost/{i}/{new string('a', 256)}")));
+            }
+        });
+
+        // The buffer has to grow part way through the data points, and the
+        // second export replays whatever the first one cached.
+        for (var export = 0; export < 2; export++)
+        {
+            var buffer = ProtobufSerializer.RentBuffer(1024);
+
+            try
+            {
+                var length = ProtobufOtlpMetricSerializer.WriteMetricsData(ref buffer, 0, Resource.Empty, metrics, out _);
+
+                using var stream = new MemoryStream(buffer, 0, length);
+                var request = OtlpCollector.ExportMetricsServiceRequest.Parser.ParseFrom(stream);
+                var dataPoints = request.ResourceMetrics[0].ScopeMetrics[0].Metrics[0].Sum.DataPoints;
+
+                Assert.Equal(DataPointCount, dataPoints.Count);
+                Assert.All(dataPoints, static point => Assert.Contains(point.Attributes, static a => a.Key == "url"));
+            }
+            finally
+            {
+                ProtobufSerializer.ReturnBuffer(buffer);
+            }
+        }
+    }
+
+    [Fact]
+    public static void WriteMetricsData_Does_Not_Cache_DataPoint_Attributes_When_A_Tag_Is_Dropped()
+    {
+        var metrics = GenerateMetricsWithTags(static counter => counter.Add(
+            1,
+            new KeyValuePair<string, object?>("route", "/a"),
+            new KeyValuePair<string, object?>("transient", new ToStringThrowsOnce())));
+
+        var buffer = new byte[64 * 1024];
+
+        Assert.Equal(["route"], SerializeAndGetAttributeKeys());
+        Assert.Equal(["route", "transient"], SerializeAndGetAttributeKeys());
+
+        string[] SerializeAndGetAttributeKeys()
+        {
+            var length = ProtobufOtlpMetricSerializer.WriteMetricsData(ref buffer, 0, Resource.Empty, metrics, out _);
+
+            using var stream = new MemoryStream(buffer, 0, length);
+            var request = OtlpCollector.ExportMetricsServiceRequest.Parser.ParseFrom(stream);
+            var dataPoint = Assert.Single(request.ResourceMetrics[0].ScopeMetrics[0].Metrics[0].Sum.DataPoints);
+
+            return [.. dataPoint.Attributes.Select(static a => a.Key)];
+        }
+    }
+
+    private static Batch<Metric> GenerateMetricsWithTags(Action<Counter<long>>? record = null)
     {
         Batch<Metric> metrics = default;
 
@@ -297,15 +366,22 @@ public static class ProtobufOtlpMetricSerializerTests
 
             var counter = meter.CreateCounter<long>("requests");
 
-            counter.Add(
-                1,
-                new KeyValuePair<string, object?>("route", "/a"),
-                new KeyValuePair<string, object?>("status", 200));
+            if (record != null)
+            {
+                record(counter);
+            }
+            else
+            {
+                counter.Add(
+                    1,
+                    new KeyValuePair<string, object?>("route", "/a"),
+                    new KeyValuePair<string, object?>("status", 200));
 
-            counter.Add(
-                2,
-                new KeyValuePair<string, object?>("route", "/b"),
-                new KeyValuePair<string, object?>("status", 500));
+                counter.Add(
+                    2,
+                    new KeyValuePair<string, object?>("route", "/b"),
+                    new KeyValuePair<string, object?>("status", 500));
+            }
 
             provider.ForceFlush();
             exported.WaitOne(TimeSpan.FromSeconds(30));
@@ -332,7 +408,8 @@ public static class ProtobufOtlpMetricSerializerTests
             ref buffer,
             writePosition,
             resource,
-            metrics);
+            metrics,
+            out _);
 
         // Assert
         Assert.NotEqual(0, actual);
@@ -498,7 +575,7 @@ public static class ProtobufOtlpMetricSerializerTests
         var buffer = ProtobufSerializer.RentBuffer(16 * 1024);
         try
         {
-            _ = ProtobufOtlpMetricSerializer.WriteMetricsData(ref buffer, 0, Resource.Empty, metrics);
+            _ = ProtobufOtlpMetricSerializer.WriteMetricsData(ref buffer, 0, Resource.Empty, metrics, out _);
         }
         finally
         {
@@ -506,5 +583,21 @@ public static class ProtobufOtlpMetricSerializerTests
         }
 
         return new WeakReference<Metric>(capturedMetric);
+    }
+
+    private sealed class ToStringThrowsOnce
+    {
+        private bool thrown;
+
+        public override string ToString()
+        {
+            if (!this.thrown)
+            {
+                this.thrown = true;
+                throw new InvalidOperationException("Nope.");
+            }
+
+            return "value";
+        }
     }
 }

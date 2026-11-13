@@ -1,6 +1,6 @@
 # OpenTelemetry Apple test app
 
-`OpenTelemetry.Apple.TestApp` is a headless `net10.0-ios` application that runs
+`OpenTelemetry.Apple.TestApp` is a headless `net11.0-ios` application that runs
 the OpenTelemetry SDK on an iOS simulator and exercises logs, metrics and traces
 with the real OTLP/HTTP exporter. It is the device half of the Apple end-to-end
 tests; the assertions are in `OpenTelemetry.Apple.Tests`.

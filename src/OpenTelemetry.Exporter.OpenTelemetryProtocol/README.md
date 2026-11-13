@@ -408,6 +408,7 @@ appBuilder.Services.AddOpenTelemetry()
         readerOptions.TemporalityPreference = MetricReaderTemporalityPreference.Delta;
         readerOptions.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds = 10_000;
         readerOptions.PeriodicExportingMetricReaderOptions.ExportTimeoutMilliseconds = 5_000;
+        readerOptions.PeriodicExportingMetricReaderOptions.MaxExportBatchSize = 1_000;
     }));
 
 // Set via Options API using code:
@@ -416,12 +417,21 @@ appBuilder.Services.Configure<MetricReaderOptions>(o =>
     o.TemporalityPreference = MetricReaderTemporalityPreference.Delta;
     o.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds = 10_000;
     o.PeriodicExportingMetricReaderOptions.ExportTimeoutMilliseconds = 5_000;
+    o.PeriodicExportingMetricReaderOptions.MaxExportBatchSize = 1_000;
 });
 
 // Set via Options API using configuration:
 appBuilder.Services.Configure<MetricReaderOptions>(
     appBuilder.Configuration.GetSection("OpenTelemetry:Metrics"));
 ```
+
+By default, all the metric points of a collection are sent in a single export
+request. Set `PeriodicExportingMetricReaderOptions.MaxExportBatchSize` to split
+them into batches of at most that many metric points instead, even if that
+splits up the metric points of a single metric, with each batch sent in its own
+export request. The batches are exported one after another and the export
+timeout applies to each request. This keeps the size of each request bounded
+when a collection is large (see [Dropped batches](#dropped-batches)).
 
 ## Environment Variables
 
@@ -522,6 +532,7 @@ or reader
   | ----------------------------------------------------| ------------------------------------------------|
   | `OTEL_METRIC_EXPORT_INTERVAL`                       | `ExportIntervalMilliseconds`                    |
   | `OTEL_METRIC_EXPORT_TIMEOUT`                        | `ExportTimeoutMilliseconds`                     |
+  | `OTEL_METRIC_EXPORT_MAX_BATCH_SIZE`                 | `MaxExportBatchSize`                            |
 
   The following environment variables can be used to override the default values
   of the `OtlpExporterOptions` used for metrics when using the [UseOtlpExporter
@@ -588,6 +599,25 @@ used for logging:
 * `OTEL_LOGRECORD_ATTRIBUTE_VALUE_LENGTH_LIMIT`
 * `OTEL_LOGRECORD_ATTRIBUTE_COUNT_LIMIT`
 
+### IUtf8SpanFormattable attribute values
+
+On .NET 10+, attribute values implementing `IUtf8SpanFormattable` that are not
+already handled as a built-in type are formatted directly into the export
+buffer with `TryFormat` instead of through `ToString()`, and exported as string
+attributes. Built-in types such as `Int128`, `DateOnly`, `TimeOnly`, `Version`
+and `IPAddress` also take this path.
+
+`TryFormat` must return `false` only when the destination is too small, and
+must not throw for any other reason: an `ArgumentException` or
+`IndexOutOfRangeException` is treated as the destination being too small.
+Without an attribute value length limit, a value that never fits grows the
+export buffer to its maximum size and the batch is dropped.
+
+A formatter may write anywhere in the space it is given, and all of that space
+is cleared before the export buffer goes back to the shared array pool. That
+space is 3 bytes per char of the attribute value length limit, or the rest of
+the export buffer when there is no limit.
+
 ## Configure HttpClient
 
 The `HttpClientFactory` option is provided on `OtlpExporterOptions` for users
@@ -634,6 +664,21 @@ services.AddHttpClient(
     "OtlpTraceExporter",
     configureClient: (client) =>
         client.DefaultRequestHeaders.Add("X-MyCustomHeader", "value"));
+```
+
+> [!NOTE]
+> The `HttpClient` the exporter creates itself does not follow HTTP redirects,
+  so the configured `Headers` and the telemetry are only sent to the configured
+  `Endpoint`, and a `3xx` response is treated as a failed export. An
+  `HttpClient` supplied through the `HttpClientFactory` option or created by
+  `IHttpClientFactory` uses its own redirect policy, which by default follows
+  redirects. To prevent the named `HttpClient` from following redirects,
+  configure its primary handler:
+
+```csharp
+services.AddHttpClient("OtlpTraceExporter")
+    .ConfigurePrimaryHttpMessageHandler(
+        () => new HttpClientHandler { AllowAutoRedirect = false });
 ```
 
 > [!IMPORTANT]
@@ -697,6 +742,19 @@ want to solicit feedback from the community.
     `OTEL_DOTNET_EXPERIMENTAL_OTLP_DISK_RETRY_DIRECTORY_PATH` to a dedicated
     directory location.
 
+      Every file stored in the directory is sent with the exporter's headers
+      and credentials, so only the application's user must be able to write
+      to it. When running on .NET on non-Windows platforms, the exporter creates
+      the `traces`, `metrics` and `logs` subdirectories accessible to the current
+      user only. Creating the exporter fails if one of them is not owned by the
+      current user or is writable by its group or by other users, or if any
+      directory in its path is not owned by the current user or by root, or is
+      writable by its group or by other users without having the sticky bit
+      set. On Windows and .NET Framework, ensure that the access control list of
+      the directory only allows the application's user to write to it. These
+      checks can be disabled using
+      `OTEL_DOTNET_EXPERIMENTAL_OTLP_DISK_RETRY_CHECK_PERMISSIONS`.
+
       The OTLP exporter utilizes a forked version of the
       [OpenTelemetry.PersistentStorage.FileSystem](https://github.com/open-telemetry/opentelemetry-dotnet-contrib/tree/main/src/OpenTelemetry.PersistentStorage.FileSystem)
       library to store telemetry data on disk. When a transient failure occurs,
@@ -707,10 +765,38 @@ want to solicit feedback from the community.
       managed on disk, refer to the [File
       details](https://github.com/open-telemetry/opentelemetry-dotnet-contrib/tree/main/src/OpenTelemetry.PersistentStorage.FileSystem#file-details).
 
+      Files are stored in a `<signal>/<destination>` subdirectory of the
+      specified directory path, where `<destination>` is derived from the
+      `Protocol`, `Endpoint` and `Headers` of the exporter. An exporter only
+      resends telemetry which was stored for its own destination. Exporters
+      which only differ in the `HttpClient` they use (for example one which adds
+      credentials to the requests) share a subdirectory and may resend each
+      other's telemetry.
+
       Added in **TBD** (Unreleased).
+
+  * `OTEL_DOTNET_EXPERIMENTAL_OTLP_DISK_RETRY_CHECK_PERMISSIONS`
+
+    When set to `false`, the permissions of the directory used for disk retry
+    are not checked when running on .NET on non-Windows platforms, and the
+    exporter is created even if the directory could be changed by another user.
+    This may be needed where the directory is on a volume whose permissions
+    cannot be restricted, such as a Kubernetes `emptyDir` volume or a directory
+    shared with the root group on OpenShift. The default value is `true`.
+
+    Added in **TBD** (Unreleased).
 
 > [!NOTE]
 > Disk retry is not supported on browser-based platforms.
+
+<!-- Comment to separate the notes -->
+
+> [!WARNING]
+> Setting `OTEL_DOTNET_EXPERIMENTAL_OTLP_DISK_RETRY_CHECK_PERMISSIONS` to
+> `false` is a security risk. Any other user who can write to the disk retry
+> directory, or replace it or any directory in its path, can have telemetry of
+> their choosing sent with the exporter's headers and credentials, and can
+> prevent the stored telemetry from being sent.
 
 * Logs
 
@@ -745,10 +831,12 @@ items in each batch with `MaxExportBatchSize` (see [Environment
 Variables](#environment-variables)), and the size of individual items with the
 [attribute limits](#attribute-limits).
 
-A metrics batch contains every metric collected by the reader and there is no
-batch size to lower, so reduce the size of the payload instead: drop
-instruments or attribute keys using views, or lower the cardinality of the
-attributes being recorded.
+For metrics, a batch contains every metric point collected by the reader unless
+batching is enabled, so limit the number of metric points in each batch with
+`PeriodicExportingMetricReaderOptions.MaxExportBatchSize` (see
+[MetricReaderOptions](#metricreaderoptions)). The size of the payload can also
+be reduced by dropping instruments or attribute keys using views, or by lowering
+the cardinality of the attributes being recorded.
 
 ## References
 

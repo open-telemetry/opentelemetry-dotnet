@@ -84,8 +84,8 @@ public class TracestateUtilsTests
     {
         var tracestateEntries = new List<KeyValuePair<string, string>>();
         Assert.True(TraceStateUtils.AppendTraceState(pair, tracestateEntries));
-        Assert.Single(tracestateEntries);
-        Assert.Equal(new KeyValuePair<string, string>(expectedKey, expectedValue), tracestateEntries.Single());
+        var tracestateEntry = Assert.Single(tracestateEntries);
+        Assert.Equal(new KeyValuePair<string, string>(expectedKey, expectedValue), tracestateEntry);
         Assert.Equal($"{expectedKey}={expectedValue}", TraceStateUtils.GetString(tracestateEntries));
     }
 

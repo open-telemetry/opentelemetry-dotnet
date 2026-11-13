@@ -72,9 +72,16 @@ public class PrometheusIntegrationTests(PromToolFixture fixture, ITestOutputHelp
 
                 // On Linux we need to bind to all available hosts to reach the
                 // Prometheus listener from promtool using Docker's internal host.
+                // The default localhost prefix is removed first: keeping it makes
+                // the listener fail to start with "Address already in use" on
+                // hosts where localhost resolves to 127.0.0.1 first.
                 if (OperatingSystem.IsLinux())
                 {
-                    options.ConfigureHttpListener = static (options, listener) => listener.Prefixes.Add($"http://*:{options.Port}/");
+                    options.ConfigureHttpListener = static (options, listener) =>
+                    {
+                        listener.Prefixes.Clear();
+                        listener.Prefixes.Add($"http://*:{options.Port}/");
+                    };
                 }
 
                 return port;

@@ -28,7 +28,17 @@ internal sealed class OtlpHttpExportClient : OtlpExportClient
         try
         {
             using var httpRequest = this.CreateHttpRequest(buffer, contentLength);
-            using var httpResponse = this.SendHttpRequest(httpRequest, cancellationToken);
+
+#if NETFRAMEWORK
+            if (this.CompressionEnabled)
+            {
+                // The length of the compressed content is not known up front, so unless the request
+                // is sent chunked HttpClientHandler buffers the entire compressed body in memory first.
+                httpRequest.Headers.TransferEncodingChunked = true;
+            }
+#endif
+
+            using var httpResponse = this.SendHttpRequest(httpRequest, deadlineUtc, cancellationToken);
 
             if (this.IsResponseTooLarge(httpResponse, out var responseTooLarge))
             {
@@ -40,15 +50,13 @@ internal sealed class OtlpHttpExportClient : OtlpExportClient
                     exception: responseTooLarge);
             }
 
-            try
+            if (!httpResponse.IsSuccessStatusCode)
             {
-                httpResponse.EnsureSuccessStatusCode();
-            }
-            catch (HttpRequestException ex)
-            {
+                var ex = CreateStatusCodeException(httpResponse);
+
                 if (OpenTelemetryProtocolExporterEventSource.Log.IsEnabled(EventLevel.Error, EventKeywords.All))
                 {
-                    var response = TryGetResponseBody(httpResponse, this.MaxResponseSizeBytes, cancellationToken);
+                    var response = TryGetResponseBody(httpResponse, Math.Min(this.MaxResponseSizeBytes, MaxLoggedResponseSizeBytes), deadlineUtc, cancellationToken);
                     OpenTelemetryProtocolExporterEventSource.Log.HttpRequestFailed(this.Endpoint, response, ex);
                 }
 

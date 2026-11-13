@@ -25,6 +25,9 @@ public class ProtobufOtlpMetricSerializerBenchmarks
     [Params(1, 4, 16, 64, 256)]
     public int MetricCount { get; set; }
 
+    [Params(false, true)]
+    public bool UseHistogram { get; set; }
+
     [GlobalSetup]
     public void Setup()
     {
@@ -46,11 +49,22 @@ public class ProtobufOtlpMetricSerializerBenchmarks
 
         for (var i = 0; i < this.MetricCount; i++)
         {
-            var counter = this.meter.CreateCounter<long>(
-                name: "benchmark.requests." + i,
-                unit: "requests",
-                description: "Number of requests processed by component " + i);
-            counter.Add(1);
+            if (this.UseHistogram)
+            {
+                var histogram = this.meter.CreateHistogram<double>(
+                    name: "benchmark.request.duration." + i,
+                    unit: "s",
+                    description: "Duration of requests processed by component " + i);
+                histogram.Record(0.5);
+            }
+            else
+            {
+                var counter = this.meter.CreateCounter<long>(
+                    name: "benchmark.requests." + i,
+                    unit: "requests",
+                    description: "Number of requests processed by component " + i);
+                counter.Add(1);
+            }
         }
 
         this.meterProvider.ForceFlush();
@@ -61,7 +75,7 @@ public class ProtobufOtlpMetricSerializerBenchmarks
 
     [Benchmark]
     public int WriteMetricsData()
-        => ProtobufOtlpMetricSerializer.WriteMetricsData(ref this.buffer, 0, Resource.Empty, in this.batch);
+        => ProtobufOtlpMetricSerializer.WriteMetricsData(ref this.buffer, 0, Resource.Empty, in this.batch, out _);
 
     [GlobalCleanup]
     public void Cleanup()

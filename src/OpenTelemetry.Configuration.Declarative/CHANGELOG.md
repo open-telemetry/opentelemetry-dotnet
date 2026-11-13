@@ -44,3 +44,43 @@ Notes](../../RELEASENOTES.md).
 
 * Declarative configuration now uses strict mode.
   ([#7849](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7849))
+
+* Added strict mode warnings that name ignored `OTEL_*` settings, configuration
+  sources that override the file, and an explicit path that differs from
+  `OTEL_CONFIG_FILE`.
+  ([#7873](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7873))
+
+* Validates property names against the schema. A property the schema does not
+  define is rejected. Limits YAML collection nesting to depth 128, including
+  paths through aliases, with the document root at depth zero. Rejects
+  unresolved mapping-key aliases during parsing.
+  ([#7904](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7904))
+
+* Reports each setting the schema defines that is present in the document but
+  not applied by this package. A stable setting is logged as an error and a
+  setting under development as a warning, naming the setting with its line and
+  column. Loading still succeeds. A document based on a starter template now
+  produces several error-level events until more sections are supported.
+  ([#8009](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8009))
+
+* Dropped support for .NET 8.0 and 9.0.
+  ([#6899](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6899))
+
+* Add support for .NET 11.0.
+  ([#6899](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6899))
+
+* A document with `tracer_provider` now turns tracing on from
+  `UseDeclarativeConfiguration()`, listening to every `ActivitySource` unless
+  `tracer_configurator/development` narrows it, with `simple` and `batch` span
+  processors and the `console` exporter. Unsupported stable `tracer_provider`
+  settings now fail the tracer provider build.
+  ([#8080](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8080))
+
+* Applies the root `log_level` to `SelfDiagnosticsOptions.MinimumLevel`. The
+  setting sets a threshold only and does not turn any output on.
+  ([#8101](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8101))
+
+* The `tracer_provider.sampler` setting now takes effect. Supports
+  `always_on`, `always_off`, `always_record`, `trace_id_ratio_based` and
+  `parent_based`, nested to any depth.
+  ([#8117](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8117))

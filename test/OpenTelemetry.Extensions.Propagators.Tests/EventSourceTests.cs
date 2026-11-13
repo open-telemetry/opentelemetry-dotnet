@@ -6,9 +6,14 @@ using OpenTelemetry.Tests;
 
 namespace OpenTelemetry.Extensions.Propagators.Tests;
 
+[Collection(EventSourceCollectionDefinition.Name)]
 public class EventSourceTests
 {
     [Fact]
     public void EventSourceTests_OpenTelemetryPropagatorsEventSource() =>
         EventSourceTestHelper.ValidateEventSourceIds<OpenTelemetryPropagatorsEventSource>();
+
+    [Fact]
+    public void EventSourceTests_OpenTelemetryPropagatorsEventSource_WritesEvents() =>
+        EventSourceTestHelper.ExerciseEventSource<OpenTelemetryPropagatorsEventSource>();
 }

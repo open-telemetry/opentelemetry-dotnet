@@ -6,11 +6,12 @@ using FsCheck;
 using FsCheck.Fluent;
 using FsCheck.Xunit;
 using Microsoft.Extensions.Configuration;
+using OpenTelemetry.Tests;
 using YamlDotNet.Core;
 
 namespace OpenTelemetry.Configuration.Declarative.FuzzTests;
 
-public class DeclarativeConfigurationFuzzTests
+public sealed class DeclarativeConfigurationFuzzTests : IDisposable
 {
     private const int MaxTests = 200;
     private const int MaxDepth = 4;
@@ -43,6 +44,10 @@ public class DeclarativeConfigurationFuzzTests
     private static readonly Arbitrary<YamlDocument> AnchoredYamlArbitrary =
         Arb.From(AnchoredYamlGenerator, ShrinkYamlDocument);
 
+    private readonly TemporaryDirectory directory = new();
+
+    public void Dispose() => this.directory.Dispose();
+
     [Property(MaxTest = MaxTests)]
     public Property LoadArbitraryYamlNeverThrowsUnexpectedException() =>
         Prop.ForAll(
@@ -54,27 +59,16 @@ public class DeclarativeConfigurationFuzzTests
             yamlContent =>
             {
                 // The public API only accepts a file path; there is no stream overload, so a temp file is required.
-                var tempPath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}.yaml");
+                var tempPath = this.CreateYamlFile(yamlContent);
                 try
                 {
-                    File.WriteAllText(tempPath, yamlContent);
-                    try
-                    {
-                        var builder = new ConfigurationBuilder();
-                        builder.AddOpenTelemetryDeclarativeConfiguration(tempPath);
-                        _ = builder.Build();
-                    }
-                    catch (DeclarativeConfigurationException)
-                    {
-                        // Expected: malformed YAML, unsupported file_format, invalid substitution, etc.
-                    }
+                    var builder = new ConfigurationBuilder();
+                    builder.AddOpenTelemetryDeclarativeConfiguration(tempPath);
+                    _ = builder.Build();
                 }
-                finally
+                catch (DeclarativeConfigurationException)
                 {
-                    if (File.Exists(tempPath))
-                    {
-                        File.Delete(tempPath);
-                    }
+                    // Expected: malformed YAML, unsupported file_format, invalid substitution, etc.
                 }
             });
 
@@ -88,31 +82,20 @@ public class DeclarativeConfigurationFuzzTests
             AnchoredYamlArbitrary,
             document =>
             {
-                var tempPath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}.yaml");
+                var tempPath = this.CreateYamlFile(document.Render());
                 try
                 {
-                    File.WriteAllText(tempPath, document.Render());
-                    try
-                    {
-                        _ = DeclarativeConfigurationReader.Read(
-                            new FilePath(tempPath),
-                            name => name.Length % 2 == 0 ? "value" : null);
-                    }
-                    catch (DeclarativeConfigurationException)
-                    {
-                        // Expected: alias cycle, merge key, invalid tag, invalid substitution, schema violation.
-                    }
-                    catch (YamlException)
-                    {
-                        // Expected: the generated text is not valid YAML.
-                    }
+                    _ = DeclarativeConfigurationReader.Read(
+                        new FilePath(tempPath),
+                        name => name.Length % 2 == 0 ? "value" : null);
                 }
-                finally
+                catch (DeclarativeConfigurationException)
                 {
-                    if (File.Exists(tempPath))
-                    {
-                        File.Delete(tempPath);
-                    }
+                    // Expected: alias cycle, merge key, invalid tag, invalid substitution, schema violation.
+                }
+                catch (YamlException)
+                {
+                    // Expected: the generated text is not valid YAML.
                 }
             });
 
@@ -262,6 +245,13 @@ public class DeclarativeConfigurationFuzzTests
             default:
                 break;
         }
+    }
+
+    private string CreateYamlFile(string yaml)
+    {
+        var path = Path.Combine(this.directory.Path, $"{Guid.NewGuid():N}.yaml");
+        File.WriteAllText(path, yaml);
+        return path;
     }
 
     private abstract record YamlValue;

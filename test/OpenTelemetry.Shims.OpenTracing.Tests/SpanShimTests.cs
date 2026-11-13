@@ -297,9 +297,9 @@ public class SpanShimTests
         shim.SetTag("foo", 1);
 
         Assert.NotNull(shim.Span.Activity);
-        Assert.Single(shim.Span.Activity.TagObjects);
-        Assert.Equal("foo", shim.Span.Activity.TagObjects.First().Key);
-        Assert.Equal(1L, (int)shim.Span.Activity.TagObjects.First().Value!);
+        var tagObject = Assert.Single(shim.Span.Activity.TagObjects);
+        Assert.Equal("foo", tagObject.Key);
+        Assert.Equal(1L, (int)tagObject.Value!);
     }
 
     [Fact]

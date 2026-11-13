@@ -22,9 +22,9 @@ public class BaggagePropagatorBenchmarks
     [Params(1, 5, 20)]
     public int ItemCount { get; set; }
 
-    /// <summary>Gets or sets a value indicating whether keys and values contain characters that require URL-encoding.</summary>
-    [Params(false, true)]
-    public bool UseSpecialChars { get; set; }
+    /// <summary>Gets or sets the type of baggage values used in each benchmark run.</summary>
+    [Params("Plain", "EscapedAscii", "Unicode", "LongEscapedAscii")]
+    public string ValueKind { get; set; } = "Plain";
 
     /// <summary>
     /// Gets or sets the header style used in each benchmark run.
@@ -44,9 +44,13 @@ public class BaggagePropagatorBenchmarks
         IEnumerable<(string Key, string Value)> Items()
         {
             return Enumerable.Range(0, this.ItemCount).Select(i =>
-                this.UseSpecialChars
-                    ? ($"key {i}", $"value {i} !@#$%^&*()")
-                    : ($"key{i}", $"value{i}"));
+                ($"key{i}", this.ValueKind switch
+                {
+                    "EscapedAscii" => $"value {i} !@#$%^&*()",
+                    "Unicode" => $"value{i}-caf\u00E9-\U0001F600",
+                    "LongEscapedAscii" => $"{new string('a', 256)} {i}%",
+                    _ => $"value{i}",
+                }));
         }
 
         var baggageHeader = this.HeaderStyle switch

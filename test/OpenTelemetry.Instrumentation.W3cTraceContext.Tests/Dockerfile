@@ -2,19 +2,21 @@
 # This should be run from the root of the repo:
 # docker build --file test/OpenTelemetry.Instrumentation.W3cTraceContext.Tests/Dockerfile .
 
-ARG BUILD_SDK_VERSION=10.0
-ARG TEST_SDK_VERSION=10.0
+ARG BUILD_SDK_VERSION=11.0
+ARG TEST_SDK_VERSION=11.0
 
-FROM mcr.microsoft.com/dotnet/sdk:8.0.425-azurelinux3.0@sha256:e4ccf0b8cdf61750d23c0364710ecfeb2b9782640866873f68a93c0884fe40e9 AS dotnet-sdk-8.0
-FROM mcr.microsoft.com/dotnet/sdk:9.0.318-azurelinux3.0@sha256:20455bfb45bca8a6a6ae7f6df54af1c67f96a1a685e810fca2f09c8e7967c52c AS dotnet-sdk-9.0
-FROM mcr.microsoft.com/dotnet/sdk:10.0.401-azurelinux3.0@sha256:01bb0a1008dd2b753ff059c9c18ec7e728b3d98d0024fa6e8c84905cdb86ae4e AS dotnet-sdk-10.0
+FROM mcr.microsoft.com/dotnet/sdk:10.0.404-azurelinux3.0@sha256:559c47af49c81eee4057de212d8b16f0c1a5df8b0d0d38ae6499093ea4e6f5a1 AS dotnet-sdk-10.0
+FROM mcr.microsoft.com/dotnet/sdk:11.0.100-azurelinux4.0@sha256:1e2bdc7d7e441899fd6a87183d68b2f03dad44f15a7bcc06234f77a7dc9f593f AS dotnet-sdk-11.0
 
 FROM dotnet-sdk-${BUILD_SDK_VERSION} AS build
 ARG PUBLISH_CONFIGURATION=Release
-ARG PUBLISH_FRAMEWORK=net10.0
+ARG PUBLISH_FRAMEWORK=net11.0
 
 # renovate: datasource=github-digest depName=w3c/trace-context packageName=w3c/trace-context currentValue=main
 ENV W3C_TRACE_CONTEXT_SHA="acab820be9db7b3433668baa5cdd43f57f4c4be0"
+
+# Azure Linux 4 includes a version of OpenSSL that requires enabling SHA1 for .snk files explicitly
+ENV OPENSSL_ENABLE_SHA1_SIGNATURES=1
 
 WORKDIR /repo
 COPY . ./
@@ -40,4 +42,4 @@ RUN tdnf install -y python3-pip \
 ENV SPEC_LEVEL=2
 ENV STRICT_LEVEL=2
 
-ENTRYPOINT ["dotnet", "vstest", "OpenTelemetry.Instrumentation.W3cTraceContext.Tests.dll"]
+ENTRYPOINT ["dotnet", "OpenTelemetry.Instrumentation.W3cTraceContext.Tests.dll"]

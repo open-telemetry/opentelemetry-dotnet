@@ -1,0 +1,127 @@
+# otel-sdk-migration-config.yaml is a typical starting point for configuring the SDK when migrating
+# from environment variable based configuration.
+#
+# This template includes env var substitution references (i.e. ${MY_ENV}) for all spec defined
+# env vars (https://opentelemetry.io/docs/specs/otel/configuration/sdk-environment-variables/)
+# which map cleanly to declarative configuration. For example, OTEL_SDK_DISABLED is referenced
+# below, but OTEL_TRACES_EXPORTER is not since it does not map well to the hierarchical
+# structure of declarative configuration.
+#
+# NOTE: With the exception of env var substitution syntax, SDKs ignore environment variables
+# when interpreting config files. For example, if "disabled: ${OTEL_SDK_DISABLED:-false}"
+# is replaced with "disabled: false", then setting the env var OTEL_SDK_DISABLED will have
+# no effect. See https://opentelemetry.io/docs/specs/otel/configuration/data-model/
+# for more information. The following spec defined env vars are NOT referenced and are thus
+# ignored:
+#
+# - OTEL_TRACES_SAMPLER
+# - OTEL_TRACES_SAMPLER_ARG
+# - OTEL_EXPORTER_ZIPKIN_ENDPOINT
+# - OTEL_EXPORTER_ZIPKIN_TIMEOUT
+# - OTEL_EXPORTER_PROMETHEUS_HOST
+# - OTEL_EXPORTER_PROMETHEUS_PORT
+# - OTEL_TRACES_EXPORTER
+# - OTEL_METRICS_EXPORTER
+# - OTEL_LOGS_EXPORTER
+# - OTEL_EXPORTER_OTLP_PROTOCOL, OTEL_EXPORTER_OTLP_{SIGNAL}_PROTOCOL
+# - OTEL_EXPORTER_OTLP_ENDPOINT
+# - OTEL_EXPORTER_OTLP_INSECURE, OTEL_EXPORTER_OTLP_{SIGNAL}_INSECURE
+# - OTEL_EXPORTER_OTLP_CERTIFICATE
+# - OTEL_EXPORTER_OTLP_CLIENT_KEY
+# - OTEL_EXPORTER_OTLP_CLIENT_CERTIFICATE
+# - OTEL_EXPORTER_OTLP_COMPRESSION
+# - OTEL_EXPORTER_OTLP_TIMEOUT
+# - OTEL_LOG_LEVEL
+#
+# For schema documentation, including required properties, semantics, default behavior, etc,
+# see: https://opentelemetry.io/docs/specs/otel-config/types/
+file_format: "1.2"
+disabled: ${OTEL_SDK_DISABLED:-false}
+log_level: info
+resource:
+  attributes:
+    - name: service.name
+      value: ${OTEL_SERVICE_NAME:-unknown_service}
+  attributes_list: ${OTEL_RESOURCE_ATTRIBUTES}
+attribute_limits:
+  attribute_value_length_limit: ${OTEL_ATTRIBUTE_VALUE_LENGTH_LIMIT}
+  attribute_count_limit: ${OTEL_ATTRIBUTE_COUNT_LIMIT:-128}
+propagator:
+  composite_list: ${OTEL_PROPAGATORS:-tracecontext,baggage}
+tracer_provider:
+  processors:
+    - batch:
+        schedule_delay: ${OTEL_BSP_SCHEDULE_DELAY:-5000}
+        export_timeout: ${OTEL_BSP_EXPORT_TIMEOUT:-30000}
+        max_queue_size: ${OTEL_BSP_MAX_QUEUE_SIZE:-2048}
+        max_export_batch_size: ${OTEL_BSP_MAX_EXPORT_BATCH_SIZE:-512}
+        exporter:
+          otlp_http:
+            endpoint: ${OTEL_EXPORTER_OTLP_ENDPOINT:-http://localhost:4318}/v1/traces
+            tls:
+              ca_file: ${OTEL_EXPORTER_OTLP_TRACES_CERTIFICATE}
+              key_file: ${OTEL_EXPORTER_OTLP_TRACES_CLIENT_KEY}
+              cert_file: ${OTEL_EXPORTER_OTLP_TRACES_CLIENT_CERTIFICATE}
+            compression: ${OTEL_EXPORTER_OTLP_TRACES_COMPRESSION:-gzip}
+            timeout: ${OTEL_EXPORTER_OTLP_TRACES_TIMEOUT:-10000}
+            headers_list: ${OTEL_EXPORTER_OTLP_TRACES_HEADERS}
+  limits:
+    attribute_value_length_limit: ${OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT}
+    attribute_count_limit: ${OTEL_SPAN_ATTRIBUTE_COUNT_LIMIT:-128}
+    event_count_limit: ${OTEL_SPAN_EVENT_COUNT_LIMIT:-128}
+    link_count_limit: ${OTEL_SPAN_LINK_COUNT_LIMIT:-128}
+    event_attribute_count_limit: ${OTEL_EVENT_ATTRIBUTE_COUNT_LIMIT:-128}
+    link_attribute_count_limit: ${OTEL_LINK_ATTRIBUTE_COUNT_LIMIT:-128}
+  sampler:
+    parent_based:
+      root:
+        always_on:
+      remote_parent_sampled:
+        always_on:
+      remote_parent_not_sampled:
+        always_off:
+      local_parent_sampled:
+        always_on:
+      local_parent_not_sampled:
+        always_off:
+meter_provider:
+  readers:
+    - periodic:
+        interval: ${OTEL_METRIC_EXPORT_INTERVAL:-60000}
+        timeout: ${OTEL_METRIC_EXPORT_TIMEOUT:-30000}
+        exporter:
+          otlp_http:
+            endpoint: ${OTEL_EXPORTER_OTLP_ENDPOINT:-http://localhost:4318}/v1/metrics
+            tls:
+              ca_file: ${OTEL_EXPORTER_OTLP_METRICS_CERTIFICATE}
+              key_file: ${OTEL_EXPORTER_OTLP_METRICS_CLIENT_KEY}
+              cert_file: ${OTEL_EXPORTER_OTLP_METRICS_CLIENT_CERTIFICATE}
+            compression: ${OTEL_EXPORTER_OTLP_METRICS_COMPRESSION:-gzip}
+            timeout: ${OTEL_EXPORTER_OTLP_METRICS_TIMEOUT:-10000}
+            headers_list: ${OTEL_EXPORTER_OTLP_METRICS_HEADERS}
+            temporality_preference: ${OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE:-cumulative}
+            default_histogram_aggregation: ${OTEL_EXPORTER_OTLP_METRICS_DEFAULT_HISTOGRAM_AGGREGATION:-explicit_bucket_histogram}
+  exemplar_filter: ${OTEL_METRICS_EXEMPLAR_FILTER:-trace_based}
+logger_provider:
+  processors:
+    - batch:
+        schedule_delay: ${OTEL_BLRP_SCHEDULE_DELAY:-1000}
+        export_timeout: ${OTEL_BLRP_EXPORT_TIMEOUT:-30000}
+        max_queue_size: ${OTEL_BLRP_MAX_QUEUE_SIZE:-2048}
+        max_export_batch_size: ${OTEL_BLRP_MAX_EXPORT_BATCH_SIZE:-512}
+        exporter:
+          otlp_http:
+            endpoint: ${OTEL_EXPORTER_OTLP_ENDPOINT:-http://localhost:4318}/v1/logs
+            tls:
+              ca_file: ${OTEL_EXPORTER_OTLP_LOGS_CERTIFICATE}
+              key_file: ${OTEL_EXPORTER_OTLP_LOGS_CLIENT_KEY}
+              cert_file: ${OTEL_EXPORTER_OTLP_LOGS_CLIENT_CERTIFICATE}
+            compression: ${OTEL_EXPORTER_OTLP_LOGS_COMPRESSION:-gzip}
+            timeout: ${OTEL_EXPORTER_OTLP_LOGS_TIMEOUT:-10000}
+            headers_list: ${OTEL_EXPORTER_OTLP_LOGS_HEADERS}
+  limits:
+    attribute_value_length_limit: ${OTEL_LOGRECORD_ATTRIBUTE_VALUE_LENGTH_LIMIT}
+    attribute_count_limit: ${OTEL_LOGRECORD_ATTRIBUTE_COUNT_LIMIT:-128}
+instrumentation/development:
+  general:
+    stability_opt_in_list: ${OTEL_SEMCONV_STABILITY_OPT_IN}

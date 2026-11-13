@@ -53,26 +53,32 @@ internal sealed class DeclarativeConfigurationDocumentAccessor
     /// Thrown when the file cannot be parsed. The exception is cached: subsequent calls
     /// re-throw the same instance without re-reading the file.
     /// </exception>
-    internal DeclarativeConfigurationDocument GetDocument() => this.GetDocument(triggeredByProvider: false);
+    internal DeclarativeConfigurationDocument GetDocument() => this.GetDocument(triggeredByPipeline: false);
 
     /// <summary>
-    /// Returns the parsed document for a configuration provider, producing it on first call.
+    /// Returns the parsed document for the configuration pipeline, producing it on first call.
     /// </summary>
+    /// <remarks>
+    /// The pipeline is the configuration provider's load and the read during
+    /// <c>UseDeclarativeConfiguration</c>. A first parse from here is expected, so unlike
+    /// <see cref="GetDocument()"/> it does not log that the document was parsed on demand.
+    /// </remarks>
     /// <returns>The parsed <see cref="DeclarativeConfigurationDocument"/>.</returns>
     /// <exception cref="DeclarativeConfigurationException">
     /// Thrown when the file cannot be parsed. The exception is cached: subsequent calls
     /// re-throw the same instance without re-reading the file.
     /// </exception>
-    internal DeclarativeConfigurationDocument GetDocumentForProvider() =>
-        this.GetDocument(triggeredByProvider: true);
+    internal DeclarativeConfigurationDocument GetDocumentForPipeline() =>
+        this.GetDocument(triggeredByPipeline: true);
 
     private static DeclarativeConfigurationDocument Parse(
         FilePath filePath,
         Func<FilePath, DeclarativeConfigurationDocument> readDocument)
     {
+        DeclarativeConfigurationDocument document;
         try
         {
-            return readDocument(filePath);
+            document = readDocument(filePath);
         }
         catch (DeclarativeConfigurationException ex)
         {
@@ -85,9 +91,32 @@ internal sealed class DeclarativeConfigurationDocumentAccessor
             throw new DeclarativeConfigurationException(
                 $"Failed to load declarative configuration from '{filePath.DisplayPath}': {ex.Message}", ex);
         }
+
+        foreach (var property in document.UnappliedProperties)
+        {
+            var (path, stability, position) = property;
+
+            if (SupportManifest.IsReportedByTracerProviderBuild(property))
+            {
+                // Don't log this property here. Building the tracer provider throws an exception
+                // that reports it, so logging now would report the same problem twice.
+                continue;
+            }
+
+            if (stability == SchemaStability.Stable)
+            {
+                OpenTelemetryDeclarativeConfigurationEventSource.Log.ConfiguredPropertyNotApplied(filePath.DisplayPath, path, position.Line, position.Column);
+            }
+            else
+            {
+                OpenTelemetryDeclarativeConfigurationEventSource.Log.DevelopmentPropertyNotApplied(filePath.DisplayPath, path, position.Line, position.Column);
+            }
+        }
+
+        return document;
     }
 
-    private DeclarativeConfigurationDocument GetDocument(bool triggeredByProvider)
+    private DeclarativeConfigurationDocument GetDocument(bool triggeredByPipeline)
     {
         if (this.document.IsValueCreated)
         {
@@ -101,7 +130,7 @@ internal sealed class DeclarativeConfigurationDocumentAccessor
 
         var parsedDocument = this.document.Value;
 
-        if (claimedParse && !triggeredByProvider)
+        if (claimedParse && !triggeredByPipeline)
         {
             OpenTelemetryDeclarativeConfigurationEventSource.Log.DocumentParsedOnDemand(this.FilePath.DisplayPath);
         }

@@ -60,10 +60,10 @@ public sealed class OtlpKvListAttributeTests : IDisposable
         Assert.Equal(OtlpCommon.AnyValue.ValueOneofCase.KvlistValue, attribute.Value.ValueCase);
 
         var values = attribute.Value.KvlistValue.Values;
-        Assert.Single(values);
-        Assert.Equal("innerKey", values[0].Key);
-        Assert.Equal(OtlpCommon.AnyValue.ValueOneofCase.StringValue, values[0].Value.ValueCase);
-        Assert.Equal("innerValue", values[0].Value.StringValue);
+        var value = Assert.Single(values);
+        Assert.Equal("innerKey", value.Key);
+        Assert.Equal(OtlpCommon.AnyValue.ValueOneofCase.StringValue, value.Value.ValueCase);
+        Assert.Equal("innerValue", value.Value.StringValue);
     }
 
     [Fact]
@@ -115,9 +115,9 @@ public sealed class OtlpKvListAttributeTests : IDisposable
         Assert.Equal(OtlpCommon.AnyValue.ValueOneofCase.KvlistValue, attribute.Value.ValueCase);
 
         var values = attribute.Value.KvlistValue.Values;
-        Assert.Single(values);
-        Assert.Equal("nullKey", values[0].Key);
-        Assert.Equal(OtlpCommon.AnyValue.ValueOneofCase.None, values[0].Value.ValueCase);
+        var value = Assert.Single(values);
+        Assert.Equal("nullKey", value.Key);
+        Assert.Equal(OtlpCommon.AnyValue.ValueOneofCase.None, value.Value.ValueCase);
     }
 
     [Fact]
@@ -137,14 +137,14 @@ public sealed class OtlpKvListAttributeTests : IDisposable
         Assert.Equal(OtlpCommon.AnyValue.ValueOneofCase.KvlistValue, attribute.Value.ValueCase);
 
         var outerValues = attribute.Value.KvlistValue.Values;
-        Assert.Single(outerValues);
-        Assert.Equal("inner", outerValues[0].Key);
-        Assert.Equal(OtlpCommon.AnyValue.ValueOneofCase.KvlistValue, outerValues[0].Value.ValueCase);
+        var outerValue = Assert.Single(outerValues);
+        Assert.Equal("inner", outerValue.Key);
+        Assert.Equal(OtlpCommon.AnyValue.ValueOneofCase.KvlistValue, outerValue.Value.ValueCase);
 
-        var innerValues = outerValues[0].Value.KvlistValue.Values;
-        Assert.Single(innerValues);
-        Assert.Equal("nestedKey", innerValues[0].Key);
-        Assert.Equal("nestedValue", innerValues[0].Value.StringValue);
+        var innerValues = outerValue.Value.KvlistValue.Values;
+        var innerValue = Assert.Single(innerValues);
+        Assert.Equal("nestedKey", innerValue.Key);
+        Assert.Equal("nestedValue", innerValue.Value.StringValue);
     }
 
     [Fact]
@@ -211,15 +211,17 @@ public sealed class OtlpKvListAttributeTests : IDisposable
         Assert.Equal("prod", values[1].Value.StringValue);
     }
 
-    [Fact]
-    public void StringDictionaryWithNullValueAsKvList()
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void StringKeyValuePairsWithNullValueAsKvList(bool asArray)
     {
         var dict = new Dictionary<string, string?>
         {
             ["present"] = "value",
             ["missing"] = null,
         };
-        var kvp = new KeyValuePair<string, object?>("key", dict);
+        var kvp = new KeyValuePair<string, object?>("key", asArray ? dict.ToArray() : dict);
 
         Assert.True(TryTransformTag(kvp, out var attribute));
         Assert.Equal(OtlpCommon.AnyValue.ValueOneofCase.KvlistValue, attribute.Value.ValueCase);
@@ -299,14 +301,14 @@ public sealed class OtlpKvListAttributeTests : IDisposable
         Assert.Equal(OtlpCommon.AnyValue.ValueOneofCase.KvlistValue, attribute.Value.ValueCase);
 
         var outerValues = attribute.Value.KvlistValue.Values;
-        Assert.Single(outerValues);
-        Assert.Equal("labels", outerValues[0].Key);
-        Assert.Equal(OtlpCommon.AnyValue.ValueOneofCase.KvlistValue, outerValues[0].Value.ValueCase);
+        var outerValue = Assert.Single(outerValues);
+        Assert.Equal("labels", outerValue.Key);
+        Assert.Equal(OtlpCommon.AnyValue.ValueOneofCase.KvlistValue, outerValue.Value.ValueCase);
 
-        var innerValues = outerValues[0].Value.KvlistValue.Values;
-        Assert.Single(innerValues);
-        Assert.Equal("x", innerValues[0].Key);
-        Assert.Equal("y", innerValues[0].Value.StringValue);
+        var innerValues = outerValue.Value.KvlistValue.Values;
+        var innerValue = Assert.Single(innerValues);
+        Assert.Equal("x", innerValue.Key);
+        Assert.Equal("y", innerValue.Value.StringValue);
     }
 
     [Fact]
@@ -400,7 +402,8 @@ public sealed class OtlpKvListAttributeTests : IDisposable
         {
             try
             {
-                writePosition = ProtobufOtlpTraceSerializer.WriteSpan(buffer, 0, new SdkLimitOptions(), activity);
+                var dirtyLength = 0;
+                writePosition = ProtobufOtlpTraceSerializer.WriteSpan(buffer, 0, new SdkLimitOptions(), activity, ref dirtyLength);
                 break;
             }
             catch (Exception ex) when (ex is IndexOutOfRangeException or ArgumentException)
@@ -425,10 +428,10 @@ public sealed class OtlpKvListAttributeTests : IDisposable
         Assert.Equal(OtlpCommon.AnyValue.ValueOneofCase.KvlistValue, kvListAttr.Value.ValueCase);
 
         var values = kvListAttr.Value.KvlistValue.Values;
-        Assert.Single(values);
+        var singleValue = Assert.Single(values);
 
-        Assert.Equal("large", values[0].Key);
-        Assert.Equal(largeString, values[0].Value.StringValue);
+        Assert.Equal("large", singleValue.Key);
+        Assert.Equal(largeString, singleValue.Value.StringValue);
     }
 
     [Fact]
@@ -447,7 +450,8 @@ public sealed class OtlpKvListAttributeTests : IDisposable
 
         var buffer = new byte[1_000_000];
 
-        var writePosition = ProtobufOtlpTraceSerializer.WriteSpan(buffer, 0, new SdkLimitOptions(), activity);
+        var dirtyLength = 0;
+        var writePosition = ProtobufOtlpTraceSerializer.WriteSpan(buffer, 0, new SdkLimitOptions(), activity, ref dirtyLength);
 
         using var stream = new MemoryStream(buffer, 0, writePosition);
         var scopeSpans = OtlpTrace.ScopeSpans.Parser.ParseFrom(stream);

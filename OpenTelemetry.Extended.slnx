@@ -50,8 +50,7 @@
     <File Path="build/OpenTelemetry.snk.base64" />
     <File Path="build/docfx.cmd" />
     <File Path="build/docker-compose.net10.0.yml" />
-    <File Path="build/docker-compose.net8.0.yml" />
-    <File Path="build/docker-compose.net9.0.yml" />
+    <File Path="build/docker-compose.net11.0.yml" />
     <File Path="build/GlobalAttrExclusions.txt" />
     <File Path="build/opentelemetry-icon-color.png" />
     <File Path="build/OpenTelemetry.prod.loose.ruleset" />
@@ -102,7 +101,6 @@
     <File Path="docs/diagnostics/experimental-apis/OTEL1000.md" />
     <File Path="docs/diagnostics/experimental-apis/OTEL1001.md" />
     <File Path="docs/diagnostics/experimental-apis/OTEL1004.md" />
-    <File Path="docs/diagnostics/experimental-apis/OTEL1005.md" />
     <File Path="docs/diagnostics/experimental-apis/README.md" />
   </Folder>
   <Folder Name="/docs/logs/">
@@ -146,6 +144,7 @@
   <Folder Name="/examples/">
     <Project Path="examples/AspNetCore/Examples.AspNetCore.csproj" />
     <Project Path="examples/Console/Examples.Console.csproj" />
+    <Project Path="examples/DeclarativeConfiguration/Examples.DeclarativeConfiguration.csproj" />
     <Project Path="examples/EnvironmentVariables/Examples.EnvironmentVariables.csproj" />
     <Project Path="examples/FSharp/Examples.FSharp.fsproj" />
     <Project Path="examples/GrpcService/Examples.GrpcService.csproj" />
@@ -168,6 +167,7 @@
     <File Path="src/Shared/DoubleExtensions.cs" />
     <File Path="src/Shared/ExceptionExtensions.cs" />
     <File Path="src/Shared/Guard.cs" />
+    <File Path="src/Shared/MathExtensions.cs" />
     <File Path="src/Shared/PeriodicExportingMetricReaderHelper.cs" />
     <File Path="src/Shared/ResourceSemanticConventions.cs" />
     <File Path="src/Shared/SchemaUrls.cs" />

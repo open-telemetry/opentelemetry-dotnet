@@ -137,6 +137,19 @@ public class ConsoleLogRecordExporter : ConsoleExporter<LogRecord>
                 }
             }
 
+            var logger = logRecord.Logger;
+            this.WriteLine("Instrumentation scope (Logger):");
+            this.WriteLine($"    Name: {logger.Name}");
+            if (!string.IsNullOrEmpty(logger.Version))
+            {
+                this.WriteLine($"    Version: {logger.Version}");
+            }
+
+            if (!string.IsNullOrEmpty(logger.SchemaUrl))
+            {
+                this.WriteLine($"    Schema URL: {logger.SchemaUrl}");
+            }
+
             var resource = this.ParentProvider.GetResource();
             if (resource != Resource.Empty)
             {

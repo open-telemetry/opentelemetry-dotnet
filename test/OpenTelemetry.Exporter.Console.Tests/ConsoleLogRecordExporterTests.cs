@@ -5,12 +5,14 @@ using System.Diagnostics;
 using Microsoft.Extensions.Logging;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Resources;
+using OpenTelemetry.Tests;
 
 namespace OpenTelemetry.Exporter.Console.Tests;
 
 #pragma warning disable CA1848 // Use the LoggerMessage delegates
 #pragma warning disable CA1873 // Avoid potentially expensive logging
 
+[Collection(ConsoleErrorCollectionDefinition.Name)]
 public class ConsoleLogRecordExporterTests
 {
     [Fact]
@@ -315,6 +317,55 @@ public class ConsoleLogRecordExporterTests
 
         // Assert
         Assert.Equal(ExportResult.Success, actual);
+    }
+
+    [Fact]
+    public void Export_WithLoggerVersionAndSchemaUrl()
+    {
+        // Arrange
+        var logRecords = new List<LogRecord>();
+        using var loggerFactory = LoggerFactory.Create(builder =>
+        {
+            builder.AddOpenTelemetry(options =>
+            {
+                options.SchemaUrl = "https://opentelemetry.io/schemas/1.24.0";
+                options.Version = "1.0.0";
+                options.AddInMemoryExporter(logRecords);
+            });
+        });
+
+        // Act
+        var logger = loggerFactory.CreateLogger<ConsoleLogRecordExporterTests>();
+        logger.LogInformation("Test message with logger version and schema URL");
+
+        // Assert
+        Assert.Single(logRecords);
+
+        // Act
+        using var exporter = new ConsoleLogRecordExporter(new ConsoleExporterOptions());
+
+        var originalOut = System.Console.Out;
+        using var output = new StringWriter();
+        System.Console.SetOut(output);
+
+        ExportResult actual;
+
+        try
+        {
+            actual = exporter.Export(new Batch<LogRecord>([.. logRecords], logRecords.Count));
+        }
+        finally
+        {
+            System.Console.SetOut(originalOut);
+        }
+
+        // Assert
+        Assert.Equal(ExportResult.Success, actual);
+
+        var consoleOutput = output.ToString();
+        Assert.Contains($"Name: {typeof(ConsoleLogRecordExporterTests).FullName}", consoleOutput, StringComparison.Ordinal);
+        Assert.Contains("Version: 1.0.0", consoleOutput, StringComparison.Ordinal);
+        Assert.Contains("Schema URL: https://opentelemetry.io/schemas/1.24.0", consoleOutput, StringComparison.Ordinal);
     }
 
     [Fact]

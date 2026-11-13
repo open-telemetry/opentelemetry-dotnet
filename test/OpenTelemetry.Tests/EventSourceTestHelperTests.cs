@@ -4,6 +4,7 @@
 // Adapted from https://github.com/dotnet/aspnetcore/blob/3a973a5f4d28242262f27c86eb3f14299fe712ba/src/Testing/test/EventSourceValidatorTests.cs
 
 using System.Diagnostics.Tracing;
+using System.Runtime.InteropServices;
 
 namespace OpenTelemetry.Tests;
 
@@ -21,13 +22,7 @@ public static class EventSourceTestHelperTests
     [Fact]
     public static void ValidateEventSourceIds_FailsForMismatchedWriteEventId()
     {
-#if !NETFRAMEWORK
-        if (!OperatingSystem.IsWindows())
-        {
-            // Only supported on Windows
-            return;
-        }
-#endif
+        Assert.SkipUnless(RuntimeInformation.IsOSPlatform(OSPlatform.Windows), "This test can only be run on Windows.");
 
         Assert.ThrowsAny<Exception>(
             EventSourceTestHelper.ValidateEventSourceIds<MismatchedIdEventSource>);

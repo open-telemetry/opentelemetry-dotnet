@@ -13,21 +13,25 @@ internal sealed class TestHttpMessageHandler : HttpMessageHandler
 
     public byte[]? HttpRequestContent { get; private set; }
 
+    public int RequestCount { get; private set; }
+
     protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
     {
         this.HttpRequestMessage = request;
+        this.RequestCount++;
 #if NET
         this.HttpRequestContent = await request.Content!.ReadAsByteArrayAsync(cancellationToken).ConfigureAwait(false);
 #else
         this.HttpRequestContent = await request.Content.ReadAsByteArrayAsync().ConfigureAwait(false);
 #endif
-        return new HttpResponseMessage();
+        return CreateResponse(request);
     }
 
 #if NET
     protected override HttpResponseMessage Send(HttpRequestMessage request, CancellationToken cancellationToken)
     {
         this.HttpRequestMessage = request;
+        this.RequestCount++;
 
         using var stream = request.Content!.ReadAsStream(cancellationToken);
         using var memoryStream = new MemoryStream();
@@ -35,7 +39,21 @@ internal sealed class TestHttpMessageHandler : HttpMessageHandler
         stream.CopyTo(memoryStream);
         this.HttpRequestContent = memoryStream.ToArray();
 
-        return new HttpResponseMessage();
+        return CreateResponse(request);
     }
 #endif
+
+    private static HttpResponseMessage CreateResponse(HttpRequestMessage request)
+    {
+        var response = new HttpResponseMessage()
+        {
+            RequestMessage = request,
+            Content = new ByteArrayContent([]),
+        };
+
+        // Also a successful response for gRPC, which is ignored for HTTP/protobuf
+        response.Headers.Add("grpc-status", "0");
+
+        return response;
+    }
 }

@@ -6,6 +6,7 @@ using System.Collections.Frozen;
 #endif
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
+using System.Diagnostics.Tracing;
 using System.Text;
 using System.Text.RegularExpressions;
 using Microsoft.Extensions.Configuration;
@@ -20,6 +21,11 @@ internal sealed class MeterProviderSdk : MeterProvider
     internal const string ExemplarFilterConfigKey = "OTEL_METRICS_EXEMPLAR_FILTER";
     internal const string ExemplarFilterHistogramsConfigKey = "OTEL_DOTNET_EXPERIMENTAL_METRICS_EXEMPLAR_FILTER_HISTOGRAMS";
 
+    // Observable callbacks execute synchronously under collectLock. Restore this
+    // after each pass so callbacks may collect a different provider on the same thread.
+    [ThreadStatic]
+    internal static long ObservableInstrumentsCollectionCycle;
+
     internal readonly IServiceProvider ServiceProvider;
     internal IDisposable? OwnedServiceProvider;
     internal int ShutdownCount;
@@ -28,16 +34,23 @@ internal sealed class MeterProviderSdk : MeterProvider
     internal ExemplarFilterType? ExemplarFilterForHistograms;
     internal Action? OnCollectObservableInstruments;
 
+    private static long lastObservableInstrumentsCollectionCycle;
+
     private readonly List<Func<Instrument, MetricStreamConfiguration?>> viewConfigs;
     private readonly Lock collectLock = new();
     private readonly MeterListener listener;
     private readonly Predicate<Instrument> shouldListenTo = static _ => false;
     private CompositeMetricReader? compositeMetricReader;
 
+    private IDisposable? selfDiagnosticsRegistration;
+
     internal MeterProviderSdk(
         IServiceProvider serviceProvider,
-        bool ownsServiceProvider)
+        bool ownsServiceProvider,
+        IDisposable selfDiagnosticsRegistration)
     {
+        this.selfDiagnosticsRegistration = selfDiagnosticsRegistration;
+
         var state = serviceProvider.GetRequiredService<MeterProviderBuilderSdk>();
         state.RegisterProvider(this);
 
@@ -267,7 +280,10 @@ internal sealed class MeterProviderSdk : MeterProvider
 
         try
         {
-            OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent($"Started publishing Instrument = \"{instrument.Name}\" of Meter = \"{instrument.Meter.Name}\".");
+            if (OpenTelemetrySdkEventSource.Log.IsEnabled(EventLevel.Verbose, EventKeywords.All))
+            {
+                OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent($"Started publishing Instrument = \"{instrument.Name}\" of Meter = \"{instrument.Meter.Name}\".");
+            }
 
             if (viewConfigCount <= 0)
             {
@@ -380,12 +396,20 @@ internal sealed class MeterProviderSdk : MeterProvider
 
             if (state != null)
             {
-                OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent($"Measurements for Instrument = \"{instrument.Name}\" of Meter = \"{instrument.Meter.Name}\" will be processed and aggregated by the SDK.");
+                if (OpenTelemetrySdkEventSource.Log.IsEnabled(EventLevel.Verbose, EventKeywords.All))
+                {
+                    OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent($"Measurements for Instrument = \"{instrument.Name}\" of Meter = \"{instrument.Meter.Name}\" will be processed and aggregated by the SDK.");
+                }
+
                 return state;
             }
             else
             {
-                OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent($"Measurements for Instrument = \"{instrument.Name}\" of Meter = \"{instrument.Meter.Name}\" will be dropped by the SDK.");
+                if (OpenTelemetrySdkEventSource.Log.IsEnabled(EventLevel.Verbose, EventKeywords.All))
+                {
+                    OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent($"Measurements for Instrument = \"{instrument.Name}\" of Meter = \"{instrument.Meter.Name}\" will be dropped by the SDK.");
+                }
+
                 return null;
             }
         }
@@ -407,6 +431,9 @@ internal sealed class MeterProviderSdk : MeterProvider
     {
         lock (this.collectLock)
         {
+            var previousCollectionCycle = ObservableInstrumentsCollectionCycle;
+            ObservableInstrumentsCollectionCycle = Interlocked.Increment(ref lastObservableInstrumentsCollectionCycle);
+
             // Record all observable instruments
             try
             {
@@ -420,6 +447,10 @@ internal sealed class MeterProviderSdk : MeterProvider
                 // It doesn't looks like we can find which instrument callback
                 // threw.
                 OpenTelemetrySdkEventSource.Log.MetricObserverCallbackException(exception);
+            }
+            finally
+            {
+                ObservableInstrumentsCollectionCycle = previousCollectionCycle;
             }
         }
     }
@@ -501,6 +532,8 @@ internal sealed class MeterProviderSdk : MeterProvider
 
             this.Disposed = true;
             OpenTelemetrySdkEventSource.Log.ProviderDisposed(nameof(MeterProvider));
+            this.selfDiagnosticsRegistration?.Dispose();
+            this.selfDiagnosticsRegistration = null;
         }
 
         base.Dispose(disposing);
@@ -533,7 +566,7 @@ internal sealed class MeterProviderSdk : MeterProvider
             }
             else
             {
-                (names ??= new(StringComparer.OrdinalIgnoreCase)).Add(source);
+                (names ??= [with(StringComparer.OrdinalIgnoreCase)]).Add(source);
             }
         }
 

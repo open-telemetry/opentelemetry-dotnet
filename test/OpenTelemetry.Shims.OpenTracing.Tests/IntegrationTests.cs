@@ -3,10 +3,12 @@
 
 using System.Diagnostics;
 using OpenTelemetry.Context.Propagation;
+using OpenTelemetry.Tests;
 using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Shims.OpenTracing.Tests;
 
+[Collection(PropagatorsCollectionDefinition.Name)]
 public class IntegrationTests
 {
     private const string ChildActivitySource = "ChildActivitySource";

@@ -2,10 +2,11 @@
 
   <PropertyGroup>
     <Description>MAUI test app validating the OpenTelemetry SDK runs end-to-end inside a .NET MAUI application host under the Android runtime.</Description>
+    <EmbedAssembliesIntoApk>true</EmbedAssembliesIntoApk>
     <EnableMSTestRunner>true</EnableMSTestRunner>
     <NoWarn>$(NoWarn);CA1515;CA1707;CA1724;CA1848;CA2007;XA0101;XA0141</NoWarn>
     <OutputType>Exe</OutputType>
-    <TargetFrameworks>net10.0-android</TargetFrameworks>
+    <TargetFrameworks>net11.0-android;net10.0-android</TargetFrameworks>
   </PropertyGroup>
 
   <!--
@@ -23,8 +24,8 @@
     that do not support trimming we cannot publish the application as trimmed.
   -->
   <PropertyGroup>
+    <PublishReadyToRun>false</PublishReadyToRun>
     <PublishTrimmed>false</PublishTrimmed>
-    <RunAOTCompilation>false</RunAOTCompilation>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -72,10 +73,10 @@
   -->
   <ItemGroup>
     <PackageReference Remove="GitHubActionsTestLogger" />
-    <PackageReference Remove="Microsoft.NET.Test.Sdk" />
+    <PackageReference Remove="Microsoft.Testing.Extensions.CodeCoverage" />
+    <PackageReference Remove="Microsoft.Testing.Extensions.HangDump" />
     <PackageReference Remove="Microsoft.Testing.Platform" />
-    <PackageReference Remove="xunit.runner.visualstudio" />
-    <PackageReference Remove="xunit.v3" />
+    <PackageReference Remove="xunit.v3.mtp-v2" />
   </ItemGroup>
 
   <ItemGroup>

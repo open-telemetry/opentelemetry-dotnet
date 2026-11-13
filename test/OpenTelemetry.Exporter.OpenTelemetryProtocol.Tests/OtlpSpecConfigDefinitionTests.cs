@@ -5,10 +5,12 @@ using System.Collections;
 using System.Globalization;
 using Microsoft.Extensions.Configuration;
 using OpenTelemetry.Metrics;
+using OpenTelemetry.Tests;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests;
 
-public class OtlpSpecConfigDefinitionTests : IEnumerable<object[]>
+[Collection(EnvVarsCollectionDefinition.Name)]
+public class OtlpSpecConfigDefinitionTests : IEnumerable<TheoryDataRow<string>>
 {
     internal static TestData DefaultData { get; } = new TestData(
         OtlpExporterOptionsConfigurationType.Default,
@@ -99,30 +101,25 @@ public class OtlpSpecConfigDefinitionTests : IEnumerable<object[]>
         Assert.Equal("OTEL_EXPORTER_OTLP_TRACES_TIMEOUT", TracingData.TimeoutKeyName);
     }
 
-    public IEnumerator<object[]> GetEnumerator()
+    public IEnumerator<TheoryDataRow<string>> GetEnumerator()
     {
-        yield return new object[]
-        {
-            DefaultData,
-        };
-
-        yield return new object[]
-        {
-            LoggingData,
-        };
-
-        yield return new object[]
-        {
-            MetricsData,
-        };
-
-        yield return new object[]
-        {
-            TracingData,
-        };
+        yield return new(nameof(DefaultData));
+        yield return new(nameof(LoggingData));
+        yield return new(nameof(MetricsData));
+        yield return new(nameof(TracingData));
     }
 
     IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
+
+    internal static TestData GetTestData(string name)
+        => name switch
+        {
+            nameof(DefaultData) => DefaultData,
+            nameof(LoggingData) => LoggingData,
+            nameof(MetricsData) => MetricsData,
+            nameof(TracingData) => TracingData,
+            _ => throw new ArgumentOutOfRangeException(nameof(name), name, "Unknown test data."),
+        };
 
     internal static IConfiguration ToConfiguration()
     {

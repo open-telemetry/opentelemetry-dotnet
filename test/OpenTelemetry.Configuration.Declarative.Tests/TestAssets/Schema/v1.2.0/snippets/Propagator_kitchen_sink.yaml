@@ -1,0 +1,11 @@
+file_format: "1.2"
+
+propagator:
+  # SNIPPET_START
+  # .composite and .composite_list are merged and deduplicated.
+  composite:
+    - tracecontext:
+    - baggage:
+    - b3:
+    - b3multi:
+  composite_list: "xray"

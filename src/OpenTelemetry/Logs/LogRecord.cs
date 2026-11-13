@@ -26,7 +26,7 @@ public sealed class LogRecord
 
     private static readonly Action<object?, LogRecord> AddScopeToRecord = static (scope, record) =>
     {
-        (record.ScopeStorage ??= new List<object?>(LogRecordPoolHelper.DefaultMaxNumberOfScopes)).Add(scope);
+        (record.ScopeStorage ??= [with(LogRecordPoolHelper.DefaultMaxNumberOfScopes)]).Add(scope);
     };
 
     internal LogRecord()
@@ -80,7 +80,7 @@ public sealed class LogRecord
             this.AttributeData = stateValues;
         }
 
-        this.Logger = InstrumentationScopeLogger.GetInstrumentationScopeLoggerForName(categoryName);
+        this.Logger = InstrumentationScopeLogger.GetInstrumentationScopeLogger(new() { Name = categoryName });
     }
 
     internal enum LogRecordSource
@@ -190,7 +190,12 @@ public sealed class LogRecord
         {
             if (this.Logger.Name != value)
             {
-                this.Logger = InstrumentationScopeLogger.GetInstrumentationScopeLoggerForName(value);
+                this.Logger = InstrumentationScopeLogger.GetInstrumentationScopeLogger(new()
+                {
+                    Name = value,
+                    Version = this.Logger.Version,
+                    SchemaUrl = this.Logger.SchemaUrl,
+                });
             }
         }
     }
@@ -372,7 +377,7 @@ public sealed class LogRecord
     /// known at the source.
     /// </summary>
     /// <remarks><inheritdoc cref="Sdk.CreateLoggerProviderBuilder" path="/remarks"/></remarks>
-    [Experimental(DiagnosticDefinitions.LogsBridgeExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
+    [Experimental(DiagnosticDefinitions.LogsExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
     public
 #else
     /// <summary>
@@ -392,7 +397,7 @@ public sealed class LogRecord
     /// Gets or sets the log <see cref="LogRecordSeverity"/>.
     /// </summary>
     /// <remarks><inheritdoc cref="Sdk.CreateLoggerProviderBuilder" path="/remarks"/></remarks>
-    [Experimental(DiagnosticDefinitions.LogsBridgeExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
+    [Experimental(DiagnosticDefinitions.LogsExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
     public
 #else
     /// <summary>
@@ -413,12 +418,12 @@ public sealed class LogRecord
     /// </summary>
     /// <remarks>
     /// <para><inheritdoc cref="Sdk.CreateLoggerProviderBuilder" path="/remarks"/></para>
-    /// Note: When using the Log Bridge API (for example <see
+    /// Note: When using the Logs API (for example <see
     /// cref="Logger.EmitLog(in LogRecordData)"/>) <see cref="Logger"/> is
     /// typically the <see cref="Logs.Logger"/> which emitted the <see
     /// cref="LogRecord"/> however the value may be different if <see
     /// cref="CategoryName"/> is modified.</remarks>
-    [Experimental(DiagnosticDefinitions.LogsBridgeExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
+    [Experimental(DiagnosticDefinitions.LogsExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
     public Logger Logger { get; internal set; } = InstrumentationScopeLogger.Default;
 #else
     /// <summary>
@@ -496,7 +501,7 @@ public sealed class LogRecord
         List<KeyValuePair<string, object?>>? attributeData = null;
         if (this.AttributeData is { } attributes)
         {
-            attributeData = new List<KeyValuePair<string, object?>>(attributes.Count);
+            attributeData = [with(attributes.Count)];
             CopyAttributes(attributes, attributeData);
         }
 
@@ -542,7 +547,12 @@ public sealed class LogRecord
             return;
         }
 
-        var attributeStorage = this.AttributeStorage ??= new List<KeyValuePair<string, object?>>(attributes.Count);
+        var attributeStorage = this.AttributeStorage;
+        if (attributeStorage == null || attributeStorage.Count > 0)
+        {
+            // A replacement may wrap the previous storage, so leave it intact.
+            attributeStorage = this.AttributeStorage = [with(attributes.Count)];
+        }
 
         // Copying the KeyValuePairs from attributes to AttributeStorage
         // "captures" the state and fixes issues where the values are generated
@@ -609,7 +619,7 @@ public sealed class LogRecord
                 // that can make the code up to 10x slower. See:
                 // https://github.com/dotnet/runtime/issues/133784
                 // https://github.com/dotnet/runtime/issues/134723
-                List<object?> scopes = new(bufferedScopes.Count);
+                List<object?> scopes = [with(bufferedScopes.Count)];
 
                 foreach (var scope in bufferedScopes)
                 {
