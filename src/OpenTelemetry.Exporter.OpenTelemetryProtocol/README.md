@@ -669,16 +669,19 @@ services.AddHttpClient(
 > [!NOTE]
 > The `HttpClient` the exporter creates itself does not follow HTTP redirects,
   so the configured `Headers` and the telemetry are only sent to the configured
-  `Endpoint`, and a `3xx` response is treated as a failed export. An
-  `HttpClient` supplied through the `HttpClientFactory` option or created by
-  `IHttpClientFactory` uses its own redirect policy, which by default follows
-  redirects. To prevent the named `HttpClient` from following redirects,
-  configure its primary handler:
+  `Endpoint`, and a `3xx` response is treated as a failed export. It also does
+  not use cookies, so a `Set-Cookie` header in a response from the `Endpoint`
+  is ignored rather than being sent with every later export. An `HttpClient`
+  supplied through the `HttpClientFactory` option or created by
+  `IHttpClientFactory` uses its own redirect and cookie policy, which by
+  default follows redirects and stores cookies. To prevent the named
+  `HttpClient` from following redirects or using cookies, configure its
+  primary handler:
 
 ```csharp
 services.AddHttpClient("OtlpTraceExporter")
     .ConfigurePrimaryHttpMessageHandler(
-        () => new HttpClientHandler { AllowAutoRedirect = false });
+        () => new HttpClientHandler { AllowAutoRedirect = false, UseCookies = false });
 ```
 
 > [!IMPORTANT]

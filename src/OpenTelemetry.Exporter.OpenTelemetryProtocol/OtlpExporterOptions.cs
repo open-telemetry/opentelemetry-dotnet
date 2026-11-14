@@ -131,7 +131,18 @@ public class OtlpExporterOptions : IOtlpExporterOptions
 #pragma warning disable CA5400 // HttpClient is created without enabling CheckCertificateRevocationList
             // CheckCertificateRevocationList is not explicitly enabled as it
             // breaks TLS certificate validation in offline/air-gapped environments.
-            return new HttpClient(new HttpClientHandler { AllowAutoRedirect = false }, disposeHandler: true)
+            var handler = new HttpClientHandler { AllowAutoRedirect = false };
+
+#if NET
+            if (!OperatingSystem.IsBrowser())
+            {
+                handler.UseCookies = false;
+            }
+#else
+            handler.UseCookies = false;
+#endif
+
+            return new HttpClient(handler, disposeHandler: true)
             {
                 MaxResponseContentBufferSize = this.MaxResponseSizeBytes,
                 Timeout = timeout,
