@@ -1,6 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Buffers.Binary;
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using System.Diagnostics.Tracing;
@@ -12,6 +13,7 @@ using Google.Protobuf;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
+using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Serializer;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Transmission;
 using OpenTelemetry.Metrics;
@@ -1077,70 +1079,216 @@ public sealed class OtlpMetricsExporterTests : IDisposable
         }
     }
 
-    [Fact]
-    public void Export_MaxRequestSizeBytesTooSmallToSerialize_DropsBatch()
+    [Theory]
+#pragma warning disable CS0618 // Suppressing gRPC obsolete warning
+    [InlineData(OtlpExportProtocol.Grpc, false)]
+    [InlineData(OtlpExportProtocol.Grpc, true)]
+#pragma warning restore CS0618 // Suppressing gRPC obsolete warning
+    [InlineData(OtlpExportProtocol.HttpProtobuf, false)]
+    [InlineData(OtlpExportProtocol.HttpProtobuf, true)]
+    public void Export_BatchExceedingMaxRequestSizeBytes_IsExportedAsSeveralRequests(OtlpExportProtocol protocol, bool oneByteOverLimit)
     {
         const int BufferExceededMaxSizeEventId = 14;
         const int BatchDroppedEventId = 39;
+        const int RequestDiscardedEventId = 41;
+        const int MetricPointDroppedEventId = 45;
+        const int ExportedAsMultipleRequestsEventId = 46;
+        const int Cardinality = 50_000;
 
-        using var listener = new TestEventListener(OpenTelemetryProtocolExporterEventSource.Log, EventLevel.Error);
+        using var listener = new TestEventListener(OpenTelemetryProtocolExporterEventSource.Log, EventLevel.Warning);
 
-        var exportClient = new TestExportClient();
+        var exportClient = new RecordingExportClient();
+        var exporterOptions = new OtlpExporterOptions
+        {
+            Protocol = protocol,
+
+            // Either the smallest limit allowed, which the batch below overruns by
+            // enough that the buffer cannot be grown to serialize it at all, or one
+            // byte under the payload. For the latter the array pool can still hand
+            // back a buffer large enough to serialize the whole batch into, so only
+            // an explicit check on the serialized size can keep the request within
+            // the limit.
+            MaxRequestSizeBytes = oneByteOverLimit
+                ? MeasureRequestSize(Cardinality, protocol) - 1
+                : OtlpExporterOptions.MinimumMaxRequestSizeBytes,
+        };
+
+        using var transmissionHandler = new OtlpExporterTransmissionHandler(exportClient, exporterOptions.TimeoutMilliseconds);
+        using var exporter = new OtlpMetricExporter(exporterOptions, new ExperimentalOptions(), transmissionHandler);
+
+        // Unlike a batch of spans or logs, a batch of cumulative metrics which is
+        // dropped for its size comes back just as large in every later collection,
+        // so it is exported as several requests instead.
+        Assert.Equal(ExportResult.Success, exporter.Export(GenerateHighCardinalityMetricBatch(Cardinality)));
+
+        Assert.True(
+            exportClient.Requests.Count > 1,
+            $"Expected the batch to be exported as more than one request but was {exportClient.Requests.Count}.");
+
+        AssertMetricPointsExportedOnce(exportClient.Requests, protocol, exporterOptions.MaxRequestSizeBytes, 0, Cardinality);
+
+        var exported = Assert.Single(listener.Messages, e => e.EventId == ExportedAsMultipleRequestsEventId);
+        Assert.Equal(exportClient.Requests.Count, exported.Payload?[2]);
+
+        Assert.DoesNotContain(
+            listener.CurrentMessages,
+            e => e.EventId is BufferExceededMaxSizeEventId or BatchDroppedEventId or RequestDiscardedEventId or MetricPointDroppedEventId);
+    }
+
+    [Fact]
+    public void Export_BatchSplitByReaderExceedingMaxRequestSizeBytes_IsExportedAsSeveralRequests()
+    {
+        const int Cardinality = 50_000;
+        const int WindowStart = 10_000;
+        const int WindowCount = 25_000;
+
+        var exportClient = new RecordingExportClient();
         var exporterOptions = new OtlpExporterOptions
         {
             Protocol = OtlpExportProtocol.HttpProtobuf,
-
-            // The smallest limit allowed, which the batch below overruns by enough
-            // that the buffer cannot be grown to serialize it at all.
             MaxRequestSizeBytes = OtlpExporterOptions.MinimumMaxRequestSizeBytes,
         };
 
         using var transmissionHandler = new OtlpExporterTransmissionHandler(exportClient, exporterOptions.TimeoutMilliseconds);
         using var exporter = new OtlpMetricExporter(exporterOptions, new ExperimentalOptions(), transmissionHandler);
 
-        Assert.Equal(ExportResult.Failure, exporter.Export(GenerateHighCardinalityMetricBatch(cardinality: 50_000)));
-        Assert.False(exportClient.SendExportRequestCalled);
+        var batch = GenerateHighCardinalityMetricBatch(Cardinality);
 
-        Assert.Single(listener.Messages, e => e.EventId == BufferExceededMaxSizeEventId);
-        Assert.Single(listener.Messages, e => e.EventId == BatchDroppedEventId);
+        Metric? metric = null;
+        foreach (var item in batch)
+        {
+            Assert.Null(metric);
+            metric = item;
+        }
+
+        Assert.NotNull(metric);
+        var aggregatorStore = metric.AggregatorStore;
+
+        // A reader limiting the number of metric points in a batch narrows the
+        // metric points a metric exposes. The requests only hold those.
+        aggregatorStore.SetExportWindow(WindowStart, WindowCount);
+
+        try
+        {
+            Assert.Equal(ExportResult.Success, exporter.Export(batch));
+        }
+        finally
+        {
+            aggregatorStore.ResetExportWindow();
+        }
+
+        Assert.True(
+            exportClient.Requests.Count > 1,
+            $"Expected the batch to be exported as more than one request but was {exportClient.Requests.Count}.");
+
+        AssertMetricPointsExportedOnce(exportClient.Requests, exporterOptions.Protocol, exporterOptions.MaxRequestSizeBytes, WindowStart, WindowCount);
     }
 
-    [Fact]
-    public void Export_RequestExceedingMaxRequestSizeBytes_IsNotSubmitted()
+    [Theory]
+    [InlineData(1_000_000)]
+    [InlineData(4_000_000)]
+    public void Export_MetricPointExceedingMaxRequestSizeBytes_IsDroppedAndTheRestExported(int tagValueLength)
     {
-        const int BufferExceededMaxSizeEventId = 14;
-        const int RequestDiscardedEventId = 41;
-        const int Cardinality = 50_000;
+        const int BatchDroppedEventId = 39;
+        const int MetricPointDroppedEventId = 45;
+        const int ExportedAsMultipleRequestsEventId = 46;
 
-        var requestSize = MeasureRequestSize(Cardinality);
+        using var listener = new TestEventListener(OpenTelemetryProtocolExporterEventSource.Log, EventLevel.Warning);
 
-        using var listener = new TestEventListener(OpenTelemetryProtocolExporterEventSource.Log, EventLevel.Error);
-
-        var exportClient = new TestExportClient();
+        var exportClient = new RecordingExportClient();
         var exporterOptions = new OtlpExporterOptions
         {
             Protocol = OtlpExportProtocol.HttpProtobuf,
-
-            // One byte under the payload. The array pool can still hand back a
-            // buffer large enough to serialize into, so only an explicit check on
-            // the serialized size can keep the request from being made.
-            MaxRequestSizeBytes = requestSize - 1,
+            MaxRequestSizeBytes = OtlpExporterOptions.MinimumMaxRequestSizeBytes,
         };
 
         using var transmissionHandler = new OtlpExporterTransmissionHandler(exportClient, exporterOptions.TimeoutMilliseconds);
         using var exporter = new OtlpMetricExporter(exporterOptions, new ExperimentalOptions(), transmissionHandler);
 
-        Assert.Equal(ExportResult.Failure, exporter.Export(GenerateHighCardinalityMetricBatch(Cardinality)));
-        Assert.False(exportClient.SendExportRequestCalled);
-        Assert.Equal(0, exportClient.LastContentLength);
+        // The second metric point does not fit in a request on its own, whether or
+        // not the array pool hands back a buffer which is large enough to hold it.
+        var batch = GenerateMetricBatch(counter =>
+        {
+            counter.Add(1, new KeyValuePair<string, object?>("tag", "value-1"));
+            counter.Add(2, new KeyValuePair<string, object?>("tag", new string('x', tagValueLength)));
+            counter.Add(3, new KeyValuePair<string, object?>("tag", "value-3"));
+        });
 
-        // Which diagnostic fires depends on the array pool. Where it rounds the
-        // rented buffer up past the limit (.NET), serialization succeeds and the
-        // request is discarded; where it returns the exact size requested (.NET
-        // Framework), the buffer is a byte short and growth is refused first.
-        Assert.Contains(
-            listener.Messages,
-            e => e.EventId is RequestDiscardedEventId or BufferExceededMaxSizeEventId);
+        Assert.Equal(ExportResult.Success, exporter.Export(batch));
+
+        var values = new List<long>();
+
+        foreach (var request in exportClient.Requests)
+        {
+            Assert.True(request.Length <= exporterOptions.MaxRequestSizeBytes, $"The request of {request.Length} bytes exceeds the limit.");
+
+            var metric = Assert.Single(Assert.Single(Assert.Single(ParseRequest(request, exporterOptions.Protocol).ResourceMetrics).ScopeMetrics).Metrics);
+            values.AddRange(metric.Sum.DataPoints.Select(static p => p.AsInt));
+        }
+
+        Assert.Equal([1, 3], values);
+        Assert.Equal(2, exportClient.Requests.Count);
+
+        var dropped = Assert.Single(listener.Messages, e => e.EventId == MetricPointDroppedEventId);
+        Assert.Equal("test.counter", dropped.Payload?[0]);
+        Assert.Equal(exporterOptions.MaxRequestSizeBytes, dropped.Payload?[1]);
+
+        Assert.Single(listener.CurrentMessages, e => e.EventId == ExportedAsMultipleRequestsEventId);
+        Assert.DoesNotContain(listener.CurrentMessages, e => e.EventId == BatchDroppedEventId);
+    }
+
+    [Fact]
+    public void Export_LastMetricPointExceedingMaxRequestSizeBytes_IsDroppedWithoutAnEmptyRequest()
+    {
+        const int MetricPointDroppedEventId = 45;
+        const int ExportedAsMultipleRequestsEventId = 46;
+
+        using var listener = new TestEventListener(OpenTelemetryProtocolExporterEventSource.Log, EventLevel.Warning);
+
+        var exportClient = new RecordingExportClient();
+        var exporterOptions = new OtlpExporterOptions
+        {
+            Protocol = OtlpExportProtocol.HttpProtobuf,
+            MaxRequestSizeBytes = OtlpExporterOptions.MinimumMaxRequestSizeBytes,
+        };
+
+        using var transmissionHandler = new OtlpExporterTransmissionHandler(exportClient, exporterOptions.TimeoutMilliseconds);
+        using var exporter = new OtlpMetricExporter(exporterOptions, new ExperimentalOptions(), transmissionHandler);
+
+        var batch = GenerateMetricBatch(static counter =>
+        {
+            counter.Add(1, new KeyValuePair<string, object?>("tag", "value-1"));
+            counter.Add(2, new KeyValuePair<string, object?>("tag", new string('x', 1_000_000)));
+        });
+
+        Assert.Equal(ExportResult.Success, exporter.Export(batch));
+
+        // Dropping the last metric point does not leave a request without any to send.
+        var request = Assert.Single(exportClient.Requests);
+        var metric = Assert.Single(Assert.Single(Assert.Single(ParseRequest(request, exporterOptions.Protocol).ResourceMetrics).ScopeMetrics).Metrics);
+        Assert.Equal([1], metric.Sum.DataPoints.Select(static p => p.AsInt));
+
+        Assert.Single(listener.Messages, e => e.EventId == MetricPointDroppedEventId);
+        Assert.DoesNotContain(listener.CurrentMessages, e => e.EventId == ExportedAsMultipleRequestsEventId);
+    }
+
+    [Fact]
+    public void Export_DeadlinePassesBetweenRequests_DoesNotSendTheRemainingRequests()
+    {
+        var exportClient = new RecordingExportClient { Delay = TimeSpan.FromMilliseconds(200) };
+        var exporterOptions = new OtlpExporterOptions
+        {
+            Protocol = OtlpExportProtocol.HttpProtobuf,
+            MaxRequestSizeBytes = OtlpExporterOptions.MinimumMaxRequestSizeBytes,
+            TimeoutMilliseconds = 100,
+        };
+
+        using var transmissionHandler = new OtlpExporterTransmissionHandler(exportClient, exporterOptions.TimeoutMilliseconds);
+        using var exporter = new OtlpMetricExporter(exporterOptions, new ExperimentalOptions(), transmissionHandler);
+
+        // The batch needs several requests, but the deadline passes during the first.
+        Assert.Equal(ExportResult.Failure, exporter.Export(GenerateHighCardinalityMetricBatch(cardinality: 50_000)));
+        Assert.Single(exportClient.Requests);
     }
 
     [Theory]
@@ -1557,24 +1705,31 @@ public sealed class OtlpMetricsExporterTests : IDisposable
 #pragma warning restore CS0618 // Suppressing gRPC obsolete warning
 
     private static Batch<Metric> GenerateHighCardinalityMetricBatch(int cardinality)
+        => GenerateMetricBatch(
+            counter =>
+            {
+                for (var i = 0; i < cardinality; i++)
+                {
+                    counter.Add(1, new KeyValuePair<string, object?>("tag", $"value-{i}"));
+                }
+            },
+            cardinality + 10);
+
+    private static Batch<Metric> GenerateMetricBatch(Action<Counter<long>> record, int cardinalityLimit = 2000)
     {
         var exported = new List<Metric>();
-        var meterName = $"{nameof(GenerateHighCardinalityMetricBatch)}.{Guid.NewGuid():N}";
+        var meterName = $"{nameof(GenerateMetricBatch)}.{Guid.NewGuid():N}";
 
         int count;
 
         using (var meter = new Meter(meterName))
         using (var meterProvider = Sdk.CreateMeterProviderBuilder()
             .AddMeter(meterName)
-            .AddView("*", new MetricStreamConfiguration { CardinalityLimit = cardinality + 10 })
+            .AddView("*", new MetricStreamConfiguration { CardinalityLimit = cardinalityLimit })
             .AddInMemoryExporter(exported)
             .Build())
         {
-            var counter = meter.CreateCounter<long>("test.counter");
-            for (var i = 0; i < cardinality; i++)
-            {
-                counter.Add(1, new KeyValuePair<string, object?>("tag", $"value-{i}"));
-            }
+            record(meter.CreateCounter<long>("test.counter"));
 
             Assert.True(meterProvider.ForceFlush());
 
@@ -1583,6 +1738,61 @@ public sealed class OtlpMetricsExporterTests : IDisposable
 
         return new Batch<Metric>([.. exported], count);
     }
+
+#pragma warning disable CS0618 // Suppressing gRPC obsolete warning
+    private static OtlpCollector.ExportMetricsServiceRequest ParseRequest(byte[] request, OtlpExportProtocol protocol)
+    {
+        const int GrpcHeaderSize = 5;
+
+        if (protocol == OtlpExportProtocol.Grpc)
+        {
+            Assert.Equal(0, request[0]);
+            Assert.Equal(request.Length - GrpcHeaderSize, (int)BinaryPrimitives.ReadUInt32BigEndian(request.AsSpan(1, 4)));
+
+            return OtlpCollector.ExportMetricsServiceRequest.Parser.ParseFrom(request, GrpcHeaderSize, request.Length - GrpcHeaderSize);
+        }
+
+        return OtlpCollector.ExportMetricsServiceRequest.Parser.ParseFrom(request);
+    }
+
+    /// <summary>
+    /// Asserts that the requests a batch from <see cref="GenerateHighCardinalityMetricBatch"/>
+    /// was exported as are each within the size limit and together hold each of the
+    /// metric points with the tag values <c>value-{start}</c> to <c>value-{start + count - 1}</c>
+    /// exactly once.
+    /// </summary>
+    private static void AssertMetricPointsExportedOnce(List<byte[]> requests, OtlpExportProtocol protocol, int maxRequestSizeBytes, int start, int count)
+    {
+        const int GrpcHeaderSize = 5;
+
+        var maxLength = protocol == OtlpExportProtocol.Grpc ? maxRequestSizeBytes + GrpcHeaderSize : maxRequestSizeBytes;
+        var exported = new HashSet<string>();
+
+        for (var i = 0; i < requests.Count; i++)
+        {
+            var request = requests[i];
+
+            Assert.True(request.Length <= maxLength, $"Request {i} of {request.Length} bytes exceeds the limit of {maxLength} bytes.");
+
+            var metric = Assert.Single(Assert.Single(Assert.Single(ParseRequest(request, protocol).ResourceMetrics).ScopeMetrics).Metrics);
+            Assert.Equal("test.counter", metric.Name);
+            Assert.NotEmpty(metric.Sum.DataPoints);
+
+            foreach (var dataPoint in metric.Sum.DataPoints)
+            {
+                var value = Assert.Single(dataPoint.Attributes).Value.StringValue;
+                Assert.True(exported.Add(value), $"The metric point '{value}' was exported more than once.");
+            }
+        }
+
+        Assert.Equal(count, exported.Count);
+
+        for (var i = start; i < start + count; i++)
+        {
+            Assert.Contains($"value-{i}", exported);
+        }
+    }
+#pragma warning restore CS0618 // Suppressing gRPC obsolete warning
 
     private static void VerifyExemplars<T>(long? longValue, double? doubleValue, bool enableExemplars, Func<T, OtlpMetrics.Exemplar?> getExemplarFunc, T state)
     {
@@ -1689,6 +1899,33 @@ public sealed class OtlpMetricsExporterTests : IDisposable
     private sealed class ToStringThrows
     {
         public override string ToString() => throw new InvalidOperationException("Nope.");
+    }
+
+    /// <summary>
+    /// An export client which keeps a copy of every request, as the exporter reuses
+    /// the buffer the requests are sent from.
+    /// </summary>
+    private sealed class RecordingExportClient : IExportClient
+    {
+        public List<byte[]> Requests { get; } = [];
+
+        public TimeSpan Delay { get; set; }
+
+        public ExportClientResponse SendExportRequest(byte[] buffer, int contentLength, DateTime deadlineUtc, CancellationToken cancellationToken = default)
+        {
+            this.Requests.Add(buffer.AsSpan(0, contentLength).ToArray());
+
+            if (this.Delay > TimeSpan.Zero)
+            {
+                Thread.Sleep(this.Delay);
+            }
+
+            return new RecordingExportClientResponse(deadlineUtc);
+        }
+
+        public bool Shutdown(int timeoutMilliseconds) => true;
+
+        private sealed class RecordingExportClientResponse(DateTime deadlineUtc) : ExportClientResponse(success: true, deadlineUtc, exception: null);
     }
 
     private sealed class DelayedOtlpMetricExporter(OtlpExporterOptions options, TimeSpan delay) : OtlpMetricExporter(options)

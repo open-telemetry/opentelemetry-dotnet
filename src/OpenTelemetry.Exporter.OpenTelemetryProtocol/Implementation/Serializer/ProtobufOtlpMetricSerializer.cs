@@ -26,8 +26,27 @@ internal static class ProtobufOtlpMetricSerializer
     [ThreadStatic]
     private static Dictionary<string, List<Metric>>? scopeMetricsList;
 
+    // The scopes in the order they are serialized in, which is the order of their
+    // first metric in the batch. A batch written as several requests is grouped
+    // again for each of them, and the cursor between the requests indexes the
+    // metrics in this order, so it must not depend on how the dictionary is
+    // enumerated.
+    [ThreadStatic]
+    private static List<List<Metric>>? scopeMetricsOrder;
+
     private delegate int WriteExemplarFunc(byte[] buffer, int writePosition, in Exemplar exemplar);
 
+    /// <summary>
+    /// Writes a whole batch of metrics as a single request.
+    /// </summary>
+    /// <param name="buffer">The buffer to write to, which is grown as needed up to <paramref name="maxBufferSize"/>.</param>
+    /// <param name="writePosition">The position in the buffer to start writing at.</param>
+    /// <param name="resource">The resource the metrics belong to.</param>
+    /// <param name="batch">The batch of metrics.</param>
+    /// <param name="dirtyLength">The number of leading bytes of the buffer which may have been written.</param>
+    /// <param name="maxBufferSize">The size the buffer can be grown to.</param>
+    /// <returns>The position in the buffer after the request.</returns>
+    /// <exception cref="IndexOutOfRangeException">The batch does not fit in a buffer of <paramref name="maxBufferSize"/> bytes.</exception>
     internal static int WriteMetricsData(
         ref byte[] buffer,
         int writePosition,
@@ -36,9 +55,65 @@ internal static class ProtobufOtlpMetricSerializer
         out int dirtyLength,
         int maxBufferSize = ProtobufSerializer.MaxBufferSize)
     {
+        var state = WriteState.ForWholeBatch();
+
+        return WriteMetricsData(ref buffer, writePosition, resource, batch, out dirtyLength, maxBufferSize, ref state);
+    }
+
+    /// <summary>
+    /// Writes as many of the metrics of a batch as fit in a request of at most
+    /// <paramref name="maxBufferSize"/> bytes, continuing from where the previous
+    /// request of the same batch ended.
+    /// </summary>
+    /// <param name="buffer">The buffer to write to, which is grown as needed up to <paramref name="maxBufferSize"/>.</param>
+    /// <param name="writePosition">The position in the buffer to start writing at.</param>
+    /// <param name="resource">The resource the metrics belong to.</param>
+    /// <param name="batch">The batch of metrics.</param>
+    /// <param name="dirtyLength">The number of leading bytes of the buffer which may have been written.</param>
+    /// <param name="maxBufferSize">The size the buffer can be grown to, and the position the request is not written past.</param>
+    /// <param name="cursor">
+    /// Where in the batch to continue from, <see langword="default"/> for its start.
+    /// On return, where the next request continues from.
+    /// </param>
+    /// <param name="completed">
+    /// <see langword="true"/> if the request holds the rest of the batch;
+    /// otherwise, <see langword="false"/> and the batch needs another request.
+    /// </param>
+    /// <returns>The position in the buffer after the request.</returns>
+    /// <exception cref="IndexOutOfRangeException">The resource, scope and metric which a metric point belongs to do not fit in a request on their own.</exception>
+    internal static int WriteMetricsData(
+        ref byte[] buffer,
+        int writePosition,
+        Resources.Resource? resource,
+        in Batch<Metric> batch,
+        out int dirtyLength,
+        int maxBufferSize,
+        ref MetricsDataCursor cursor,
+        out bool completed)
+    {
+        var state = WriteState.ForRequest(cursor, maxBufferSize);
+
+        writePosition = WriteMetricsData(ref buffer, writePosition, resource, batch, out dirtyLength, maxBufferSize, ref state);
+
+        cursor = state.Next;
+        completed = state.Completed;
+
+        return writePosition;
+    }
+
+    private static int WriteMetricsData(
+        ref byte[] buffer,
+        int writePosition,
+        Resources.Resource? resource,
+        in Batch<Metric> batch,
+        out int dirtyLength,
+        int maxBufferSize,
+        ref WriteState state)
+    {
         dirtyLength = 0;
         metricListPool ??= [];
         scopeMetricsList ??= [];
+        scopeMetricsOrder ??= [];
 
         // Note: The grouped batch is held in thread-static state, so it has to be
         // released even when serialization fails. TryWriteResourceMetrics rethrows
@@ -53,12 +128,13 @@ internal static class ProtobufOtlpMetricSerializer
                 {
                     metrics = metricListPool.Count > 0 ? metricListPool.Pop() : [];
                     scopeMetricsList[metricName] = metrics;
+                    scopeMetricsOrder.Add(metrics);
                 }
 
                 metrics.Add(metric);
             }
 
-            writePosition = TryWriteResourceMetrics(ref buffer, writePosition, resource, scopeMetricsList, ref dirtyLength, maxBufferSize);
+            writePosition = TryWriteResourceMetrics(ref buffer, writePosition, resource, scopeMetricsOrder, ref dirtyLength, maxBufferSize, ref state);
         }
         finally
         {
@@ -68,56 +144,176 @@ internal static class ProtobufOtlpMetricSerializer
         return writePosition;
     }
 
-    internal static int TryWriteResourceMetrics(
+    private static int TryWriteResourceMetrics(
         ref byte[] buffer,
         int writePosition,
         Resources.Resource? resource,
-        Dictionary<string, List<Metric>> scopeMetrics,
+        List<List<Metric>> scopeMetrics,
         ref int dirtyLength,
-        int maxBufferSize = ProtobufSerializer.MaxBufferSize)
+        int maxBufferSize,
+        ref WriteState state)
     {
+        var entryWritePosition = writePosition;
+
         while (true)
         {
-            var entryWritePosition = writePosition;
+            state.BeginRequest();
 
             try
             {
                 writePosition = ProtobufSerializer.WriteTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.MetricsData_Resource_Metrics, ProtobufWireType.LEN);
-                var mericsDataLengthPosition = writePosition;
+                var metricsDataLengthPosition = writePosition;
                 writePosition += ReserveSizeForLength;
+                state.Open.ResourceMetrics = metricsDataLengthPosition;
 
-                writePosition = WriteResourceMetrics(buffer, writePosition, resource, scopeMetrics, maxBufferSize, ref dirtyLength);
+                writePosition = WriteResourceMetrics(buffer, writePosition, resource, scopeMetrics, maxBufferSize, ref dirtyLength, ref state);
 
-                ProtobufSerializer.WriteReservedLength(buffer, mericsDataLengthPosition, writePosition - (mericsDataLengthPosition + ReserveSizeForLength));
+                if (!state.Full)
+                {
+                    // A request continuing a batch whose remaining metric points were all
+                    // dropped holds nothing worth sending.
+                    if (state.ContinuesWithoutMetricPoints)
+                    {
+                        dirtyLength = Math.Max(dirtyLength, writePosition);
+                        state.Complete();
+                        return entryWritePosition;
+                    }
 
-                // Serialization succeeded, return the final write position
-                return writePosition;
+                    ProtobufSerializer.WriteReservedLength(buffer, metricsDataLengthPosition, writePosition - (metricsDataLengthPosition + ReserveSizeForLength));
+
+                    // Serialization succeeded, return the final write position
+                    state.Complete();
+                    return writePosition;
+                }
             }
             catch (Exception ex) when (ex is IndexOutOfRangeException or ArgumentException)
             {
-                // Reset write position and attempt to increase the buffer size
-                writePosition = entryWritePosition;
-                dirtyLength = 0;
+                // Grow the buffer and start the request over. A request which may be cut
+                // is not grown past the size limit, which the pool can already have
+                // exceeded when it handed out the buffer, so that the limit is not
+                // reported as exceeded every time a request is cut.
+                var canGrow = state.SingleRequest || buffer.Length < maxBufferSize;
 
-                if (!ProtobufSerializer.IncreaseBufferSize(ref buffer, OtlpSignalType.Metrics, maxBufferSize))
+                if (canGrow && ProtobufSerializer.IncreaseBufferSize(ref buffer, OtlpSignalType.Metrics, maxBufferSize))
+                {
+                    writePosition = entryWritePosition;
+                    dirtyLength = 0;
+                    continue;
+                }
+
+                // The buffer cannot be grown any further. A whole batch written as a single
+                // request cannot be made any smaller, and neither can a request which does
+                // not hold a metric point yet, unless the buffer is at the size limit and
+                // it is a metric point which does not fit, since the resource, scope and
+                // metric it belongs to are repeated in every request.
+                if (state.SingleRequest || !(state.HasCheckpoint || (!canGrow && state.WritingMetricPoint)))
                 {
                     throw;
                 }
+
+                // How far the writer got before running off the end of the buffer is not
+                // known, so the whole buffer is dirty.
+                dirtyLength = buffer.Length;
             }
+
+            // The buffer is kept, and the bytes written beyond where the request is cut
+            // or started over must be cleared before it goes back to the pool.
+            dirtyLength = Math.Max(dirtyLength, writePosition);
+
+            // The request is full. Cut it at the end of the last metric point which fits.
+            if (state.HasCheckpoint)
+            {
+                return CutRequest(buffer, ref state);
+            }
+
+            // The first metric of the request ended beyond the limit without a metric
+            // point being written, so not even its resource, scope and metric fit.
+            if (!state.WritingMetricPoint)
+            {
+                throw new InvalidOperationException($"The metrics could not be serialized within the maximum request size of {maxBufferSize - entryWritePosition} bytes.");
+            }
+
+            // The request holds no metric point and the first one to write does not fit,
+            // so it is the metric point itself which does not fit in a request on its
+            // own. Drop it, and start the request over from the next metric point.
+            OpenTelemetryProtocolExporterEventSource.Log.MetricPointDroppedDueToSizeLimit(state.MetricName, maxBufferSize - entryWritePosition);
+
+            state.DropMetricPoint();
+            writePosition = entryWritePosition;
         }
+    }
+
+    /// <summary>
+    /// Cuts a request at its checkpoint, the end of the last metric point which fits,
+    /// by discarding what was written after it and closing the messages open there.
+    /// </summary>
+    /// <param name="buffer">The buffer the request was written to.</param>
+    /// <param name="state">The state of the request.</param>
+    /// <returns>The position in the buffer after the request.</returns>
+    private static int CutRequest(byte[] buffer, ref WriteState state)
+    {
+        Debug.Assert(state.HasCheckpoint, "A request can only be cut at a checkpoint.");
+
+        int writePosition;
+        int scopeMetricsLengthPosition;
+
+        if (state.TrackingMetricPoints)
+        {
+            // The first metric of the request is cut after the last of its metric
+            // points which fits, and the next request continues from the one after.
+            writePosition = state.CheckpointPosition;
+            scopeMetricsLengthPosition = state.Open.ScopeMetrics;
+
+            if (state.Open.MetricData >= 0)
+            {
+                ProtobufSerializer.WriteReservedLength(buffer, state.Open.MetricData, writePosition - (state.Open.MetricData + ReserveSizeForLength));
+            }
+
+            ProtobufSerializer.WriteReservedLength(buffer, state.Open.Metric, writePosition - (state.Open.Metric + ReserveSizeForLength));
+
+            state.Cut(state.MetricIndex, state.MetricPointIndex);
+        }
+        else if (state.MetricStartPosition >= 0 && state.ScopeMetricsWritten > 0)
+        {
+            // A later metric which does not fit is cut at its start, and the next
+            // request continues from it.
+            writePosition = state.MetricStartPosition;
+            scopeMetricsLengthPosition = state.Open.ScopeMetrics;
+
+            state.Cut(state.MetricIndex, 0);
+        }
+        else
+        {
+            // A scope none of whose metrics is complete is cut at its start, which
+            // closes the previous scope of the request, and the next request
+            // continues from the first of its metrics not written by the previous
+            // requests.
+            writePosition = state.ScopeStartPosition;
+            scopeMetricsLengthPosition = state.PreviousScopeMetricsLengthPosition;
+
+            state.Cut(Math.Max(state.MetricIndex, state.Resume.MetricIndex), 0);
+        }
+
+        var resourceMetricsLengthPosition = state.Open.ResourceMetrics;
+
+        ProtobufSerializer.WriteReservedLength(buffer, scopeMetricsLengthPosition, writePosition - (scopeMetricsLengthPosition + ReserveSizeForLength));
+        ProtobufSerializer.WriteReservedLength(buffer, resourceMetricsLengthPosition, writePosition - (resourceMetricsLengthPosition + ReserveSizeForLength));
+
+        return writePosition;
     }
 
     private static void ReturnMetricListToPool()
     {
-        if (scopeMetricsList is { Count: > 0 })
+        if (scopeMetricsOrder is { Count: > 0 })
         {
-            foreach (var entry in scopeMetricsList)
+            foreach (var metrics in scopeMetricsOrder)
             {
-                entry.Value.Clear();
-                metricListPool?.Push(entry.Value);
+                metrics.Clear();
+                metricListPool?.Push(metrics);
             }
 
-            scopeMetricsList.Clear();
+            scopeMetricsOrder.Clear();
+            scopeMetricsList?.Clear();
         }
     }
 
@@ -125,37 +321,53 @@ internal static class ProtobufOtlpMetricSerializer
         byte[] buffer,
         int writePosition,
         Resources.Resource? resource,
-        Dictionary<string, List<Metric>> scopeMetrics,
+        List<List<Metric>> scopeMetrics,
         int maxBufferSize,
-        ref int dirtyLength)
+        ref int dirtyLength,
+        ref WriteState state)
     {
         writePosition = ProtobufOtlpResourceSerializer.WriteResource(buffer, writePosition, resource);
-        writePosition = WriteScopeMetrics(buffer, writePosition, scopeMetrics, maxBufferSize, ref dirtyLength);
 
+        // The schema URL is written ahead of the scopes so that a request cut short
+        // after a metric point is complete, apart from the lengths of the open messages.
         if (resource?.SchemaUrl is { Length: > 0 } schemaUrl)
         {
             writePosition = ProtobufSerializer.WriteStringWithTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.ResourceMetrics_Schema_Url, schemaUrl);
         }
 
-        return writePosition;
+        return WriteScopeMetrics(buffer, writePosition, scopeMetrics, maxBufferSize, ref dirtyLength, ref state);
     }
 
     private static int WriteScopeMetrics(
         byte[] buffer,
         int writePosition,
-        Dictionary<string, List<Metric>> scopeMetrics,
+        List<List<Metric>> scopeMetrics,
         int maxBufferSize,
-        ref int dirtyLength)
+        ref int dirtyLength,
+        ref WriteState state)
     {
         if (scopeMetrics != null)
         {
-            foreach (var entry in scopeMetrics)
+            foreach (var metrics in scopeMetrics)
             {
+                // A scope whose metrics were all written by the previous requests.
+                if (state.SkipScope(metrics.Count))
+                {
+                    continue;
+                }
+
+                var scopeStartPosition = writePosition;
                 writePosition = ProtobufSerializer.WriteTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.ResourceMetrics_Scope_Metrics, ProtobufWireType.LEN);
                 var resourceMetricsScopeMetricsLengthPosition = writePosition;
                 writePosition += ReserveSizeForLength;
+                state.BeginScope(scopeStartPosition, resourceMetricsScopeMetricsLengthPosition);
 
-                writePosition = WriteScopeMetric(buffer, writePosition, entry.Key, entry.Value, maxBufferSize, ref dirtyLength);
+                writePosition = WriteScopeMetric(buffer, writePosition, metrics[0].MeterName, metrics, maxBufferSize, ref dirtyLength, ref state);
+
+                if (state.Full)
+                {
+                    break;
+                }
 
                 ProtobufSerializer.WriteReservedLength(buffer, resourceMetricsScopeMetricsLengthPosition, writePosition - (resourceMetricsScopeMetricsLengthPosition + ReserveSizeForLength));
             }
@@ -170,7 +382,8 @@ internal static class ProtobufOtlpMetricSerializer
         string meterName,
         List<Metric> metrics,
         int maxBufferSize,
-        ref int dirtyLength)
+        ref int dirtyLength,
+        ref WriteState state)
     {
         writePosition = ProtobufSerializer.WriteTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.ScopeMetrics_Scope, ProtobufWireType.LEN);
         var instrumentationScopeLengthPosition = writePosition;
@@ -208,24 +421,39 @@ internal static class ProtobufOtlpMetricSerializer
 
         ProtobufSerializer.WriteReservedLength(buffer, instrumentationScopeLengthPosition, writePosition - (instrumentationScopeLengthPosition + ReserveSizeForLength));
 
-        for (var i = 0; i < metrics.Count; i++)
-        {
-            writePosition = WriteMetric(buffer, writePosition, metrics[i], maxBufferSize, ref dirtyLength);
-        }
-
+        // The schema URL is written ahead of the metrics so that a request cut short
+        // after a metric point is complete, apart from the lengths of the open messages.
         if (!string.IsNullOrEmpty(meterSchemaUrl))
         {
             writePosition = ProtobufSerializer.WriteStringWithTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.ScopeMetrics_Schema_Url, meterSchemaUrl);
         }
 
+        for (var i = 0; i < metrics.Count; i++)
+        {
+            // A metric written by the previous requests.
+            if (state.SkipMetric())
+            {
+                continue;
+            }
+
+            writePosition = WriteMetric(buffer, writePosition, metrics[i], maxBufferSize, ref dirtyLength, ref state);
+
+            if (state.Full)
+            {
+                break;
+            }
+        }
+
         return writePosition;
     }
 
-    private static int WriteMetric(byte[] buffer, int writePosition, Metric metric, int maxBufferSize, ref int dirtyLength)
+    private static int WriteMetric(byte[] buffer, int writePosition, Metric metric, int maxBufferSize, ref int dirtyLength, ref WriteState state)
     {
+        var metricStartPosition = writePosition;
         writePosition = ProtobufSerializer.WriteTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.ScopeMetrics_Metrics, ProtobufWireType.LEN);
         var metricLengthPosition = writePosition;
         writePosition += ReserveSizeForLength;
+        state.BeginMetric(metric, metricStartPosition, metricLengthPosition);
 
         // Do not allocate the cached copy until the destination buffer has grown
         // enough to hold it. ArrayPool may return more than was requested, so the
@@ -247,14 +475,25 @@ internal static class ProtobufOtlpMetricSerializer
                     writePosition = ProtobufSerializer.WriteTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.Metric_Data_Sum, ProtobufWireType.LEN);
                     var metricTypeLengthPosition = writePosition;
                     writePosition += ReserveSizeForLength;
+                    state.Open.MetricData = metricTypeLengthPosition;
 
                     writePosition = ProtobufSerializer.WriteBoolWithTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.Sum_Is_Monotonic, metric.MetricType == MetricType.LongSum);
                     writePosition = ProtobufSerializer.WriteEnumWithTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.Sum_Aggregation_Temporality, aggregationValue);
 
                     foreach (ref readonly var metricPoint in metric.GetMetricPoints())
                     {
+                        if (!state.BeginMetricPoint())
+                        {
+                            continue;
+                        }
+
                         var sum = metricPoint.GetSumLong();
                         writePosition = WriteNumberDataPoint(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.Sum_Data_Points, in metricPoint, sum, ref dirtyLength);
+
+                        if (!state.CommitMetricPoint(writePosition))
+                        {
+                            break;
+                        }
                     }
 
                     ProtobufSerializer.WriteReservedLength(buffer, metricTypeLengthPosition, writePosition - (metricTypeLengthPosition + ReserveSizeForLength));
@@ -267,14 +506,25 @@ internal static class ProtobufOtlpMetricSerializer
                     writePosition = ProtobufSerializer.WriteTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.Metric_Data_Sum, ProtobufWireType.LEN);
                     var metricTypeLengthPosition = writePosition;
                     writePosition += ReserveSizeForLength;
+                    state.Open.MetricData = metricTypeLengthPosition;
 
                     writePosition = ProtobufSerializer.WriteBoolWithTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.Sum_Is_Monotonic, metric.MetricType == MetricType.DoubleSum);
                     writePosition = ProtobufSerializer.WriteEnumWithTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.Sum_Aggregation_Temporality, aggregationValue);
 
                     foreach (ref readonly var metricPoint in metric.GetMetricPoints())
                     {
+                        if (!state.BeginMetricPoint())
+                        {
+                            continue;
+                        }
+
                         var sum = metricPoint.GetSumDouble();
                         writePosition = WriteNumberDataPoint(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.Sum_Data_Points, in metricPoint, sum, ref dirtyLength);
+
+                        if (!state.CommitMetricPoint(writePosition))
+                        {
+                            break;
+                        }
                     }
 
                     ProtobufSerializer.WriteReservedLength(buffer, metricTypeLengthPosition, writePosition - (metricTypeLengthPosition + ReserveSizeForLength));
@@ -286,11 +536,22 @@ internal static class ProtobufOtlpMetricSerializer
                     writePosition = ProtobufSerializer.WriteTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.Metric_Data_Gauge, ProtobufWireType.LEN);
                     var metricTypeLengthPosition = writePosition;
                     writePosition += ReserveSizeForLength;
+                    state.Open.MetricData = metricTypeLengthPosition;
 
                     foreach (ref readonly var metricPoint in metric.GetMetricPoints())
                     {
+                        if (!state.BeginMetricPoint())
+                        {
+                            continue;
+                        }
+
                         var lastValue = metricPoint.GetGaugeLastValueLong();
                         writePosition = WriteNumberDataPoint(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.Gauge_Data_Points, in metricPoint, lastValue, ref dirtyLength);
+
+                        if (!state.CommitMetricPoint(writePosition))
+                        {
+                            break;
+                        }
                     }
 
                     ProtobufSerializer.WriteReservedLength(buffer, metricTypeLengthPosition, writePosition - (metricTypeLengthPosition + ReserveSizeForLength));
@@ -302,11 +563,22 @@ internal static class ProtobufOtlpMetricSerializer
                     writePosition = ProtobufSerializer.WriteTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.Metric_Data_Gauge, ProtobufWireType.LEN);
                     var metricTypeLengthPosition = writePosition;
                     writePosition += ReserveSizeForLength;
+                    state.Open.MetricData = metricTypeLengthPosition;
 
                     foreach (ref readonly var metricPoint in metric.GetMetricPoints())
                     {
+                        if (!state.BeginMetricPoint())
+                        {
+                            continue;
+                        }
+
                         var lastValue = metricPoint.GetGaugeLastValueDouble();
                         writePosition = WriteNumberDataPoint(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.Gauge_Data_Points, in metricPoint, lastValue, ref dirtyLength);
+
+                        if (!state.CommitMetricPoint(writePosition))
+                        {
+                            break;
+                        }
                     }
 
                     ProtobufSerializer.WriteReservedLength(buffer, metricTypeLengthPosition, writePosition - (metricTypeLengthPosition + ReserveSizeForLength));
@@ -322,11 +594,17 @@ internal static class ProtobufOtlpMetricSerializer
                     writePosition = ProtobufSerializer.WriteTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.Metric_Data_Histogram, ProtobufWireType.LEN);
                     var metricTypeLengthPosition = writePosition;
                     writePosition += ReserveSizeForLength;
+                    state.Open.MetricData = metricTypeLengthPosition;
 
                     writePosition = ProtobufSerializer.WriteEnumWithTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.Histogram_Aggregation_Temporality, aggregationValue);
 
                     foreach (ref readonly var metricPoint in metric.GetMetricPoints())
                     {
+                        if (!state.BeginMetricPoint())
+                        {
+                            continue;
+                        }
+
                         writePosition = ProtobufSerializer.WriteTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.Histogram_Data_Points, ProtobufWireType.LEN);
                         var dataPointLengthPosition = writePosition;
                         writePosition += ReserveSizeForLength;
@@ -356,6 +634,11 @@ internal static class ProtobufOtlpMetricSerializer
                         writePosition = WriteDoubleExemplars(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.HistogramDataPoint_Exemplars, in metricPoint, ref dirtyLength);
 
                         ProtobufSerializer.WriteReservedLength(buffer, dataPointLengthPosition, writePosition - (dataPointLengthPosition + ReserveSizeForLength));
+
+                        if (!state.CommitMetricPoint(writePosition))
+                        {
+                            break;
+                        }
                     }
 
                     ProtobufSerializer.WriteReservedLength(buffer, metricTypeLengthPosition, writePosition - (metricTypeLengthPosition + ReserveSizeForLength));
@@ -367,11 +650,17 @@ internal static class ProtobufOtlpMetricSerializer
                     writePosition = ProtobufSerializer.WriteTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.Metric_Data_Exponential_Histogram, ProtobufWireType.LEN);
                     var metricTypeLengthPosition = writePosition;
                     writePosition += ReserveSizeForLength;
+                    state.Open.MetricData = metricTypeLengthPosition;
 
                     writePosition = ProtobufSerializer.WriteEnumWithTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.ExponentialHistogram_Aggregation_Temporality, aggregationValue);
 
                     foreach (ref readonly var metricPoint in metric.GetMetricPoints())
                     {
+                        if (!state.BeginMetricPoint())
+                        {
+                            continue;
+                        }
+
                         writePosition = ProtobufSerializer.WriteTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.ExponentialHistogram_Data_Points, ProtobufWireType.LEN);
                         var dataPointLengthPosition = writePosition;
                         writePosition += ReserveSizeForLength;
@@ -435,6 +724,11 @@ internal static class ProtobufOtlpMetricSerializer
                         writePosition = WriteDoubleExemplars(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.ExponentialHistogramDataPoint_Exemplars, in metricPoint, ref dirtyLength);
 
                         ProtobufSerializer.WriteReservedLength(buffer, dataPointLengthPosition, writePosition - (dataPointLengthPosition + ReserveSizeForLength));
+
+                        if (!state.CommitMetricPoint(writePosition))
+                        {
+                            break;
+                        }
                     }
 
                     ProtobufSerializer.WriteReservedLength(buffer, metricTypeLengthPosition, writePosition - (metricTypeLengthPosition + ReserveSizeForLength));
@@ -446,6 +740,12 @@ internal static class ProtobufOtlpMetricSerializer
         }
 
         ProtobufSerializer.WriteReservedLength(buffer, metricLengthPosition, writePosition - (metricLengthPosition + ReserveSizeForLength));
+
+        if (!state.Full)
+        {
+            state.EndMetric(writePosition);
+        }
+
         return writePosition;
     }
 
@@ -809,6 +1109,30 @@ internal static class ProtobufOtlpMetricSerializer
             $"Metric metadata exceeds the available serialization buffer capacity of {availableBufferSize} bytes.");
 
     /// <summary>
+    /// Where in a batch of metrics the next request continues from, when the batch
+    /// is written as several requests.
+    /// </summary>
+    internal struct MetricsDataCursor
+    {
+        /// <summary>
+        /// The index of the next metric to write, in the order the metrics of the
+        /// batch are serialized in, which groups them by scope.
+        /// </summary>
+        public int MetricIndex;
+
+        /// <summary>
+        /// The index of the next metric point of that metric to write.
+        /// </summary>
+        public int MetricPointIndex;
+
+        /// <summary>
+        /// The number of metric points of the batch dropped so far because they did
+        /// not fit in a request on their own.
+        /// </summary>
+        public int DroppedMetricPointCount;
+    }
+
+    /// <summary>
     /// The location in the buffer of the encoded explicit bounds of a histogram data point.
     /// </summary>
     private readonly struct ExplicitBoundsCache(double[] bounds, int start, int length)
@@ -818,6 +1142,337 @@ internal static class ProtobufOtlpMetricSerializer
         public readonly int Start { get; } = start;
 
         public readonly int Length { get; } = length;
+    }
+
+    /// <summary>
+    /// The positions of the reserved lengths of the messages a metric point is
+    /// nested in, or -1 for a message which is not open.
+    /// </summary>
+    private struct OpenMessages
+    {
+        public int ResourceMetrics;
+
+        public int ScopeMetrics;
+
+        public int Metric;
+
+        public int MetricData;
+
+        public static OpenMessages None => new() { ResourceMetrics = -1, ScopeMetrics = -1, Metric = -1, MetricData = -1 };
+    }
+
+    /// <summary>
+    /// Tracks the writing of a request so that it can be cut at the end of the last
+    /// metric point which fits when the rest of the batch does not.
+    /// </summary>
+    /// <remarks>
+    /// Only the first metric of a request is tracked metric point by metric point,
+    /// as it is the only one which can be too large for a request on its own: a
+    /// later metric which does not fit is cut at its start and left whole for the
+    /// next request, where it is the first. Likewise a scope which does not fit
+    /// before its first metric is complete is cut at its start. This keeps the
+    /// tracking of the other metrics and their metric points to a few operations.
+    /// </remarks>
+    private struct WriteState
+    {
+        /// <summary>
+        /// Whether the whole batch has to be written as this one request, in which
+        /// case it is never cut.
+        /// </summary>
+        public bool SingleRequest;
+
+        /// <summary>
+        /// The position the request is not written past. A metric point or metric
+        /// which ends beyond it does not fit, even where the buffer is larger.
+        /// </summary>
+        public int Limit;
+
+        /// <summary>
+        /// The metric and metric point the request starts from.
+        /// </summary>
+        public MetricsDataCursor Resume;
+
+        /// <summary>
+        /// Where the next request continues from, once this one is complete or cut.
+        /// </summary>
+        public MetricsDataCursor Next;
+
+        /// <summary>
+        /// Whether the request holds the rest of the batch.
+        /// </summary>
+        public bool Completed;
+
+        /// <summary>
+        /// The index of the metric being written, in the order the metrics are serialized in.
+        /// </summary>
+        public int MetricIndex;
+
+        /// <summary>
+        /// Whether the first metric of the request has been begun.
+        /// </summary>
+        public bool FirstMetricBegun;
+
+        /// <summary>
+        /// The index of the first metric of the request.
+        /// </summary>
+        public int FirstMetricIndex;
+
+        /// <summary>
+        /// Whether the metric being written is the first of the request, whose metric
+        /// points are tracked one by one.
+        /// </summary>
+        public bool TrackingMetricPoints;
+
+        /// <summary>
+        /// The index of the metric point of the first metric being written.
+        /// </summary>
+        public int MetricPointIndex;
+
+        /// <summary>
+        /// The number of metric points of the first metric which were written by
+        /// the previous requests.
+        /// </summary>
+        public int MetricPointsToSkip;
+
+        /// <summary>
+        /// The first metric of the request.
+        /// </summary>
+        public Metric? Metric;
+
+        /// <summary>
+        /// Whether a metric point of the first metric is being written, as opposed
+        /// to the messages around it.
+        /// </summary>
+        public bool WritingMetricPoint;
+
+        /// <summary>
+        /// Whether a metric point or metric ended beyond <see cref="Limit"/>, so
+        /// that the request has to be cut.
+        /// </summary>
+        public bool Full;
+
+        /// <summary>
+        /// The reserved lengths of the messages currently open.
+        /// </summary>
+        public OpenMessages Open;
+
+        /// <summary>
+        /// The position after the last metric point of the first metric which fit,
+        /// where the request can be cut while that metric is being written, or -1
+        /// when there is none.
+        /// </summary>
+        public int CheckpointPosition;
+
+        /// <summary>
+        /// The position the scope being written starts at, where the request can
+        /// be cut while none of its metrics is complete.
+        /// </summary>
+        public int ScopeStartPosition;
+
+        /// <summary>
+        /// The reserved length of the previous scope of the request, which is the
+        /// message to close when the request is cut at <see cref="ScopeStartPosition"/>,
+        /// or -1 when the scope being written is the first of the request.
+        /// </summary>
+        public int PreviousScopeMetricsLengthPosition;
+
+        /// <summary>
+        /// The number of metrics of the scope being written which are complete.
+        /// </summary>
+        public int ScopeMetricsWritten;
+
+        /// <summary>
+        /// The position the metric being written starts at, where the request can be
+        /// cut once a metric of its scope is complete, or -1 while none is being written.
+        /// </summary>
+        public int MetricStartPosition;
+
+        /// <summary>
+        /// Gets a value indicating whether the request can be cut somewhere.
+        /// </summary>
+        public readonly bool HasCheckpoint
+            => this.TrackingMetricPoints
+                ? this.CheckpointPosition >= 0
+                : (this.MetricStartPosition >= 0 && this.ScopeMetricsWritten > 0) || this.PreviousScopeMetricsLengthPosition >= 0;
+
+        /// <summary>
+        /// Gets a value indicating whether the request continues a batch from a
+        /// previous request and has no metric point to hold, as when the remaining
+        /// metric points of the batch were dropped.
+        /// </summary>
+        public readonly bool ContinuesWithoutMetricPoints
+            => !this.SingleRequest &&
+               (this.Resume.MetricIndex > 0 || this.Resume.MetricPointIndex > 0) &&
+               this.CheckpointPosition < 0 &&
+               (!this.FirstMetricBegun || this.MetricIndex <= this.FirstMetricIndex + 1);
+
+        public readonly string MetricName => this.Metric?.Name ?? string.Empty;
+
+        public static WriteState ForWholeBatch()
+            => new() { SingleRequest = true, Limit = int.MaxValue };
+
+        public static WriteState ForRequest(in MetricsDataCursor cursor, int limit)
+            => new() { Limit = limit, Resume = cursor, Next = cursor };
+
+        public void BeginRequest()
+        {
+            this.MetricIndex = 0;
+            this.FirstMetricBegun = false;
+            this.TrackingMetricPoints = false;
+            this.WritingMetricPoint = false;
+            this.Full = false;
+            this.Open = OpenMessages.None;
+            this.CheckpointPosition = -1;
+            this.PreviousScopeMetricsLengthPosition = -1;
+            this.ScopeMetricsWritten = 0;
+            this.MetricStartPosition = -1;
+        }
+
+        /// <summary>
+        /// Skips a scope if all of its metrics were written by the previous requests.
+        /// </summary>
+        /// <param name="metricCount">The number of metrics in the scope.</param>
+        /// <returns><see langword="true"/> if the scope is skipped; otherwise, <see langword="false"/>.</returns>
+        public bool SkipScope(int metricCount)
+        {
+            if (this.MetricIndex + metricCount <= this.Resume.MetricIndex)
+            {
+                this.MetricIndex += metricCount;
+                return true;
+            }
+
+            return false;
+        }
+
+        public void BeginScope(int startPosition, int lengthPosition)
+        {
+            this.PreviousScopeMetricsLengthPosition = this.Open.ScopeMetrics;
+            this.ScopeStartPosition = startPosition;
+            this.ScopeMetricsWritten = 0;
+            this.MetricStartPosition = -1;
+            this.Open.ScopeMetrics = lengthPosition;
+        }
+
+        /// <summary>
+        /// Skips a metric if it was written by the previous requests.
+        /// </summary>
+        /// <returns><see langword="true"/> if the metric is skipped; otherwise, <see langword="false"/>.</returns>
+        public bool SkipMetric()
+        {
+            if (this.MetricIndex < this.Resume.MetricIndex)
+            {
+                this.MetricIndex++;
+                return true;
+            }
+
+            return false;
+        }
+
+        public void BeginMetric(Metric metric, int startPosition, int lengthPosition)
+        {
+            this.MetricStartPosition = startPosition;
+
+            if (!this.FirstMetricBegun)
+            {
+                this.FirstMetricBegun = true;
+                this.FirstMetricIndex = this.MetricIndex;
+                this.TrackingMetricPoints = true;
+                this.Metric = metric;
+                this.MetricPointIndex = 0;
+                this.MetricPointsToSkip = this.MetricIndex == this.Resume.MetricIndex ? this.Resume.MetricPointIndex : 0;
+                this.Open.Metric = lengthPosition;
+                this.Open.MetricData = -1;
+            }
+        }
+
+        /// <summary>
+        /// Starts a metric point, unless it was written by the previous requests.
+        /// </summary>
+        /// <returns><see langword="true"/> if the metric point is to be written; otherwise, <see langword="false"/>.</returns>
+        public bool BeginMetricPoint()
+        {
+            if (!this.TrackingMetricPoints)
+            {
+                return true;
+            }
+
+            if (this.MetricPointsToSkip > 0)
+            {
+                this.MetricPointsToSkip--;
+                this.MetricPointIndex++;
+                return false;
+            }
+
+            this.WritingMetricPoint = true;
+            return true;
+        }
+
+        /// <summary>
+        /// Completes a metric point, which becomes the checkpoint the request can be
+        /// cut at when the metric is the first of the request.
+        /// </summary>
+        /// <param name="writePosition">The position after the metric point.</param>
+        /// <returns><see langword="true"/> if the metric point fits; otherwise, <see langword="false"/> and the request is full.</returns>
+        public bool CommitMetricPoint(int writePosition)
+        {
+            if (!this.TrackingMetricPoints)
+            {
+                return true;
+            }
+
+            if (writePosition > this.Limit)
+            {
+                this.Full = true;
+                return false;
+            }
+
+            this.WritingMetricPoint = false;
+            this.MetricPointIndex++;
+            this.CheckpointPosition = writePosition;
+            return true;
+        }
+
+        /// <summary>
+        /// Completes a metric, if it fits.
+        /// </summary>
+        /// <param name="writePosition">The position after the metric.</param>
+        public void EndMetric(int writePosition)
+        {
+            if (writePosition > this.Limit)
+            {
+                this.Full = true;
+                return;
+            }
+
+            this.TrackingMetricPoints = false;
+            this.MetricIndex++;
+            this.ScopeMetricsWritten++;
+        }
+
+        /// <summary>
+        /// Drops the metric point being written, so that the request starts over from
+        /// the one after it.
+        /// </summary>
+        public void DropMetricPoint()
+        {
+            this.Resume.MetricIndex = this.MetricIndex;
+            this.Resume.MetricPointIndex = this.MetricPointIndex + 1;
+            this.Next.DroppedMetricPointCount++;
+        }
+
+        public void Cut(int metricIndex, int metricPointIndex)
+        {
+            this.Next.MetricIndex = metricIndex;
+            this.Next.MetricPointIndex = metricPointIndex;
+            this.Completed = false;
+        }
+
+        public void Complete()
+        {
+            this.Next.MetricIndex = this.MetricIndex;
+            this.Next.MetricPointIndex = 0;
+            this.Completed = true;
+        }
     }
 
     private sealed class CachedAttributes(int fieldNumber, byte[] bytes)

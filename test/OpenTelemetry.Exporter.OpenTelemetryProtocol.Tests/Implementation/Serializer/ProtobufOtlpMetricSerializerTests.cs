@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics.Metrics;
+using System.Diagnostics.Tracing;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
@@ -10,6 +11,8 @@ using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Tests;
 using OtlpCollector = OpenTelemetry.Proto.Collector.Metrics.V1;
+using OtlpCommon = OpenTelemetry.Proto.Common.V1;
+using OtlpMetrics = OpenTelemetry.Proto.Metrics.V1;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests.Implementation.Serializer;
 
@@ -334,6 +337,277 @@ public static class ProtobufOtlpMetricSerializerTests
 
             return [.. dataPoint.Attributes.Select(static a => a.Key)];
         }
+    }
+
+    [Theory]
+    [InlineData(1)]
+    [InlineData(2)]
+    [InlineData(3)]
+    [InlineData(5)]
+    [InlineData(8)]
+    [InlineData(16)]
+    public static void WriteMetricsData_BatchLargerThanRequest_IsWrittenAsSeveralRequestsCutAtMetricPoints(int divisor)
+    {
+        const string ResourceSchemaUrl = "https://opentelemetry.io/schemas/resource";
+
+        var resource = new Resource(new Dictionary<string, object> { ["service.name"] = "cut" }, ResourceSchemaUrl);
+        var metrics = GenerateMetricsOfEveryType();
+
+        var buffer = new byte[1024];
+        var wholeLength = ProtobufOtlpMetricSerializer.WriteMetricsData(ref buffer, 0, resource, metrics, out _);
+        var expected = DescribeDataPoints(ParseRequest(buffer, wholeLength));
+
+        // A request one byte short of the whole batch, or a fraction of it.
+        var limit = divisor == 1 ? wholeLength - 1 : wholeLength / divisor;
+
+        var actual = new List<string>();
+        var cursor = default(ProtobufOtlpMetricSerializer.MetricsDataCursor);
+        var requestCount = 0;
+        bool completed;
+
+        do
+        {
+            var length = ProtobufOtlpMetricSerializer.WriteMetricsData(ref buffer, 0, resource, metrics, out var dirtyLength, limit, ref cursor, out completed);
+
+            Assert.True(length <= limit, $"Request {requestCount} of {length} bytes exceeds the limit of {limit} bytes.");
+
+            // The bytes written beyond where a request is cut have to be cleared before
+            // the buffer goes back to the pool, so they count towards its dirty prefix.
+            Assert.True(
+                completed || dirtyLength > length,
+                $"Request {requestCount} of {length} bytes reported a dirty length of {dirtyLength} bytes.");
+
+            // Every request is a complete message, with the resource and the scopes
+            // of its metrics, and holds no metric without metric points.
+            var request = ParseRequest(buffer, length);
+            var resourceMetrics = Assert.Single(request.ResourceMetrics);
+            Assert.Equal(ResourceSchemaUrl, resourceMetrics.SchemaUrl);
+            Assert.Equal("cut", Assert.Single(resourceMetrics.Resource.Attributes).Value.StringValue);
+            Assert.NotEmpty(resourceMetrics.ScopeMetrics);
+
+            foreach (var scopeMetrics in resourceMetrics.ScopeMetrics)
+            {
+                Assert.Equal($"{scopeMetrics.Scope.Name}/schema", scopeMetrics.SchemaUrl);
+                Assert.NotEmpty(scopeMetrics.Metrics);
+            }
+
+            var dataPoints = DescribeDataPoints(request);
+            Assert.Equal(resourceMetrics.ScopeMetrics.Sum(static s => s.Metrics.Count), dataPoints.Select(static d => d.Split('|')[0]).Distinct().Count());
+
+            actual.AddRange(dataPoints);
+            requestCount++;
+        }
+        while (!completed);
+
+        Assert.True(requestCount > 1, "The batch was expected to need more than one request.");
+        Assert.Equal(0, cursor.DroppedMetricPointCount);
+        Assert.Equal(expected.OrderBy(static d => d, StringComparer.Ordinal), actual.OrderBy(static d => d, StringComparer.Ordinal));
+    }
+
+    [Fact]
+    public static void WriteMetricsData_MetricPointLargerThanRequest_IsDroppedAndTheRestWritten()
+    {
+        const int MetricPointDroppedEventId = 45;
+
+        using var listener = new TestEventListener(OpenTelemetryProtocolExporterEventSource.Log, EventLevel.Error);
+
+        var metrics = GenerateMetricsWithTags(static counter =>
+        {
+            counter.Add(1, new KeyValuePair<string, object?>("size", "small-1"));
+            counter.Add(2, new KeyValuePair<string, object?>("size", new string('x', 4096)));
+            counter.Add(3, new KeyValuePair<string, object?>("size", "small-3"));
+        });
+
+        var buffer = new byte[256];
+        var cursor = default(ProtobufOtlpMetricSerializer.MetricsDataCursor);
+        var values = new List<long>();
+        bool completed;
+
+        do
+        {
+            var length = ProtobufOtlpMetricSerializer.WriteMetricsData(ref buffer, 0, Resource.Empty, metrics, out _, 1024, ref cursor, out completed);
+
+            Assert.True(length <= 1024, $"The request of {length} bytes exceeds the limit.");
+
+            var request = ParseRequest(buffer, length);
+            var metric = Assert.Single(Assert.Single(Assert.Single(request.ResourceMetrics).ScopeMetrics).Metrics);
+            values.AddRange(metric.Sum.DataPoints.Select(static p => p.AsInt));
+        }
+        while (!completed);
+
+        Assert.Equal([1, 3], values);
+        Assert.Equal(1, cursor.DroppedMetricPointCount);
+
+        var dropped = Assert.Single(listener.Messages, static e => e.EventId == MetricPointDroppedEventId);
+        Assert.Equal("requests", dropped.Payload?[0]);
+        Assert.Equal(1024, dropped.Payload?[1]);
+    }
+
+    [Fact]
+    public static void WriteMetricsData_LastMetricPointLargerThanRequest_IsDroppedWithoutAnEmptyRequest()
+    {
+        var metrics = GenerateMetricsWithTags(static counter =>
+        {
+            counter.Add(1, new KeyValuePair<string, object?>("size", "small-1"));
+            counter.Add(2, new KeyValuePair<string, object?>("size", new string('x', 4096)));
+        });
+
+        var buffer = new byte[1024];
+        var cursor = default(ProtobufOtlpMetricSerializer.MetricsDataCursor);
+
+        // The first request is cut after the first metric point.
+        var length = ProtobufOtlpMetricSerializer.WriteMetricsData(ref buffer, 0, Resource.Empty, metrics, out _, 1024, ref cursor, out var completed);
+
+        Assert.False(completed);
+        var metric = Assert.Single(Assert.Single(Assert.Single(ParseRequest(buffer, length).ResourceMetrics).ScopeMetrics).Metrics);
+        Assert.Equal([1], metric.Sum.DataPoints.Select(static p => p.AsInt));
+
+        // The second metric point is dropped, after which nothing is left to send, so
+        // no request holding only the resource, scope and metric is produced.
+        length = ProtobufOtlpMetricSerializer.WriteMetricsData(ref buffer, 0, Resource.Empty, metrics, out var dirtyLength, 1024, ref cursor, out completed);
+
+        Assert.True(completed);
+        Assert.Equal(0, length);
+        Assert.True(dirtyLength > 0, "The bytes written before the request was abandoned have to be cleared.");
+        Assert.Equal(1, cursor.DroppedMetricPointCount);
+    }
+
+    [Fact]
+    public static void WriteMetricsData_RequestTooSmallForAnyMetricPoint_Throws()
+    {
+        var metrics = GenerateMetricsWithTags();
+        var buffer = new byte[16];
+        var cursor = default(ProtobufOtlpMetricSerializer.MetricsDataCursor);
+
+        // Not even the resource, scope and metric a metric point belongs to fit.
+        Assert.ThrowsAny<Exception>(() => ProtobufOtlpMetricSerializer.WriteMetricsData(ref buffer, 0, Resource.Empty, metrics, out _, 16, ref cursor, out _));
+
+        Assert.Equal(default, cursor.MetricIndex);
+        Assert.Equal(default, cursor.MetricPointIndex);
+    }
+
+    private static OtlpCollector.ExportMetricsServiceRequest ParseRequest(byte[] buffer, int length)
+    {
+        using var stream = new MemoryStream(buffer, 0, length);
+        return OtlpCollector.ExportMetricsServiceRequest.Parser.ParseFrom(stream);
+    }
+
+    /// <summary>
+    /// Describes every data point of a request as a string, so that the data
+    /// points of several requests can be compared with those of a single one.
+    /// </summary>
+    private static List<string> DescribeDataPoints(OtlpCollector.ExportMetricsServiceRequest request)
+    {
+        var result = new List<string>();
+
+        foreach (var resourceMetrics in request.ResourceMetrics)
+        {
+            foreach (var scopeMetrics in resourceMetrics.ScopeMetrics)
+            {
+                foreach (var metric in scopeMetrics.Metrics)
+                {
+                    var prefix = $"{scopeMetrics.Scope.Name}/{metric.Name}";
+
+                    switch (metric.DataCase)
+                    {
+                        case OtlpMetrics.Metric.DataOneofCase.Sum:
+                            result.AddRange(metric.Sum.DataPoints.Select(p => $"{prefix}|{Describe(p.Attributes)}|{p.AsInt}|{p.AsDouble}|{p.Exemplars.Count}"));
+                            break;
+
+                        case OtlpMetrics.Metric.DataOneofCase.Gauge:
+                            result.AddRange(metric.Gauge.DataPoints.Select(p => $"{prefix}|{Describe(p.Attributes)}|{p.AsInt}|{p.AsDouble}|{p.Exemplars.Count}"));
+                            break;
+
+                        case OtlpMetrics.Metric.DataOneofCase.Histogram:
+                            result.AddRange(metric.Histogram.DataPoints.Select(p => $"{prefix}|{Describe(p.Attributes)}|{p.Count}|{p.Sum}|{p.BucketCounts.Count}|{p.ExplicitBounds.Count}|{p.Exemplars.Count}"));
+                            break;
+
+                        case OtlpMetrics.Metric.DataOneofCase.ExponentialHistogram:
+                            result.AddRange(metric.ExponentialHistogram.DataPoints.Select(p => $"{prefix}|{Describe(p.Attributes)}|{p.Count}|{p.Sum}|{p.Scale}|{p.Positive.BucketCounts.Count}|{p.Exemplars.Count}"));
+                            break;
+
+                        default:
+                            Assert.Fail($"Unexpected metric data '{metric.DataCase}'.");
+                            break;
+                    }
+                }
+            }
+        }
+
+        return result;
+
+        static string Describe(IEnumerable<OtlpCommon.KeyValue> attributes)
+            => string.Join(",", attributes.Select(static a => $"{a.Key}={a.Value}"));
+    }
+
+    /// <summary>
+    /// Generates metrics of every type from two scopes with schema URLs, each with
+    /// several metric points carrying exemplars.
+    /// </summary>
+    private static Batch<Metric> GenerateMetricsOfEveryType()
+    {
+        const int MetricPointsPerMetric = 12;
+
+        var exported = new List<Metric>();
+        var meterNames = new[]
+        {
+            $"{nameof(ProtobufOtlpMetricSerializerTests)}.{nameof(GenerateMetricsOfEveryType)}.1",
+            $"{nameof(ProtobufOtlpMetricSerializerTests)}.{nameof(GenerateMetricsOfEveryType)}.2",
+        };
+
+        var meters = new List<Meter>();
+        int count;
+
+        try
+        {
+            using (var meterProvider = Sdk.CreateMeterProviderBuilder()
+                .AddMeter(meterNames)
+                .SetExemplarFilter(ExemplarFilterType.AlwaysOn)
+                .AddView("exponential.histogram", new Base2ExponentialBucketHistogramConfiguration())
+                .AddInMemoryExporter(exported)
+                .Build())
+            {
+                foreach (var meterName in meterNames)
+                {
+                    var meter = new Meter(new MeterOptions(meterName) { TelemetrySchemaUrl = $"{meterName}/schema" });
+                    meters.Add(meter);
+
+                    var longCounter = meter.CreateCounter<long>("long.counter");
+                    var doubleCounter = meter.CreateCounter<double>("double.counter");
+                    var histogram = meter.CreateHistogram<double>("histogram");
+                    var exponentialHistogram = meter.CreateHistogram<double>("exponential.histogram");
+                    var gaugeValues = new List<Measurement<long>>();
+                    meter.CreateObservableGauge("gauge", () => gaugeValues);
+
+                    for (var i = 0; i < MetricPointsPerMetric; i++)
+                    {
+                        var tag = new KeyValuePair<string, object?>("index", i);
+
+                        longCounter.Add(i, tag);
+                        doubleCounter.Add(i + 0.5, tag);
+                        histogram.Record(i * 10, tag);
+                        exponentialHistogram.Record(i + 1, tag);
+                        gaugeValues.Add(new Measurement<long>(i, tag));
+                    }
+                }
+
+                Assert.True(meterProvider.ForceFlush());
+
+                // Disposing the provider collects and exports the same metrics again.
+                count = exported.Count;
+            }
+        }
+        finally
+        {
+            foreach (var meter in meters)
+            {
+                meter.Dispose();
+            }
+        }
+
+        Assert.Equal(10, count);
+
+        return new Batch<Metric>([.. exported], count);
     }
 
     private static Batch<Metric> GenerateMetricsWithTags(Action<Counter<long>>? record = null)

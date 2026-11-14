@@ -90,66 +90,116 @@ public class OtlpMetricExporter : BaseExporter<Metric>
 
         byte[]? buffer = null;
         var serializationSucceeded = false;
-        var writePosition = 0;
+        var largestWritePosition = 0;
         var dirtyLength = 0;
+        var result = ExportResult.Success;
 
         try
         {
             buffer = this.serializationBuffer.Rent();
 
-            try
+            // Unlike spans and log records, metric points are not consumed by being
+            // exported: with cumulative temporality every later collection contains
+            // the metric points of this one again. A batch which does not fit in a
+            // single request is therefore sent as several requests rather than
+            // dropped, which would also drop every collection that follows it.
+            var cursor = default(ProtobufOtlpMetricSerializer.MetricsDataCursor);
+            var requestCount = 0;
+            bool completed;
+
+            do
             {
-                writePosition = ProtobufOtlpMetricSerializer.WriteMetricsData(
-                    ref buffer,
-                    this.startWritePosition,
-                    this.Resource,
-                    metrics,
-                    out dirtyLength,
-                    this.maxRequestSizeBytes + this.startWritePosition);
+                int writePosition;
+
+                try
+                {
+                    writePosition = ProtobufOtlpMetricSerializer.WriteMetricsData(
+                        ref buffer,
+                        this.startWritePosition,
+                        this.Resource,
+                        metrics,
+                        out var requestDirtyLength,
+                        this.maxRequestSizeBytes + this.startWritePosition,
+                        ref cursor,
+                        out completed);
+
+                    dirtyLength = Math.Max(dirtyLength, requestDirtyLength);
+                }
+                catch (Exception ex)
+                {
+                    OpenTelemetryProtocolExporterEventSource.Log.BatchDroppedDueToSerializationFailure(
+                        OtlpSignalType.Metrics,
+                        metrics.Count - cursor.MetricIndex,
+                        ex);
+
+                    // How far the failed request got is unknown, so the buffer is cleared
+                    // in full even when an earlier request was serialized.
+                    serializationSucceeded = false;
+                    return ExportResult.Failure;
+                }
+
                 serializationSucceeded = true;
+                largestWritePosition = Math.Max(largestWritePosition, writePosition);
+
+                // Nothing is left to send once the remaining metric points were dropped.
+                if (completed && writePosition == this.startWritePosition)
+                {
+                    break;
+                }
+
+                // The serialization buffer is rented from a pool that can hand back more
+                // than was asked for, so the payload can overrun the configured limit.
+                // The specification requires that such a request is not made at all.
+                var requestSize = writePosition - this.startWritePosition;
+                if (requestSize > this.maxRequestSizeBytes)
+                {
+                    OpenTelemetryProtocolExporterEventSource.Log.RequestDiscardedDueToSizeLimit(
+                        OtlpSignalType.Metrics,
+                        metrics.Count - cursor.MetricIndex,
+                        requestSize,
+                        this.maxRequestSizeBytes);
+
+                    // Discard the oversized buffer rather than keeping it as the size hint.
+                    serializationSucceeded = false;
+                    return ExportResult.Failure;
+                }
+
+                if (this.startWritePosition == GrpcStartWritePosition)
+                {
+                    // Grpc payload consists of 3 parts
+                    // byte 0 - Specifying if the payload is compressed.
+                    // 1-4 byte - Specifies the length of payload in big endian format.
+                    // 5 and above -  Protobuf serialized data.
+                    // Note: byte 0 must be explicitly cleared because the rented buffer is not zeroed.
+                    buffer[0] = 0;
+                    var data = new Span<byte>(buffer, 1, 4);
+                    var dataLength = writePosition - GrpcStartWritePosition;
+                    BinaryPrimitives.WriteUInt32BigEndian(data, (uint)dataLength);
+                }
+
+                // A request which fails does not stop the rest of the batch from being
+                // sent, but none of it can be sent once the deadline has passed.
+                if (!this.transmissionHandler.TrySubmitRequest(buffer, writePosition, deadlineUtc))
+                {
+                    result = ExportResult.Failure;
+                }
+
+                requestCount++;
+
+                if (!completed && deadlineUtc <= DateTime.UtcNow)
+                {
+                    result = ExportResult.Failure;
+                    break;
+                }
             }
-            catch (Exception ex)
+            while (!completed);
+
+            if (requestCount > 1)
             {
-                OpenTelemetryProtocolExporterEventSource.Log.BatchDroppedDueToSerializationFailure(
-                    OtlpSignalType.Metrics,
+                OpenTelemetryProtocolExporterEventSource.Log.BatchExportedAsMultipleRequests(
                     metrics.Count,
-                    ex);
-                return ExportResult.Failure;
-            }
-
-            // The serialization buffer is rented from a pool that can hand back more
-            // than was asked for, so the payload can overrun the configured limit.
-            // The specification requires that such a request is not made at all.
-            var requestSize = writePosition - this.startWritePosition;
-            if (requestSize > this.maxRequestSizeBytes)
-            {
-                OpenTelemetryProtocolExporterEventSource.Log.RequestDiscardedDueToSizeLimit(
-                    OtlpSignalType.Metrics,
-                    metrics.Count,
-                    requestSize,
-                    this.maxRequestSizeBytes);
-
-                // Discard the oversized buffer rather than keeping it as the size hint.
-                serializationSucceeded = false;
-                return ExportResult.Failure;
-            }
-
-            if (this.startWritePosition == GrpcStartWritePosition)
-            {
-                // Grpc payload consists of 3 parts
-                // byte 0 - Specifying if the payload is compressed.
-                // 1-4 byte - Specifies the length of payload in big endian format.
-                // 5 and above -  Protobuf serialized data.
-                // Note: byte 0 must be explicitly cleared because the rented buffer is not zeroed.
-                buffer[0] = 0;
-                var data = new Span<byte>(buffer, 1, 4);
-                var dataLength = writePosition - GrpcStartWritePosition;
-                BinaryPrimitives.WriteUInt32BigEndian(data, (uint)dataLength);
-            }
-
-            if (!this.transmissionHandler.TrySubmitRequest(buffer, writePosition, deadlineUtc))
-            {
-                return ExportResult.Failure;
+                    this.maxRequestSizeBytes,
+                    requestCount);
             }
         }
         catch (Exception ex)
@@ -163,7 +213,7 @@ public class OtlpMetricExporter : BaseExporter<Metric>
             {
                 if (serializationSucceeded)
                 {
-                    this.serializationBuffer.Return(buffer, writePosition, dirtyLength);
+                    this.serializationBuffer.Return(buffer, largestWritePosition, dirtyLength);
                 }
                 else
                 {
@@ -172,7 +222,7 @@ public class OtlpMetricExporter : BaseExporter<Metric>
             }
         }
 
-        return ExportResult.Success;
+        return result;
     }
 
     /// <inheritdoc />

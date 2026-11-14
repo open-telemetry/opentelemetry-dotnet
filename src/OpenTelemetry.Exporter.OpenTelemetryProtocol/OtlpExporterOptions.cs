@@ -202,9 +202,11 @@ public class OtlpExporterOptions : IOtlpExporterOptions
     /// <list type="bullet">
     /// <item>The size is measured on the serialized payload before any
     /// compression selected by <see cref="Compression"/> is applied.</item>
-    /// <item>A batch whose serialized payload exceeds this size is not sent, and
-    /// is dropped in its entirety. Set this to match the request size limit of
-    /// the receiver being exported to.</item>
+    /// <item>A batch of spans or log records whose serialized payload exceeds
+    /// this size is not sent, and is dropped in its entirety. A batch of metrics
+    /// is sent as several requests of at most this size instead, and only a
+    /// metric point which exceeds this size on its own is dropped. Set this to
+    /// match the request size limit of the receiver being exported to.</item>
     /// <item>The buffer used to serialize is grown on demand, so raising this
     /// value does not by itself increase memory use.</item>
     /// <item>Accepted values run from <c>750000</c>, the size the serialization

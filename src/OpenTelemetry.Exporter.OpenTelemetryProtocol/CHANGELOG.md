@@ -7,6 +7,14 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Fixed `OtlpMetricExporter` dropping every collection once the metrics did not
+  fit in a single request of `OtlpExporterOptions.MaxRequestSizeBytes`, which
+  with cumulative temporality stopped the export of all metrics until the
+  process was restarted. Such a batch is now sent as several requests, each cut
+  at the end of a metric point, and only a metric point which does not fit in a
+  request on its own is dropped.
+  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+
 ## 1.21.0
 
 Released 2026-Nov-11
