@@ -11,7 +11,7 @@ Notes](../../RELEASENOTES.md).
   longer store cookies set by responses from the endpoint or send them with
   later export requests. See [Configure HttpClient](README.md#configure-httpclient)
   to prevent `HttpClient` created by `IHttpClientFactory` from using cookies.
-  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+  ([#8131](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8131))
 
 ## 1.21.0
 
