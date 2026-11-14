@@ -1,0 +1,1 @@
+OpenTelemetry.Exporter.OtlpExportCompression.Zstd = 2 -> OpenTelemetry.Exporter.OtlpExportCompression
