@@ -13,7 +13,7 @@ Notes](../../RELEASENOTES.md).
   process was restarted. Such a batch is now sent as several requests, each cut
   at the end of a metric point, and only a metric point which does not fit in a
   request on its own is dropped.
-  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+  ([#8132](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8132))
 
 ## 1.21.0
 
