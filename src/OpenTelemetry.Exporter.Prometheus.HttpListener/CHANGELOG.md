@@ -7,6 +7,12 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Fixed the listener permanently stopping when `HttpListener` fails to get a
+  request, for example after a burst of requests rejected by authentication
+  configured through `ConfigureHttpListener`. The failure is now logged and the
+  listener keeps accepting requests.
+  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+
 ## 1.21.0-beta.1
 
 Released 2026-Nov-11

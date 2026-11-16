@@ -4,6 +4,7 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
+using System.Diagnostics.Tracing;
 using System.Globalization;
 using System.Net;
 #if NETFRAMEWORK
@@ -1047,6 +1048,169 @@ public class PrometheusHttpListenerTests
         Assert.True(closed, "The server did not close the connection while the unread request body was trickled in.");
     }
 
+    [Fact]
+    public async Task ScrapesAreStillServedAfterHttpListenerFailsToGetRequest()
+    {
+        Assert.SkipWhen(
+            RuntimeInformation.IsOSPlatform(OSPlatform.Windows),
+            "HTTP.sys does not fail the pending GetContextAsync() operation when requests do not pass authentication.");
+
+        EnsureThreadPoolWorkerThreadsAvailable();
+
+        var timeout = TimeSpan.FromSeconds(10);
+
+        using var meter = new Meter(MeterName, MeterVersion);
+
+        // The failure is logged by the thread that accepts requests, not this one
+        using var eventListener = new AcceptRequestFailedListener();
+
+        using var requestHeld = new ManualResetEventSlim();
+        using var allowRequestToBeRejected = new ManualResetEventSlim();
+
+        var holdNextRequest = 0;
+
+        using var context = CreateMeterProvider(meter, configureListener: (options) =>
+        {
+            // The listener itself answers requests without credentials with 401,
+            // they are not handed to the exporter
+            options.ConfigureHttpListener = (_, listener) => listener.AuthenticationSchemeSelectorDelegate = (_) =>
+            {
+                if (Interlocked.Exchange(ref holdNextRequest, 0) == 1)
+                {
+                    requestHeld.Set();
+                    allowRequestToBeRejected.Wait(timeout);
+                }
+
+                return AuthenticationSchemes.Basic;
+            };
+
+            return options.Port;
+        });
+
+        meter.CreateCounter<long>("counter_long").Add(1);
+
+        var requestUri = new Uri("metrics", UriKind.Relative);
+        var credentials = Convert.ToBase64String(System.Text.Encoding.ASCII.GetBytes("user:password"));
+
+        using var httpClient = new HttpClient { BaseAddress = context.BaseAddress, Timeout = timeout };
+
+        using (var request = new HttpRequestMessage(HttpMethod.Get, requestUri))
+        {
+            request.Headers.Authorization = new("Basic", credentials);
+
+            using var response = await httpClient.SendAsync(request, TestContext.Current.CancellationToken);
+
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        }
+
+        // On the managed (non-Windows) HttpListener implementation, the pending GetContextAsync()
+        // operation fails when more than 20 requests that are already waiting are rejected one
+        // after the other. To get there, hold the rejection of a first request, which is sent on
+        // the connection of the scrape above so that it is not read by the thread that accepts
+        // connections, and let more requests queue up behind it.
+        Volatile.Write(ref holdNextRequest, 1);
+
+        var heldRequest = httpClient.GetAsync(requestUri, TestContext.Current.CancellationToken);
+
+        var clients = new List<System.Net.Sockets.TcpClient>();
+
+        try
+        {
+            Assert.True(requestHeld.Wait(timeout, TestContext.Current.CancellationToken));
+
+            var unauthenticated = System.Text.Encoding.ASCII.GetBytes(
+                $"GET /metrics HTTP/1.1\r\nHost: localhost:{context.Port}\r\nConnection: close\r\n\r\n");
+
+            for (var i = 0; i < 32; i++)
+            {
+                var client = new System.Net.Sockets.TcpClient();
+                clients.Add(client);
+
+#if NET
+                await client.ConnectAsync(context.BaseAddress.Host, context.Port, TestContext.Current.CancellationToken);
+                await client.GetStream().WriteAsync(unauthenticated, TestContext.Current.CancellationToken);
+#else
+                await client.ConnectAsync(context.BaseAddress.Host, context.Port);
+                await client.GetStream().WriteAsync(unauthenticated, 0, unauthenticated.Length, TestContext.Current.CancellationToken);
+#endif
+            }
+
+            // Give the listener time to read the requests
+            await Task.Delay(TimeSpan.FromMilliseconds(250), TestContext.Current.CancellationToken);
+
+            allowRequestToBeRejected.Set();
+
+            using (var response = await heldRequest)
+            {
+                Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+            }
+
+            var buffer = new byte[512];
+
+            foreach (var client in clients)
+            {
+                using var cts = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
+                cts.CancelAfter(timeout);
+
+#if NET
+                var read = await client.GetStream().ReadAsync(buffer, cts.Token);
+#else
+                var read = await client.GetStream().ReadAsync(buffer, 0, buffer.Length, cts.Token);
+#endif
+
+                Assert.StartsWith("HTTP/1.1 401", System.Text.Encoding.ASCII.GetString(buffer, 0, read), StringComparison.Ordinal);
+            }
+        }
+        finally
+        {
+            allowRequestToBeRejected.Set();
+
+            foreach (var client in clients)
+            {
+                client.Dispose();
+            }
+        }
+
+        string? content = null;
+
+        // The listener can still hand the first request that follows to the operation which
+        // failed, and that request is then never answered, so allow for further attempts.
+        for (var attempt = 0; attempt < 5 && string.IsNullOrEmpty(content); attempt++)
+        {
+            using var request = new HttpRequestMessage(HttpMethod.Get, requestUri);
+            request.Headers.Authorization = new("Basic", credentials);
+
+            using var cts = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
+            cts.CancelAfter(TimeSpan.FromSeconds(2));
+
+            try
+            {
+                using var response = await httpClient.SendAsync(request, cts.Token);
+
+                Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+#if NET
+                content = await response.Content.ReadAsStringAsync(cts.Token);
+#else
+                content = await response.Content.ReadAsStringAsync();
+#endif
+            }
+            catch (OperationCanceledException) when (!TestContext.Current.CancellationToken.IsCancellationRequested)
+            {
+                // Not answered
+            }
+        }
+
+        Assert.NotNull(content);
+        Assert.Contains("counter_long", content, StringComparison.Ordinal);
+
+        // Guard against the scenario no longer being reproduced, in which case the
+        // scrapes above would succeed whether or not failures are handled
+        Assert.True(
+            eventListener.Count > 0,
+            "HttpListener did not fail to get a request, so the test did not exercise the failure.");
+    }
+
     internal static MeterProviderTestContext CreateMeterProvider(
         Meter meter,
         Func<PrometheusHttpListenerOptions, int>? configureListener = null,
@@ -1340,6 +1504,29 @@ public class PrometheusHttpListenerTests
 
         public void Dispose()
             => this.Provider.Dispose();
+    }
+
+    private sealed class AcceptRequestFailedListener : EventListener
+    {
+        private int count;
+
+        public int Count => Volatile.Read(ref this.count);
+
+        protected override void OnEventSourceCreated(EventSource eventSource)
+        {
+            if (eventSource.Name == "OpenTelemetry-Exporter-Prometheus")
+            {
+                this.EnableEvents(eventSource, EventLevel.Error);
+            }
+        }
+
+        protected override void OnEventWritten(EventWrittenEventArgs eventData)
+        {
+            if (eventData.EventId == 17)
+            {
+                Interlocked.Increment(ref this.count);
+            }
+        }
     }
 
     private sealed class ScrapingResourceDetector(HttpClient client, CancellationToken cancellationToken) : IResourceDetector
