@@ -1128,7 +1128,9 @@ public sealed class OtlpMetricsExporterTests : IDisposable
         AssertMetricPointsExportedOnce(exportClient.Requests, protocol, exporterOptions.MaxRequestSizeBytes, 0, Cardinality);
 
         var exported = Assert.Single(listener.Messages, e => e.EventId == ExportedAsMultipleRequestsEventId);
-        Assert.Equal(exportClient.Requests.Count, exported.Payload?[2]);
+        Assert.Equal(1L, exported.Payload?[0]);
+        Assert.Equal((long)exporterOptions.MaxRequestSizeBytes, exported.Payload?[1]);
+        Assert.Equal((long)exportClient.Requests.Count, exported.Payload?[2]);
 
         Assert.DoesNotContain(
             listener.CurrentMessages,
@@ -1270,6 +1272,35 @@ public sealed class OtlpMetricsExporterTests : IDisposable
 
         Assert.Single(listener.Messages, e => e.EventId == MetricPointDroppedEventId);
         Assert.DoesNotContain(listener.CurrentMessages, e => e.EventId == ExportedAsMultipleRequestsEventId);
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(1)]
+    public void Export_RequestFailsAndALaterRequestSucceeds_SendsTheRemainingRequestsAndFails(int failingRequestIndex)
+    {
+        const int Cardinality = 50_000;
+
+        var exportClient = new RecordingExportClient { FailingRequestIndex = failingRequestIndex };
+        var exporterOptions = new OtlpExporterOptions
+        {
+            Protocol = OtlpExportProtocol.HttpProtobuf,
+            MaxRequestSizeBytes = OtlpExporterOptions.MinimumMaxRequestSizeBytes,
+        };
+
+        using var transmissionHandler = new OtlpExporterTransmissionHandler(exportClient, exporterOptions.TimeoutMilliseconds);
+        using var exporter = new OtlpMetricExporter(exporterOptions, new ExperimentalOptions(), transmissionHandler);
+
+        // A request which fails does not stop the others, and the success of those
+        // which follow it does not make up for it.
+        Assert.Equal(ExportResult.Failure, exporter.Export(GenerateHighCardinalityMetricBatch(Cardinality)));
+
+        Assert.True(
+            exportClient.Requests.Count > failingRequestIndex + 1,
+            $"Expected a request after the failed request {failingRequestIndex} but there were {exportClient.Requests.Count}.");
+
+        // Every metric point is sent once, and none of them again for the failed request.
+        AssertMetricPointsExportedOnce(exportClient.Requests, exporterOptions.Protocol, exporterOptions.MaxRequestSizeBytes, 0, Cardinality);
     }
 
     [Fact]
@@ -1911,8 +1942,15 @@ public sealed class OtlpMetricsExporterTests : IDisposable
 
         public TimeSpan Delay { get; set; }
 
+        /// <summary>
+        /// Gets or sets the zero-based index of the request to fail, if any.
+        /// </summary>
+        public int? FailingRequestIndex { get; set; }
+
         public ExportClientResponse SendExportRequest(byte[] buffer, int contentLength, DateTime deadlineUtc, CancellationToken cancellationToken = default)
         {
+            var success = this.FailingRequestIndex != this.Requests.Count;
+
             this.Requests.Add(buffer.AsSpan(0, contentLength).ToArray());
 
             if (this.Delay > TimeSpan.Zero)
@@ -1920,12 +1958,12 @@ public sealed class OtlpMetricsExporterTests : IDisposable
                 Thread.Sleep(this.Delay);
             }
 
-            return new RecordingExportClientResponse(deadlineUtc);
+            return new RecordingExportClientResponse(deadlineUtc, success);
         }
 
         public bool Shutdown(int timeoutMilliseconds) => true;
 
-        private sealed class RecordingExportClientResponse(DateTime deadlineUtc) : ExportClientResponse(success: true, deadlineUtc, exception: null);
+        private sealed class RecordingExportClientResponse(DateTime deadlineUtc, bool success) : ExportClientResponse(success, deadlineUtc, exception: null);
     }
 
     private sealed class DelayedOtlpMetricExporter(OtlpExporterOptions options, TimeSpan delay) : OtlpMetricExporter(options)

@@ -121,7 +121,8 @@ public class OtlpMetricExporter : BaseExporter<Metric>
                         out var requestDirtyLength,
                         this.maxRequestSizeBytes + this.startWritePosition,
                         ref cursor,
-                        out completed);
+                        out completed,
+                        deadlineUtc);
 
                     dirtyLength = Math.Max(dirtyLength, requestDirtyLength);
                 }

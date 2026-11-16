@@ -404,7 +404,7 @@ internal sealed class OpenTelemetryProtocolExporterEventSource : EventSource, IC
         46,
         Message = "Metrics batch containing {0} item(s) exceeded the maximum request size of {1} bytes and was exported as {2} requests.",
         Level = EventLevel.Warning)]
-    internal void BatchExportedAsMultipleRequests(long itemCount, int maxRequestSizeBytes, int requestCount)
+    internal void BatchExportedAsMultipleRequests(long itemCount, long maxRequestSizeBytes, long requestCount)
         => this.WriteEvent(46, itemCount, maxRequestSizeBytes, requestCount);
 
     private static string RedactEndpointUri(Uri endpoint)

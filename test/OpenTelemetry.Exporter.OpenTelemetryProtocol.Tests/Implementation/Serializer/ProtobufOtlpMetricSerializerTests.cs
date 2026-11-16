@@ -621,6 +621,57 @@ public static class ProtobufOtlpMetricSerializerTests
         Assert.Equal(4, cursor.DroppedMetricPointCount);
     }
 
+    [Fact]
+    public static void WriteMetricsData_MetricPointLargerThanRequest_DoesNotCacheItsAttributes()
+    {
+        var tag = new ToStringCounted(4096);
+
+        var metrics = GenerateMetricsWithTags(counter => counter.Add(1, new KeyValuePair<string, object?>("size", tag)));
+
+        var buffer = new byte[8192];
+
+        // The attributes of the metric point alone exceed the request, so it is dropped
+        // and there is no point in keeping a copy of them for the next export to replay.
+        for (var export = 1; export <= 2; export++)
+        {
+            var cursor = default(ProtobufOtlpMetricSerializer.MetricsDataCursor);
+
+            var length = ProtobufOtlpMetricSerializer.WriteMetricsData(ref buffer, 0, Resource.Empty, metrics, out _, 1024, ref cursor, out var completed);
+
+            Assert.True(completed);
+            Assert.Equal(0, length);
+            Assert.Equal(1, cursor.DroppedMetricPointCount);
+            Assert.Equal(export, tag.Calls);
+        }
+    }
+
+    [Fact]
+    public static void WriteMetricsData_DeadlinePassesWhileDroppingMetricPoints_Throws()
+    {
+        var metrics = GenerateMetricsWithTags(static counter =>
+        {
+            for (var i = 0; i < 4; i++)
+            {
+                counter.Add(i, new KeyValuePair<string, object?>("size", new string((char)('a' + i), 4096)));
+            }
+        });
+
+        var buffer = new byte[8192];
+        var cursor = default(ProtobufOtlpMetricSerializer.MetricsDataCursor);
+
+        // Every metric point is dropped, one after the other, unless the deadline stops it.
+        Assert.Throws<TimeoutException>(() => ProtobufOtlpMetricSerializer.WriteMetricsData(
+            ref buffer,
+            0,
+            Resource.Empty,
+            metrics,
+            out _,
+            1024,
+            ref cursor,
+            out _,
+            DateTime.UtcNow.AddSeconds(-1)));
+    }
+
     private static int MeasureRequest(Batch<Metric> metrics)
     {
         var buffer = new byte[1024];
@@ -1077,6 +1128,17 @@ public static class ProtobufOtlpMetricSerializerTests
         }
 
         return new WeakReference<Metric>(capturedMetric);
+    }
+
+    private sealed class ToStringCounted(int length)
+    {
+        public int Calls { get; private set; }
+
+        public override string ToString()
+        {
+            this.Calls++;
+            return new string('x', length);
+        }
     }
 
     private sealed class ToStringThrowsOnce
