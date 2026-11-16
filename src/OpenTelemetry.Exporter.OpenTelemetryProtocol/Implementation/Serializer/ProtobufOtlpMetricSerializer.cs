@@ -172,7 +172,7 @@ internal static class ProtobufOtlpMetricSerializer
                 {
                     // A request continuing a batch whose remaining metric points were all
                     // dropped holds nothing worth sending.
-                    if (state.ContinuesWithoutMetricPoints)
+                    if (state.IsEmptyContinuation)
                     {
                         dirtyLength = Math.Max(dirtyLength, writePosition);
                         state.Complete();
@@ -271,13 +271,14 @@ internal static class ProtobufOtlpMetricSerializer
 
             ProtobufSerializer.WriteReservedLength(buffer, state.Open.Metric, writePosition - (state.Open.Metric + ReserveSizeForLength));
 
-            state.Cut(state.MetricIndex, state.MetricPointIndex);
+            state.Cut(state.MetricIndex, state.MetricPointIndex, state.CheckpointMetricPoints);
         }
-        else if (state.MetricStartPosition >= 0 && state.ScopeMetricsWritten > 0)
+        else if (state.CompletedMetricEndPosition >= 0)
         {
-            // A later metric which does not fit is cut at its start, and the next
-            // request continues from it.
-            writePosition = state.MetricStartPosition;
+            // A later metric which does not fit is cut at its start, which is the end
+            // of the metric before it, and the next request continues from it. The
+            // metric may not even have been begun, if the buffer was full to the byte.
+            writePosition = state.CompletedMetricEndPosition;
             scopeMetricsLengthPosition = state.Open.ScopeMetrics;
 
             state.Cut(state.MetricIndex, 0);
@@ -369,6 +370,16 @@ internal static class ProtobufOtlpMetricSerializer
                     break;
                 }
 
+                // A scope whose only metrics which were not written by the previous
+                // requests had nothing left to write is not written either.
+                if (state.ScopeMetricsWritten == 0)
+                {
+                    dirtyLength = Math.Max(dirtyLength, writePosition);
+                    writePosition = scopeStartPosition;
+                    state.RollBackScope();
+                    continue;
+                }
+
                 ProtobufSerializer.WriteReservedLength(buffer, resourceMetricsScopeMetricsLengthPosition, writePosition - (resourceMetricsScopeMetricsLengthPosition + ReserveSizeForLength));
             }
         }
@@ -453,7 +464,7 @@ internal static class ProtobufOtlpMetricSerializer
         writePosition = ProtobufSerializer.WriteTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.ScopeMetrics_Metrics, ProtobufWireType.LEN);
         var metricLengthPosition = writePosition;
         writePosition += ReserveSizeForLength;
-        state.BeginMetric(metric, metricStartPosition, metricLengthPosition);
+        state.BeginMetric(metric, metricLengthPosition);
 
         // Do not allocate the cached copy until the destination buffer has grown
         // enough to hold it. ArrayPool may return more than was requested, so the
@@ -480,17 +491,17 @@ internal static class ProtobufOtlpMetricSerializer
                     writePosition = ProtobufSerializer.WriteBoolWithTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.Sum_Is_Monotonic, metric.MetricType == MetricType.LongSum);
                     writePosition = ProtobufSerializer.WriteEnumWithTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.Sum_Aggregation_Temporality, aggregationValue);
 
-                    foreach (ref readonly var metricPoint in metric.GetMetricPoints())
+                    var metricPoints = state.GetMetricPoints(metric);
+
+                    while (metricPoints.MoveNext())
                     {
-                        if (!state.BeginMetricPoint())
-                        {
-                            continue;
-                        }
+                        ref readonly var metricPoint = ref metricPoints.Current;
+                        state.BeginMetricPoint();
 
                         var sum = metricPoint.GetSumLong();
                         writePosition = WriteNumberDataPoint(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.Sum_Data_Points, in metricPoint, sum, ref dirtyLength);
 
-                        if (!state.CommitMetricPoint(writePosition))
+                        if (!state.CommitMetricPoint(writePosition, in metricPoints))
                         {
                             break;
                         }
@@ -511,17 +522,17 @@ internal static class ProtobufOtlpMetricSerializer
                     writePosition = ProtobufSerializer.WriteBoolWithTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.Sum_Is_Monotonic, metric.MetricType == MetricType.DoubleSum);
                     writePosition = ProtobufSerializer.WriteEnumWithTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.Sum_Aggregation_Temporality, aggregationValue);
 
-                    foreach (ref readonly var metricPoint in metric.GetMetricPoints())
+                    var metricPoints = state.GetMetricPoints(metric);
+
+                    while (metricPoints.MoveNext())
                     {
-                        if (!state.BeginMetricPoint())
-                        {
-                            continue;
-                        }
+                        ref readonly var metricPoint = ref metricPoints.Current;
+                        state.BeginMetricPoint();
 
                         var sum = metricPoint.GetSumDouble();
                         writePosition = WriteNumberDataPoint(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.Sum_Data_Points, in metricPoint, sum, ref dirtyLength);
 
-                        if (!state.CommitMetricPoint(writePosition))
+                        if (!state.CommitMetricPoint(writePosition, in metricPoints))
                         {
                             break;
                         }
@@ -538,17 +549,17 @@ internal static class ProtobufOtlpMetricSerializer
                     writePosition += ReserveSizeForLength;
                     state.Open.MetricData = metricTypeLengthPosition;
 
-                    foreach (ref readonly var metricPoint in metric.GetMetricPoints())
+                    var metricPoints = state.GetMetricPoints(metric);
+
+                    while (metricPoints.MoveNext())
                     {
-                        if (!state.BeginMetricPoint())
-                        {
-                            continue;
-                        }
+                        ref readonly var metricPoint = ref metricPoints.Current;
+                        state.BeginMetricPoint();
 
                         var lastValue = metricPoint.GetGaugeLastValueLong();
                         writePosition = WriteNumberDataPoint(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.Gauge_Data_Points, in metricPoint, lastValue, ref dirtyLength);
 
-                        if (!state.CommitMetricPoint(writePosition))
+                        if (!state.CommitMetricPoint(writePosition, in metricPoints))
                         {
                             break;
                         }
@@ -565,17 +576,17 @@ internal static class ProtobufOtlpMetricSerializer
                     writePosition += ReserveSizeForLength;
                     state.Open.MetricData = metricTypeLengthPosition;
 
-                    foreach (ref readonly var metricPoint in metric.GetMetricPoints())
+                    var metricPoints = state.GetMetricPoints(metric);
+
+                    while (metricPoints.MoveNext())
                     {
-                        if (!state.BeginMetricPoint())
-                        {
-                            continue;
-                        }
+                        ref readonly var metricPoint = ref metricPoints.Current;
+                        state.BeginMetricPoint();
 
                         var lastValue = metricPoint.GetGaugeLastValueDouble();
                         writePosition = WriteNumberDataPoint(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.Gauge_Data_Points, in metricPoint, lastValue, ref dirtyLength);
 
-                        if (!state.CommitMetricPoint(writePosition))
+                        if (!state.CommitMetricPoint(writePosition, in metricPoints))
                         {
                             break;
                         }
@@ -598,12 +609,12 @@ internal static class ProtobufOtlpMetricSerializer
 
                     writePosition = ProtobufSerializer.WriteEnumWithTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.Histogram_Aggregation_Temporality, aggregationValue);
 
-                    foreach (ref readonly var metricPoint in metric.GetMetricPoints())
+                    var metricPoints = state.GetMetricPoints(metric);
+
+                    while (metricPoints.MoveNext())
                     {
-                        if (!state.BeginMetricPoint())
-                        {
-                            continue;
-                        }
+                        ref readonly var metricPoint = ref metricPoints.Current;
+                        state.BeginMetricPoint();
 
                         writePosition = ProtobufSerializer.WriteTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.Histogram_Data_Points, ProtobufWireType.LEN);
                         var dataPointLengthPosition = writePosition;
@@ -635,7 +646,7 @@ internal static class ProtobufOtlpMetricSerializer
 
                         ProtobufSerializer.WriteReservedLength(buffer, dataPointLengthPosition, writePosition - (dataPointLengthPosition + ReserveSizeForLength));
 
-                        if (!state.CommitMetricPoint(writePosition))
+                        if (!state.CommitMetricPoint(writePosition, in metricPoints))
                         {
                             break;
                         }
@@ -654,12 +665,12 @@ internal static class ProtobufOtlpMetricSerializer
 
                     writePosition = ProtobufSerializer.WriteEnumWithTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.ExponentialHistogram_Aggregation_Temporality, aggregationValue);
 
-                    foreach (ref readonly var metricPoint in metric.GetMetricPoints())
+                    var metricPoints = state.GetMetricPoints(metric);
+
+                    while (metricPoints.MoveNext())
                     {
-                        if (!state.BeginMetricPoint())
-                        {
-                            continue;
-                        }
+                        ref readonly var metricPoint = ref metricPoints.Current;
+                        state.BeginMetricPoint();
 
                         writePosition = ProtobufSerializer.WriteTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.ExponentialHistogram_Data_Points, ProtobufWireType.LEN);
                         var dataPointLengthPosition = writePosition;
@@ -725,7 +736,7 @@ internal static class ProtobufOtlpMetricSerializer
 
                         ProtobufSerializer.WriteReservedLength(buffer, dataPointLengthPosition, writePosition - (dataPointLengthPosition + ReserveSizeForLength));
 
-                        if (!state.CommitMetricPoint(writePosition))
+                        if (!state.CommitMetricPoint(writePosition, in metricPoints))
                         {
                             break;
                         }
@@ -740,6 +751,16 @@ internal static class ProtobufOtlpMetricSerializer
         }
 
         ProtobufSerializer.WriteReservedLength(buffer, metricLengthPosition, writePosition - (metricLengthPosition + ReserveSizeForLength));
+
+        // A metric whose metric points were all written by the previous requests or
+        // dropped is not written again, so that a request does not hold a metric
+        // with nothing in it, nor spend its size on one ahead of the next metric.
+        if (state.IsFirstMetricExhausted)
+        {
+            dirtyLength = Math.Max(dirtyLength, writePosition);
+            state.RollBackMetric();
+            return metricStartPosition;
+        }
 
         if (!state.Full)
         {
@@ -1130,6 +1151,14 @@ internal static class ProtobufOtlpMetricSerializer
         /// not fit in a request on their own.
         /// </summary>
         public int DroppedMetricPointCount;
+
+        /// <summary>
+        /// The enumerator of the metric points of that metric, positioned at the last
+        /// one written or dropped, so that the next request continues from the one
+        /// after it without enumerating those before it again. It is only valid when
+        /// <see cref="MetricPointIndex"/> is not zero.
+        /// </summary>
+        public MetricPointsAccessor.Enumerator MetricPoints;
     }
 
     /// <summary>
@@ -1213,26 +1242,24 @@ internal static class ProtobufOtlpMetricSerializer
         public bool FirstMetricBegun;
 
         /// <summary>
-        /// The index of the first metric of the request.
-        /// </summary>
-        public int FirstMetricIndex;
-
-        /// <summary>
         /// Whether the metric being written is the first of the request, whose metric
         /// points are tracked one by one.
         /// </summary>
         public bool TrackingMetricPoints;
 
         /// <summary>
-        /// The index of the metric point of the first metric being written.
+        /// The index of the metric point of the first metric being written, which
+        /// is also the number of its metric points which were written by the
+        /// previous requests or dropped.
         /// </summary>
         public int MetricPointIndex;
 
         /// <summary>
-        /// The number of metric points of the first metric which were written by
-        /// the previous requests.
+        /// The position of the enumerator of the metric points of the first metric
+        /// after the last metric point which fit, where the next request continues
+        /// from without enumerating the metric points before it again.
         /// </summary>
-        public int MetricPointsToSkip;
+        public MetricPointsAccessor.Enumerator CheckpointMetricPoints;
 
         /// <summary>
         /// The first metric of the request.
@@ -1282,10 +1309,20 @@ internal static class ProtobufOtlpMetricSerializer
         public int ScopeMetricsWritten;
 
         /// <summary>
-        /// The position the metric being written starts at, where the request can be
-        /// cut once a metric of its scope is complete, or -1 while none is being written.
+        /// The number of metrics of the request which are complete.
         /// </summary>
-        public int MetricStartPosition;
+        public int MetricsWritten;
+
+        /// <summary>
+        /// The position after the last metric of the scope being written which is
+        /// complete, where the request can be cut, or -1 while none is.
+        /// </summary>
+        /// <remarks>
+        /// This is also where the metric after it starts, but it is recorded when a
+        /// metric is complete rather than when the next one is begun, as the next
+        /// one may not be able to start at all when the buffer is full to the byte.
+        /// </remarks>
+        public int CompletedMetricEndPosition;
 
         /// <summary>
         /// Gets a value indicating whether the request can be cut somewhere.
@@ -1293,18 +1330,29 @@ internal static class ProtobufOtlpMetricSerializer
         public readonly bool HasCheckpoint
             => this.TrackingMetricPoints
                 ? this.CheckpointPosition >= 0
-                : (this.MetricStartPosition >= 0 && this.ScopeMetricsWritten > 0) || this.PreviousScopeMetricsLengthPosition >= 0;
+                : this.CompletedMetricEndPosition >= 0 || this.PreviousScopeMetricsLengthPosition >= 0;
 
         /// <summary>
         /// Gets a value indicating whether the request continues a batch from a
-        /// previous request and has no metric point to hold, as when the remaining
-        /// metric points of the batch were dropped.
+        /// previous request and holds no metric, as when the remaining metric
+        /// points of the batch were dropped.
         /// </summary>
-        public readonly bool ContinuesWithoutMetricPoints
+        public readonly bool IsEmptyContinuation
             => !this.SingleRequest &&
                (this.Resume.MetricIndex > 0 || this.Resume.MetricPointIndex > 0) &&
-               this.CheckpointPosition < 0 &&
-               (!this.FirstMetricBegun || this.MetricIndex <= this.FirstMetricIndex + 1);
+               this.MetricsWritten == 0;
+
+        /// <summary>
+        /// Gets a value indicating whether the first metric of the request has no
+        /// metric point left to write, because they were all written by the previous
+        /// requests or dropped, and so is not worth sending.
+        /// </summary>
+        public readonly bool IsFirstMetricExhausted
+            => !this.SingleRequest &&
+               !this.Full &&
+               this.TrackingMetricPoints &&
+               this.MetricPointIndex > 0 &&
+               this.CheckpointPosition < 0;
 
         public readonly string MetricName => this.Metric?.Name ?? string.Empty;
 
@@ -1325,7 +1373,8 @@ internal static class ProtobufOtlpMetricSerializer
             this.CheckpointPosition = -1;
             this.PreviousScopeMetricsLengthPosition = -1;
             this.ScopeMetricsWritten = 0;
-            this.MetricStartPosition = -1;
+            this.MetricsWritten = 0;
+            this.CompletedMetricEndPosition = -1;
         }
 
         /// <summary>
@@ -1349,8 +1398,31 @@ internal static class ProtobufOtlpMetricSerializer
             this.PreviousScopeMetricsLengthPosition = this.Open.ScopeMetrics;
             this.ScopeStartPosition = startPosition;
             this.ScopeMetricsWritten = 0;
-            this.MetricStartPosition = -1;
+            this.CompletedMetricEndPosition = -1;
             this.Open.ScopeMetrics = lengthPosition;
+        }
+
+        /// <summary>
+        /// Rolls back a scope none of whose metrics was written, because the metric
+        /// points of those which were not written by the previous requests were dropped.
+        /// </summary>
+        /// <remarks>
+        /// Only the first metric of a request can be rolled back, which is in the
+        /// first scope of the request, so there is no previous scope to return to.
+        /// </remarks>
+        public void RollBackScope()
+        {
+            // Rolling back any other scope would leave the lengths of the messages
+            // open in the request wrong, which would be sent as a corrupt request, so
+            // this is checked in every build rather than asserted.
+            if (this.PreviousScopeMetricsLengthPosition >= 0 || this.MetricsWritten > 0)
+            {
+                throw new InvalidOperationException("Only the first scope of a request can be rolled back.");
+            }
+
+            this.Open.ScopeMetrics = this.PreviousScopeMetricsLengthPosition;
+            this.ScopeMetricsWritten = 0;
+            this.CompletedMetricEndPosition = -1;
         }
 
         /// <summary>
@@ -1368,43 +1440,42 @@ internal static class ProtobufOtlpMetricSerializer
             return false;
         }
 
-        public void BeginMetric(Metric metric, int startPosition, int lengthPosition)
+        public void BeginMetric(Metric metric, int lengthPosition)
         {
-            this.MetricStartPosition = startPosition;
-
             if (!this.FirstMetricBegun)
             {
                 this.FirstMetricBegun = true;
-                this.FirstMetricIndex = this.MetricIndex;
                 this.TrackingMetricPoints = true;
                 this.Metric = metric;
-                this.MetricPointIndex = 0;
-                this.MetricPointsToSkip = this.MetricIndex == this.Resume.MetricIndex ? this.Resume.MetricPointIndex : 0;
+                this.MetricPointIndex = this.MetricIndex == this.Resume.MetricIndex ? this.Resume.MetricPointIndex : 0;
                 this.Open.Metric = lengthPosition;
                 this.Open.MetricData = -1;
             }
         }
 
         /// <summary>
-        /// Starts a metric point, unless it was written by the previous requests.
+        /// Gets the metric points of a metric to write, which for the first metric of
+        /// a request are those which were not written by the previous requests.
         /// </summary>
-        /// <returns><see langword="true"/> if the metric point is to be written; otherwise, <see langword="false"/>.</returns>
-        public bool BeginMetricPoint()
+        /// <param name="metric">The metric.</param>
+        /// <returns>
+        /// An enumerator positioned after the metric points written or dropped
+        /// so far, which is not enumerated again from the start.
+        /// </returns>
+        public readonly MetricPointsAccessor.Enumerator GetMetricPoints(Metric metric)
+            => this.TrackingMetricPoints && this.MetricPointIndex > 0
+                ? this.Resume.MetricPoints
+                : metric.GetMetricPoints().GetEnumerator();
+
+        /// <summary>
+        /// Starts a metric point.
+        /// </summary>
+        public void BeginMetricPoint()
         {
-            if (!this.TrackingMetricPoints)
+            if (this.TrackingMetricPoints)
             {
-                return true;
+                this.WritingMetricPoint = true;
             }
-
-            if (this.MetricPointsToSkip > 0)
-            {
-                this.MetricPointsToSkip--;
-                this.MetricPointIndex++;
-                return false;
-            }
-
-            this.WritingMetricPoint = true;
-            return true;
         }
 
         /// <summary>
@@ -1412,8 +1483,9 @@ internal static class ProtobufOtlpMetricSerializer
         /// cut at when the metric is the first of the request.
         /// </summary>
         /// <param name="writePosition">The position after the metric point.</param>
+        /// <param name="metricPoints">The enumerator of the metric points of the metric, positioned at the metric point.</param>
         /// <returns><see langword="true"/> if the metric point fits; otherwise, <see langword="false"/> and the request is full.</returns>
-        public bool CommitMetricPoint(int writePosition)
+        public bool CommitMetricPoint(int writePosition, in MetricPointsAccessor.Enumerator metricPoints)
         {
             if (!this.TrackingMetricPoints)
             {
@@ -1429,6 +1501,7 @@ internal static class ProtobufOtlpMetricSerializer
             this.WritingMetricPoint = false;
             this.MetricPointIndex++;
             this.CheckpointPosition = writePosition;
+            this.CheckpointMetricPoints = metricPoints;
             return true;
         }
 
@@ -1447,6 +1520,21 @@ internal static class ProtobufOtlpMetricSerializer
             this.TrackingMetricPoints = false;
             this.MetricIndex++;
             this.ScopeMetricsWritten++;
+            this.MetricsWritten++;
+            this.CompletedMetricEndPosition = writePosition;
+        }
+
+        /// <summary>
+        /// Rolls back the first metric of the request, none of whose metric points
+        /// is left to write, so that the next metric becomes the first of the request.
+        /// </summary>
+        public void RollBackMetric()
+        {
+            this.TrackingMetricPoints = false;
+            this.FirstMetricBegun = false;
+            this.MetricIndex++;
+            this.Open.Metric = -1;
+            this.Open.MetricData = -1;
         }
 
         /// <summary>
@@ -1455,15 +1543,34 @@ internal static class ProtobufOtlpMetricSerializer
         /// </summary>
         public void DropMetricPoint()
         {
+            // The metric point is the first to be written by the request, so it is
+            // the one after where the previous requests, or the metric points
+            // dropped before it, left off.
+            // Resuming from the wrong position would write metric points twice or skip
+            // them, so this is checked in every build rather than asserted.
+            if (this.SingleRequest || !this.TrackingMetricPoints || this.CheckpointPosition >= 0 || this.Metric is null)
+            {
+                throw new InvalidOperationException("Only the first metric point of a request can be dropped.");
+            }
+
+            var metricPoints = this.GetMetricPoints(this.Metric);
+
+            metricPoints.MoveNext();
+
             this.Resume.MetricIndex = this.MetricIndex;
             this.Resume.MetricPointIndex = this.MetricPointIndex + 1;
+            this.Resume.MetricPoints = metricPoints;
             this.Next.DroppedMetricPointCount++;
         }
 
         public void Cut(int metricIndex, int metricPointIndex)
+            => this.Cut(metricIndex, metricPointIndex, default);
+
+        public void Cut(int metricIndex, int metricPointIndex, in MetricPointsAccessor.Enumerator metricPoints)
         {
             this.Next.MetricIndex = metricIndex;
             this.Next.MetricPointIndex = metricPointIndex;
+            this.Next.MetricPoints = metricPoints;
             this.Completed = false;
         }
 
