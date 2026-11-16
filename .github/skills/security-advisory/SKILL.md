@@ -116,9 +116,13 @@ Write down the answer to each one, with evidence:
 2. **Attacker capability.** Who is the attacker, and what exactly do they
    control? Unauthenticated remote client, authenticated client, a producer on a
    message topic the app consumes, an upstream service forwarding unvalidated
-   input, a local user on the same host, or the operator themselves? A
-   "vulnerability" that requires the operator's configuration or a trusted
-   caller is a bug, not a vulnerability.
+   input, a local user on the same host, or the operator themselves? Classify
+   the actual input, the trust boundary it crosses and the impact. Do not
+   exclude a report solely because it needs an opt-in setting or an SDK caller:
+   `THREAT_MODEL.md` treats application-supplied data (attributes, baggage,
+   propagated headers) as untrusted input, and opt-in features such as OTLP disk
+   retry have had security fixes. A setting chosen by the operator is normally
+   trusted, but the data the feature then handles may not be.
 3. **Reachability.** Does attacker input actually reach the affected code in a
    default or documented configuration? Which non-default settings, other
    preconditions or "stacked conditions" are needed (sampling on, consumption
@@ -156,8 +160,24 @@ Write down the answer to each one, with evidence:
 | Outcome | Meaning | Channel |
 | ------- | ------- | ------- |
 | **Vulnerability** | Meets the policy: realistic attacker, demonstrated impact on confidentiality, integrity or non-trivial availability, in a supported component | [Private route](#private-route-temporary-private-fork) |
-| **Ordinary bug** | Real defect and worth fixing, but not a vulnerability under the policy (authenticated or trusted attacker, capacity issue, stacked unlikely conditions, operator-controlled input, low impact) | [Public route](#public-route-ordinary-bug-fix) - only after explicit maintainer sign-off |
-| **Invalid, duplicate or already fixed** | Not reproducible, not reachable, already fixed on `main`, or covered by another advisory | Draft a closing comment for the maintainer; no fix |
+| **Ordinary bug** | Real defect and worth fixing, but not a vulnerability under the policy (availability-only impact that needs an authenticated client, capacity issue, stacked unlikely conditions, low impact) | [Public route](#public-route-ordinary-bug-fix) - only after explicit maintainer sign-off |
+| **Fixed on `main`, not yet released** | The defect is already fixed on `main`, but no released package contains the fix | Release and disclosure follow-up for the maintainer; do not recommend closing |
+| **Invalid or duplicate** | Not reproducible, not reachable, covered by another advisory, or already fixed in a **released** package | Draft a closing comment for the maintainer; no fix |
+
+The authentication exclusion applies only to the policy's *availability*
+cases. An authenticated user who can read or alter another tenant's telemetry,
+or cross another privilege boundary, is a confidentiality or integrity issue
+and must be assessed against the actual trust boundary, not classified as an
+ordinary bug just because the attacker was authenticated.
+
+A fix on `main` does not mean users have a fixed package: releasing needs a
+separate release pull request and tagging and publishing workflow
+([`build/RELEASING.md`](../../../build/RELEASING.md)). Before recommending that
+an advisory is closed as already fixed, verify that a released package on
+NuGet.org contains the fix (for example `git tag --contains <fix-commit>`, the
+released `CHANGELOG.md` entries, and the package versions on NuGet.org). If it
+is unreleased, say so and leave the release and disclosure plan to the
+maintainer.
 
 Examples of how this has been applied:
 
@@ -334,8 +354,10 @@ possibility of accidentally disclosing the vulnerability via an unintended Git a
    ask before resolving.
 4. **Build and test in the fork directory** (the whole affected test project,
    on every target framework that runs locally), and confirm the working tree is
-   clean afterwards. If the fixes may impact performance, measure and report it
-   using the existing `performance-benchmark` skill.
+   clean afterwards, including ignored files (see
+   [Keep investigation artifacts out of the checkout](#keep-investigation-artifacts-out-of-the-checkout)).
+   If the fixes may impact performance, measure and report it using the existing
+   `performance-benchmark` skill.
 5. **Do not push** unless asked. When asked, confirm the remote again first.
    Pushing to the private fork lets the advisory's collaborators review it.
 6. **Report** the resulting commit, what was verified, and what was not.
@@ -407,7 +429,8 @@ Once (and only once) the maintainer has authorized it:
 4. **Stop for review** before committing unless told to commit.
 5. **Commit** (when asked) with a message in the repository's style
    (`[Component] Summary`), a body that describes the behaviour change and not
-   the attack, **no GHSA reference**, and the trailers described in
+   the attack, **no GHSA reference**, and, only if the maintainer authorized it,
+   the trailer described in
    [Scanner findings](#scanner-findings-from-anthropics-oss-scanner). Do not
    push yet; the maintainer reviews the commit first.
 6. **Push and open a draft pull request** only when asked to:
@@ -456,8 +479,11 @@ truncating a string).
 
 ### What to include
 
-When the report was made by `oss-scanner`, the maintainer wants the finding
-credited, in two places:
+When the report was made by `oss-scanner` **and the maintainer has explicitly
+authorized crediting it for that finding**, credit the finding in two places.
+Authorizing a public fix does not by itself authorize publishing the private
+finding ID or the word "vulnerability"; if the maintainer has not said so, ask
+before including either:
 
 **1. Git commit trailer.** End the commit message body with the trailer, on its
 own line after a blank line, with the exact wording and the trailing full stop:
@@ -501,8 +527,10 @@ Short description of the change...
 ```
 
 The scanner asks for this (it is how it learns which reports were right and got
-fixed); it is a request, not a condition, so the maintainer may waive it. Do not
-use it for reports from anyone else.
+fixed), but it is a request, not a condition. Gate both the commit trailer and
+the pull request line on the maintainer's explicit authorization for that
+finding. Without it, leave out the trailer, the pull request line and the
+finding ID. Do not use it for reports from anyone else.
 
 ### Emailed scan reports
 
@@ -546,8 +574,33 @@ Repository-specific traps that have caused rework:
   sequences (for example `"\U0001F600"`) in test data.
 - **Parallel tests.** Tests that touch environment variables, static state or
   fixed ports must not assume they run alone.
-- Do not let the verification create files in the repository that belong to
-  the investigation (reproducers, dumps, benchmarks).
+
+### Keep investigation artifacts out of the checkout
+
+Verification can leave files in the working tree that Git ignores, so a clean
+`git status` does not prove the checkout is clean. In particular:
+
+- `TestResults/` at the repository root: `build/Tests.targets` writes test
+  results, diagnostics and **full hang dumps** (which contain process memory)
+  there.
+- `BenchmarkDotNet.Artifacts/` at the repository root: `benchmark.ps1` writes
+  its results there.
+
+To avoid this, send the output to the session scratchpad instead:
+
+- With the `Test` target, pass
+  `-p:TestResultsDirectory=<scratchpad>\TestResults`. With `dotnet test`, pass
+  `--results-directory <scratchpad>\TestResults` and
+  `--diagnostic-output-directory <scratchpad>\TestResults\diag`.
+- `benchmark.ps1` has no option to move its output. Run the `test/Benchmarks`
+  project directly with BenchmarkDotNet's `--artifacts <scratchpad>` instead, or
+  move the folder out of the checkout afterwards.
+
+Before any authorized push, upload, archive or sharing of the working tree,
+inspect the ignored files as well as the tracked ones
+(`git status --short --ignored`, ignoring `bin/` and `obj/`), and make sure no
+reproducers, dumps, results or benchmark output are included. Remove only files
+you created, and do not run `git clean` without the maintainer's approval.
 
 ## What to report back
 
