@@ -11,7 +11,7 @@ Notes](../../RELEASENOTES.md).
   threads, block shutdown or crash the process on Linux and macOS by keeping a
   scrape connection open. Scrape connections are no longer kept alive, so
   each scrape now uses a new connection.
-  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+  ([#8136](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8136))
 
 ## 1.21.0-beta.1
 
