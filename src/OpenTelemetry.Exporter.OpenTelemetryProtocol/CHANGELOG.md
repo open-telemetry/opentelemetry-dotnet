@@ -22,7 +22,7 @@ Notes](../../RELEASENOTES.md).
   when the call that ended it returns, and at most 2048 are queued before
   further ones are dropped. Call `ForceFlush()` where a span or log record
   must have been exported before continuing.
-  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+  ([#8134](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8134))
 
 ## 1.21.0
 
