@@ -116,6 +116,10 @@ public class BatchExportActivityProcessorTests
         using var exportStarted = new ManualResetEventSlim();
         using var releaseExport = new ManualResetEventSlim();
 
+        var itemsRead = 0;
+
+        // The exporter must not throw, as it runs on the processor's own thread
+        // and an unhandled exception there would terminate the whole test host.
         using var exporter = new DelegatingExporter<Activity>
         {
             OnExportFunc = batch =>
@@ -124,11 +128,11 @@ public class BatchExportActivityProcessorTests
                 // has left the queue before the export itself has finished.
                 foreach (var item in batch)
                 {
-                    Assert.NotNull(item);
+                    itemsRead++;
                 }
 
                 exportStarted.Set();
-                Assert.True(releaseExport.Wait(TimeSpan.FromSeconds(30)));
+                _ = releaseExport.Wait(TimeSpan.FromSeconds(30));
                 return ExportResult.Success;
             },
         };
@@ -140,16 +144,26 @@ public class BatchExportActivityProcessorTests
             ActivityTraceFlags = ActivityTraceFlags.Recorded,
         };
 
-        processor.OnEnd(activity);
+        try
+        {
+            processor.OnEnd(activity);
 
-        Assert.True(exportStarted.Wait(TimeSpan.FromSeconds(30)));
+            Assert.True(exportStarted.Wait(TimeSpan.FromSeconds(30), TestContext.Current.CancellationToken));
 
-        // The export is still in progress, so the item has not been flushed yet
-        Assert.False(processor.ForceFlush(100));
+            // The export is still in progress, so the item has not been flushed yet
+            Assert.False(processor.ForceFlush(100));
 
-        releaseExport.Set();
+            releaseExport.Set();
 
-        Assert.True(processor.ForceFlush(30_000));
+            Assert.True(processor.ForceFlush(30_000));
+            Assert.Equal(1, itemsRead);
+        }
+        finally
+        {
+            // Never leave the exporter blocked, even if an assertion failed
+            releaseExport.Set();
+            processor.Shutdown(30_000);
+        }
     }
 
     [Theory]
