@@ -68,7 +68,7 @@
       "addLabels": [".NET"]
     },
     {
-      "matchManagers": ["pypi"],
+      "matchManagers": ["pip-compile"],
       "addLabels": ["python"]
     },
     {
