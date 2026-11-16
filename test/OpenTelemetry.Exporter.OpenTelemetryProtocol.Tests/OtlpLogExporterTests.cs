@@ -1886,8 +1886,10 @@ public class OtlpLogExporterTests
 
         var callingThreadId = Environment.CurrentManagedThreadId;
         var exportedOnCallingThread = false;
+        var exportDeadlineSet = false;
         var logRecordsWrittenDuringExport = true;
         var exportedBatches = new List<string?[]>();
+        DelegatingExporter<LogRecord>? delegatingExporter = null;
 
         using (var loggerFactory = LoggerFactory.Create(builder => builder
             .UseOpenTelemetry(
@@ -1901,11 +1903,12 @@ public class OtlpLogExporterTests
                     {
                         otlpExporter.Dispose();
 
-                        return new DelegatingExporter<LogRecord>
+                        return delegatingExporter = new DelegatingExporter<LogRecord>
                         {
                             OnExportFunc = batch =>
                             {
                                 exportedOnCallingThread |= Environment.CurrentManagedThreadId == callingThreadId;
+                                exportDeadlineSet |= delegatingExporter!.ExportDeadlineUtc != DateTime.MaxValue;
 
                                 // An export in progress must not stop the other log records from being written.
                                 logRecordsWrittenDuringExport &= logRecordsWritten.Wait(TimeSpan.FromSeconds(5));
@@ -1935,6 +1938,9 @@ public class OtlpLogExporterTests
 
         Assert.False(exportedOnCallingThread);
         Assert.True(logRecordsWrittenDuringExport);
+
+        // The processor does not limit the time an export may take, only the exporter's own timeout does.
+        Assert.False(exportDeadlineSet);
 
         // Each log record is still exported on its own, in the order in which they were written.
         Assert.Equal(LogRecordCount, exportedBatches.Count);

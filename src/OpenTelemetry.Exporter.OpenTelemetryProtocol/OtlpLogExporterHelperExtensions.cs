@@ -340,7 +340,9 @@ public static class OtlpLogExporterHelperExtensions
                 // that thread until thread pool threads have completed the HTTP
                 // request. A batch size of 1 still exports each log record on its
                 // own, in order and as soon as it has been written, but on a thread.
-                return new BatchLogRecordExportProcessor(otlpExporter, maxExportBatchSize: 1);
+                // The processor's export timeout is disabled so that, as before, only
+                // the timeout of the exporter itself limits how long an export takes.
+                return new BatchLogRecordExportProcessor(otlpExporter, exporterTimeoutMilliseconds: 0, maxExportBatchSize: 1);
             }
             else
             {

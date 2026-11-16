@@ -1426,8 +1426,10 @@ public sealed class OtlpTraceExporterTests : IDisposable
 
         var callingThreadId = Environment.CurrentManagedThreadId;
         var exportedOnCallingThread = false;
+        var exportDeadlineSet = false;
         var spansEndedDuringExport = true;
         var exportedBatches = new List<string[]>();
+        DelegatingExporter<Activity>? delegatingExporter = null;
 
         using (Sdk.CreateTracerProviderBuilder()
             .AddSource(ActivitySourceName)
@@ -1440,11 +1442,12 @@ public sealed class OtlpTraceExporterTests : IDisposable
                 {
                     otlpExporter.Dispose();
 
-                    return new DelegatingExporter<Activity>
+                    return delegatingExporter = new DelegatingExporter<Activity>
                     {
                         OnExportFunc = batch =>
                         {
                             exportedOnCallingThread |= Environment.CurrentManagedThreadId == callingThreadId;
+                            exportDeadlineSet |= delegatingExporter!.ExportDeadlineUtc != DateTime.MaxValue;
 
                             // An export in progress must not stop the other spans from ending.
                             spansEndedDuringExport &= spansEnded.Wait(TimeSpan.FromSeconds(5));
@@ -1475,6 +1478,9 @@ public sealed class OtlpTraceExporterTests : IDisposable
 
         Assert.False(exportedOnCallingThread);
         Assert.True(spansEndedDuringExport);
+
+        // The processor does not limit the time an export may take, only the exporter's own timeout does.
+        Assert.False(exportDeadlineSet);
 
         // Each span is still exported on its own, in the order in which the spans ended.
         Assert.Equal(SpanCount, exportedBatches.Count);
