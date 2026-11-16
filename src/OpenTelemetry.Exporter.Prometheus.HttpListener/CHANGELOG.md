@@ -11,7 +11,7 @@ Notes](../../RELEASENOTES.md).
   request, for example after a burst of requests rejected by authentication
   configured through `ConfigureHttpListener`. The failure is now logged and the
   listener keeps accepting requests.
-  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+  ([#8135](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8135))
 
 ## 1.21.0-beta.1
 
