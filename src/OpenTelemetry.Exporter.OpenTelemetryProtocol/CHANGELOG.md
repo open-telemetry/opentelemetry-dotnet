@@ -15,6 +15,15 @@ Notes](../../RELEASENOTES.md).
   to prevent `HttpClient` created by `IHttpClientFactory` from using cookies.
   ([#8131](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8131))
 
+* **Breaking:** `ExportProcessorType.Simple` no longer exports each span or log
+  record on the thread which ended it, which could stall an application under
+  concurrent load. Each is still exported on its own, in order, as soon as it
+  has ended, but by a thread of the processor, so it may not have been exported
+  when the call that ended it returns, and at most 2048 are queued before
+  further ones are dropped. Call `ForceFlush()` where a span or log record
+  must have been exported before continuing.
+  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+
 ## 1.21.0
 
 Released 2026-Nov-11

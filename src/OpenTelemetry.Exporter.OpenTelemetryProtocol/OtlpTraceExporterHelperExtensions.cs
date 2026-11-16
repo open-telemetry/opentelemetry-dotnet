@@ -154,8 +154,14 @@ public static class OtlpTraceExporterHelperExtensions
                 otlpExporter = configureExporterInstance(otlpExporter);
             }
 
+            // SimpleActivityExportProcessor is deliberately not used for
+            // ExportProcessorType.Simple. It exports on the thread which
+            // wrote the activity while holding a lock, and an export blocks
+            // that thread until thread pool threads have completed the HTTP
+            // request. A batch size of 1 still exports each activity on its
+            // own, in order and as soon as it has been written, but on a thread.
             return exportProcessorType == ExportProcessorType.Simple
-                ? new SimpleActivityExportProcessor(otlpExporter)
+                ? new BatchActivityExportProcessor(otlpExporter, maxExportBatchSize: 1)
                 : new BatchActivityExportProcessor(
                     otlpExporter,
                     batchExportProcessorOptions.MaxQueueSize,

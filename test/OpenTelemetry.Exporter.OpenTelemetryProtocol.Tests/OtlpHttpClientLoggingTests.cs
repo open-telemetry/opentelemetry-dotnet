@@ -126,12 +126,15 @@ public sealed class OtlpHttpClientLoggingTests
         var loggerFactory = serviceProvider.GetRequiredService<ILoggerFactory>();
         var logger = loggerFactory.CreateLogger(nameof(OtlpHttpClientLoggingTests));
 
+        // The log records are exported by a thread of the processor.
         logger.HelloFrom("tomato", 2.99);
+        Assert.True(SpinWait.SpinUntil(() => httpMessageHandler.RequestCount == 1, TimeSpan.FromSeconds(10)));
         Assert.NotNull(httpMessageHandler.HttpRequestMessage);
         Assert.DoesNotContain(loggerProvider.Entries, IsHttpClientInformationLog);
 
         configuration.Reload();
         logger.HelloFrom("tomato", 2.99);
+        Assert.True(SpinWait.SpinUntil(() => httpMessageHandler.RequestCount == 2, TimeSpan.FromSeconds(10)));
 
         Assert.DoesNotContain(loggerProvider.Entries, IsHttpClientInformationLog);
         Assert.Equal(1, configureInvocations);

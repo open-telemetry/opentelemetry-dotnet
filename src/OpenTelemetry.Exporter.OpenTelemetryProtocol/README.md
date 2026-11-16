@@ -361,6 +361,13 @@ The following options are only applicable to `OtlpTraceExporter`:
   processor](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk.md#built-in-span-processors).
   The default is Batch.
 
+  With Simple each span is exported on its own as soon as it has ended, in the
+  order in which the spans ended. As with Batch, the export is done by a thread
+  of the processor and not by the thread which ended the span, so a span may not
+  have been exported yet when the call which ended it returns. At most 2048
+  spans wait to be exported, and a span which ends while that many are waiting
+  is dropped.
+
 * `BatchExportProcessorOptions`: Configuration options for the batch exporter.
   Only used if ExportProcessorType is set to Batch.
 
@@ -394,6 +401,14 @@ appBuilder.Services.Configure<LogRecordExportProcessorOptions>(o =>
 appBuilder.Services.Configure<LogRecordExportProcessorOptions>(
     appBuilder.Configuration.GetSection("OpenTelemetry:Logging"));
 ```
+
+When `ExportProcessorType` is set to `ExportProcessorType.Simple` each log
+record is exported on its own as soon as it has been written, in the order in
+which the log records were written. As with `ExportProcessorType.Batch`, the
+export is done by a thread of the processor and not by the thread which wrote
+the log record, so a log record may not have been exported yet when the call
+which wrote it returns. At most 2048 log records wait to be exported, and a log
+record which is written while that many are waiting is dropped.
 
 ### MetricReaderOptions
 
