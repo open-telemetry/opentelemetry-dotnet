@@ -669,9 +669,12 @@ services.AddHttpClient(
 > [!NOTE]
 > The `HttpClient` the exporter creates itself does not follow HTTP redirects,
   so the configured `Headers` and the telemetry are only sent to the configured
-  `Endpoint`, and a `3xx` response is treated as a failed export. It also does
-  not use cookies, so a `Set-Cookie` header in a response from the `Endpoint`
-  is ignored rather than being sent with every later export. An `HttpClient`
+  `Endpoint`, and a `3xx` response is treated as a failed export. Outside of
+  browser environments, where cookie handling is controlled by the browser and
+  is unchanged, it also does not automatically store cookies, so a `Set-Cookie`
+  header in a response from the `Endpoint` is ignored rather than being sent
+  with every later export. Headers configured explicitly, such as a `Cookie`
+  header, are still sent. An `HttpClient`
   supplied through the `HttpClientFactory` option or created by
   `IHttpClientFactory` uses its own redirect and cookie policy, which by
   default follows redirects and stores cookies. To prevent the named

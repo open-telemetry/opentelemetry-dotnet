@@ -8,8 +8,10 @@ Notes](../../RELEASENOTES.md).
 ## Unreleased
 
 * **Breaking:** `HttpClient` instances created by the exporter directly no
-  longer store cookies set by responses from the endpoint or send them with
-  later export requests. See [Configure HttpClient](README.md#configure-httpclient)
+  longer automatically store cookies set by responses from the endpoint or
+  send them with later export requests, except in browser environments where
+  cookie handling is unchanged. Explicitly configured `Cookie` headers are
+  still sent. See [Configure HttpClient](README.md#configure-httpclient)
   to prevent `HttpClient` created by `IHttpClientFactory` from using cookies.
   ([#8131](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8131))
 
