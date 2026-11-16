@@ -6,6 +6,10 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Fixed `ForceFlush` on batch export processors returning before an export
+  which was already in progress had finished.
+  ([#8134](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8134))
+
 ## 1.21.0
 
 Released 2026-Nov-11

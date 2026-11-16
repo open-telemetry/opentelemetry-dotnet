@@ -110,6 +110,48 @@ public class BatchExportActivityProcessorTests
         Assert.Equal(0, processor.DroppedCount);
     }
 
+    [Fact]
+    public void CheckForceFlushWaitsForExportInProgress()
+    {
+        using var exportStarted = new ManualResetEventSlim();
+        using var releaseExport = new ManualResetEventSlim();
+
+        using var exporter = new DelegatingExporter<Activity>
+        {
+            OnExportFunc = batch =>
+            {
+                // Read the item, as an exporter does when serializing it, so that it
+                // has left the queue before the export itself has finished.
+                foreach (var item in batch)
+                {
+                    Assert.NotNull(item);
+                }
+
+                exportStarted.Set();
+                Assert.True(releaseExport.Wait(TimeSpan.FromSeconds(30)));
+                return ExportResult.Success;
+            },
+        };
+
+        using var processor = new BatchActivityExportProcessor(exporter, maxQueueSize: 2, maxExportBatchSize: 1);
+
+        using var activity = new Activity("start")
+        {
+            ActivityTraceFlags = ActivityTraceFlags.Recorded,
+        };
+
+        processor.OnEnd(activity);
+
+        Assert.True(exportStarted.Wait(TimeSpan.FromSeconds(30)));
+
+        // The export is still in progress, so the item has not been flushed yet
+        Assert.False(processor.ForceFlush(100));
+
+        releaseExport.Set();
+
+        Assert.True(processor.ForceFlush(30_000));
+    }
+
     [Theory]
     [InlineData(Timeout.Infinite)]
     [InlineData(0)]
