@@ -32,6 +32,7 @@ public class EventSourceTests
         log.ConflictingUnit("test_metric", "bytes", "seconds");
         log.CollectFailed();
         log.ScrapeAbandoned();
+        log.MetricsDroppedFromResponse("test_metric", 2, 85_000);
 
         var events = listener.Messages;
 
@@ -58,6 +59,12 @@ public class EventSourceTests
         Assert.Equal("test_metric", conflictingUnit.Payload[0]);
         Assert.Equal("bytes", conflictingUnit.Payload[1]);
         Assert.Equal("seconds", conflictingUnit.Payload[2]);
+
+        var metricsDropped = Assert.Single(events, e => e.EventId == 17);
+        Assert.NotNull(metricsDropped.Payload);
+        Assert.Equal("test_metric", metricsDropped.Payload[0]);
+        Assert.Equal(2, metricsDropped.Payload[1]);
+        Assert.Equal(85_000, metricsDropped.Payload[2]);
     }
 
     [Fact]
