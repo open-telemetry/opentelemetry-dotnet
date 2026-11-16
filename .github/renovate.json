@@ -68,7 +68,7 @@
       "addLabels": [".NET"]
     },
     {
-      "matchManagers": ["pip-compile"],
+      "matchManagers": ["pip_requirements"],
       "addLabels": ["python"]
     },
     {
