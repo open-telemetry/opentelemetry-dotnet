@@ -640,7 +640,7 @@ internal static class ProtobufOtlpMetricSerializer
                         var endTime = (ulong)metricPoint.EndTime.ToUnixTimeNanoseconds();
                         writePosition = ProtobufSerializer.WriteFixed64WithTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.HistogramDataPoint_Time_Unix_Nano, endTime);
 
-                        writePosition = WriteDataPointAttributes(buffer, writePosition, metricPoint.Tags, ProtobufOtlpMetricFieldNumberConstants.HistogramDataPoint_Attributes, maxBufferSize, ref dirtyLength);
+                        writePosition = WriteDataPointAttributes(buffer, writePosition, metricPoint.Tags, ProtobufOtlpMetricFieldNumberConstants.HistogramDataPoint_Attributes, ref dirtyLength, out var attributes);
 
                         var count = (ulong)metricPoint.GetHistogramCount();
                         writePosition = ProtobufSerializer.WriteFixed64WithTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.HistogramDataPoint_Count, count);
@@ -659,6 +659,7 @@ internal static class ProtobufOtlpMetricSerializer
                         writePosition = WriteDoubleExemplars(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.HistogramDataPoint_Exemplars, in metricPoint, ref dirtyLength);
 
                         ProtobufSerializer.WriteReservedLength(buffer, dataPointLengthPosition, writePosition - (dataPointLengthPosition + ReserveSizeForLength));
+                        CacheDataPointAttributes(buffer, in attributes, writePosition, maxBufferSize);
 
                         if (!state.CommitMetricPoint(writePosition, in metricPoints))
                         {
@@ -696,7 +697,7 @@ internal static class ProtobufOtlpMetricSerializer
                         var endTime = (ulong)metricPoint.EndTime.ToUnixTimeNanoseconds();
                         writePosition = ProtobufSerializer.WriteFixed64WithTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.ExponentialHistogramDataPoint_Time_Unix_Nano, endTime);
 
-                        writePosition = WriteDataPointAttributes(buffer, writePosition, metricPoint.Tags, ProtobufOtlpMetricFieldNumberConstants.ExponentialHistogramDataPoint_Attributes, maxBufferSize, ref dirtyLength);
+                        writePosition = WriteDataPointAttributes(buffer, writePosition, metricPoint.Tags, ProtobufOtlpMetricFieldNumberConstants.ExponentialHistogramDataPoint_Attributes, ref dirtyLength, out var attributes);
 
                         var sum = metricPoint.GetHistogramSum();
                         writePosition = ProtobufSerializer.WriteDoubleWithTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.ExponentialHistogramDataPoint_Sum, sum);
@@ -749,6 +750,7 @@ internal static class ProtobufOtlpMetricSerializer
                         writePosition = WriteDoubleExemplars(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.ExponentialHistogramDataPoint_Exemplars, in metricPoint, ref dirtyLength);
 
                         ProtobufSerializer.WriteReservedLength(buffer, dataPointLengthPosition, writePosition - (dataPointLengthPosition + ReserveSizeForLength));
+                        CacheDataPointAttributes(buffer, in attributes, writePosition, maxBufferSize);
 
                         if (!state.CommitMetricPoint(writePosition, in metricPoints))
                         {
@@ -800,7 +802,7 @@ internal static class ProtobufOtlpMetricSerializer
         var endTime = (ulong)metricPoint.EndTime.ToUnixTimeNanoseconds();
         writePosition = ProtobufSerializer.WriteFixed64WithTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.NumberDataPoint_Time_Unix_Nano, endTime);
 
-        writePosition = WriteDataPointAttributes(buffer, writePosition, metricPoint.Tags, ProtobufOtlpMetricFieldNumberConstants.NumberDataPoint_Attributes, maxBufferSize, ref dirtyLength);
+        writePosition = WriteDataPointAttributes(buffer, writePosition, metricPoint.Tags, ProtobufOtlpMetricFieldNumberConstants.NumberDataPoint_Attributes, ref dirtyLength, out var attributes);
 
         if (metricPoint.TryGetExemplars(out var exemplars))
         {
@@ -817,6 +819,7 @@ internal static class ProtobufOtlpMetricSerializer
         }
 
         ProtobufSerializer.WriteReservedLength(buffer, dataPointLengthPosition, writePosition - (dataPointLengthPosition + ReserveSizeForLength));
+        CacheDataPointAttributes(buffer, in attributes, writePosition, maxBufferSize);
         return writePosition;
     }
 
@@ -835,11 +838,12 @@ internal static class ProtobufOtlpMetricSerializer
         var endTime = (ulong)metricPoint.EndTime.ToUnixTimeNanoseconds();
         writePosition = ProtobufSerializer.WriteFixed64WithTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.NumberDataPoint_Time_Unix_Nano, endTime);
 
-        writePosition = WriteDataPointAttributes(buffer, writePosition, metricPoint.Tags, ProtobufOtlpMetricFieldNumberConstants.NumberDataPoint_Attributes, maxBufferSize, ref dirtyLength);
+        writePosition = WriteDataPointAttributes(buffer, writePosition, metricPoint.Tags, ProtobufOtlpMetricFieldNumberConstants.NumberDataPoint_Attributes, ref dirtyLength, out var attributes);
 
         writePosition = WriteDoubleExemplars(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.NumberDataPoint_Exemplars, in metricPoint, ref dirtyLength);
 
         ProtobufSerializer.WriteReservedLength(buffer, dataPointLengthPosition, writePosition - (dataPointLengthPosition + ReserveSizeForLength));
+        CacheDataPointAttributes(buffer, in attributes, writePosition, maxBufferSize);
         return writePosition;
     }
 
@@ -858,11 +862,17 @@ internal static class ProtobufOtlpMetricSerializer
     /// <param name="writePosition">The current position in the buffer.</param>
     /// <param name="tags">The data point's tags.</param>
     /// <param name="fieldNumber">The field number to write each attribute under.</param>
-    /// <param name="maxBufferSize">The position a request is not written past, beyond which the attributes are not cached.</param>
     /// <param name="dirtyLength">The furthest position that may have been written, raised by any attribute written past its end.</param>
+    /// <param name="pending">
+    /// The attributes which were serialized and can be cached once the data point
+    /// is known to fit in a request, with <see cref="CacheDataPointAttributes"/>,
+    /// or <see langword="default"/> if there is nothing to cache.
+    /// </param>
     /// <returns>The new write position.</returns>
-    private static int WriteDataPointAttributes(byte[] buffer, int writePosition, ReadOnlyTagCollection tags, int fieldNumber, int maxBufferSize, ref int dirtyLength)
+    private static int WriteDataPointAttributes(byte[] buffer, int writePosition, ReadOnlyTagCollection tags, int fieldNumber, ref int dirtyLength, out PendingAttributes pending)
     {
+        pending = default;
+
         var keyAndValues = tags.KeyAndValues;
 
         if (keyAndValues.Length == 0)
@@ -887,32 +897,48 @@ internal static class ProtobufOtlpMetricSerializer
             allTagsWritten &= written;
         }
 
-        if (!allTagsWritten)
+        if (allTagsWritten)
         {
-            // A dropped tag is not necessarily dropped for good (for example a
-            // ToString() which throws only sometimes), so an incomplete set of
-            // attributes must not be replayed by every later export.
-            return writePosition;
+            pending = new PendingAttributes(keyAndValues, fieldNumber, startPosition, writePosition - startPosition);
         }
 
-        if (writePosition > maxBufferSize)
+        // Otherwise a dropped tag is not necessarily dropped for good (for example a
+        // ToString() which throws only sometimes), so an incomplete set of attributes
+        // must not be replayed by every later export.
+        return writePosition;
+    }
+
+    /// <summary>
+    /// Caches the attributes of a data point which were serialized, if the data
+    /// point they belong to fits in a request.
+    /// </summary>
+    /// <remarks>
+    /// This is done once the whole data point is written, rather than when its
+    /// attributes are, as what follows them (such as buckets and exemplars) can
+    /// make it too large for a request. A data point which is dropped would
+    /// otherwise have a copy of its attributes retained, and allocated again by
+    /// every export of it that follows.
+    /// </remarks>
+    /// <param name="buffer">The buffer the data point was written to.</param>
+    /// <param name="pending">The attributes of the data point.</param>
+    /// <param name="writePosition">The position in the buffer after the data point.</param>
+    /// <param name="maxBufferSize">The position a request is not written past.</param>
+    private static void CacheDataPointAttributes(byte[] buffer, in PendingAttributes pending, int writePosition, int maxBufferSize)
+    {
+        if (pending.KeyAndValues is not { } keyAndValues || writePosition > maxBufferSize)
         {
-            // The data point cannot fit in a request, so it is dropped and its attributes
-            // would only be copied and retained for every export of it that follows.
-            return writePosition;
+            return;
         }
 
-        var bytes = new byte[writePosition - startPosition];
-        Buffer.BlockCopy(buffer, startPosition, bytes, 0, bytes.Length);
+        var bytes = new byte[pending.Length];
+        Buffer.BlockCopy(buffer, pending.Start, bytes, 0, bytes.Length);
 
 #if NETFRAMEWORK || NETSTANDARD2_0
         CachedDataPointAttributes.Remove(keyAndValues);
-        CachedDataPointAttributes.Add(keyAndValues, new CachedAttributes(fieldNumber, bytes));
+        CachedDataPointAttributes.Add(keyAndValues, new CachedAttributes(pending.FieldNumber, bytes));
 #else
-        CachedDataPointAttributes.AddOrUpdate(keyAndValues, new CachedAttributes(fieldNumber, bytes));
+        CachedDataPointAttributes.AddOrUpdate(keyAndValues, new CachedAttributes(pending.FieldNumber, bytes));
 #endif
-
-        return writePosition;
     }
 
     private static int WriteTag(byte[] buffer, int writePosition, KeyValuePair<string, object?> tag, int fieldNumber, ref int dirtyLength)
@@ -1181,6 +1207,20 @@ internal static class ProtobufOtlpMetricSerializer
         /// <see cref="MetricPointIndex"/> is not zero.
         /// </summary>
         public MetricPointsAccessor.Enumerator MetricPoints;
+    }
+
+    /// <summary>
+    /// The serialized attributes of a data point, which are cached once it is known to fit in a request.
+    /// </summary>
+    private readonly struct PendingAttributes(KeyValuePair<string, object?>[] keyAndValues, int fieldNumber, int start, int length)
+    {
+        public readonly KeyValuePair<string, object?>[]? KeyAndValues { get; } = keyAndValues;
+
+        public readonly int FieldNumber { get; } = fieldNumber;
+
+        public readonly int Start { get; } = start;
+
+        public readonly int Length { get; } = length;
     }
 
     /// <summary>

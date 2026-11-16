@@ -646,6 +646,34 @@ public static class ProtobufOtlpMetricSerializerTests
     }
 
     [Fact]
+    public static void WriteMetricsData_MetricPointLargerThanRequestAfterItsAttributes_DoesNotCacheItsAttributes()
+    {
+        static Batch<Metric> Generate(ToStringCounted tag)
+            => GenerateMetricsFromMeter(meter => meter.CreateHistogram<double>("latency").Record(1, new KeyValuePair<string, object?>("size", tag)));
+
+        var tag = new ToStringCounted(512);
+
+        // The request is a byte too small for the metric point, whose attributes are
+        // well within it, but not the buckets and bounds which follow them.
+        var limit = MeasureRequest(Generate(new ToStringCounted(512))) - 1;
+
+        var metrics = Generate(tag);
+        var buffer = new byte[8192];
+
+        for (var export = 1; export <= 2; export++)
+        {
+            var cursor = default(ProtobufOtlpMetricSerializer.MetricsDataCursor);
+
+            var length = ProtobufOtlpMetricSerializer.WriteMetricsData(ref buffer, 0, Resource.Empty, metrics, out _, limit, ref cursor, out var completed);
+
+            Assert.True(completed);
+            Assert.Equal(0, length);
+            Assert.Equal(1, cursor.DroppedMetricPointCount);
+            Assert.Equal(export, tag.Calls);
+        }
+    }
+
+    [Fact]
     public static void WriteMetricsData_DeadlinePassesWhileDroppingMetricPoints_Throws()
     {
         var metrics = GenerateMetricsWithTags(static counter =>
@@ -817,6 +845,31 @@ public static class ProtobufOtlpMetricSerializerTests
 
     private static Batch<Metric> GenerateMetricsWithTags(Action<Counter<long>>? record = null)
     {
+        return GenerateMetricsFromMeter(meter =>
+        {
+            var counter = meter.CreateCounter<long>("requests");
+
+            if (record != null)
+            {
+                record(counter);
+            }
+            else
+            {
+                counter.Add(
+                    1,
+                    new KeyValuePair<string, object?>("route", "/a"),
+                    new KeyValuePair<string, object?>("status", 200));
+
+                counter.Add(
+                    2,
+                    new KeyValuePair<string, object?>("route", "/b"),
+                    new KeyValuePair<string, object?>("status", 500));
+            }
+        });
+    }
+
+    private static Batch<Metric> GenerateMetricsFromMeter(Action<Meter> record)
+    {
         Batch<Metric> metrics = default;
 
         using (var exported = new ManualResetEvent(false))
@@ -843,24 +896,7 @@ public static class ProtobufOtlpMetricSerializerTests
                 .AddReader(reader)
                 .Build();
 
-            var counter = meter.CreateCounter<long>("requests");
-
-            if (record != null)
-            {
-                record(counter);
-            }
-            else
-            {
-                counter.Add(
-                    1,
-                    new KeyValuePair<string, object?>("route", "/a"),
-                    new KeyValuePair<string, object?>("status", 200));
-
-                counter.Add(
-                    2,
-                    new KeyValuePair<string, object?>("route", "/b"),
-                    new KeyValuePair<string, object?>("status", 500));
-            }
+            record(meter);
 
             provider.ForceFlush();
             exported.WaitOne(TimeSpan.FromSeconds(30));
