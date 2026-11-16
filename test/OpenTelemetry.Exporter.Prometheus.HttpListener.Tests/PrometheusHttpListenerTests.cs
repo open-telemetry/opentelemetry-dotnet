@@ -1049,7 +1049,7 @@ public class PrometheusHttpListenerTests
     }
 
     [Fact]
-    public async Task ScrapesAreStillServedAfterHttpListenerFailsToGetRequest()
+    public async Task ScrapesAreStillServedAfterHttpListenerRepeatedlyFailsToGetRequest()
     {
         Assert.SkipWhen(
             RuntimeInformation.IsOSPlatform(OSPlatform.Windows),
@@ -1108,66 +1108,73 @@ public class PrometheusHttpListenerTests
         // after the other. To get there, hold the rejection of a first request, which is sent on
         // the connection of the scrape above so that it is not read by the thread that accepts
         // connections, and let more requests queue up behind it.
-        Volatile.Write(ref holdNextRequest, 1);
+        //
+        // The accept loop only forgets its earlier failures once it is handed a request, which none
+        // of the rejected ones are, so repeating this without a scrape in between makes it fail
+        // repeatedly and exercises the back-off between attempts. A request is then handed to the
+        // operation that failed, so only some of the rounds fail the pending operation.
+        const int Rounds = 5;
+        const int MinimumFailures = 2;
 
-        var heldRequest = httpClient.GetAsync(requestUri, TestContext.Current.CancellationToken);
-
-        var clients = new List<System.Net.Sockets.TcpClient>();
-
-        try
+        for (var round = 0; round < Rounds; round++)
         {
-            Assert.True(requestHeld.Wait(timeout, TestContext.Current.CancellationToken));
+            requestHeld.Reset();
+            allowRequestToBeRejected.Reset();
+            Volatile.Write(ref holdNextRequest, 1);
 
-            var unauthenticated = System.Text.Encoding.ASCII.GetBytes(
-                $"GET /metrics HTTP/1.1\r\nHost: localhost:{context.Port}\r\nConnection: close\r\n\r\n");
+            var heldRequest = httpClient.GetAsync(requestUri, TestContext.Current.CancellationToken);
 
-            for (var i = 0; i < 32; i++)
+            var clients = new List<System.Net.Sockets.TcpClient>();
+
+            try
             {
-                var client = new System.Net.Sockets.TcpClient();
-                clients.Add(client);
+                Assert.True(requestHeld.Wait(timeout, TestContext.Current.CancellationToken));
+
+                var unauthenticated = System.Text.Encoding.ASCII.GetBytes(
+                    $"GET /metrics HTTP/1.1\r\nHost: localhost:{context.Port}\r\nConnection: close\r\n\r\n");
+
+                for (var i = 0; i < 32; i++)
+                {
+                    var client = new System.Net.Sockets.TcpClient();
+                    clients.Add(client);
 
 #if NET
-                await client.ConnectAsync(context.BaseAddress.Host, context.Port, TestContext.Current.CancellationToken);
-                await client.GetStream().WriteAsync(unauthenticated, TestContext.Current.CancellationToken);
+                    await client.ConnectAsync(context.BaseAddress.Host, context.Port, TestContext.Current.CancellationToken);
+                    await client.GetStream().WriteAsync(unauthenticated, TestContext.Current.CancellationToken);
 #else
-                await client.ConnectAsync(context.BaseAddress.Host, context.Port);
-                await client.GetStream().WriteAsync(unauthenticated, 0, unauthenticated.Length, TestContext.Current.CancellationToken);
+                    await client.ConnectAsync(context.BaseAddress.Host, context.Port);
+                    await client.GetStream().WriteAsync(unauthenticated, 0, unauthenticated.Length, TestContext.Current.CancellationToken);
 #endif
+                }
+
+                // Give the listener time to read the requests
+                await Task.Delay(TimeSpan.FromMilliseconds(250), TestContext.Current.CancellationToken);
+
+                allowRequestToBeRejected.Set();
+
+                using (var response = await heldRequest)
+                {
+                    Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+                }
+
+                foreach (var client in clients)
+                {
+                    using var cts = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
+                    cts.CancelAfter(timeout);
+
+                    var statusLine = await ReadStatusLineAsync(client.GetStream(), cts.Token);
+
+                    Assert.StartsWith("HTTP/1.1 401", statusLine, StringComparison.Ordinal);
+                }
             }
-
-            // Give the listener time to read the requests
-            await Task.Delay(TimeSpan.FromMilliseconds(250), TestContext.Current.CancellationToken);
-
-            allowRequestToBeRejected.Set();
-
-            using (var response = await heldRequest)
+            finally
             {
-                Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
-            }
+                allowRequestToBeRejected.Set();
 
-            var buffer = new byte[512];
-
-            foreach (var client in clients)
-            {
-                using var cts = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
-                cts.CancelAfter(timeout);
-
-#if NET
-                var read = await client.GetStream().ReadAsync(buffer, cts.Token);
-#else
-                var read = await client.GetStream().ReadAsync(buffer, 0, buffer.Length, cts.Token);
-#endif
-
-                Assert.StartsWith("HTTP/1.1 401", System.Text.Encoding.ASCII.GetString(buffer, 0, read), StringComparison.Ordinal);
-            }
-        }
-        finally
-        {
-            allowRequestToBeRejected.Set();
-
-            foreach (var client in clients)
-            {
-                client.Dispose();
+                foreach (var client in clients)
+                {
+                    client.Dispose();
+                }
             }
         }
 
@@ -1207,8 +1214,8 @@ public class PrometheusHttpListenerTests
         // Guard against the scenario no longer being reproduced, in which case the
         // scrapes above would succeed whether or not failures are handled
         Assert.True(
-            eventListener.Count > 0,
-            "HttpListener did not fail to get a request, so the test did not exercise the failure.");
+            eventListener.Count >= MinimumFailures,
+            $"HttpListener failed to get a request {eventListener.Count} time(s) instead of at least {MinimumFailures}, so the test did not exercise repeated failures.");
     }
 
     internal static MeterProviderTestContext CreateMeterProvider(
@@ -1263,6 +1270,36 @@ public class PrometheusHttpListenerTests
         }
 
         throw new InvalidOperationException($"{nameof(MeterProvider)} could not be created within {maximumAttempts} attempts.");
+    }
+
+    private static async Task<string> ReadStatusLineAsync(System.Net.Sockets.NetworkStream stream, CancellationToken cancellationToken)
+    {
+        // A read may return only part of the response, so keep reading until the status line is complete
+        var buffer = new byte[512];
+        var length = 0;
+
+        while (length < buffer.Length)
+        {
+#if NET
+            var read = await stream.ReadAsync(buffer.AsMemory(length), cancellationToken);
+#else
+            var read = await stream.ReadAsync(buffer, length, buffer.Length - length, cancellationToken);
+#endif
+
+            if (read == 0)
+            {
+                break;
+            }
+
+            length += read;
+
+            if (Array.IndexOf(buffer, (byte)'\n', 0, length) >= 0)
+            {
+                break;
+            }
+        }
+
+        return System.Text.Encoding.ASCII.GetString(buffer, 0, length);
     }
 
     private static void EnsureThreadPoolWorkerThreadsAvailable()
