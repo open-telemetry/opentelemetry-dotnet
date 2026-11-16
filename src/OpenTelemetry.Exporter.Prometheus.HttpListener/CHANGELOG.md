@@ -17,7 +17,7 @@ Notes](../../RELEASENOTES.md).
   metrics which do not fit and logs an error event, instead of failing with
   HTTP 500. The scrape still fails when none of the metrics fit. Increase
   `MaxScrapeResponseSizeBytes` if metrics are omitted.
-  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+  ([#8139](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8139))
 
 ## 1.21.0-beta.1
 
