@@ -16,7 +16,7 @@ Notes](../../RELEASENOTES.md).
 * Fixed every scrape failing once a metric point has an attribute value whose
   conversion to a string throws an exception. The value of such an attribute is
   now treated as empty, and a warning event is written.
-  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+  ([#8141](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8141))
 
 ## 1.21.0-beta.1
 
