@@ -367,6 +367,113 @@ public class OtlpGrpcExportClientTests
             exportClient.SendExportRequest(buffer, buffer.Length, DateTime.UtcNow.AddSeconds(10), cts.Token));
     }
 
+#if NET
+    [Fact]
+    public void SendExportRequest_Http2NotNegotiated_ReplacesHttpClientCreatedByExporter()
+    {
+        var buffer = BuildGrpcFrame("grpc test payload"u8.ToArray());
+
+        // Stands in for an HttpClient that no longer attempts HTTP/2 with the endpoint.
+        using var testHandler = new ThrowingHttpMessageHandler(
+            new HttpRequestException(HttpRequestError.VersionNegotiationError, "HTTP/2 could not be negotiated."));
+        using var httpClient = new HttpClient(testHandler, disposeHandler: false);
+
+        var exportClient = new OtlpGrpcExportClient(
+            new OtlpExporterOptions { Endpoint = new Uri("http://localhost:4317") },
+            httpClient,
+            string.Empty);
+
+        var response = exportClient.SendExportRequest(buffer, buffer.Length, DateTime.UtcNow.AddSeconds(10), TestContext.Current.CancellationToken);
+
+        using var replacement = exportClient.HttpClient;
+
+        var grpcResponse = Assert.IsType<ExportClientGrpcResponse>(response);
+        Assert.False(grpcResponse.Success);
+        Assert.IsType<HttpRequestException>(grpcResponse.Exception);
+        Assert.NotSame(httpClient, replacement);
+        Assert.Throws<ObjectDisposedException>(httpClient.CancelPendingRequests);
+
+        // The replacement is used by later requests and by shutdown.
+        Assert.True(exportClient.Shutdown(1000));
+    }
+
+    [Fact]
+    public void Shutdown_HttpClientDisposed_DoesNotThrow()
+    {
+        using var testHandler = new ThrowingHttpMessageHandler(new InvalidOperationException());
+        var httpClient = new HttpClient(testHandler, disposeHandler: false);
+
+        var exportClient = new OtlpGrpcExportClient(
+            new OtlpExporterOptions { Endpoint = new Uri("http://localhost:4317") },
+            httpClient,
+            string.Empty);
+
+        // Stands in for the HttpClient being replaced and disposed of by another thread.
+        httpClient.Dispose();
+
+        Assert.True(exportClient.Shutdown(1000));
+    }
+
+    [Theory]
+    [InlineData(HttpRequestError.VersionNegotiationError, true)]
+    [InlineData(HttpRequestError.ConnectionError, false)]
+    public void SendExportRequest_RequestFailed_KeepsHttpClient(HttpRequestError error, bool customHttpClientFactory)
+    {
+        var buffer = BuildGrpcFrame("grpc test payload"u8.ToArray());
+
+        using var testHandler = new ThrowingHttpMessageHandler(new HttpRequestException(error, "The request failed."));
+        using var httpClient = new HttpClient(testHandler, disposeHandler: false);
+
+        var options = new OtlpExporterOptions { Endpoint = new Uri("http://localhost:4317") };
+
+        if (customHttpClientFactory)
+        {
+            // An HttpClient supplied by the application is not the exporter's to replace.
+            options.HttpClientFactory = () => httpClient;
+        }
+
+        var exportClient = new OtlpGrpcExportClient(options, httpClient, string.Empty);
+
+        var response = exportClient.SendExportRequest(buffer, buffer.Length, DateTime.UtcNow.AddSeconds(10), TestContext.Current.CancellationToken);
+
+        Assert.False(Assert.IsType<ExportClientGrpcResponse>(response).Success);
+        Assert.Same(httpClient, exportClient.HttpClient);
+
+        // The HttpClient has not been disposed of.
+        httpClient.CancelPendingRequests();
+    }
+
+    [Fact]
+    public void SendExportRequest_Http2NotNegotiatedAndReplacementCannotBeCreated_KeepsHttpClient()
+    {
+        var buffer = BuildGrpcFrame("grpc test payload"u8.ToArray());
+
+        using var testHandler = new ThrowingHttpMessageHandler(
+            new HttpRequestException(HttpRequestError.VersionNegotiationError, "HTTP/2 could not be negotiated."));
+        using var httpClient = new HttpClient(testHandler, disposeHandler: false);
+
+        // The default factory throws because the certificate file does not exist.
+        var options = new OtlpExporterOptions
+        {
+            Endpoint = new Uri("https://localhost:4317"),
+            MtlsOptions = new OtlpMtlsOptions { CaCertificatePath = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName()) },
+        };
+
+        var exportClient = new OtlpGrpcExportClient(options, httpClient, string.Empty);
+
+        var response = exportClient.SendExportRequest(buffer, buffer.Length, DateTime.UtcNow.AddSeconds(10), TestContext.Current.CancellationToken);
+
+        // The failure of the request is reported, not that of creating the replacement.
+        var grpcResponse = Assert.IsType<ExportClientGrpcResponse>(response);
+        Assert.False(grpcResponse.Success);
+        Assert.IsType<HttpRequestException>(grpcResponse.Exception);
+        Assert.Same(httpClient, exportClient.HttpClient);
+
+        // The HttpClient has not been disposed of.
+        httpClient.CancelPendingRequests();
+    }
+#endif
+
     private static ExportClientGrpcResponse SendExportRequestThatThrows(Exception exception)
     {
         var buffer = BuildGrpcFrame("grpc test payload"u8.ToArray());

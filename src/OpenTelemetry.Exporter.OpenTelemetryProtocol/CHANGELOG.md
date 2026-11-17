@@ -15,6 +15,12 @@ Notes](../../RELEASENOTES.md).
   to prevent `HttpClient` created by `IHttpClientFactory` from using cookies.
   ([#8131](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8131))
 
+* Fixed the OTLP/gRPC exporter not exporting again on .NET after a connection
+  to the `https` endpoint was made without HTTP/2 being negotiated. The
+  `HttpClient` created by the exporter is now replaced when this happens. An
+  `HttpClient` supplied through `HttpClientFactory` is not replaced.
+  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+
 ## 1.21.0
 
 Released 2026-Nov-11
