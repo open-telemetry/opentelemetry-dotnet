@@ -13,6 +13,17 @@ Notes](../../RELEASENOTES.md).
   each scrape now uses a new connection.
   ([#8136](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8136))
 
+* Fixed the listener permanently stopping when `HttpListener` fails to get a
+  request, for example after a burst of requests rejected by authentication
+  configured through `ConfigureHttpListener`. The failure is now logged and the
+  listener keeps accepting requests.
+  ([#8135](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8135))
+
+* Fixed every scrape failing once a metric point has an attribute value whose
+  conversion to a string throws an exception. The value of such an attribute is
+  now treated as empty, and a warning event is written.
+  ([#8141](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8141))
+
 * A scrape response which exceeds `MaxScrapeResponseSizeBytes`, or which has
   metrics with tags that are too large to be serialized, now omits those
   metrics and logs an error event, instead of failing with HTTP 500. The scrape

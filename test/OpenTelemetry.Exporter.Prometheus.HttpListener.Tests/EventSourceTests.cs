@@ -32,6 +32,7 @@ public class EventSourceTests
         log.ConflictingUnit("test_metric", "bytes", "seconds");
         log.CollectFailed();
         log.ScrapeAbandoned();
+        log.AcceptRequestFailed(exception);
         log.MetricsDroppedFromResponse("test_metric", 2, 85_000);
 
         var events = listener.Messages;
@@ -41,6 +42,7 @@ public class EventSourceTests
         Assert.Contains(events, e => e.EventId == 3); // FailedShutdown
         Assert.Contains(events, e => e.EventId == 12); // CollectFailed
         Assert.Contains(events, e => e.EventId == 14); // ScrapeAbandoned
+        Assert.Contains(events, e => e.EventId == 17); // AcceptRequestFailed
 
         var conflictingType = Assert.Single(events, e => e.EventId == 6);
         Assert.NotNull(conflictingType.Payload);

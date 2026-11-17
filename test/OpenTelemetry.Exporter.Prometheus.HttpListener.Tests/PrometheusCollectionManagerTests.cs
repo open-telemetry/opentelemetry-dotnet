@@ -3053,6 +3053,56 @@ public sealed class PrometheusCollectionManagerTests
         }
     }
 
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task EnterCollectIgnoresTagValueWhichCannotBeConvertedToString(bool openMetricsRequested)
+    {
+        using var meter = CreateMeter();
+        using var provider = CreateMeterProviderWithCache(meter, scrapeResponseCacheDurationMilliseconds: 0);
+
+#pragma warning disable CA2000 // MeterProvider owns exporter lifecycle
+        var exporter = GetExporter(provider);
+#pragma warning restore CA2000 // MeterProvider owns exporter lifecycle
+
+        var counter = meter.CreateCounter<long>("test_counter");
+
+        counter.Add(1, new KeyValuePair<string, object?>("key", "value"));
+
+        // ArgumentException is also how the serializer signals that the response buffer is full
+        counter.Add(2, new KeyValuePair<string, object?>("key", new CallbackLabelValue(static () => throw new ArgumentException("Nope."))));
+
+        // A point without the attribute is written as the same series as the one whose value could not be converted
+        counter.Add(4);
+
+        var protocol = GetProtocol(openMetricsRequested);
+
+        // The metric point is cumulative, so it is written by every scrape
+        for (var i = 0; i < 2; i++)
+        {
+            var response = await EnterCollectAsync(exporter, protocol);
+
+            try
+            {
+                Assert.True(response.Succeeded);
+
+                // The exception must not be taken for a full buffer either
+                Assert.Equal(PrometheusExporterOptions.InitialScrapeResponseSizeBytes, response.View.Array!.Length);
+
+                var output = Encoding.UTF8.GetString(response.View.Array, response.View.Offset, response.View.Count);
+
+                Assert.Contains($"test_counter_total{{key=\"value\",otel_scope_name=\"{meter.Name}\"}} 1\n", output, StringComparison.Ordinal);
+
+                // A label with an empty value is the same as one that does not exist, so the two points are one series
+                Assert.Equal(1, CountOccurrences(output, $"test_counter_total{{otel_scope_name=\"{meter.Name}\"}}"));
+            }
+            finally
+            {
+                exporter.CollectionManager.ExitCollect(response);
+            }
+        }
+    }
+
     private static int CountOccurrences(string value, string substring)
     {
         var count = 0;

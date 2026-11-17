@@ -7,6 +7,11 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Fixed every scrape failing once a metric point has an attribute value whose
+  conversion to a string throws an exception. The value of such an attribute is
+  now treated as empty, and a warning event is written.
+  ([#8141](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8141))
+
 * A scrape response which exceeds `MaxScrapeResponseSizeBytes`, or which has
   metrics with tags that are too large to be serialized, now omits those
   metrics and logs an error event, instead of failing with HTTP 500. The scrape
