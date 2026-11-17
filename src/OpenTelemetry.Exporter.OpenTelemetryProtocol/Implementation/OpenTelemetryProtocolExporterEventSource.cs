@@ -8,6 +8,8 @@ using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 
+// Any redaction here is best-effort only - we do not guarantee that any exception will be free of potentially sensitive information
+
 [EventSource(Name = "OpenTelemetry-Exporter-OpenTelemetryProtocol")]
 internal sealed class OpenTelemetryProtocolExporterEventSource : EventSource, IConfigurationExtensionsLogger
 {
