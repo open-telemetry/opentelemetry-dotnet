@@ -39,6 +39,10 @@ internal abstract class OtlpExportClient : IExportClient
 
     private HttpClient httpClient;
 
+#if NET
+    private int replacementInProgress;
+#endif
+
     protected OtlpExportClient(OtlpExporterOptions options, HttpClient httpClient, string signalPath)
     {
         Guard.ThrowIfNull(options);
@@ -351,36 +355,62 @@ internal abstract class OtlpExportClient : IExportClient
     private void ReplaceHttpClient(HttpClient current)
     {
         if (this.createReplacementHttpClient is not { } createReplacement ||
-            !ReferenceEquals(this.HttpClient, current))
+            !ReferenceEquals(this.HttpClient, current) ||
+            Interlocked.CompareExchange(ref this.replacementInProgress, 1, 0) != 0)
         {
             // The HttpClient is not the exporter's to replace,
-            // or another thread has already replaced it.
+            // or it is already being replaced.
             return;
         }
 
-        HttpClient replacement;
-
+        // Creating an HttpClient can block, for example while certificates are
+        // checked for revocation, which does not respect the deadline of an export.
+        // It is therefore not done on the thread that is exporting, so that the
+        // failed export is not held up. A dedicated thread is used so that the
+        // replacement does not depend on the thread pool, and the next export
+        // is sent with the replacement once it is ready.
         try
         {
-            replacement = createReplacement();
+            _ = Task.Factory.StartNew(
+                () => this.CreateReplacementHttpClient(current, createReplacement),
+                CancellationToken.None,
+                TaskCreationOptions.LongRunning,
+                TaskScheduler.Default);
         }
         catch (Exception)
         {
-            // The replacement could not be created, for example because a
-            // certificate file could not be loaded. Keep the current HttpClient
-            // so that the original failure is reported, and try again after the
-            // next failure.
-            return;
+            // The thread could not be started. Keep the current HttpClient so that the
+            // original failure is reported, and try again after the next failure.
+            Volatile.Write(ref this.replacementInProgress, 0);
         }
+    }
 
-        if (Interlocked.CompareExchange(ref this.httpClient, replacement, current) == current)
+    private void CreateReplacementHttpClient(HttpClient current, Func<HttpClient> createReplacement)
+    {
+        try
         {
+            HttpClient replacement;
+
+            try
+            {
+                replacement = createReplacement();
+            }
+            catch (Exception)
+            {
+                // The replacement could not be created, for example because a
+                // certificate file could not be loaded. Keep the current HttpClient
+                // and try again after the next failure.
+                return;
+            }
+
+            // Only a single replacement is attempted at a time, so nothing else writes the HttpClient.
+            Volatile.Write(ref this.httpClient, replacement);
+
             current.Dispose();
         }
-        else
+        finally
         {
-            // Another thread has already replaced the HttpClient.
-            replacement.Dispose();
+            Volatile.Write(ref this.replacementInProgress, 0);
         }
     }
 #endif

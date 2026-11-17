@@ -385,13 +385,31 @@ public class OtlpGrpcExportClientTests
 
         var response = exportClient.SendExportRequest(buffer, buffer.Length, DateTime.UtcNow.AddSeconds(10), TestContext.Current.CancellationToken);
 
-        using var replacement = exportClient.HttpClient;
-
         var grpcResponse = Assert.IsType<ExportClientGrpcResponse>(response);
         Assert.False(grpcResponse.Success);
         Assert.IsType<HttpRequestException>(grpcResponse.Exception);
+
+        // The replacement is created in the background, and the original is disposed of once it has been replaced.
+        Assert.True(
+            SpinWait.SpinUntil(
+                () =>
+                {
+                    try
+                    {
+                        httpClient.CancelPendingRequests();
+                        return false;
+                    }
+                    catch (ObjectDisposedException)
+                    {
+                        return true;
+                    }
+                },
+                TimeSpan.FromSeconds(30)),
+            "The HttpClient was not replaced.");
+
+        using var replacement = exportClient.HttpClient;
+
         Assert.NotSame(httpClient, replacement);
-        Assert.Throws<ObjectDisposedException>(httpClient.CancelPendingRequests);
 
         // The replacement is used by later requests and by shutdown.
         Assert.True(exportClient.Shutdown(1000));
@@ -461,12 +479,23 @@ public class OtlpGrpcExportClientTests
 
         var exportClient = new OtlpGrpcExportClient(options, httpClient, string.Empty);
 
+        const int SecureHttpClientCreationFailedEventId = 36;
+
+        // The replacement is created on another thread, so the listener must not filter by the activity of this one.
+        using var listener = new EventSignalListener(SecureHttpClientCreationFailedEventId);
+
         var response = exportClient.SendExportRequest(buffer, buffer.Length, DateTime.UtcNow.AddSeconds(10), TestContext.Current.CancellationToken);
 
         // The failure of the request is reported, not that of creating the replacement.
         var grpcResponse = Assert.IsType<ExportClientGrpcResponse>(response);
         Assert.False(grpcResponse.Success);
         Assert.IsType<HttpRequestException>(grpcResponse.Exception);
+
+        // The replacement is created in the background, so wait for the attempt to fail.
+        Assert.True(
+            listener.Wait(TimeSpan.FromSeconds(30)),
+            "The replacement HttpClient was not attempted to be created.");
+
         Assert.Same(httpClient, exportClient.HttpClient);
 
         // The HttpClient has not been disposed of.
@@ -517,6 +546,45 @@ public class OtlpGrpcExportClientTests
 
         return output.ToArray();
     }
+
+#if NET
+    private sealed class EventSignalListener : EventListener
+    {
+        private readonly int eventId;
+        private readonly ManualResetEventSlim signal = new(false);
+
+        public EventSignalListener(int eventId)
+        {
+            this.eventId = eventId;
+
+            this.EnableEvents(OpenTelemetryProtocolExporterEventSource.Log, EventLevel.Error);
+        }
+
+        public bool Wait(TimeSpan timeout) => this.signal.Wait(timeout);
+
+        public override void Dispose()
+        {
+            base.Dispose();
+            this.signal.Dispose();
+        }
+
+        protected override void OnEventWritten(EventWrittenEventArgs eventData)
+        {
+            if (eventData.EventId == this.eventId)
+            {
+                try
+                {
+                    this.signal.Set();
+                }
+                catch (ObjectDisposedException)
+                {
+                    // The test has finished.
+                }
+            }
+        }
+    }
+
+#endif
 
     private sealed class ThrowingHttpMessageHandler : HttpMessageHandler
     {
