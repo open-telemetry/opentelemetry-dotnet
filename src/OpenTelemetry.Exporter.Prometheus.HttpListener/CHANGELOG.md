@@ -13,6 +13,11 @@ Notes](../../RELEASENOTES.md).
   each scrape now uses a new connection.
   ([#8136](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8136))
 
+* Fixed every scrape failing once a metric point has an attribute value whose
+  conversion to a string throws an exception. The value of such an attribute is
+  now treated as empty, and a warning event is written.
+  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+
 ## 1.21.0-beta.1
 
 Released 2026-Nov-11

@@ -615,7 +615,7 @@ To avoid this, send the output to the session scratchpad instead:
 - With the `Test` target, pass
   `-p:TestResultsDirectory=<scratchpad>\TestResults`. With `dotnet test`, pass
   `--results-directory <scratchpad>\TestResults` and
-  `--diagnostic-output-directory <scratchpad>\TestResults\diag`.
+  `--diagnostic --diagnostic-output-directory <scratchpad>\TestResults\diag`.
 - `benchmark.ps1` has no option to move its output. Run the `test/Benchmarks`
   project directly with BenchmarkDotNet's `--artifacts <scratchpad>` instead, or
   move the folder out of the checkout afterwards.
