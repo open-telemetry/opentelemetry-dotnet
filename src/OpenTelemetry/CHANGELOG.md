@@ -9,7 +9,7 @@ Notes](../../RELEASENOTES.md).
 * Self-diagnostics log entries now indent every line after the first and write
   control characters as `\uXXXX` escapes, so that text in a message can no
   longer start a line that reads as a separate entry.
-  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+  ([#8145](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8145))
 
 ## 1.21.0
 
