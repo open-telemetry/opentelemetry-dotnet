@@ -283,16 +283,21 @@ internal sealed class PrometheusHttpListener : IDisposable
 
     private async Task ProcessRequestAsync(HttpListenerContext context, CancellationToken cancellationToken)
     {
-        if (context.Request.HasEntityBody)
-        {
-            // A scrape has no request body, and nothing here reads one. Do not keep the connection
-            // alive for such a request. On the managed (non-Windows) HttpListener implementation,
-            // Response.Close() on a keep-alive connection first synchronously drains any unread
-            // request body, waiting up to a second for each read, so a client that announces a body
-            // and trickles it in could hold a thread pool thread indefinitely after its response has
-            // been sent, beyond the reach of the scrape timeout.
-            context.Response.KeepAlive = false;
-        }
+        // Never keep a scrape connection alive: each connection carries exactly one response.
+        //
+        // On the managed (non-Windows) HttpListener implementation, Response.Close() on a keep-alive
+        // connection first synchronously drains any unread request body, waiting up to a second for
+        // each read, so a client that announces a body and trickles it in could hold a thread pool
+        // thread indefinitely after its response has been sent.
+        //
+        // The same implementation also writes any response headers that have not yet been sent (the
+        // status line of a body-less 408, 500 or 503, or the 404 or 400 that the listener itself
+        // sends) with a synchronous socket write that has no timeout, and so does HttpListener.Stop()
+        // for every open connection. A client that keeps a connection alive and does not read its
+        // earlier responses can fill the socket's send queue so that such a write never completes,
+        // holding a thread pool thread or blocking shutdown for as long as the client stays connected.
+        // With a single response per connection, none of our own responses can be left unread in the queue ahead of such a write.
+        context.Response.KeepAlive = false;
 
         if (this.disposed || cancellationToken.IsCancellationRequested)
         {
