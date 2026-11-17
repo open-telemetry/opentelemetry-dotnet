@@ -303,7 +303,7 @@ internal static class ProtobufOtlpLogSerializer
         var attributes = logRecord.Attributes;
         if (attributes != null)
         {
-            for (var i = 0; TryGetAttribute(attributes, i, out var attribute); i++)
+            for (var i = 0; TryGetAttribute(attributes, i, state, out var attribute); i++)
             {
                 // Special casing {OriginalFormat}
                 // See https://github.com/open-telemetry/opentelemetry-dotnet/pull/3182
@@ -412,6 +412,7 @@ internal static class ProtobufOtlpLogSerializer
                 // A scope whose items cannot be read (e.g. a message template with
                 // more placeholders than arguments) costs the rest of that scope,
                 // not the log record or the batch.
+                state.TagWriterState.DroppedTagCount++;
                 OpenTelemetryProtocolExporterEventSource.Log.LogRecordDataReadFailed("scopes", ex);
             }
         }
@@ -433,8 +434,8 @@ internal static class ProtobufOtlpLogSerializer
             // string, only the attribute is dropped. The text is obtained
             // before anything is written so that an exception thrown here is
             // not mistaken for the buffer being full.
-            OpenTelemetryProtocolExporterEventSource.Log.UnsupportedAttributeType(exception.GetType().ToString(), key);
             state.TagWriterState.DroppedTagCount++;
+            OpenTelemetryProtocolExporterEventSource.Log.LogRecordDataReadFailed(key, ex);
             return;
         }
 
@@ -442,12 +443,16 @@ internal static class ProtobufOtlpLogSerializer
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static bool TryGetAttribute(IReadOnlyList<KeyValuePair<string, object?>> attributes, int index, out KeyValuePair<string, object?> attribute)
+    private static bool TryGetAttribute(IReadOnlyList<KeyValuePair<string, object?>> attributes, int index, SerializationState state, out KeyValuePair<string, object?> attribute)
     {
         // Attributes buffered by the SDK are held in a List, which cannot throw
         // when read, so only other implementations pay for the guarded read.
-        if (attributes is List<KeyValuePair<string, object?>> list)
+        // The exact type is required as a derived type may implement the
+        // interface differently to the List it derives from.
+        if (attributes.GetType() == typeof(List<KeyValuePair<string, object?>>))
         {
+            var list = (List<KeyValuePair<string, object?>>)attributes;
+
             if ((uint)index < (uint)list.Count)
             {
                 attribute = list[index];
@@ -458,11 +463,11 @@ internal static class ProtobufOtlpLogSerializer
             return false;
         }
 
-        return TryGetAttributeGuarded(attributes, index, out attribute);
+        return TryGetAttributeGuarded(attributes, index, state, out attribute);
     }
 
     [MethodImpl(MethodImplOptions.NoInlining)]
-    private static bool TryGetAttributeGuarded(IReadOnlyList<KeyValuePair<string, object?>> attributes, int index, out KeyValuePair<string, object?> attribute)
+    private static bool TryGetAttributeGuarded(IReadOnlyList<KeyValuePair<string, object?>> attributes, int index, SerializationState state, out KeyValuePair<string, object?> attribute)
     {
         // Reading is separated from writing so that an exception thrown by
         // reading the attributes is not mistaken for the buffer being full.
@@ -476,6 +481,9 @@ internal static class ProtobufOtlpLogSerializer
         }
         catch (Exception ex) when (ex is not OutOfMemoryException)
         {
+            // The attributes from this one onwards are left out. The number which
+            // could not be read is unknown, so only the failure itself is counted.
+            state.TagWriterState.DroppedTagCount++;
             OpenTelemetryProtocolExporterEventSource.Log.LogRecordDataReadFailed("attributes", ex);
         }
 

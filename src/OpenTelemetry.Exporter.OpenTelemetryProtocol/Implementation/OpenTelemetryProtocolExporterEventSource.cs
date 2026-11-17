@@ -398,7 +398,20 @@ internal sealed class OpenTelemetryProtocolExporterEventSource : EventSource, IC
     {
         if (Log.IsEnabled(EventLevel.Warning, EventKeywords.All))
         {
-            this.LogRecordDataReadFailed(dataName, ex.ToInvariantString());
+            string exception;
+            try
+            {
+                exception = ex.ToInvariantString();
+            }
+            catch (Exception e) when (e is not OutOfMemoryException)
+            {
+                // The exception was thrown by data which could not be read, so it may
+                // not be possible to convert it to a string either. Reporting the
+                // failure must not fail the serialization of the log record.
+                exception = ex.GetType().ToString();
+            }
+
+            this.LogRecordDataReadFailed(dataName, exception);
         }
     }
 

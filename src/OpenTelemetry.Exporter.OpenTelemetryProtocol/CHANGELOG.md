@@ -17,7 +17,8 @@ Notes](../../RELEASENOTES.md).
 
 * Fixed a whole batch of log records being dropped when the exception, scopes
   or attributes of one of the log records cannot be read. Only the data which
-  could not be read is now left out of that log record.
+  could not be read, and any that follows it in the same scope or attribute
+  list, is now left out of that log record, and is counted as dropped.
   ([#8143](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8143))
 
 ## 1.21.0

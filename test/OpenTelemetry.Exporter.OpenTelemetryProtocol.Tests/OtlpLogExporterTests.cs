@@ -963,6 +963,8 @@ public class OtlpLogExporterTests
             builder.UseOpenTelemetry(logging => logging.AddInMemoryExporter(logRecords));
         });
 
+        using var listener = new TestEventListener(OpenTelemetryProtocolExporterEventSource.Log, EventLevel.Warning);
+
         var logger = loggerFactory.CreateLogger("OtlpLogExporterTests");
         var thrown = (Exception)Activator.CreateInstance(thrownType, "Nope.")!;
         var exception = new ArgumentOutOfRangeException(nameof(thrownType), new ToStringThrowsException(thrown), "Value is not supported.");
@@ -985,6 +987,8 @@ public class OtlpLogExporterTests
         var attribute = Assert.Single(exported.Attributes);
         Assert.Equal(SemanticConventions.AttributeExceptionType, attribute.Key);
         Assert.Equal(nameof(ArgumentOutOfRangeException), attribute.Value.StringValue);
+
+        AssertReadFailures(listener, SemanticConventions.AttributeExceptionMessage, SemanticConventions.AttributeExceptionStacktrace);
     }
 
     [Fact]
@@ -992,6 +996,8 @@ public class OtlpLogExporterTests
     {
         // A message template with more placeholders than arguments throws when its
         // items are read, which happens when the log record is serialized.
+        using var listener = new TestEventListener(OpenTelemetryProtocolExporterEventSource.Log, EventLevel.Warning);
+
         var logRecords = new List<LogRecord>();
         using var loggerFactory = LoggerFactory.Create(builder =>
         {
@@ -1019,12 +1025,31 @@ public class OtlpLogExporterTests
 
         var request = CreateLogsExportRequest(DefaultSdkLimitOptions, new ExperimentalOptions(), new Batch<LogRecord>([.. logRecords], logRecords.Count), ResourceBuilder.CreateEmpty().Build());
 
-        Assert.Equal(3, request.ResourceLogs[0].ScopeLogs[0].LogRecords.Count);
+        var exported = request.ResourceLogs[0].ScopeLogs[0].LogRecords;
+        Assert.Equal(3, exported.Count);
+
+        // The items of the scope from the one which cannot be read are left out and counted.
+        Assert.Equal(0u, exported[0].DroppedAttributesCount);
+        Assert.Equal(1u, exported[1].DroppedAttributesCount);
+        Assert.Equal(0u, exported[2].DroppedAttributesCount);
+        Assert.DoesNotContain(exported[1].Attributes, x => x.Key is "b" or "Client");
+
+        AssertReadFailures(listener, "scopes");
     }
 
-    [Fact]
-    public void CheckToOtlpLogRecordAttributesWhichCannotBeReadAreDropped()
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void CheckToOtlpLogRecordAttributesWhichCannotBeReadAreDropped(bool exceptionToStringThrows)
     {
+        // The failure is reported by the event source at warning level, which must not
+        // itself fail when the exception which was thrown cannot be converted to a string.
+        using var listener = new TestEventListener(OpenTelemetryProtocolExporterEventSource.Log, EventLevel.Warning);
+
+        Exception readFailure = exceptionToStringThrows
+            ? new ArgumentOutOfRangeException(nameof(exceptionToStringThrows), new ToStringThrows(), "Nope.")
+            : new ArgumentOutOfRangeException(nameof(exceptionToStringThrows));
+
         var logRecords = new List<LogRecord>();
         using var loggerFactory = LoggerFactory.Create(builder =>
         {
@@ -1037,7 +1062,7 @@ public class OtlpLogExporterTests
         logger.SomeLogInformation();
         logger.SomeLogInformation();
 
-        logRecords[1].Attributes = new ThrowingAttributeList();
+        logRecords[1].Attributes = new ThrowingAttributeList(readFailure);
 
         var request = CreateLogsExportRequest(DefaultSdkLimitOptions, new ExperimentalOptions(), new Batch<LogRecord>([.. logRecords], logRecords.Count), ResourceBuilder.CreateEmpty().Build());
 
@@ -1046,6 +1071,35 @@ public class OtlpLogExporterTests
 
         var attribute = Assert.Single(exported[1].Attributes);
         Assert.Equal("readable", attribute.Key);
+        Assert.Equal(1u, exported[1].DroppedAttributesCount);
+
+        var message = AssertReadFailures(listener, "attributes");
+        Assert.Contains(nameof(ArgumentOutOfRangeException), (string)message.Payload![1]!, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void CheckToOtlpLogRecordAttributesUseTheListInterfaceOfListSubclasses()
+    {
+        var logRecords = new List<LogRecord>();
+        using var loggerFactory = LoggerFactory.Create(builder =>
+        {
+            builder.UseOpenTelemetry(logging => logging.AddInMemoryExporter(logRecords));
+        });
+
+        var logger = loggerFactory.CreateLogger("OtlpLogExporterTests");
+
+        logger.SomeLogInformation();
+
+        // The attributes exposed through IReadOnlyList<T> are those which are exported,
+        // even if the type derives from List<T> and its own contents are different.
+        logRecords[0].Attributes = new ProjectedAttributeList { new("hidden", "value") };
+
+        var request = CreateLogsExportRequest(DefaultSdkLimitOptions, new ExperimentalOptions(), new Batch<LogRecord>([.. logRecords], logRecords.Count), ResourceBuilder.CreateEmpty().Build());
+
+        var exported = Assert.Single(Assert.Single(Assert.Single(request.ResourceLogs).ScopeLogs).LogRecords);
+        var attribute = Assert.Single(exported.Attributes);
+        Assert.Equal("projected", attribute.Key);
+        Assert.Equal("value", attribute.Value.StringValue);
     }
 
     [Fact]
@@ -2567,6 +2621,16 @@ public class OtlpLogExporterTests
         return resourceSpans;
     }
 
+    private static EventWrittenEventArgs AssertReadFailures(TestEventListener listener, params string[] dataNames)
+    {
+        // Event 45 is raised when data of a log record could not be read.
+        var messages = listener.CurrentMessages.Where(x => x.EventId == 45).ToList();
+
+        Assert.Equal(dataNames, messages.Select(x => (string)x.Payload![0]!));
+
+        return messages[0];
+    }
+
     private sealed class PassThroughDelegatingHandler : DelegatingHandler;
 
     private sealed class NonEnumerableReadOnlyList(params KeyValuePair<string, object?>[] items) : IReadOnlyList<KeyValuePair<string, object?>>
@@ -2592,12 +2656,23 @@ public class OtlpLogExporterTests
         public override string ToString() => throw exception;
     }
 
-    private sealed class ThrowingAttributeList : IReadOnlyList<KeyValuePair<string, object?>>
+    private sealed class ProjectedAttributeList : List<KeyValuePair<string, object?>>, IReadOnlyList<KeyValuePair<string, object?>>
+    {
+        int IReadOnlyCollection<KeyValuePair<string, object?>>.Count => 1;
+
+        KeyValuePair<string, object?> IReadOnlyList<KeyValuePair<string, object?>>.this[int index]
+            => index == 0 ? new("projected", "value") : throw new ArgumentOutOfRangeException(nameof(index));
+
+        IEnumerator<KeyValuePair<string, object?>> IEnumerable<KeyValuePair<string, object?>>.GetEnumerator()
+            => throw new NotSupportedException();
+    }
+
+    private sealed class ThrowingAttributeList(Exception readFailure) : IReadOnlyList<KeyValuePair<string, object?>>
     {
         public int Count => 2;
 
         public KeyValuePair<string, object?> this[int index]
-            => index == 0 ? new("readable", "value") : throw new ArgumentOutOfRangeException(nameof(index));
+            => index == 0 ? new("readable", "value") : throw readFailure;
 
         public IEnumerator<KeyValuePair<string, object?>> GetEnumerator()
             => throw new NotSupportedException();
