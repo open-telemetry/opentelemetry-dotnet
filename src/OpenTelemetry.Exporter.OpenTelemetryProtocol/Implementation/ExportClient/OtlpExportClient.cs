@@ -355,11 +355,18 @@ internal abstract class OtlpExportClient : IExportClient
     private void ReplaceHttpClient(HttpClient current)
     {
         if (this.createReplacementHttpClient is not { } createReplacement ||
-            !ReferenceEquals(this.HttpClient, current) ||
             Interlocked.CompareExchange(ref this.replacementInProgress, 1, 0) != 0)
         {
             // The HttpClient is not the exporter's to replace,
             // or it is already being replaced.
+            return;
+        }
+
+        // Only the caller that holds the gate writes the HttpClient, so whether
+        // it has already been replaced must be checked while the gate is held.
+        if (!ReferenceEquals(this.HttpClient, current))
+        {
+            Volatile.Write(ref this.replacementInProgress, 0);
             return;
         }
 
