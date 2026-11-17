@@ -393,6 +393,22 @@ internal sealed class OpenTelemetryProtocolExporterEventSource : EventSource, IC
     internal void GrpcStatusDetailsCodeMismatch(int grpcStatusCode, int detailsStatusCode)
         => this.WriteEvent(44, grpcStatusCode, detailsStatusCode);
 
+    [NonEvent]
+    internal void LogRecordDataReadFailed(string dataName, Exception ex)
+    {
+        if (Log.IsEnabled(EventLevel.Warning, EventKeywords.All))
+        {
+            this.LogRecordDataReadFailed(dataName, ex.ToInvariantString());
+        }
+    }
+
+    [Event(
+        45,
+        Message = "Failed to read the {0} of a log record. The log record will be exported without it. Exception: {1}",
+        Level = EventLevel.Warning)]
+    internal void LogRecordDataReadFailed(string dataName, string exception)
+        => this.WriteEvent(45, dataName, exception);
+
     private static string RedactEndpointUri(Uri endpoint)
     {
         var authority = endpoint.GetComponents(UriComponents.SchemeAndServer, UriFormat.UriEscaped);

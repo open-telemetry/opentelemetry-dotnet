@@ -952,6 +952,145 @@ public class OtlpLogExporterTests
         Assert.Equal(1u, otlpLogRecord.DroppedAttributesCount);
     }
 
+    [Theory]
+    [InlineData(typeof(InvalidOperationException))]
+    [InlineData(typeof(ArgumentException))]
+    public void CheckToOtlpLogRecordExceptionWithThrowingMessageIsExported(Type thrownType)
+    {
+        var logRecords = new List<LogRecord>();
+        using var loggerFactory = LoggerFactory.Create(builder =>
+        {
+            builder.UseOpenTelemetry(logging => logging.AddInMemoryExporter(logRecords));
+        });
+
+        var logger = loggerFactory.CreateLogger("OtlpLogExporterTests");
+        var thrown = (Exception)Activator.CreateInstance(thrownType, "Nope.")!;
+        var exception = new ArgumentOutOfRangeException(nameof(thrownType), new ToStringThrowsException(thrown), "Value is not supported.");
+
+        logger.SomeLogInformation();
+        logger.ExceptionOccurred(exception);
+        logger.SomeLogInformation();
+
+        Assert.Throws(thrownType, () => exception.Message);
+        Assert.Throws(thrownType, exception.ToString);
+
+        var request = CreateLogsExportRequest(DefaultSdkLimitOptions, new ExperimentalOptions(), new Batch<LogRecord>([.. logRecords], logRecords.Count), ResourceBuilder.CreateEmpty().Build());
+
+        var exportedLogRecords = Assert.Single(Assert.Single(request.ResourceLogs).ScopeLogs).LogRecords;
+        Assert.Equal(3, exportedLogRecords.Count);
+
+        var exported = Assert.Single(exportedLogRecords, x => x.Body?.StringValue == "Exception Occurred");
+        Assert.Equal(2u, exported.DroppedAttributesCount);
+
+        var attribute = Assert.Single(exported.Attributes);
+        Assert.Equal(SemanticConventions.AttributeExceptionType, attribute.Key);
+        Assert.Equal(nameof(ArgumentOutOfRangeException), attribute.Value.StringValue);
+    }
+
+    [Fact]
+    public void CheckToOtlpLogRecordScopeWhichCannotBeReadIsDropped()
+    {
+        // A message template with more placeholders than arguments throws when its
+        // items are read, which happens when the log record is serialized.
+        var logRecords = new List<LogRecord>();
+        using var loggerFactory = LoggerFactory.Create(builder =>
+        {
+            builder.UseOpenTelemetry(
+                logging => logging.AddInMemoryExporter(logRecords),
+                options => options.IncludeScopes = true);
+        });
+
+        var logger = loggerFactory.CreateLogger("OtlpLogExporterTests");
+
+        logger.SomeLogInformation();
+
+#pragma warning disable CA1727 // Use PascalCase for named placeholders
+#pragma warning disable CA1848 // Use the LoggerMessage delegates
+#pragma warning disable CA2017 // Parameter count mismatch
+        using (logger.BeginScope("Download of {a}{b} by {Client}", "1.2.3.4"))
+#pragma warning restore CA2017 // Parameter count mismatch
+#pragma warning restore CA1848 // Use the LoggerMessage delegates
+#pragma warning restore CA1727 // Use PascalCase for named placeholders
+        {
+            logger.SomeLogInformation();
+        }
+
+        logger.SomeLogInformation();
+
+        var request = CreateLogsExportRequest(DefaultSdkLimitOptions, new ExperimentalOptions(), new Batch<LogRecord>([.. logRecords], logRecords.Count), ResourceBuilder.CreateEmpty().Build());
+
+        Assert.Equal(3, request.ResourceLogs[0].ScopeLogs[0].LogRecords.Count);
+    }
+
+    [Fact]
+    public void CheckToOtlpLogRecordAttributesWhichCannotBeReadAreDropped()
+    {
+        var logRecords = new List<LogRecord>();
+        using var loggerFactory = LoggerFactory.Create(builder =>
+        {
+            builder.UseOpenTelemetry(logging => logging.AddInMemoryExporter(logRecords));
+        });
+
+        var logger = loggerFactory.CreateLogger("OtlpLogExporterTests");
+
+        logger.SomeLogInformation();
+        logger.SomeLogInformation();
+        logger.SomeLogInformation();
+
+        logRecords[1].Attributes = new ThrowingAttributeList();
+
+        var request = CreateLogsExportRequest(DefaultSdkLimitOptions, new ExperimentalOptions(), new Batch<LogRecord>([.. logRecords], logRecords.Count), ResourceBuilder.CreateEmpty().Build());
+
+        var exported = request.ResourceLogs[0].ScopeLogs[0].LogRecords;
+        Assert.Equal(3, exported.Count);
+
+        var attribute = Assert.Single(exported[1].Attributes);
+        Assert.Equal("readable", attribute.Key);
+    }
+
+    [Fact]
+    public void LogSerialization_ExpandsBufferForScopeAttributes()
+    {
+        // Failing to write a scope attribute because the buffer is full must still
+        // resize the buffer, rather than being treated as a scope that cannot be read.
+        var logRecords = new List<LogRecord>();
+        using var loggerFactory = LoggerFactory.Create(builder =>
+        {
+            builder.UseOpenTelemetry(
+                logging => logging.AddInMemoryExporter(logRecords),
+                options => options.IncludeScopes = true);
+        });
+
+        var logger = loggerFactory.CreateLogger("OtlpLogExporterTests");
+        var scopeState = new Dictionary<string, object> { ["scope-key"] = new string('a', 1000) };
+
+        using (logger.BeginScope(scopeState))
+        {
+            logger.SomeLogInformation();
+        }
+
+        var batch = new Batch<LogRecord>([.. logRecords], logRecords.Count);
+
+        var buffer = ProtobufSerializer.RentBuffer(50);
+        try
+        {
+            var writePosition = ProtobufOtlpLogSerializer.WriteLogsData(ref buffer, 0, DefaultSdkLimitOptions, new(), ResourceBuilder.CreateEmpty().Build(), batch, out _);
+            using var stream = new MemoryStream(buffer, 0, writePosition);
+            var logsData = OtlpLogs.LogsData.Parser.ParseFrom(stream);
+
+            Assert.True(buffer.Length > 50);
+
+            var otlpLogRecord = Assert.Single(Assert.Single(Assert.Single(logsData.ResourceLogs).ScopeLogs).LogRecords);
+            var attribute = Assert.Single(otlpLogRecord.Attributes);
+            Assert.Equal("scope-key", attribute.Key);
+            Assert.Equal(new string('a', 1000), attribute.Value.StringValue);
+        }
+        finally
+        {
+            ProtobufSerializer.ReturnBuffer(buffer);
+        }
+    }
+
     [Fact]
     public void CheckToOtlpLogRecordRespectsAttributeLimits()
     {
@@ -2446,5 +2585,24 @@ public class OtlpLogExporterTests
     private sealed class ToStringThrows
     {
         public override string ToString() => throw new InvalidOperationException("Nope.");
+    }
+
+    private sealed class ToStringThrowsException(Exception exception)
+    {
+        public override string ToString() => throw exception;
+    }
+
+    private sealed class ThrowingAttributeList : IReadOnlyList<KeyValuePair<string, object?>>
+    {
+        public int Count => 2;
+
+        public KeyValuePair<string, object?> this[int index]
+            => index == 0 ? new("readable", "value") : throw new ArgumentOutOfRangeException(nameof(index));
+
+        public IEnumerator<KeyValuePair<string, object?>> GetEnumerator()
+            => throw new NotSupportedException();
+
+        System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
+            => this.GetEnumerator();
     }
 }

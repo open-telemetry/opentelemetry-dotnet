@@ -15,6 +15,11 @@ Notes](../../RELEASENOTES.md).
   to prevent `HttpClient` created by `IHttpClientFactory` from using cookies.
   ([#8131](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8131))
 
+* Fixed a whole batch of log records being dropped when the exception, scopes
+  or attributes of one of the log records cannot be read. Only the data which
+  could not be read is now left out of that log record.
+  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+
 ## 1.21.0
 
 Released 2026-Nov-11
