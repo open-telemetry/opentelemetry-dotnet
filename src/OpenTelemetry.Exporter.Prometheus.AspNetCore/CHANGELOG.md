@@ -15,7 +15,7 @@ Notes](../../RELEASENOTES.md).
 * Fixed a metric tag, resource constant label or `target_info` resource
   attribute named `__name__` being written as a label. Such a label is no
   longer written.
-  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+  ([#8146](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8146))
 
 ## 1.21.0-beta.1
 
