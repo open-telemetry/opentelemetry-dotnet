@@ -20,8 +20,9 @@ Notes](../../RELEASENOTES.md).
   concurrent load. Each is still exported on its own, in order, as soon as it
   has ended, but by a thread of the processor, so it may not have been exported
   when the call that ended it returns, and at most 2048 are queued before
-  further ones are dropped. Call `ForceFlush()` where a span or log record
-  must have been exported before continuing.
+  further ones are dropped. Call `ForceFlush()` and check its result to wait
+  for pending exports. On single-threaded platforms, it triggers export without
+  waiting and returns `false` while exports are still pending.
   ([#8134](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8134))
 
 ## 1.21.0

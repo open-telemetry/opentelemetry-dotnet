@@ -3,6 +3,7 @@
 
 using System.Diagnostics;
 using OpenTelemetry.Exporter;
+using OpenTelemetry.Internal;
 using OpenTelemetry.Tests;
 
 namespace OpenTelemetry.Trace.Tests;
@@ -110,9 +111,14 @@ public class BatchExportActivityProcessorTests
         Assert.Equal(0, processor.DroppedCount);
     }
 
-    [Fact]
-    public void CheckForceFlushWaitsForExportInProgress()
+    [Theory]
+    [InlineData(false)]
+#if NET
+    [InlineData(true)]
+#endif
+    public void CheckForceFlushWaitsForExportInProgress(bool threadingDisabled)
     {
+        using var threadingOverride = ThreadingHelper.BeginThreadingOverride(threadingDisabled);
         using var exportStarted = new ManualResetEventSlim();
         using var releaseExport = new ManualResetEventSlim();
 
@@ -146,6 +152,8 @@ public class BatchExportActivityProcessorTests
 
         try
         {
+            Assert.True(processor.ForceFlush(100));
+
             processor.OnEnd(activity);
 
             Assert.True(exportStarted.Wait(TimeSpan.FromSeconds(30), TestContext.Current.CancellationToken));
@@ -155,7 +163,9 @@ public class BatchExportActivityProcessorTests
 
             releaseExport.Set();
 
-            Assert.True(processor.ForceFlush(30_000));
+            // With threading disabled ForceFlush cannot wait for the worker,
+            // so poll until the export has actually completed.
+            Assert.True(SpinWait.SpinUntil(() => processor.ForceFlush(100), TimeSpan.FromSeconds(30)));
             Assert.Equal(1, itemsRead);
         }
         finally

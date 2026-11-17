@@ -368,6 +368,10 @@ The following options are only applicable to `OtlpTraceExporter`:
   spans wait to be exported, and a span which ends while that many are waiting
   is dropped.
 
+  Call `ForceFlush()` and check its result before relying on pending exports
+  being complete. On single-threaded platforms `ForceFlush()` triggers export
+  without waiting and returns `false` while exports are still pending.
+
 * `BatchExportProcessorOptions`: Configuration options for the batch exporter.
   Only used if ExportProcessorType is set to Batch.
 
@@ -409,6 +413,10 @@ export is done by a thread of the processor and not by the thread which wrote
 the log record, so a log record may not have been exported yet when the call
 which wrote it returns. At most 2048 log records wait to be exported, and a log
 record which is written while that many are waiting is dropped.
+
+Call `ForceFlush()` and check its result before relying on pending exports
+being complete. On single-threaded platforms `ForceFlush()` triggers export
+without waiting and returns `false` while exports are still pending.
 
 ### MetricReaderOptions
 
