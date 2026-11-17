@@ -136,4 +136,20 @@ internal sealed class PrometheusExporterEventSource : EventSource, IConfiguratio
         Level = EventLevel.Warning)]
     public void ConflictingSampleName(string metricName, string generatedFor)
         => this.WriteEvent(16, metricName, generatedFor);
+
+    [NonEvent]
+    public void AcceptRequestFailed(Exception ex)
+    {
+        if (this.IsEnabled(EventLevel.Error, EventKeywords.All))
+        {
+            this.AcceptRequestFailed(ex.ToInvariantString());
+        }
+    }
+
+    [Event(
+        17,
+        Message = "Failed to accept a scrape request, the listener will continue to accept requests: '{0}'",
+        Level = EventLevel.Error)]
+    public void AcceptRequestFailed(string exception)
+        => this.WriteEvent(17, exception);
 }

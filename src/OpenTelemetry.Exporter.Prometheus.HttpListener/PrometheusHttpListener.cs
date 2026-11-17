@@ -12,6 +12,8 @@ namespace OpenTelemetry.Exporter;
 
 internal sealed class PrometheusHttpListener : IDisposable
 {
+    private static readonly TimeSpan GetContextRetryDelay = TimeSpan.FromMilliseconds(100);
+    private static readonly TimeSpan GetContextMaximumRetryDelay = TimeSpan.FromSeconds(5);
     private static readonly TimeSpan RequestDrainTimeout = TimeSpan.FromSeconds(5);
     private static readonly TimeSpan WorkerShutdownTimeout = TimeSpan.FromSeconds(5);
 
@@ -192,18 +194,52 @@ internal sealed class PrometheusHttpListener : IDisposable
         try
         {
             using var scope = SuppressInstrumentationScope.Begin();
+            var consecutiveFailures = 0;
+
             while (!cancellationToken.IsCancellationRequested)
             {
+                HttpListenerContext context;
+
+                try
+                {
 #if NET
-                var context = await this.httpListener
-                    .GetContextAsync()
-                    .WaitAsync(cancellationToken)
-                    .ConfigureAwait(false);
+                    context = await this.httpListener
+                        .GetContextAsync()
+                        .WaitAsync(cancellationToken)
+                        .ConfigureAwait(false);
 #else
-                var task = this.httpListener.GetContextAsync();
-                task.Wait(cancellationToken);
-                var context = await task.ConfigureAwait(false);
+                    var task = this.httpListener.GetContextAsync();
+                    task.Wait(cancellationToken);
+                    context = await task.ConfigureAwait(false);
 #endif
+                }
+                catch (Exception ex) when (ex is not OperationCanceledException &&
+                    !cancellationToken.IsCancellationRequested &&
+                    this.httpListener.IsListening)
+                {
+                    // Failing to get one request does not mean that the listener has stopped.
+                    // For example, the managed (non-Windows) HttpListener implementation fails
+                    // the pending operation when it rejects a burst of requests that do not pass
+                    // its own authentication. Leaving the loop here would stop and close the
+                    // listener, so log the failure and carry on.
+                    PrometheusExporterEventSource.Log.AcceptRequestFailed(ex);
+
+                    if (consecutiveFailures++ > 0)
+                    {
+                        // Do not spin if the listener keeps failing without yielding a request.
+                        // Back off, up to a limit, so that a listener which keeps failing
+                        // does not flood the log either.
+                        var delay = TimeSpan.FromMilliseconds(Math.Min(
+                            GetContextRetryDelay.TotalMilliseconds * (1 << Math.Min(consecutiveFailures - 2, 8)),
+                            GetContextMaximumRetryDelay.TotalMilliseconds));
+
+                        await Task.Delay(delay, cancellationToken).ConfigureAwait(false);
+                    }
+
+                    continue;
+                }
+
+                consecutiveFailures = 0;
 
                 Interlocked.Increment(ref this.activeRequestCount);
                 _ = Task.Run(
