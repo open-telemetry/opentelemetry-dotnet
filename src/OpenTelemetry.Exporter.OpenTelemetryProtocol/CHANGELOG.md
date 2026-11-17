@@ -19,7 +19,7 @@ Notes](../../RELEASENOTES.md).
   to the `https` endpoint was made without HTTP/2 being negotiated. The
   `HttpClient` created by the exporter is now replaced when this happens. An
   `HttpClient` supplied through `HttpClientFactory` is not replaced.
-  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+  ([#8144](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8144))
 
 ## 1.21.0
 
