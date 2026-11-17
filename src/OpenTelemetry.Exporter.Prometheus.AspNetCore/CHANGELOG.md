@@ -7,10 +7,11 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
-* A scrape response which exceeds `MaxScrapeResponseSizeBytes` now omits the
-  metrics which do not fit and logs an error event, instead of failing with
-  HTTP 500. The scrape still fails when none of the metrics fit. Increase
-  `MaxScrapeResponseSizeBytes` if metrics are omitted.
+* A scrape response which exceeds `MaxScrapeResponseSizeBytes`, or which has
+  metrics with tags that are too large to be serialized, now omits those
+  metrics and logs an error event, instead of failing with HTTP 500. The scrape
+  still fails when none of the metrics fit. Increase `MaxScrapeResponseSizeBytes`
+  if metrics are omitted because the response is too large.
   ([#8139](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8139))
 
 ## 1.21.0-beta.1

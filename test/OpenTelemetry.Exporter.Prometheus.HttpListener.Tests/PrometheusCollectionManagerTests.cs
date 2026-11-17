@@ -2512,6 +2512,72 @@ public sealed class PrometheusCollectionManagerTests
     [Theory]
     [InlineData(false)]
     [InlineData(true)]
+    public async Task EnterCollectOmitsOnlyTheHistogramWhichHasTagsTooLargeToSerialize(bool openMetricsRequested)
+    {
+        // The tags of a histogram point are serialized in a scratch buffer of their own, which doubles in size
+        // for as long as the result is no more than 100 MiB, so it is 64 MiB at the most. A tag value which
+        // is larger than that cannot be serialized, however large the response is allowed to be.
+        var tagValue = new string('x', 72 * 1024 * 1024);
+
+        using var meter = CreateMeter();
+
+        using var listener = new DroppedListener(eventId: 17, "b_histogram", countIndex: 1, nameIndex: 0);
+
+#pragma warning disable CA2000 // Dispose objects before losing scope
+        var exporter = new PrometheusExporter(new PrometheusExporterOptions
+        {
+            TargetInfoEnabled = false,
+            ScrapeResponseCacheDurationMilliseconds = 0,
+        });
+
+        var reader = new BaseExportingMetricReader(exporter)
+        {
+            TemporalityPreference = MetricReaderTemporalityPreference.Cumulative,
+        };
+#pragma warning restore CA2000 // Dispose objects before losing scope
+
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddReader(reader)
+            .Build();
+
+        meter.CreateCounter<long>("a_counter", description: "Help text.").Add(1);
+        meter.CreateHistogram<double>("b_histogram", description: "Help text.").Record(1, new KeyValuePair<string, object?>("label", tagValue));
+        meter.CreateCounter<long>("c_counter", description: "Help text.").Add(2);
+
+        var response = await exporter.CollectionManager.EnterCollect(GetProtocol(openMetricsRequested), TestContext.Current.CancellationToken);
+
+        string output;
+
+        try
+        {
+            Assert.True(response.Succeeded, "The metrics which fit were not served.");
+            output = Encoding.UTF8.GetString(response.View.Array!, response.View.Offset, response.View.Count);
+        }
+        finally
+        {
+            exporter.CollectionManager.ExitCollect(response);
+        }
+
+        var lines = output.Split('\n');
+
+        Assert.Single(lines, line => line.StartsWith("a_counter_total{", StringComparison.Ordinal));
+        Assert.Single(lines, line => line.StartsWith("c_counter_total{", StringComparison.Ordinal));
+        Assert.Single(lines, line => line.StartsWith("# TYPE a_counter", StringComparison.Ordinal));
+        Assert.Single(lines, line => line.StartsWith("# TYPE c_counter", StringComparison.Ordinal));
+        Assert.DoesNotContain("b_histogram", output, StringComparison.Ordinal);
+
+        if (openMetricsRequested)
+        {
+            Assert.EndsWith("# EOF\n", output, StringComparison.Ordinal);
+        }
+
+        Assert.Equal([1], listener.Counts);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
     public async Task EnterCollectDoesNotWriteTheSameSeriesMoreThanOnce(bool openMetricsRequested)
     {
         var prefix = nameof(this.EnterCollectDoesNotWriteTheSameSeriesMoreThanOnce);

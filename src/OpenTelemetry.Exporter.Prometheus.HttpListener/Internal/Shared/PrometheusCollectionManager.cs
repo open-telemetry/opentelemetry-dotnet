@@ -725,12 +725,14 @@ internal sealed class PrometheusCollectionManager
                         writeDroppedMetadata = false;
                         break;
                     }
-                    catch (Exception ex) when (ex is IndexOutOfRangeException or ArgumentException)
+                    catch (Exception ex) when (ex is IndexOutOfRangeException or ArgumentException or SerializedTagsTooLargeException)
                     {
                         // The metric is written again, so the series that it had written must be forgotten.
                         this.series.Rollback(seriesMark);
 
-                        if (!state.TryExpandBuffer())
+                        // The tags of a metric point which are too large to be serialized do not fit in any response,
+                        // so growing the response would not help and the metric is left out of it straight away.
+                        if (ex is SerializedTagsTooLargeException || !state.TryExpandBuffer())
                         {
                             // The response cannot grow any further, so the metric is left out of it rather than the
                             // whole response being discarded, which would lose the metrics which do fit as well.
