@@ -1174,11 +1174,11 @@ public class PrometheusHttpListenerTests
         throw new InvalidOperationException($"{nameof(MeterProvider)} could not be created within {maximumAttempts} attempts.");
     }
 
-    private static void EnsureThreadPoolWorkerThreadsAvailable()
+    internal static void EnsureThreadPoolWorkerThreadsAvailable(int minimumWorkerThreads = 0)
     {
         ThreadPool.GetMinThreads(out var workerThreads, out var completionPortThreads);
 
-        var desiredWorkerThreads = Math.Max(workerThreads, Environment.ProcessorCount * 2);
+        var desiredWorkerThreads = Math.Max(Math.Max(workerThreads, Environment.ProcessorCount * 2), minimumWorkerThreads);
 
         // The listener's I/O completes on completion port threads (HTTP.sys on Windows), so
         // keep those available too, or a cancelled write is not observed until one frees up.
