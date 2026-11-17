@@ -152,7 +152,6 @@ internal sealed class PrometheusExporterEventSource : EventSource, IConfiguratio
         Level = EventLevel.Error)]
     public void AcceptRequestFailed(string exception)
         => this.WriteEvent(17, exception);
-}
 
     [Event(
         18,
@@ -160,3 +159,4 @@ internal sealed class PrometheusExporterEventSource : EventSource, IConfiguratio
         Level = EventLevel.Error)]
     public void MetricsDroppedFromResponse(string firstMetricName, int count, int maxScrapeResponseSizeBytes)
         => this.WriteEvent(17, firstMetricName, count, maxScrapeResponseSizeBytes);
+}
