@@ -544,6 +544,73 @@ public sealed class SelfDiagnosticsFileSinkTests : IDisposable
         }
     }
 
+    [Fact]
+    public void Retention_DirectoryUnavailableWhileAnotherSinkSeeds_DoesNotForgetFiles()
+    {
+        string firstFile;
+
+        using (var first = this.CreateSink(maxRetainedFiles: 2))
+        {
+            firstFile = first.CurrentFilePath!;
+        }
+
+        // While the directory cannot be reached (here it is temporarily renamed, as if its
+        // volume were unmounted), a sink for another directory seeds its own retention. That
+        // must not forget the files recorded for the unavailable directory.
+        var unavailable = this.tempDirectory.Path + "-unavailable";
+        Directory.Move(this.tempDirectory.Path, unavailable);
+
+        try
+        {
+            using var otherDirectory = new TemporaryDirectory();
+
+            using var other = new SelfDiagnosticsFileSink(
+                otherDirectory.Path,
+                fileSizeLimitKilobytes: 10_240,
+                maxRetainedFiles: 2,
+                preambleFactory: null,
+                retryInterval: TimeSpan.Zero);
+
+            Assert.True(other.IsActive, "expected the sink to open a file");
+        }
+        finally
+        {
+            Directory.Move(unavailable, this.tempDirectory.Path);
+        }
+
+        Assert.True(SelfDiagnosticsFileSink.WasCreatedByThisProcess(firstFile));
+
+        using (var second = this.CreateSink(maxRetainedFiles: 1))
+        {
+            Assert.True(second.IsActive, "expected the sink to open a file");
+        }
+
+        Assert.False(File.Exists(firstFile), "expected the earlier file to be taken over and pruned");
+    }
+
+    [Fact]
+    public void Retention_SeededAcrossSinkRecreation_WithTrailingDirectorySeparator()
+    {
+        string firstFile;
+
+        using (var first = this.CreateSink(maxRetainedFiles: 1))
+        {
+            firstFile = first.CurrentFilePath!;
+        }
+
+        using (var second = new SelfDiagnosticsFileSink(
+            this.tempDirectory.Path + Path.DirectorySeparatorChar,
+            fileSizeLimitKilobytes: 10_240,
+            maxRetainedFiles: 1,
+            preambleFactory: null,
+            retryInterval: TimeSpan.Zero))
+        {
+            Assert.True(second.IsActive, "expected the sink to open a file");
+        }
+
+        Assert.False(File.Exists(firstFile), "expected the earlier file to be taken over and pruned");
+    }
+
     [Theory]
     [InlineData(0)]
     [InlineData(-5)]
