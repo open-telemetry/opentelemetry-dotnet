@@ -836,9 +836,22 @@ public sealed partial class PrometheusSerializerTests
         counter.Add(long.MaxValue, new KeyValuePair<string, object?>("method", "a"), new KeyValuePair<string, object?>("k", string.Empty));
         counter.Add(1, new KeyValuePair<string, object?>("method", "a"));
 
+        // The total is more than a long can be after the second point, but is less again after the third.
+        var upDownCounter = meter.CreateUpDownCounter<long>("test_up_down_counter");
+        upDownCounter.Add(long.MaxValue, new KeyValuePair<string, object?>("method", "a"), new KeyValuePair<string, object?>("k", string.Empty));
+        upDownCounter.Add(1, new KeyValuePair<string, object?>("method", "a"), new KeyValuePair<string, object?>("k", null));
+        upDownCounter.Add(-long.MaxValue, new KeyValuePair<string, object?>("method", "a"));
+
         provider.ForceFlush();
 
-        var cursor = WriteMetric(buffer, 0, metrics.Single(), useOpenMetrics, suppressScopeInfo: true, series: new SeriesRegistry());
+        var series = new SeriesRegistry();
+        var cursor = 0;
+
+        foreach (var metric in metrics)
+        {
+            cursor = WriteMetric(buffer, cursor, metric, useOpenMetrics, suppressScopeInfo: true, series: series);
+        }
+
         var output = Encoding.UTF8.GetString(buffer, 0, cursor);
 
         // The total is written as a floating-point number, instead of wrapping around to a negative integer.
@@ -846,6 +859,75 @@ public sealed partial class PrometheusSerializerTests
         var value = double.Parse(sample.Split(' ').Last(), CultureInfo.InvariantCulture);
 
         Assert.Equal(Math.Pow(2, 63), value);
+
+        // The total is exact, and so is an integer, when it is not more than a long can be.
+        Assert.Single(GetSampleLines(output, "test_up_down_counter"), line => line.EndsWith(" 1", StringComparison.Ordinal));
+        Assert.Equal(0, series.DroppedCount);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void WriteMetricDoesNotKeepTheSeriesOfAnotherMetricWhenAddingUpPoints(bool histogram)
+    {
+        var metrics = new List<Metric>();
+
+        using var firstMeter = new Meter(nameof(this.WriteMetricDoesNotKeepTheSeriesOfAnotherMetricWhenAddingUpPoints) + ".first");
+        using var secondMeter = new Meter(nameof(this.WriteMetricDoesNotKeepTheSeriesOfAnotherMetricWhenAddingUpPoints) + ".second");
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(firstMeter.Name)
+            .AddMeter(secondMeter.Name)
+            .AddInMemoryExporter(metrics)
+            .Build();
+
+        var count = histogram ? 4 : 12;
+        var padding = new string('x', histogram ? 1024 : 4096);
+
+        // The meters have the same series, which are the same series once the scope information is suppressed
+        foreach (var meter in new[] { firstMeter, secondMeter })
+        {
+            var counter = meter.CreateCounter<long>("test_counter");
+            var histogramInstrument = meter.CreateHistogram<double>("test_histogram");
+
+            for (var i = 0; i < count; i++)
+            {
+                var tag = new KeyValuePair<string, object?>("method", i.ToString(CultureInfo.InvariantCulture) + padding);
+
+                if (histogram)
+                {
+                    histogramInstrument.Record(1, tag);
+                }
+                else
+                {
+                    counter.Add(1, tag);
+                }
+            }
+        }
+
+        provider.ForceFlush();
+
+        var name = histogram ? "test_histogram" : "test_counter";
+        var ordered = metrics.Where(m => m.Name == name).OrderBy(m => m.MeterName, StringComparer.Ordinal).ToList();
+
+        Assert.Equal(2, ordered.Count);
+
+        // The buffer has room for the series of the first metric, and for half of what it takes to keep them again, which
+        // they are not as the series of the second metric are dropped, so there is no need for that.
+        var length = WriteMetric(new byte[4 * 1024 * 1024], 0, ordered[0], useOpenMetrics: false, suppressScopeInfo: true);
+        var buffer = new byte[length + (count * padding.Length / 2)];
+
+        var series = new SeriesRegistry();
+        var cursor = 0;
+
+        foreach (var metric in ordered)
+        {
+            cursor = WriteMetric(buffer, cursor, metric, useOpenMetrics: false, suppressScopeInfo: true, series: series);
+        }
+
+        var output = Encoding.UTF8.GetString(buffer, 0, cursor);
+
+        Assert.Equal(count, CountSamples(output, histogram ? "test_histogram_count" : "test_counter_total"));
+        Assert.Equal(count, series.DroppedCount);
     }
 
     [Theory]

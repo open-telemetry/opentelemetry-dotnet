@@ -263,16 +263,20 @@ internal abstract class TextFormatSerializer
 
                 if (isLongValue)
                 {
-                    if (mergedPoint is { SumOverflowed: true })
+                    if (mergedPoint is null)
                     {
-                        // The total is more than a long can be, which is not more than a sample can be.
-                        cursor = WriteDouble(buffer, cursor, mergedPoint.SumDouble);
+                        cursor = metric.MetricType.IsSum()
+                            ? WriteLong(buffer, cursor, metricPoint.GetSumLong())
+                            : WriteLong(buffer, cursor, metricPoint.GetGaugeLastValueLong());
+                    }
+                    else if (mergedPoint.SumInteger >= long.MinValue && mergedPoint.SumInteger <= long.MaxValue)
+                    {
+                        cursor = WriteLong(buffer, cursor, (long)mergedPoint.SumInteger);
                     }
                     else
                     {
-                        cursor = metric.MetricType.IsSum()
-                            ? WriteLong(buffer, cursor, mergedPoint?.SumLong ?? metricPoint.GetSumLong())
-                            : WriteLong(buffer, cursor, metricPoint.GetGaugeLastValueLong());
+                        // The total is more than a long can be, which is not more than a sample can be.
+                        cursor = WriteDouble(buffer, cursor, (double)mergedPoint.SumInteger);
                     }
                 }
                 else
@@ -2753,22 +2757,17 @@ internal abstract class TextFormatSerializer
             if (!series.TryGetValue(identity, out var mergedPoint))
             {
                 series[identity] = mergedPoint = new MergedPoint(identity);
-                scratch = seriesEnd;
+
+                // A series that has been written for another metric is dropped, so it is not kept.
+                if (options.Series?.Contains(identity) != true)
+                {
+                    scratch = seriesEnd;
+                }
             }
 
             if (isLongValue)
             {
-                var value = metricPoint.GetSumLong();
-                var sum = unchecked(mergedPoint.SumLong + value);
-
-                // The sum has overflowed if its sign is not that of two values which have the same sign.
-                if (((mergedPoint.SumLong ^ sum) & (value ^ sum)) < 0)
-                {
-                    mergedPoint.SumOverflowed = true;
-                }
-
-                mergedPoint.SumLong = sum;
-                mergedPoint.SumDouble += value;
+                mergedPoint.SumInteger += metricPoint.GetSumLong();
             }
             else
             {
@@ -2807,8 +2806,12 @@ internal abstract class TextFormatSerializer
                 {
                     series[identity] = mergedPoint = new MergedPoint(identity);
 
-                    new ReadOnlySpan<byte>(serializedTagsBuffer, 0, serializedTagsLength).CopyTo(new Span<byte>(buffer, scratch, serializedTagsLength));
-                    scratch += serializedTagsLength;
+                    // A series that has been written for another metric is dropped, so it is not kept.
+                    if (options.Series?.Contains(identity) != true)
+                    {
+                        new ReadOnlySpan<byte>(serializedTagsBuffer, 0, serializedTagsLength).CopyTo(new Span<byte>(buffer, scratch, serializedTagsLength));
+                        scratch += serializedTagsLength;
+                    }
                 }
 
                 // The points of a metric all have the same buckets.

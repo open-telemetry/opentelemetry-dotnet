@@ -112,6 +112,13 @@ internal sealed class SeriesRegistry
     }
 
     /// <summary>
+    /// Gets a value indicating whether a series has been added.
+    /// </summary>
+    /// <param name="identity">The identity of the series, as returned by <see cref="GetIdentity"/>.</param>
+    /// <returns><see langword="true"/> if the series has been added; otherwise <see langword="false"/>.</returns>
+    public bool Contains(string identity) => this.series.Contains(identity);
+
+    /// <summary>
     /// Gets the current position, so that what is added or dropped after it can be removed with <see cref="Rollback"/>.
     /// </summary>
     /// <returns>The current position.</returns>
