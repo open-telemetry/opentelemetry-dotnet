@@ -444,6 +444,16 @@ public sealed class SelfDiagnosticsFileSinkTests : IDisposable
             File.WriteAllText(otherFiles[otherFiles.Count - 1], "not ours");
         }
 
+        // Make the original files unambiguously older than the files the recreated sinks
+        // create, so that the pruning order does not fall back to the directory enumeration
+        // order on a file system whose timestamps are too coarse to tell them apart.
+        var past = DateTime.UtcNow.AddMinutes(-ownFiles.Length);
+
+        for (var i = 0; i < ownFiles.Length; i++)
+        {
+            File.SetLastWriteTimeUtc(ownFiles[i], past.AddMinutes(i));
+        }
+
         for (var recreation = 0; recreation < 2; recreation++)
         {
             using var sink = this.CreateSink(fileSizeLimitKilobytes: 1, maxRetainedFiles: 3);
@@ -455,6 +465,82 @@ public sealed class SelfDiagnosticsFileSinkTests : IDisposable
 
             // Only the oldest of the process's own files makes way for the new one.
             Assert.Equal(recreation == 0 ? 2 : 1, ownFiles.Count(File.Exists));
+        }
+    }
+
+    [Fact]
+    public void Retention_IgnoresFileWhoseNameDiffersOnlyInCase()
+    {
+        string series;
+        string ownFile;
+
+        using (var first = this.CreateSink(fileSizeLimitKilobytes: 1, maxRetainedFiles: 3))
+        {
+            // Only the unpredictable part of a fallback name can differ in case and still match
+            // the pattern a recreated sink discovers the series with, so force a fallback name.
+            series = first.CurrentFilePath!.Substring(0, first.CurrentFilePath.Length - "1.log".Length);
+            File.WriteAllText($"{series}2.log", "not ours");
+
+            WriteLine(first, new string('x', 1_100));
+            first.Flush();
+
+            ownFile = first.CurrentFilePath;
+            Assert.EndsWith("-2.log", ownFile, StringComparison.Ordinal);
+            Assert.Equal(series.Length + 32 + "-2.log".Length, ownFile.Length);
+        }
+
+        var otherFile = $"{series}{ownFile.Substring(series.Length, 32).ToUpperInvariant()}-2.log";
+        Assert.NotEqual(ownFile, otherFile);
+        Assert.SkipWhen(File.Exists(otherFile), "The file system is not case-sensitive.");
+
+        File.WriteAllText(otherFile, "not ours");
+
+        // A limit of one prunes every file the process created before, but nothing else.
+        using (var second = this.CreateSink(fileSizeLimitKilobytes: 1, maxRetainedFiles: 1))
+        {
+            Assert.True(second.IsActive, "expected the sink to open a file");
+            Assert.DoesNotContain(otherFile, GetRetainedFiles(second));
+        }
+
+        Assert.False(File.Exists(ownFile), "expected the file created by the process to be pruned");
+        Assert.Equal("not ours", File.ReadAllText(otherFile));
+    }
+
+    [Fact]
+    public void Retention_ForgetsFilesDeletedBeforeRecreation()
+    {
+        var deletedFiles = new List<string>();
+        string? previous = null;
+
+        for (var recreation = 0; recreation < 3; recreation++)
+        {
+            string path;
+
+            using (var sink = this.CreateSink(maxRetainedFiles: 2))
+            {
+                path = sink.CurrentFilePath!;
+                Assert.EndsWith($"-{recreation + 1}.log", path, StringComparison.Ordinal);
+                Assert.True(SelfDiagnosticsFileSink.WasCreatedByThisProcess(path));
+            }
+
+            // Keep only the newest log between recreations: the series carries on from it, so
+            // every recreation creates a file with a new name and removes one with an old name.
+            if (previous is not null)
+            {
+                File.Delete(previous);
+                deletedFiles.Add(previous);
+            }
+
+            previous = path;
+        }
+
+        // The next sink to seed its retention drops the files that are no longer there.
+        using (var sink = this.CreateSink(maxRetainedFiles: 2))
+        {
+            Assert.True(SelfDiagnosticsFileSink.WasCreatedByThisProcess(sink.CurrentFilePath!));
+            Assert.NotNull(previous);
+            Assert.True(SelfDiagnosticsFileSink.WasCreatedByThisProcess(previous));
+            Assert.All(deletedFiles, file => Assert.False(SelfDiagnosticsFileSink.WasCreatedByThisProcess(file), $"expected a deleted file to be forgotten: {file}"));
         }
     }
 

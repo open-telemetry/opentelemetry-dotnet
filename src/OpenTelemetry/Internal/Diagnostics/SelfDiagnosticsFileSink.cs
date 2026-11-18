@@ -62,8 +62,10 @@ internal sealed class SelfDiagnosticsFileSink : ISelfDiagnosticsSink
     // Full paths of the files that sinks in this process created under bounded retention and
     // have not pruned yet. The log directory may be shared with other users, so a file whose
     // name matches the series is not necessarily one of ours: a recreated sink only takes over
-    // (and later deletes) files recorded here.
-    private static readonly HashSet<string> CreatedFiles = new(StringComparer.OrdinalIgnoreCase);
+    // (and later deletes) files recorded here. Paths are compared exactly: the file system
+    // returns the names of our files as we created them, so a name that differs from one of
+    // them only in case belongs to another file, which it is on a case-sensitive file system.
+    private static readonly HashSet<string> CreatedFiles = new(StringComparer.Ordinal);
     private static readonly Lock CreatedFilesLock = new();
 
     private readonly string logDirectory;
@@ -233,6 +235,14 @@ internal sealed class SelfDiagnosticsFileSink : ISelfDiagnosticsSink
     internal static string CreateFallbackProcessIdentity(Guid processInstanceId)
         => $"unknown-{processInstanceId:N}";
 
+    internal static bool WasCreatedByThisProcess(string path)
+    {
+        lock (CreatedFilesLock)
+        {
+            return CreatedFiles.Contains(Path.GetFullPath(path));
+        }
+    }
+
     internal void UpdateAnnouncement(bool announceLogFile)
         => this.announceLogFile = announceLogFile;
 
@@ -295,11 +305,15 @@ internal sealed class SelfDiagnosticsFileSink : ISelfDiagnosticsSink
     private static bool IsSamePath(string path, string? other)
         => other is not null && string.Equals(path, other, StringComparison.OrdinalIgnoreCase);
 
-    private static bool WasCreatedByThisProcess(string path)
+    // Something other than the sink that created a file can remove it from the log directory.
+    // Such files are dropped from the registry when a sink next consults it, so that a process
+    // whose logs keep being removed between sink recreations does not accumulate the path of
+    // every log it has ever written.
+    private static void ForgetDeletedFiles()
     {
         lock (CreatedFilesLock)
         {
-            return CreatedFiles.Contains(Path.GetFullPath(path));
+            CreatedFiles.RemoveWhere(static path => !File.Exists(path));
         }
     }
 
@@ -399,6 +413,8 @@ internal sealed class SelfDiagnosticsFileSink : ISelfDiagnosticsSink
 
             if (!this.retentionSeeded)
             {
+                ForgetDeletedFiles();
+
                 var existingFiles = Directory.EnumerateFiles(
                     this.logDirectory,
                     $"otel-dotnet-{ProcessIdentity}-*.log");
