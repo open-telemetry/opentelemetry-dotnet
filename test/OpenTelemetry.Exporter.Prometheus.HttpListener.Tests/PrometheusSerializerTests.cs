@@ -1940,7 +1940,7 @@ public sealed partial class PrometheusSerializerTests
             TextFormatSerializer.GetNextSerializedTagsBufferSize(TextFormatSerializer.MaxSerializedTagsBufferSize / 2));
 
         // Growth beyond the maximum fails fast rather than allocating without bound.
-        Assert.Throws<InvalidOperationException>(
+        Assert.Throws<SerializedTagsTooLargeException>(
             () => TextFormatSerializer.GetNextSerializedTagsBufferSize((TextFormatSerializer.MaxSerializedTagsBufferSize / 2) + 1));
     }
 

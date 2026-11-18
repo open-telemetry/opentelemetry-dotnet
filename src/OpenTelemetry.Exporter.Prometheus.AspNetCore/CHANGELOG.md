@@ -17,6 +17,13 @@ Notes](../../RELEASENOTES.md).
   longer written.
   ([#8146](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8146))
 
+* A scrape response which exceeds `MaxScrapeResponseSizeBytes`, or which has
+  metrics with tags that are too large to be serialized, now omits those
+  metrics and logs an error event, instead of failing with HTTP 500. The scrape
+  still fails when none of the metrics fit. Increase `MaxScrapeResponseSizeBytes`
+  if metrics are omitted because the response is too large.
+  ([#8139](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8139))
+
 * Fixed the response buffers of a scrape format being kept for the lifetime of
   the exporter once a scrape has requested that format. Buffers which have not
   been needed for 5 minutes are now released the next time a scrape collects

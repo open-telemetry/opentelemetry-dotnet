@@ -395,14 +395,15 @@ internal abstract class TextFormatSerializer
     {
         // Doubles the supplied buffer size, throwing once growth would exceed
         // MaxSerializedTagsBufferSize so that serializing an oversized tag set fails
-        // fast instead of allocating without bound. An InvalidOperationException is
+        // fast instead of allocating without bound. A SerializedTagsTooLargeException is
         // used deliberately: the buffer-growth retry loops in PrometheusCollectionManager
-        // only retry on IndexOutOfRangeException/ArgumentException, so this terminates
-        // the scrape immediately rather than repeatedly re-entering this allocation.
+        // only retry on IndexOutOfRangeException/ArgumentException, so this does not cause
+        // the response buffer to grow, and the metric which the tags belong to is instead
+        // left out of the response, rather than the scrape failing as a whole.
         var newBufferSize = currentBufferSize * 2;
 
         return newBufferSize is <= 0 or > MaxSerializedTagsBufferSize
-            ? throw new InvalidOperationException("The serialized Prometheus tag set exceeded the maximum supported size.")
+            ? throw new SerializedTagsTooLargeException()
             : newBufferSize;
     }
 
