@@ -141,7 +141,8 @@ public sealed class SelfDiagnosticsConfigParserTests : IDisposable
         Assert.False(transientFailure, "Expected a missing file not to be a transient failure.");
         Assert.False(new SelfDiagnosticsConfigParser(() => this.directory.Path).TryGetConfiguration(out _, out transientFailure), "Expected the parser to fail when the path is a directory.");
         Assert.False(transientFailure, "Expected a directory not to be a transient failure.");
-        Assert.False(new SelfDiagnosticsConfigParser(() => throw new IOException("Unavailable.")).TryGetConfiguration(out _), "Expected the parser to fail when an IOException is thrown.");
+        Assert.False(new SelfDiagnosticsConfigParser(() => throw new IOException("Unavailable.")).TryGetConfiguration(out _, out transientFailure), "Expected the parser to fail when an IOException is thrown.");
+        Assert.True(transientFailure, "Expected an IOException to be a transient failure.");
     }
 
     [Fact]
