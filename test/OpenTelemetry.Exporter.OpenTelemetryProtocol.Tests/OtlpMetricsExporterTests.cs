@@ -1091,8 +1091,8 @@ public sealed class OtlpMetricsExporterTests : IDisposable
         const int BufferExceededMaxSizeEventId = 14;
         const int BatchDroppedEventId = 39;
         const int RequestDiscardedEventId = 41;
-        const int MetricPointDroppedEventId = 45;
-        const int ExportedAsMultipleRequestsEventId = 46;
+        const int MetricPointDroppedEventId = 46;
+        const int ExportedAsMultipleRequestsEventId = 47;
         const int Cardinality = 50_000;
 
         using var listener = new TestEventListener(OpenTelemetryProtocolExporterEventSource.Log, EventLevel.Warning);
@@ -1192,8 +1192,8 @@ public sealed class OtlpMetricsExporterTests : IDisposable
     public void Export_MetricPointExceedingMaxRequestSizeBytes_IsDroppedAndTheRestExported(int tagValueLength)
     {
         const int BatchDroppedEventId = 39;
-        const int MetricPointDroppedEventId = 45;
-        const int ExportedAsMultipleRequestsEventId = 46;
+        const int MetricPointDroppedEventId = 46;
+        const int ExportedAsMultipleRequestsEventId = 47;
 
         using var listener = new TestEventListener(OpenTelemetryProtocolExporterEventSource.Log, EventLevel.Warning);
 
@@ -1242,8 +1242,8 @@ public sealed class OtlpMetricsExporterTests : IDisposable
     [Fact]
     public void Export_LastMetricPointExceedingMaxRequestSizeBytes_IsDroppedWithoutAnEmptyRequest()
     {
-        const int MetricPointDroppedEventId = 45;
-        const int ExportedAsMultipleRequestsEventId = 46;
+        const int MetricPointDroppedEventId = 46;
+        const int ExportedAsMultipleRequestsEventId = 47;
 
         using var listener = new TestEventListener(OpenTelemetryProtocolExporterEventSource.Log, EventLevel.Warning);
 

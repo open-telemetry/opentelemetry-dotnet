@@ -407,7 +407,7 @@ public static class ProtobufOtlpMetricSerializerTests
     [Fact]
     public static void WriteMetricsData_MetricPointLargerThanRequest_IsDroppedAndTheRestWritten()
     {
-        const int MetricPointDroppedEventId = 45;
+        const int MetricPointDroppedEventId = 46;
 
         using var listener = new TestEventListener(OpenTelemetryProtocolExporterEventSource.Log, EventLevel.Error);
 
