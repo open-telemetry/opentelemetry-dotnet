@@ -16,6 +16,52 @@ public class BaggageTests
     private const string V2 = "Value2";
     private const string V3 = "Value3";
 
+    // Factories obtain baggage after each test clears Baggage.Current.
+    public static TheoryData<string, Func<Baggage>> EmptyBaggageSources => new()
+    {
+        { "CreateNull", static () => Baggage.Create() },
+        { "CreateEmpty", static () => Baggage.Create([]) },
+        { "ClearInstance", static () => Baggage.Create(new Dictionary<string, string> { [K3] = V3 }).ClearBaggage() },
+        { "RemoveLast", static () => Baggage.Create(new Dictionary<string, string> { [K3] = V3 }).RemoveBaggage(K3) },
+        { "Current", static () => Baggage.Current },
+        { "StaticSetNothing", static () => Baggage.SetBaggage(Array.Empty<KeyValuePair<string, string?>>()) },
+        { "StaticRemoveNothing", static () => Baggage.RemoveBaggage(K3) },
+        { "StaticClear", static () => Baggage.ClearBaggage() },
+        { "DefaultSetInvalid", static () => default(Baggage).SetBaggage(string.Empty, V3) },
+        { "DefaultSetNull", static () => default(Baggage).SetBaggage(K3, null) },
+        {
+            "DefaultSetEmptyEnumerable",
+            static () => default(Baggage).SetBaggage(Enumerable.Empty<KeyValuePair<string, string?>>())
+        },
+        {
+            "DefaultSetEmptyParams",
+            static () => default(Baggage).SetBaggage(Array.Empty<KeyValuePair<string, string?>>())
+        },
+        {
+            "DefaultSetNoOpEnumerable",
+            static () => default(Baggage).SetBaggage(new List<KeyValuePair<string, string?>> { new(string.Empty, V3) })
+        },
+        {
+            "DefaultSetNoOpParams",
+            static () => default(Baggage).SetBaggage(new KeyValuePair<string, string?>(string.Empty, V3))
+        },
+        { "DefaultRemoveMissing", static () => default(Baggage).RemoveBaggage(K3) },
+        { "DefaultContext", static () => default(PropagationContext).Baggage },
+        { "ConstructedContext", static () => new PropagationContext(default, default).Baggage },
+        {
+            "ExtractNoHeader",
+            static () => new BaggagePropagator().Extract(default, new object(), static (_, _) => null).Baggage
+        },
+        {
+            "ExtractNullCarrier",
+            static () => new BaggagePropagator().Extract<object>(default, null!, static (_, _) => null).Baggage
+        },
+        {
+            "TracePropagator",
+            static () => new TraceContextPropagator().Extract(default, new object(), static (_, _) => null).Baggage
+        },
+    };
+
     [Fact]
     public void EmptyTest()
     {
@@ -264,6 +310,107 @@ public class BaggageTests
         Baggage.ClearBaggage();
 
         Assert.Equal(0, Baggage.Current.Count);
+    }
+
+    [Theory]
+    [InlineData(null, null)]
+    [InlineData("invalid", null)]
+    [InlineData("tenant=second", "second")]
+    public void ExtractedBaggageReplacesCurrentForEachMessage(string? header, string? expectedTenant)
+    {
+        Baggage.Current = default;
+        var propagator = new BaggagePropagator();
+        var first = new Dictionary<string, string> { ["baggage"] = "tenant=first" };
+        var second = new Dictionary<string, string>();
+        if (header != null)
+        {
+            second["baggage"] = header;
+        }
+
+        var firstContext = propagator.Extract(default, first, GetHeader);
+        Baggage.SetBaggage("source", "orders", firstContext.Baggage);
+        Assert.Equal("first", Baggage.GetBaggage("tenant"));
+
+        var secondContext = propagator.Extract(default, second, GetHeader);
+        Baggage.SetBaggage("source", "orders", secondContext.Baggage);
+
+        var outbound = new Dictionary<string, string>();
+        propagator.Inject(
+            new PropagationContext(default, Baggage.Current),
+            outbound,
+            static (carrier, key, value) => carrier[key] = value);
+        var outboundBaggage = propagator.Extract(default, outbound, GetHeader).Baggage;
+
+        Assert.Equal(expectedTenant, outboundBaggage.GetBaggage("tenant"));
+        Assert.Equal("orders", outboundBaggage.GetBaggage("source"));
+
+        static IEnumerable<string>? GetHeader(Dictionary<string, string> carrier, string key)
+            => carrier.TryGetValue(key, out var value) ? [value] : null;
+    }
+
+    // The factory delegates cannot be serialized during discovery.
+    [Theory(DisableDiscoveryEnumeration = true)]
+    [MemberData(nameof(EmptyBaggageSources))]
+    public void StaticHelpersUseExplicitEmptyBaggage(string source, Func<Baggage> createEmptyBaggage)
+    {
+        Baggage.Current = default;
+        var empty = (createEmptyBaggage ?? throw new ArgumentNullException(nameof(createEmptyBaggage)))();
+
+        Assert.True(empty == default, $"{source} should produce empty baggage.");
+        Assert.Equal(default(Baggage).GetHashCode(), empty.GetHashCode());
+        Baggage.SetBaggage(K1, V1);
+
+        Assert.Null(Baggage.GetBaggage(K1, empty));
+        Assert.Empty(Baggage.GetBaggage(empty));
+        Assert.False(Baggage.GetEnumerator(empty).MoveNext());
+
+        var updated = Baggage.SetBaggage(K2, V2, empty);
+        Assert.Equal(new KeyValuePair<string, string>(K2, V2), Assert.Single(updated.GetBaggage()));
+        Assert.Equal(updated, Baggage.Current);
+
+        Baggage.SetBaggage(K1, V1);
+        updated = Baggage.SetBaggage(new Dictionary<string, string?> { [K2] = V2 }, empty);
+        Assert.Equal(new KeyValuePair<string, string>(K2, V2), Assert.Single(updated.GetBaggage()));
+        Assert.Equal(updated, Baggage.Current);
+
+        Baggage.SetBaggage(K1, V1);
+        Assert.Empty(Baggage.RemoveBaggage(K2, empty).GetBaggage());
+        Assert.Empty(Baggage.Current.GetBaggage());
+
+        Baggage.SetBaggage(K1, V1);
+        Assert.Empty(Baggage.ClearBaggage(empty).GetBaggage());
+        Assert.Empty(Baggage.Current.GetBaggage());
+    }
+
+    [Fact]
+    public void StaticHelpersUseCurrentWhenBaggageIsDefault()
+    {
+        Baggage.Current = default;
+        Baggage.SetBaggage(K1, V1);
+
+        Assert.Equal(V1, Baggage.GetBaggage(K1, default));
+        Assert.Single(Baggage.GetBaggage(default(Baggage)));
+        Assert.True(Baggage.GetEnumerator(default).MoveNext());
+        Assert.Equal(2, Baggage.SetBaggage(K2, V2, default).Count);
+        Assert.Equal(3, Baggage.SetBaggage(new Dictionary<string, string?> { [K3] = V3 }, default).Count);
+        Assert.Equal(2, Baggage.RemoveBaggage(K3, default).Count);
+        Assert.Empty(Baggage.ClearBaggage(default).GetBaggage());
+    }
+
+    [Fact]
+    public void SharedEmptyBaggageCannotBeModifiedThroughReturnedItems()
+    {
+        Baggage.Current = default;
+        var items = Baggage.Current.GetBaggage();
+
+        if (items is IDictionary<string, string> dictionary)
+        {
+            Assert.True(dictionary.IsReadOnly);
+            Assert.Throws<NotSupportedException>(() => dictionary.Add(K1, V1));
+        }
+
+        Assert.Empty(Baggage.Create().GetBaggage());
+        Assert.Empty(Baggage.Current.GetBaggage());
     }
 
     [Fact]
