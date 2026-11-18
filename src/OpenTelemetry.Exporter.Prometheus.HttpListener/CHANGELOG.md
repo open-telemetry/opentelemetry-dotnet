@@ -24,6 +24,11 @@ Notes](../../RELEASENOTES.md).
   now treated as empty, and a warning event is written.
   ([#8141](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8141))
 
+* Fixed a metric tag, resource constant label or `target_info` resource
+  attribute named `__name__` being written as a label. Such a label is no
+  longer written.
+  ([#8146](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8146))
+
 ## 1.21.0-beta.1
 
 Released 2026-Nov-11
