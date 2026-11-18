@@ -62,7 +62,7 @@ public class EventSourceTests
         Assert.Equal("bytes", conflictingUnit.Payload[1]);
         Assert.Equal("seconds", conflictingUnit.Payload[2]);
 
-        var metricsDropped = Assert.Single(events, e => e.EventId == 17);
+        var metricsDropped = Assert.Single(events, e => e.EventId == 18);
         Assert.NotNull(metricsDropped.Payload);
         Assert.Equal("test_metric", metricsDropped.Payload[0]);
         Assert.Equal(2, metricsDropped.Payload[1]);

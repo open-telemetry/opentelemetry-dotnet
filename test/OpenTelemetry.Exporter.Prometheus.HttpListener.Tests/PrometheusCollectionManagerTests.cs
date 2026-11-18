@@ -2285,7 +2285,7 @@ public sealed class PrometheusCollectionManagerTests
         using var firstMeter = new Meter(prefix + ".first");
         using var secondMeter = new Meter(prefix + ".second");
 
-        using var listener = new DroppedListener(eventId: 17, "b_counter", countIndex: 1, nameIndex: 0);
+        using var listener = new DroppedListener(eventId: 18, "b_counter", countIndex: 1, nameIndex: 0);
 
 #pragma warning disable CA2000 // Dispose objects before losing scope
         var exporter = new PrometheusExporter(new PrometheusExporterOptions
@@ -2369,7 +2369,7 @@ public sealed class PrometheusCollectionManagerTests
 
         using var meter = CreateMeter();
 
-        using var listener = new DroppedListener(eventId: 17, MetricNamePrefix, countIndex: 1, nameIndex: 0);
+        using var listener = new DroppedListener(eventId: 18, MetricNamePrefix, countIndex: 1, nameIndex: 0);
 
 #pragma warning disable CA2000 // Dispose objects before losing scope
         var exporter = new PrometheusExporter(new PrometheusExporterOptions
@@ -2521,7 +2521,7 @@ public sealed class PrometheusCollectionManagerTests
 
         using var meter = CreateMeter();
 
-        using var listener = new DroppedListener(eventId: 17, "b_histogram", countIndex: 1, nameIndex: 0);
+        using var listener = new DroppedListener(eventId: 18, "b_histogram", countIndex: 1, nameIndex: 0);
 
 #pragma warning disable CA2000 // Dispose objects before losing scope
         var exporter = new PrometheusExporter(new PrometheusExporterOptions
