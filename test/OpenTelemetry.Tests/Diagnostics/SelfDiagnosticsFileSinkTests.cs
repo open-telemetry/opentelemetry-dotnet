@@ -74,19 +74,90 @@ public sealed class SelfDiagnosticsFileSinkTests : IDisposable
             File.CreateSymbolicLink(firstPath[..^"-1.log".Length] + "-2.log", linkTarget);
 
             WriteLine(sink, new string('x', 1_100));
-            Assert.False(sink.IsActive, "expected the rollover to fail on the name taken by the link");
-
-            // The retry interval is zero, so the next write moves on to the next index.
             WriteLine(sink, "after the rollover");
             sink.Flush();
 
-            Assert.True(sink.IsActive, "expected sink to recover by skipping the name taken by the link");
-            Assert.EndsWith("-3.log", sink.CurrentFilePath, StringComparison.Ordinal);
+            Assert.True(sink.IsActive, "expected the rollover to move on from the name taken by the link");
+            Assert.EndsWith("-2.log", sink.CurrentFilePath, StringComparison.Ordinal);
+            Assert.NotEqual(firstPath[..^"-1.log".Length] + "-2.log", sink.CurrentFilePath);
         }
 
         Assert.Equal("target content", File.ReadAllText(linkTarget));
     }
 #endif
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(2)]
+    public void RollOver_NamesAlreadyTaken_DoesNotWaitForRetryInterval(int maxRetainedFiles)
+    {
+        var errors = new List<string>();
+        string series;
+
+        using (var sink = new SelfDiagnosticsFileSink(
+            this.tempDirectory.Path,
+            fileSizeLimitKilobytes: 1,
+            maxRetainedFiles,
+            preambleFactory: null,
+            reportError: errors.Add,
+            retryInterval: TimeSpan.FromHours(1),
+            announceLogFile: false))
+        {
+            var firstPath = sink.CurrentFilePath;
+            Assert.NotNull(firstPath);
+            Assert.EndsWith("-1.log", firstPath, StringComparison.Ordinal);
+
+            series = firstPath.Substring(0, firstPath.Length - "1.log".Length);
+
+            // The next names in the series are taken by something else, as files and as a directory.
+            File.WriteAllText($"{series}2.log", "not ours");
+            File.WriteAllText($"{series}3.log", "not ours");
+            Directory.CreateDirectory($"{series}4.log");
+
+            var previous = firstPath;
+
+            for (var rollover = 0; rollover < 3; rollover++)
+            {
+                WriteLine(sink, new string('x', 1_100));
+                WriteLine(sink, $"after rollover {rollover}");
+                sink.Flush();
+
+                Assert.True(sink.IsActive, "expected the rollover to find a free name without waiting");
+                Assert.NotEqual(previous, sink.CurrentFilePath);
+                Assert.Contains($"after rollover {rollover}", SelfDiagnosticsTestHelpers.ReadAllTextShared(sink.CurrentFilePath!), StringComparison.Ordinal);
+                previous = sink.CurrentFilePath;
+            }
+
+            Assert.Empty(errors);
+        }
+
+        Assert.Equal("not ours", File.ReadAllText($"{series}2.log"));
+        Assert.Equal("not ours", File.ReadAllText($"{series}3.log"));
+        Assert.True(Directory.Exists($"{series}4.log"));
+    }
+
+    [Fact]
+    public void Recreation_FileWithUnpredictableName_ContinuesAfterItsIndex()
+    {
+        string series;
+
+        using (var first = this.CreateSink(fileSizeLimitKilobytes: 1, maxRetainedFiles: 0))
+        {
+            series = first.CurrentFilePath!.Substring(0, first.CurrentFilePath.Length - "1.log".Length);
+            File.WriteAllText($"{series}2.log", "not ours");
+
+            WriteLine(first, new string('x', 1_100));
+            WriteLine(first, "entry");
+            first.Flush();
+
+            Assert.EndsWith("-2.log", first.CurrentFilePath, StringComparison.Ordinal);
+            Assert.NotEqual($"{series}2.log", first.CurrentFilePath);
+        }
+
+        using var second = this.CreateSink(maxRetainedFiles: 0);
+
+        Assert.EndsWith("-3.log", second.CurrentFilePath, StringComparison.Ordinal);
+    }
 
     [Fact]
     public void FirstOpen_WritesStartupMessageToStderr()

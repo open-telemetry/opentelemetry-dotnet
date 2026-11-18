@@ -306,7 +306,7 @@ internal sealed class SelfDiagnosticsFileSink : ISelfDiagnosticsSink
         // The index is always past any file already in the series, so the name is expected to
         // be free; an existing entry is most likely a symbolic link planted by another user of
         // the log directory. FileMode.CreateNew fails instead of following it (and writing into
-        // its target), and the next attempt moves on to the next index.
+        // its target), and the caller then tries again with a different name.
         // FileShare.Read lets external tools tail the log while it's open.
 #if NET
         var options = new FileStreamOptions
@@ -378,7 +378,25 @@ internal sealed class SelfDiagnosticsFileSink : ISelfDiagnosticsSink
             var fileName = $"otel-dotnet-{ProcessIdentity}-{this.fileIndex}.log";
             var filePath = Path.Combine(this.logDirectory, fileName);
 
-            var stream = OpenLogFile(filePath);
+            FileStream stream;
+
+            try
+            {
+                stream = OpenLogFile(filePath);
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                // The name is already in use (or otherwise cannot be created). Names of the
+                // form above are predictable, so rather than waiting out the retry interval
+                // and then trying the next predictable name, try once straight away with a
+                // name that cannot be known in advance. A further failure is handled below.
+                filePath = Path.Combine(
+                    this.logDirectory,
+                    $"otel-dotnet-{ProcessIdentity}-{Guid.NewGuid():N}-{this.fileIndex}.log");
+
+                stream = OpenLogFile(filePath);
+            }
+
             var newWriter = new StreamWriter(stream, Utf8NoBom) { AutoFlush = false };
 
             this.CurrentFilePath = filePath;
