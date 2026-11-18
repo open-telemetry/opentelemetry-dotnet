@@ -21,7 +21,7 @@ Notes](../../RELEASENOTES.md).
   response when the points are written as the same series, such as when they
   only differ by a tag with an empty or `null` value. The values of such points
   are now added together.
-  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+  ([#8156](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8156))
 
 ## 1.21.0-beta.1
 
