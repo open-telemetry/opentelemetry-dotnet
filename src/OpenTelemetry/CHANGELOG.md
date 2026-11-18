@@ -11,6 +11,10 @@ Notes](../../RELEASENOTES.md).
   longer start a line that reads as a separate entry.
   ([#8145](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8145))
 
+* Fixed `ForceFlush` on batch export processors reporting success before
+  pending exports had finished.
+  ([#8134](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8134))
+
 * The self-diagnostics `OTEL_DIAGNOSTICS.json` file being temporarily locked by
   another process is no longer treated as the file having been removed.
   ([#8158](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8158))
