@@ -70,7 +70,7 @@ internal sealed class BatchExportTaskWorker<T> : BatchExportWorker<T>
     /// <inheritdoc/>
     public override bool WaitForExport(int timeoutMilliseconds)
     {
-        var tail = this.CircularBuffer.RemovedCount;
+        var tail = this.ExportedCount;
         var head = this.CircularBuffer.AddedCount;
 
         if (head == tail)
@@ -88,13 +88,12 @@ internal sealed class BatchExportTaskWorker<T> : BatchExportWorker<T>
             return false;
         }
 
-        // On WASM (single-threaded), calling .GetAwaiter().GetResult() would deadlock
-        // because there is no second thread to complete the async work. Instead, just
-        // trigger the export and let the async worker loop drain the buffer. WASM apps
-        // don't have a real exit path so there is no risk of data loss.
+        // On single-threaded platforms, waiting for the worker would deadlock.
+        // The export has been triggered, but only report success if the exports
+        // pending when this call started have actually completed.
         if (!ThreadingHelper.IsThreadingEnabled())
         {
-            return true;
+            return this.ExportedCount >= head;
         }
 
         // Otherwise we can just wait for the export to complete synchronously
@@ -165,7 +164,7 @@ internal sealed class BatchExportTaskWorker<T> : BatchExportWorker<T>
 
                 if (remainingMilliseconds <= 0)
                 {
-                    return this.CircularBuffer.RemovedCount >= targetHead;
+                    return this.ExportedCount >= targetHead;
                 }
 
                 timeout = Math.Min(remainingMilliseconds, pollingMilliseconds);
@@ -197,7 +196,7 @@ internal sealed class BatchExportTaskWorker<T> : BatchExportWorker<T>
                 // Expected when timeout or shutdown occurs
             }
 
-            if (this.CircularBuffer.RemovedCount >= targetHead)
+            if (this.ExportedCount >= targetHead)
             {
                 return true;
             }

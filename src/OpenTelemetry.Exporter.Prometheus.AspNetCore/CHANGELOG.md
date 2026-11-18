@@ -17,6 +17,13 @@ Notes](../../RELEASENOTES.md).
   longer written.
   ([#8146](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8146))
 
+* A scrape response which exceeds `MaxScrapeResponseSizeBytes`, or which has
+  metrics with tags that are too large to be serialized, now omits those
+  metrics and logs an error event, instead of failing with HTTP 500. The scrape
+  still fails when none of the metrics fit. Increase `MaxScrapeResponseSizeBytes`
+  if metrics are omitted because the response is too large.
+  ([#8139](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8139))
+
 * Fixed the values of counter and histogram points being missing from a scrape
   response when the points are written as the same series, such as when they
   only differ by a tag with an empty or `null` value. The values of such points

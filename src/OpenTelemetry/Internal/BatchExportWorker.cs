@@ -13,6 +13,7 @@ internal abstract class BatchExportWorker<T> : IDisposable
     private readonly Action<long>? exportStarted;
     private long shutdownDrainTarget = long.MaxValue;
     private long droppedCount;
+    private long exportedCount;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="BatchExportWorker{T}"/> class.
@@ -49,6 +50,18 @@ internal abstract class BatchExportWorker<T> : IDisposable
     /// Gets the number of telemetry objects dropped by the processor.
     /// </summary>
     internal long DroppedCount => Volatile.Read(ref this.droppedCount);
+
+    /// <summary>
+    /// Gets the number of telemetry objects which have been removed from the
+    /// circular buffer and whose export has finished.
+    /// </summary>
+    /// <remarks>
+    /// Unlike <see cref="CircularBuffer{T}.RemovedCount"/>, which advances as
+    /// soon as the exporter reads an item from a batch, this only advances
+    /// once the call to the exporter has returned, so it does not count an
+    /// export which is still in progress.
+    /// </remarks>
+    protected long ExportedCount => Volatile.Read(ref this.exportedCount);
 
     /// <summary>
     /// Gets the circular buffer for storing telemetry objects.
@@ -136,10 +149,20 @@ internal abstract class BatchExportWorker<T> : IDisposable
     {
         if (this.CircularBuffer.Count > 0)
         {
-            using (var batch = new Batch<T>(this.CircularBuffer, this.MaxExportBatchSize))
+            try
             {
-                this.exportStarted?.Invoke(batch.Count);
-                this.Exporter.Export(batch, this.ExporterTimeoutMilliseconds);
+                using (var batch = new Batch<T>(this.CircularBuffer, this.MaxExportBatchSize))
+                {
+                    this.exportStarted?.Invoke(batch.Count);
+                    this.Exporter.Export(batch, this.ExporterTimeoutMilliseconds);
+                }
+            }
+            finally
+            {
+                // Only the worker removes items, and disposing the batch removes
+                // any which the exporter did not read, so everything removed
+                // from the buffer has now been exported (or abandoned).
+                Volatile.Write(ref this.exportedCount, this.CircularBuffer.RemovedCount);
             }
         }
     }
