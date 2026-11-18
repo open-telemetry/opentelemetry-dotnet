@@ -1417,6 +1417,81 @@ public sealed class OtlpTraceExporterTests : IDisposable
                 });
 
     [Fact]
+    public void SimpleExportProcessorTypeExportsEachSpanWithoutBlockingTheCallingThread()
+    {
+        const string ActivitySourceName = "otlp.simple.test";
+        const int SpanCount = 3;
+
+        using var spansEnded = new ManualResetEventSlim();
+
+        var callingThreadId = Environment.CurrentManagedThreadId;
+        var exportedOnCallingThread = false;
+        var exportDeadlineSet = false;
+        var spansEndedDuringExport = true;
+        var exportedBatches = new List<string[]>();
+        DelegatingExporter<Activity>? delegatingExporter = null;
+
+        using (Sdk.CreateTracerProviderBuilder()
+            .AddSource(ActivitySourceName)
+            .AddProcessor(sp => OtlpTraceExporterHelperExtensions.BuildOtlpExporterProcessor(
+                serviceProvider: sp,
+                exporterOptions: new OtlpExporterOptions { ExportProcessorType = ExportProcessorType.Simple },
+                sdkLimitOptions: DefaultSdkLimitOptions,
+                experimentalOptions: DefaultExperimentalOptions,
+                configureExporterInstance: otlpExporter =>
+                {
+                    otlpExporter.Dispose();
+
+                    return delegatingExporter = new DelegatingExporter<Activity>
+                    {
+                        OnExportFunc = batch =>
+                        {
+                            exportedOnCallingThread |= Environment.CurrentManagedThreadId == callingThreadId;
+                            exportDeadlineSet |= delegatingExporter!.ExportDeadlineUtc != DateTime.MaxValue;
+
+                            // An export in progress must not stop the other spans from ending.
+                            spansEndedDuringExport &= spansEnded.Wait(TimeSpan.FromSeconds(5));
+
+                            var names = new List<string>();
+                            foreach (var activity in batch)
+                            {
+                                names.Add(activity.DisplayName);
+                            }
+
+                            exportedBatches.Add([.. names]);
+                            return ExportResult.Success;
+                        },
+                    };
+                }))
+            .Build())
+        {
+            using var source = new ActivitySource(ActivitySourceName);
+
+            for (var i = 0; i < SpanCount; i++)
+            {
+                using var activity = source.StartActivity($"span-{i}");
+                Assert.NotNull(activity);
+            }
+
+            spansEnded.Set();
+        }
+
+        Assert.False(exportedOnCallingThread);
+        Assert.True(spansEndedDuringExport);
+
+        // The processor does not limit the time an export may take, only the exporter's own timeout does.
+        Assert.False(exportDeadlineSet);
+
+        // Each span is still exported on its own, in the order in which the spans ended.
+        Assert.Equal(SpanCount, exportedBatches.Count);
+        for (var i = 0; i < SpanCount; i++)
+        {
+            var name = Assert.Single(exportedBatches[i]);
+            Assert.Equal($"span-{i}", name);
+        }
+    }
+
+    [Fact]
     public void NonnamedOptionsMutateSharedInstanceTest()
     {
         var testOptionsInstance = new OtlpExporterOptions();
