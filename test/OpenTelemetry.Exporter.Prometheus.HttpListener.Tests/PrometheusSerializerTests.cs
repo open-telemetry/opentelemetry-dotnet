@@ -467,7 +467,7 @@ public sealed partial class PrometheusSerializerTests
     [Theory]
     [InlineData(false)]
     [InlineData(true)]
-    public void WriteMetricDropsPointsWithTagKeysThatCollideOnceEscaped(bool useOpenMetrics)
+    public void WriteMetricAddsUpPointsWithTagKeysThatCollideOnceEscaped(bool useOpenMetrics)
     {
         var buffer = new byte[85000];
         var metrics = new List<Metric>();
@@ -489,14 +489,13 @@ public sealed partial class PrometheusSerializerTests
         var cursor = WriteMetric(buffer, 0, metrics.Single(), useOpenMetrics, series: series);
         var output = Encoding.UTF8.GetString(buffer, 0, cursor);
 
-        // The first of the two points that are the same series is written, and the other is dropped.
+        // The two points that are the same series are written as one, with the sum of their values.
         var samples = GetSampleLines(output, "test_counter_total");
 
         Assert.Equal(2, samples.Count);
-        Assert.Single(samples, line => line.Contains("a_b=\"value\"", StringComparison.Ordinal));
-        Assert.Single(samples, line => line.Contains("a_b=\"other\"", StringComparison.Ordinal));
-        Assert.Equal(1, series.DroppedCount);
-        Assert.Equal("test_counter", series.FirstDroppedMetricName);
+        Assert.Single(samples, line => line.Contains("a_b=\"value\"", StringComparison.Ordinal) && line.EndsWith(" 3", StringComparison.Ordinal));
+        Assert.Single(samples, line => line.Contains("a_b=\"other\"", StringComparison.Ordinal) && line.EndsWith(" 4", StringComparison.Ordinal));
+        Assert.Equal(0, series.DroppedCount);
     }
 
     [Theory]
@@ -546,7 +545,7 @@ public sealed partial class PrometheusSerializerTests
     [Theory]
     [InlineData(false)]
     [InlineData(true)]
-    public void WriteMetricDropsPointsWhichOnlyDifferByATagWithTheNameOfTheMetricNameLabel(bool useOpenMetrics)
+    public void WriteMetricAddsUpPointsWhichOnlyDifferByATagWithTheNameOfTheMetricNameLabel(bool useOpenMetrics)
     {
         var buffer = new byte[85000];
         var metrics = new List<Metric>();
@@ -568,14 +567,14 @@ public sealed partial class PrometheusSerializerTests
         var cursor = WriteMetric(buffer, 0, metrics.Single(), useOpenMetrics, series: series);
         var output = Encoding.UTF8.GetString(buffer, 0, cursor);
 
-        // The tag is not written, so the two points which have it are the same series, and the second is dropped.
+        // The tag is not written, so the two points which have it are the same series, and are written as one.
         var samples = GetSampleLines(output, "test_counter_total");
 
         Assert.Equal(2, samples.Count);
-        Assert.Single(samples, line => line.Contains("x=\"1\"", StringComparison.Ordinal));
+        Assert.Single(samples, line => line.Contains("x=\"1\"", StringComparison.Ordinal) && line.EndsWith(" 4", StringComparison.Ordinal));
+        Assert.Single(samples, line => !line.Contains("x=\"1\"", StringComparison.Ordinal) && line.EndsWith(" 3", StringComparison.Ordinal));
         Assert.DoesNotContain("__name__", output, StringComparison.Ordinal);
-        Assert.Equal(1, series.DroppedCount);
-        Assert.Equal("test_counter", series.FirstDroppedMetricName);
+        Assert.Equal(0, series.DroppedCount);
     }
 
     [Theory]
@@ -667,7 +666,7 @@ public sealed partial class PrometheusSerializerTests
     [Theory]
     [InlineData(false)]
     [InlineData(true)]
-    public void WriteMetricDropsPointsWithTheSameLabelsInADifferentOrderOnceEscaped(bool useOpenMetrics)
+    public void WriteMetricAddsUpPointsWithTheSameLabelsInADifferentOrderOnceEscaped(bool useOpenMetrics)
     {
         var buffer = new byte[85000];
         var metrics = new List<Metric>();
@@ -689,14 +688,14 @@ public sealed partial class PrometheusSerializerTests
         var cursor = WriteMetric(buffer, 0, metrics.Single(), useOpenMetrics, suppressScopeInfo: true, series: series);
         var output = Encoding.UTF8.GetString(buffer, 0, cursor);
 
-        Assert.Single(GetSampleLines(output, "test_counter_total"));
-        Assert.Equal(1, series.DroppedCount);
+        Assert.Single(GetSampleLines(output, "test_counter_total"), line => line.EndsWith(" 3", StringComparison.Ordinal));
+        Assert.Equal(0, series.DroppedCount);
     }
 
     [Theory]
     [InlineData(false)]
     [InlineData(true)]
-    public void WriteMetricDropsHistogramsWithoutBucketsWithTheSameSeries(bool useOpenMetrics)
+    public void WriteMetricAddsUpHistogramsWithoutBucketsWithTheSameSeries(bool useOpenMetrics)
     {
         var buffer = new byte[85000];
         var metrics = new List<Metric>();
@@ -723,8 +722,100 @@ public sealed partial class PrometheusSerializerTests
         Assert.Empty(GetSampleLines(output, "test_histogram_bucket"));
         Assert.Equal(2, GetSampleLines(output, "test_histogram_sum").Count);
         Assert.Equal(2, GetSampleLines(output, "test_histogram_count").Count);
-        Assert.Single(GetSampleLines(output, "test_histogram_sum"), line => line.Contains("a_b=\"value\"", StringComparison.Ordinal));
+        Assert.Single(GetSampleLines(output, "test_histogram_sum"), line => line.Contains("a_b=\"value\"", StringComparison.Ordinal) && line.EndsWith(" 3", StringComparison.Ordinal));
+        Assert.Single(GetSampleLines(output, "test_histogram_count"), line => line.Contains("a_b=\"value\"", StringComparison.Ordinal) && line.EndsWith(" 2", StringComparison.Ordinal));
+        Assert.Single(GetSampleLines(output, "test_histogram_count"), line => line.Contains("a_b=\"other\"", StringComparison.Ordinal) && line.EndsWith(" 1", StringComparison.Ordinal));
+        Assert.Equal(0, series.DroppedCount);
+    }
+
+    [Theory]
+    [InlineData(false, "", false)]
+    [InlineData(false, "", true)]
+    [InlineData(false, null, false)]
+    [InlineData(false, null, true)]
+    [InlineData(true, "", false)]
+    [InlineData(true, "", true)]
+    [InlineData(true, null, false)]
+    [InlineData(true, null, true)]
+    public void WriteMetricAddsUpPointsWithAnEmptyTagValueToThoseWithoutTheTag(bool useOpenMetrics, string? value, bool valueFirst)
+    {
+        var buffer = new byte[85000];
+        var metrics = new List<Metric>();
+
+        using var meter = CreateMeter();
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddInMemoryExporter(metrics)
+            .Build();
+
+        var counter = meter.CreateCounter<long>("test_counter");
+        var upDownCounter = meter.CreateUpDownCounter<double>("test_up_down_counter");
+        var histogram = meter.CreateHistogram<double>("test_histogram");
+        var gauge = meter.CreateGauge<long>("test_gauge");
+
+        void Record(bool withTag, long amount)
+        {
+            var tags = new TagList { { "method", "password" } };
+
+            if (withTag)
+            {
+                tags.Add("app.build", value);
+            }
+
+            counter.Add(amount, tags);
+            upDownCounter.Add(amount, tags);
+            histogram.Record(amount, tags);
+            gauge.Record(amount, tags);
+        }
+
+        // The order that the points are created in decides which is first, and neither should be lost.
+        if (valueFirst)
+        {
+            Record(withTag: true, 10);
+            Record(withTag: false, 20);
+        }
+        else
+        {
+            Record(withTag: false, 20);
+            Record(withTag: true, 10);
+        }
+
+        // A point with a different tag is its own series
+        counter.Add(5, new KeyValuePair<string, object?>("method", "password"), new KeyValuePair<string, object?>("app.build", "7"));
+
+        provider.ForceFlush();
+
+        var series = new SeriesRegistry();
+        var cursor = 0;
+
+        foreach (var metric in metrics)
+        {
+            cursor = WriteMetric(buffer, cursor, metric, useOpenMetrics, suppressScopeInfo: true, series: series);
+        }
+
+        var output = Encoding.UTF8.GetString(buffer, 0, cursor);
+
+        var counterSamples = GetSampleLines(output, "test_counter_total");
+        Assert.Equal(2, counterSamples.Count);
+        Assert.Single(counterSamples, line => line.Contains("app_build=\"7\"", StringComparison.Ordinal) && line.EndsWith(" 5", StringComparison.Ordinal));
+        Assert.Single(counterSamples, line => !line.Contains("app_build", StringComparison.Ordinal) && line.EndsWith(" 30", StringComparison.Ordinal));
+
+        Assert.Single(GetSampleLines(output, "test_up_down_counter"), line => line.EndsWith(" 30", StringComparison.Ordinal));
+
+        Assert.Single(GetSampleLines(output, "test_histogram_count"), line => line.EndsWith(" 2", StringComparison.Ordinal));
+        Assert.Single(GetSampleLines(output, "test_histogram_sum"), line => line.EndsWith(" 30", StringComparison.Ordinal));
+
+        // The buckets are cumulative, with the point that has the value in the bucket of 10 and the other in that of 25.
+        var buckets = GetSampleLines(output, "test_histogram_bucket");
+        Assert.Single(buckets, line => line.Contains($"le=\"{(useOpenMetrics ? "5.0" : "5")}\"", StringComparison.Ordinal) && line.EndsWith(" 0", StringComparison.Ordinal));
+        Assert.Single(buckets, line => line.Contains($"le=\"{(useOpenMetrics ? "10.0" : "10")}\"", StringComparison.Ordinal) && line.EndsWith(" 1", StringComparison.Ordinal));
+        Assert.Single(buckets, line => line.Contains($"le=\"{(useOpenMetrics ? "25.0" : "25")}\"", StringComparison.Ordinal) && line.EndsWith(" 2", StringComparison.Ordinal));
+        Assert.Single(buckets, line => line.Contains("le=\"+Inf\"", StringComparison.Ordinal) && line.EndsWith(" 2", StringComparison.Ordinal));
+
+        // The values of a gauge cannot be added up, so only the first is written, and the other is dropped.
+        Assert.Single(GetSampleLines(output, "test_gauge"));
         Assert.Equal(1, series.DroppedCount);
+        Assert.Equal("test_gauge", series.FirstDroppedMetricName);
     }
 
     [Theory]

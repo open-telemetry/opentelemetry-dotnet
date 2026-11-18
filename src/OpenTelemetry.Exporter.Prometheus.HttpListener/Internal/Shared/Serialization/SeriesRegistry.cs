@@ -55,6 +55,16 @@ internal sealed class SeriesRegistry
     public string? FirstDroppedMetricName { get; private set; }
 
     /// <summary>
+    /// Gets the identity of a series.
+    /// </summary>
+    /// <param name="buffer">The buffer containing the series.</param>
+    /// <param name="start">The position in <paramref name="buffer"/> of the first byte of the series.</param>
+    /// <param name="length">The length of the series in bytes.</param>
+    /// <returns>The identity of the series, for use with <see cref="TryAdd(string)"/>.</returns>
+    public static string GetIdentity(byte[] buffer, int start, int length)
+        => Encoding.UTF8.GetString(buffer, start, length);
+
+    /// <summary>
     /// Removes everything, ready for a new response to be written.
     /// </summary>
     public void Clear()
@@ -82,9 +92,15 @@ internal sealed class SeriesRegistry
     /// <param name="length">The length of the series in bytes.</param>
     /// <returns><see langword="true"/> if the series was added; <see langword="false"/> if it is a duplicate.</returns>
     public bool TryAdd(byte[] buffer, int start, int length)
-    {
-        var identity = Encoding.UTF8.GetString(buffer, start, length);
+        => this.TryAdd(GetIdentity(buffer, start, length));
 
+    /// <summary>
+    /// Adds a series, unless it has already been added.
+    /// </summary>
+    /// <param name="identity">The identity of the series, as returned by <see cref="GetIdentity"/>.</param>
+    /// <returns><see langword="true"/> if the series was added; <see langword="false"/> if it is a duplicate.</returns>
+    public bool TryAdd(string identity)
+    {
         if (!this.series.Add(identity))
         {
             return false;

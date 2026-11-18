@@ -176,6 +176,9 @@ internal abstract class TextFormatSerializer
         string? helpOverride,
         in TextFormatSerializerOptions options = default)
     {
+        var metricStart = cursor;
+        var seriesMark = options.Series is { } series ? series.Mark() : default;
+
         if (writeType)
         {
             cursor = this.WriteTypeMetadata(buffer, cursor, prometheusMetric);
@@ -195,8 +198,26 @@ internal abstract class TextFormatSerializer
         {
             var isLongValue = ((int)metric.MetricType & 0b_0000_1111) == 0x0a; // I8
 
+            var mergedPoints = options.MergePoints ? this.MergeSums(buffer, cursor, metric, prometheusMetric, options, isLongValue) : null;
+            var pointIndex = 0;
+
             foreach (ref readonly var metricPoint in metric.GetMetricPoints())
             {
+                MergedPoint? mergedPoint = null;
+
+                if (mergedPoints is not null)
+                {
+                    // The points of a series are written together, by the first of them.
+                    mergedPoint = mergedPoints[pointIndex++];
+
+                    if (mergedPoint.Written)
+                    {
+                        continue;
+                    }
+
+                    mergedPoint.Written = true;
+                }
+
                 var seriesStart = cursor;
 
                 cursor = this.WriteSeriesAndTags(
@@ -212,8 +233,27 @@ internal abstract class TextFormatSerializer
                 var seriesEnd = cursor;
 
                 // A series which has already been written is not written again, as the response would not be valid.
-                if (options.Series is { } registry && !registry.TryAdd(buffer, seriesStart, seriesEnd - seriesStart))
+                if (options.Series is { } registry &&
+                    !(mergedPoint is null ? registry.TryAdd(buffer, seriesStart, seriesEnd - seriesStart) : registry.TryAdd(mergedPoint.Identity)))
                 {
+                    if (mergedPoint is null && metric.MetricType.IsSum())
+                    {
+                        // The values of the points are added up, as the scraper sees them as one series, so the metric is written again.
+                        registry.Rollback(seriesMark);
+
+                        return this.WriteMetric(
+                            buffer,
+                            metricStart,
+                            metric,
+                            prometheusMetric,
+                            writeType,
+                            writeUnit,
+                            writeHelp,
+                            unitOverride,
+                            helpOverride,
+                            options.WithMergedPoints());
+                    }
+
                     registry.RecordDropped(metric.Name);
                     cursor = seriesStart;
                     continue;
@@ -224,13 +264,13 @@ internal abstract class TextFormatSerializer
                 if (isLongValue)
                 {
                     cursor = metric.MetricType.IsSum()
-                        ? WriteLong(buffer, cursor, metricPoint.GetSumLong())
+                        ? WriteLong(buffer, cursor, mergedPoint?.SumLong ?? metricPoint.GetSumLong())
                         : WriteLong(buffer, cursor, metricPoint.GetGaugeLastValueLong());
                 }
                 else
                 {
                     cursor = metric.MetricType.IsSum()
-                        ? WriteDouble(buffer, cursor, metricPoint.GetSumDouble())
+                        ? WriteDouble(buffer, cursor, mergedPoint?.SumDouble ?? metricPoint.GetSumDouble())
                         : WriteDouble(buffer, cursor, metricPoint.GetGaugeLastValueDouble());
                 }
 
@@ -250,8 +290,26 @@ internal abstract class TextFormatSerializer
         }
         else
         {
+            var mergedPoints = options.MergePoints ? this.MergeHistograms(metric, options) : null;
+            var pointIndex = 0;
+
             foreach (ref readonly var metricPoint in metric.GetMetricPoints())
             {
+                MergedPoint? mergedPoint = null;
+
+                if (mergedPoints is not null)
+                {
+                    // The points of a series are written together, by the first of them.
+                    mergedPoint = mergedPoints[pointIndex++];
+
+                    if (mergedPoint.Written)
+                    {
+                        continue;
+                    }
+
+                    mergedPoint.Written = true;
+                }
+
                 var tags = metricPoint.Tags;
 
                 var serializedTagsBuffer = this.SerializeTagsToPooledBuffer(
@@ -266,8 +324,27 @@ internal abstract class TextFormatSerializer
                     var serializedTags = new ReadOnlySpan<byte>(serializedTagsBuffer, 0, serializedTagsLength);
 
                     // The labels identify the series of the point, which is that of all of its buckets, sum and count.
-                    if (options.Series is { } histogramRegistry && !histogramRegistry.TryAdd(serializedTagsBuffer, 0, serializedTagsLength))
+                    if (options.Series is { } histogramRegistry &&
+                        !(mergedPoint is null ? histogramRegistry.TryAdd(serializedTagsBuffer, 0, serializedTagsLength) : histogramRegistry.TryAdd(mergedPoint.Identity)))
                     {
+                        if (mergedPoint is null)
+                        {
+                            // The values of the points are added up, as the scraper sees them as one series, so the metric is written again.
+                            histogramRegistry.Rollback(seriesMark);
+
+                            return this.WriteMetric(
+                                buffer,
+                                metricStart,
+                                metric,
+                                prometheusMetric,
+                                writeType,
+                                writeUnit,
+                                writeHelp,
+                                unitOverride,
+                                helpOverride,
+                                options.WithMergedPoints());
+                        }
+
                         histogramRegistry.RecordDropped(metric.Name);
                         continue;
                     }
@@ -276,11 +353,13 @@ internal abstract class TextFormatSerializer
                     var previousBound = double.NegativeInfinity;
 
                     long totalCount = 0;
+                    var bucketCounts = mergedPoint?.BucketCounts;
+                    var bucketIndex = 0;
                     foreach (var histogramMeasurement in metricPoint.GetHistogramBuckets())
                     {
                         hasNegativeBucketBounds |= histogramMeasurement.ExplicitBound < 0;
 
-                        totalCount += histogramMeasurement.BucketCount;
+                        totalCount += bucketCounts is null ? histogramMeasurement.BucketCount : bucketCounts[bucketIndex++];
 
                         cursor = this.WriteHistogramBucketName(buffer, cursor, prometheusMetric);
 
@@ -316,7 +395,7 @@ internal abstract class TextFormatSerializer
 
                         buffer[cursor++] = unchecked((byte)' ');
 
-                        cursor = WriteDouble(buffer, cursor, metricPoint.GetHistogramSum());
+                        cursor = WriteDouble(buffer, cursor, mergedPoint?.HistogramSum ?? metricPoint.GetHistogramSum());
 
                         buffer[cursor++] = AsciiLineFeed;
 
@@ -325,7 +404,7 @@ internal abstract class TextFormatSerializer
 
                         buffer[cursor++] = unchecked((byte)' ');
 
-                        cursor = WriteLong(buffer, cursor, metricPoint.GetHistogramCount());
+                        cursor = WriteLong(buffer, cursor, mergedPoint?.HistogramCount ?? metricPoint.GetHistogramCount());
                         buffer[cursor++] = AsciiLineFeed;
                     }
 
@@ -2631,6 +2710,107 @@ internal abstract class TextFormatSerializer
         value.AsSpan().CopyTo(destination);
 
         return value.Length;
+    }
+
+    // Gets the point of each of the points of the metric, in order, with the values of the points that are the same series added up.
+    private List<MergedPoint> MergeSums(
+        byte[] buffer,
+        int cursor,
+        Metric metric,
+        PrometheusMetric prometheusMetric,
+        in TextFormatSerializerOptions options,
+        bool isLongValue)
+    {
+        var series = new Dictionary<string, MergedPoint>(StringComparer.Ordinal);
+        var points = new List<MergedPoint>();
+
+        foreach (ref readonly var metricPoint in metric.GetMetricPoints())
+        {
+            // The series is written where the metric is about to be, and is written over once the values are known.
+            var seriesEnd = this.WriteSeriesAndTags(
+                buffer,
+                cursor,
+                metric,
+                prometheusMetric,
+                metricPoint.Tags,
+                options,
+                suffix: null,
+                reservedOutputKeys: ReservedLabelNames);
+
+            var identity = SeriesRegistry.GetIdentity(buffer, cursor, seriesEnd - cursor);
+
+            if (!series.TryGetValue(identity, out var mergedPoint))
+            {
+                series[identity] = mergedPoint = new MergedPoint(identity);
+            }
+
+            if (isLongValue)
+            {
+                mergedPoint.SumLong = unchecked(mergedPoint.SumLong + metricPoint.GetSumLong());
+            }
+            else
+            {
+                mergedPoint.SumDouble += metricPoint.GetSumDouble();
+            }
+
+            points.Add(mergedPoint);
+        }
+
+        return points;
+    }
+
+    private List<MergedPoint> MergeHistograms(Metric metric, in TextFormatSerializerOptions options)
+    {
+        var series = new Dictionary<string, MergedPoint>(StringComparer.Ordinal);
+        var points = new List<MergedPoint>();
+
+        foreach (ref readonly var metricPoint in metric.GetMetricPoints())
+        {
+            var serializedTagsBuffer = this.SerializeTagsToPooledBuffer(
+                metric,
+                metricPoint.Tags,
+                options,
+                ReservedHistogramLabelNames,
+                out var serializedTagsLength);
+
+            try
+            {
+                var identity = SeriesRegistry.GetIdentity(serializedTagsBuffer, 0, serializedTagsLength);
+
+                if (!series.TryGetValue(identity, out var mergedPoint))
+                {
+                    series[identity] = mergedPoint = new MergedPoint(identity);
+                }
+
+                // The points of a metric all have the same buckets.
+                var bucketCounts = mergedPoint.BucketCounts ??= [];
+                var bucketIndex = 0;
+                foreach (var histogramMeasurement in metricPoint.GetHistogramBuckets())
+                {
+                    if (bucketIndex == bucketCounts.Count)
+                    {
+                        bucketCounts.Add(histogramMeasurement.BucketCount);
+                    }
+                    else
+                    {
+                        bucketCounts[bucketIndex] += histogramMeasurement.BucketCount;
+                    }
+
+                    bucketIndex++;
+                }
+
+                mergedPoint.HistogramSum += metricPoint.GetHistogramSum();
+                mergedPoint.HistogramCount += metricPoint.GetHistogramCount();
+
+                points.Add(mergedPoint);
+            }
+            finally
+            {
+                ArrayPool<byte>.Shared.Return(serializedTagsBuffer);
+            }
+        }
+
+        return points;
     }
 
     private string[] GetReservedExemplarOutputKeys()

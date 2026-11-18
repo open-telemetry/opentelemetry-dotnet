@@ -17,6 +17,12 @@ Notes](../../RELEASENOTES.md).
   longer written.
   ([#8146](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8146))
 
+* Fixed the values of counter and histogram points being missing from a scrape
+  response when the points are written as the same series, such as when they
+  only differ by a tag with an empty or `null` value. The values of such points
+  are now added together.
+  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+
 ## 1.21.0-beta.1
 
 Released 2026-Nov-11
