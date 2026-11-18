@@ -492,7 +492,7 @@ public sealed class OpenTelemetryLoggingExtensionsTests
 
         Assert.Throws<InvalidOperationException>(() => loggerFactory.CreateLogger("FirstLogger"));
 
-        var logger = Assert.IsAssignableFrom<ILogger>(reentrantLogger);
+        var logger = Assert.IsType<ILogger>(reentrantLogger, exactMatch: false);
         logger.Log(
             LogLevel.Information,
             new EventId(1),

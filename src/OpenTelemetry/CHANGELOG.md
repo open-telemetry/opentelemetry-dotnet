@@ -6,6 +6,15 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Self-diagnostics log entries now indent every line after the first and write
+  control characters as `\uXXXX` escapes, so that text in a message can no
+  longer start a line that reads as a separate entry.
+  ([#8145](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8145))
+
+* Fixed `ForceFlush` on batch export processors reporting success before
+  pending exports had finished.
+  ([#8134](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8134))
+
 * Non-finite histogram measurements (`NaN`, `+Inf`, `-Inf`) are now dropped
   rather than recorded, so they can no longer permanently corrupt the sum,
   min, and max of a cumulative histogram stream. This aligns the explicit-bucket

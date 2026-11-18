@@ -27,7 +27,9 @@
       ]
     }
   ],
-  "dependencyDashboard": false,
+  "dependencyDashboard": {
+    "enabled": false
+  },
   "extends": [
     "config:best-practices",
     "customManagers:dockerfileVersions",
@@ -66,7 +68,7 @@
       "addLabels": [".NET"]
     },
     {
-      "matchManagers": ["pypi"],
+      "matchManagers": ["pip_requirements"],
       "addLabels": ["python"]
     },
     {
@@ -95,11 +97,6 @@
     {
       "extends": ["monorepo:opentelemetry-dotnet-contrib"],
       "description": ["Allow prerelease versions of .NET OpenTelemetry contrib packages"],
-      "ignoreUnstable": false
-    },
-    {
-      "matchDepNames": ["StyleCop.Analyzers"],
-      "description": ["Allow prerelease versions of StyleCop.Analyzers"],
       "ignoreUnstable": false
     }
   ],

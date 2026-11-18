@@ -25,10 +25,10 @@ public class LogRecordStateProcessorTests
             logger.HelloWorld(1234);
         }
 
-        Assert.Single(exportedItems);
+        var exportedItem = Assert.Single(exportedItems);
 
         AssertStateAndAttributes(
-            exportedItems[0],
+            exportedItem,
             attributesExpectedCount: !includeAttributes ? 0 : parseStateValues ? 1 : 3,
             stateExpectedCount: !includeAttributes || parseStateValues ? 1 : 3,
             out var state,
@@ -66,16 +66,16 @@ public class LogRecordStateProcessorTests
             logger.HelloWorld(1234);
         }
 
-        Assert.Single(exportedItems);
+        var exportedItem = Assert.Single(exportedItems);
 
         AssertStateAndAttributes(
-            exportedItems[0],
+            exportedItem,
             attributesExpectedCount: 0,
             stateExpectedCount: 0,
             out var state,
             out var attributes);
 
-        Assert.True(exportedItems[0].State is CustomState);
+        Assert.True(exportedItem.State is CustomState);
 
         void OnEnd(LogRecord logRecord)
         {
@@ -106,10 +106,10 @@ public class LogRecordStateProcessorTests
             logger.HelloWorld(1234);
         }
 
-        Assert.Single(exportedItems);
+        var exportedItem = Assert.Single(exportedItems);
 
         AssertStateAndAttributes(
-            exportedItems[0],
+            exportedItem,
             attributesExpectedCount: !includeAttributes ? 1 : 3,
             stateExpectedCount: !includeAttributes || parseStateValues ? 0 : 3,
             out var state,
@@ -148,10 +148,10 @@ public class LogRecordStateProcessorTests
             logger.HelloWorld(1234);
         }
 
-        Assert.Single(exportedItems);
+        var exportedItem = Assert.Single(exportedItems);
 
         AssertStateAndAttributes(
-            exportedItems[0],
+            exportedItem,
             attributesExpectedCount: !includeAttributes ? 1 : 3,
             stateExpectedCount: !includeAttributes ? 1 : 3,
             out var state,

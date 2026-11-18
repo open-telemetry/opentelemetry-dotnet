@@ -153,6 +153,7 @@ internal static class OtlpSecureHttpClientFactory
 
             this.AllowAutoRedirect = false;
             this.CheckCertificateRevocationList = true;
+            this.UseCookies = false;
 
             if (this.clientCertificate != null)
             {

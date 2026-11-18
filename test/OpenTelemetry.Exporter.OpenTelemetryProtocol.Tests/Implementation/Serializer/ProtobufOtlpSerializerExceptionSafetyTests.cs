@@ -211,9 +211,9 @@ public class ProtobufOtlpSerializerExceptionSafetyTests(MaxSizeSerializationBuff
             meter.CreateCounter<long>("counter").Add(1);
 
             Assert.True(meterProvider.ForceFlush());
-            Assert.Single(exportedMetrics);
+            var exportedMetric = Assert.Single(exportedMetrics);
 
-            var batch = new Batch<Metric>([exportedMetrics[0]], 1);
+            var batch = new Batch<Metric>([exportedMetric], 1);
 
             Assert.Throws<IndexOutOfRangeException>(() => ProtobufOtlpMetricSerializer.WriteMetricsData(
                 ref failingBuffer,

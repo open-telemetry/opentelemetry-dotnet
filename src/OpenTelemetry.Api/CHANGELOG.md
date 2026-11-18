@@ -6,6 +6,16 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* **Breaking Change**: Isolate ambient baggage updates between execution contexts.
+  Changes made in awaited async methods no longer update their caller's baggage.
+  Enable the `OpenTelemetry.Baggage.AllowUnsafeLegacyFlow` AppContext switch at
+  startup to temporarily restore unsafe legacy sharing.
+  ([#8042](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8042))
+
+* **Breaking Change**: Static `Baggage` helpers now honor explicitly supplied
+  empty baggage; omit the argument to use `Baggage.Current`.
+  ([#8153](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8153))
+
 ## 1.21.0
 
 Released 2026-Nov-11
