@@ -819,6 +819,97 @@ public sealed partial class PrometheusSerializerTests
     }
 
     [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void WriteMetricAddsUpPointsWithATotalThatIsMoreThanALongCanBe(bool useOpenMetrics)
+    {
+        var buffer = new byte[85000];
+        var metrics = new List<Metric>();
+
+        using var meter = CreateMeter();
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddInMemoryExporter(metrics)
+            .Build();
+
+        var counter = meter.CreateCounter<long>("test_counter");
+        counter.Add(long.MaxValue, new KeyValuePair<string, object?>("method", "a"), new KeyValuePair<string, object?>("k", string.Empty));
+        counter.Add(1, new KeyValuePair<string, object?>("method", "a"));
+
+        provider.ForceFlush();
+
+        var cursor = WriteMetric(buffer, 0, metrics.Single(), useOpenMetrics, suppressScopeInfo: true, series: new SeriesRegistry());
+        var output = Encoding.UTF8.GetString(buffer, 0, cursor);
+
+        // The total is written as a floating-point number, instead of wrapping around to a negative integer.
+        var sample = Assert.Single(GetSampleLines(output, "test_counter_total"));
+        var value = double.Parse(sample.Split(' ').Last(), CultureInfo.InvariantCulture);
+
+        Assert.Equal(Math.Pow(2, 63), value);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void WriteMetricDoesNotKeepMoreThanTheBufferCanHoldWhenAddingUpPoints(bool histogram)
+    {
+        var buffer = new byte[85000];
+        var metrics = new List<Metric>();
+
+        using var meter = CreateMeter();
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddInMemoryExporter(metrics)
+            .Build();
+
+        var counter = meter.CreateCounter<long>("test_counter");
+        var histogramInstrument = meter.CreateHistogram<double>("test_histogram");
+
+        void RecordPoint(params KeyValuePair<string, object?>[] tags)
+        {
+            if (histogram)
+            {
+                histogramInstrument.Record(1, tags);
+            }
+            else
+            {
+                counter.Add(1, tags);
+            }
+        }
+
+        // Two points that are the same series, followed by many that are not and that are too many to be written
+        RecordPoint(new KeyValuePair<string, object?>("method", "a"));
+        RecordPoint(new KeyValuePair<string, object?>("method", "a"), new KeyValuePair<string, object?>("k", string.Empty));
+
+        var padding = new string('x', 4096);
+
+        for (var i = 0; i < 1000; i++)
+        {
+            RecordPoint(new KeyValuePair<string, object?>("method", i.ToString(CultureInfo.InvariantCulture) + padding));
+        }
+
+        provider.ForceFlush();
+
+#if NET
+        var allocated = GC.GetAllocatedBytesForCurrentThread();
+#endif
+
+        var exception = Record.Exception(() => WriteMetric(buffer, 0, metrics.Single(), useOpenMetrics: false, suppressScopeInfo: true, series: new SeriesRegistry()));
+
+#if NET
+        allocated = GC.GetAllocatedBytesForCurrentThread() - allocated;
+#endif
+
+        // The buffer is too small for the points, which is the same as when it is too small for any other, so it is grown by the caller.
+        Assert.True(exception is IndexOutOfRangeException or ArgumentException);
+
+#if NET
+        // Keeping the series of all of the points would need 1,000 times a string of 8 KB, but those of the buffer are all that are kept.
+        Assert.InRange(allocated, 0, 2 * 1024 * 1024);
+#endif
+    }
+
+    [Theory]
     [InlineData(new[] { "a.b", "a_b" }, true)]
     [InlineData(new[] { "a.b", "aZ", "a_b" }, true)]
     [InlineData(new[] { "a b", "a_b" }, true)]

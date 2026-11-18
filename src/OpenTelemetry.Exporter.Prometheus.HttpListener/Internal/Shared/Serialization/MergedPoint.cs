@@ -29,7 +29,12 @@ internal sealed class MergedPoint(string identity)
     public long SumLong { get; set; }
 
     /// <summary>
-    /// Gets or sets the sum of the values of the points of a floating-point sum.
+    /// Gets or sets a value indicating whether <see cref="SumLong"/> has overflowed.
+    /// </summary>
+    public bool SumOverflowed { get; set; }
+
+    /// <summary>
+    /// Gets or sets the sum of the values of the points of a floating-point sum, or of an integer sum as well as <see cref="SumLong"/>.
     /// </summary>
     public double SumDouble { get; set; }
 
