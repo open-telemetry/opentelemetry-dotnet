@@ -6,6 +6,15 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Self-diagnostics log entries now indent every line after the first and write
+  control characters as `\uXXXX` escapes, so that text in a message can no
+  longer start a line that reads as a separate entry.
+  ([#8145](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8145))
+
+* Fixed `ForceFlush` on batch export processors reporting success before
+  pending exports had finished.
+  ([#8134](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8134))
+
 * Add support for setting the operational criticality of a service using the
   new `AddServiceCriticality()` extension method on `ResourceBuilder` with
   the [`service.criticality` resource attribute](https://github.com/open-telemetry/semantic-conventions/blob/c381bc8a42ec5628bc7becdca4ce904ae0ed66c3/docs/registry/attributes/service.md#service-criticality).

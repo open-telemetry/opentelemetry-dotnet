@@ -106,6 +106,8 @@ public sealed partial class PrometheusSerializerTests
         { 1.5d, "1.5" },
         { new Guid("12345678-1234-1234-1234-1234567890ab"), "12345678-1234-1234-1234-1234567890ab" },
         { new Version(1, 2, 3), "1.2.3" },
+        { new ThrowingValue(), string.Empty },
+        { new ThrowingFormattableValue(), string.Empty },
         { new DateTime(2024, 5, 6, 7, 8, 9, DateTimeKind.Utc), "05/06/2024 07:08:09" },
         { new DateTimeOffset(2024, 5, 6, 7, 8, 9, TimeSpan.FromHours(2)), "05/06/2024 07:08:09 +02:00" },
         { TimeSpan.FromTicks(1234567890), "00:02:03.4567890" },
@@ -498,6 +500,85 @@ public sealed partial class PrometheusSerializerTests
     }
 
     [Theory]
+    [InlineData("__name__", false)]
+    [InlineData("__name__", true)]
+    [InlineData("_._name_._", false)]
+    [InlineData("_._name_._", true)]
+    public void WriteMetricDoesNotWriteTagsWithTheNameOfTheMetricNameLabel(string key, bool useOpenMetrics)
+    {
+        var buffer = new byte[85000];
+        var metrics = new List<Metric>();
+
+        using var meter = CreateMeter();
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddInMemoryExporter(metrics)
+            .Build();
+
+        meter.CreateCounter<int>("test_counter").Add(1, new KeyValuePair<string, object?>(key, "up"), new KeyValuePair<string, object?>("x", "1"));
+        meter.CreateGauge<int>("test_gauge").Record(2, new KeyValuePair<string, object?>("x", "1"), new KeyValuePair<string, object?>(key, "up"));
+        meter.CreateHistogram<double>("test_histogram").Record(18, new KeyValuePair<string, object?>(key, "up"), new KeyValuePair<string, object?>("x", "1"));
+
+        provider.ForceFlush();
+
+        IReadOnlyList<KeyValuePair<string, object>> resourceConstantLabels = [new(key, "up")];
+
+        var output = new StringBuilder();
+
+        foreach (var metric in metrics)
+        {
+            var cursor = WriteMetric(buffer, 0, metric, useOpenMetrics, resourceConstantLabels: resourceConstantLabels);
+            output.Append(Encoding.UTF8.GetString(buffer, 0, cursor));
+        }
+
+        // The name of a metric is the value of its "__name__" label, so a sample with a tag of that name would have two names.
+        var samples = output
+            .ToString()
+            .Split('\n')
+            .Where(line => line.Length > 0 && line[0] != '#')
+            .ToList();
+
+        Assert.NotEmpty(samples);
+        Assert.All(samples, line => Assert.DoesNotContain("__name__", line, StringComparison.Ordinal));
+        Assert.All(samples, line => Assert.Contains("x=\"1\"", line, StringComparison.Ordinal));
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void WriteMetricDropsPointsWhichOnlyDifferByATagWithTheNameOfTheMetricNameLabel(bool useOpenMetrics)
+    {
+        var buffer = new byte[85000];
+        var metrics = new List<Metric>();
+
+        using var meter = CreateMeter();
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddInMemoryExporter(metrics)
+            .Build();
+
+        var counter = meter.CreateCounter<int>("test_counter");
+        counter.Add(1, new KeyValuePair<string, object?>("__name__", "up"));
+        counter.Add(2, new KeyValuePair<string, object?>("__name__", "down"));
+        counter.Add(4, new KeyValuePair<string, object?>("x", "1"));
+
+        provider.ForceFlush();
+
+        var series = new SeriesRegistry();
+        var cursor = WriteMetric(buffer, 0, metrics.Single(), useOpenMetrics, series: series);
+        var output = Encoding.UTF8.GetString(buffer, 0, cursor);
+
+        // The tag is not written, so the two points which have it are the same series, and the second is dropped.
+        var samples = GetSampleLines(output, "test_counter_total");
+
+        Assert.Equal(2, samples.Count);
+        Assert.Single(samples, line => line.Contains("x=\"1\"", StringComparison.Ordinal));
+        Assert.DoesNotContain("__name__", output, StringComparison.Ordinal);
+        Assert.Equal(1, series.DroppedCount);
+        Assert.Equal("test_counter", series.FirstDroppedMetricName);
+    }
+
+    [Theory]
     [InlineData(false)]
     [InlineData(true)]
     public void WriteMetricDropsSeriesOfMetricsFromDifferentMetersWhenScopeInfoIsSuppressed(bool useOpenMetrics)
@@ -701,6 +782,33 @@ public sealed partial class PrometheusSerializerTests
         // The label of a bucket is not written for a tag that has its name, so a point with the tag has the same series as one without it.
         Assert.True(TextFormatSerializer.PrometheusV1.HasCollidingTagKeys(tracker, metrics.Single(m => m.Name == "test_histogram")));
         Assert.False(TextFormatSerializer.PrometheusV1.HasCollidingTagKeys(tracker, metrics.Single(m => m.Name == "test_counter")));
+    }
+
+    [Theory]
+    [InlineData("__name__")]
+    [InlineData("_._name_._")]
+    public void HasCollidingTagKeysIsTrueForTheKeyOfTheMetricNameLabelWhichIsNotWritten(string key)
+    {
+        var metrics = new List<Metric>();
+
+        using var meter = CreateMeter();
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddInMemoryExporter(metrics)
+            .Build();
+
+        meter.CreateHistogram<double>("test_histogram").Record(1);
+        meter.CreateCounter<int>("test_counter").Add(1);
+
+        provider.ForceFlush();
+
+        var tracker = new TagKeyTracker();
+
+        tracker.Observe(0, key, "up");
+
+        // The label of the name of a metric is not written for a tag that has its name, so a point with the tag has the same series as one without it.
+        Assert.True(TextFormatSerializer.PrometheusV1.HasCollidingTagKeys(tracker, metrics.Single(m => m.Name == "test_histogram")));
+        Assert.True(TextFormatSerializer.PrometheusV1.HasCollidingTagKeys(tracker, metrics.Single(m => m.Name == "test_counter")));
     }
 
     [Fact]
@@ -1832,7 +1940,7 @@ public sealed partial class PrometheusSerializerTests
             TextFormatSerializer.GetNextSerializedTagsBufferSize(TextFormatSerializer.MaxSerializedTagsBufferSize / 2));
 
         // Growth beyond the maximum fails fast rather than allocating without bound.
-        Assert.Throws<InvalidOperationException>(
+        Assert.Throws<SerializedTagsTooLargeException>(
             () => TextFormatSerializer.GetNextSerializedTagsBufferSize((TextFormatSerializer.MaxSerializedTagsBufferSize / 2) + 1));
     }
 
@@ -2128,6 +2236,25 @@ public sealed partial class PrometheusSerializerTests
         var cursor = (openMetricsRequested ? (TextFormatSerializer)TextFormatSerializer.OpenMetricsV1 : TextFormatSerializer.PrometheusV1).WriteTargetInfo(buffer, 0, resource);
 
         Assert.Equal(0, cursor);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void WriteTargetInfoDoesNotWriteAttributesWithTheNameOfTheMetricNameLabel(bool openMetricsRequested)
+    {
+        var buffer = new byte[256];
+        var resource = ResourceBuilder.CreateEmpty()
+            .AddAttributes([new("__name__", "up"), new("service.name", "svc")])
+            .Build();
+
+        var serializer = openMetricsRequested ? (TextFormatSerializer)TextFormatSerializer.OpenMetricsV1 : TextFormatSerializer.PrometheusV1;
+
+        var cursor = serializer.WriteTargetInfo(buffer, 0, resource);
+        var output = Encoding.UTF8.GetString(buffer, 0, cursor);
+
+        Assert.EndsWith("target_info{service_name=\"svc\"} 1\n", output, StringComparison.Ordinal);
+        Assert.DoesNotContain("__name__", output, StringComparison.Ordinal);
     }
 
     [Theory]
@@ -2805,6 +2932,68 @@ public sealed partial class PrometheusSerializerTests
         await Verify(output, "txt", VerifySettings).UseParameters(escaping);
     }
 
+    [Theory]
+    [InlineData(PrometheusProtocol.AllowUtf8Escaping, "__name__")]
+    [InlineData(PrometheusProtocol.DotsEscaping, "_name_")]
+    [InlineData(PrometheusProtocol.UnderscoresEscaping, "__name__")]
+    [InlineData(PrometheusProtocol.ValuesEscaping, "__name__")]
+    public void WriteMetricDoesNotWriteTagsWhichAreEscapedToTheNameOfTheMetricNameLabel(string escaping, string key)
+    {
+        var buffer = new byte[85000];
+        var metrics = new List<Metric>();
+
+        using var meter = CreateMeter();
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddInMemoryExporter(metrics)
+            .Build();
+
+        // The names are not valid legacy names, so they are written within the braces by the scheme that does not escape them.
+        meter.CreateCounter<int>("test.counter").Add(1, new KeyValuePair<string, object?>(key, "up"), new KeyValuePair<string, object?>("x", "1"));
+        meter.CreateHistogram<double>("test.histogram").Record(18, new KeyValuePair<string, object?>(key, "up"), new KeyValuePair<string, object?>("x", "1"));
+
+        provider.ForceFlush();
+
+        var output = new StringBuilder();
+
+        foreach (var metric in metrics)
+        {
+            output.Append(WriteMetricWithEscaping(buffer, metric, escaping));
+        }
+
+        var samples = output
+            .ToString()
+            .Split('\n')
+            .Where(line => line.Length > 0 && line[0] != '#')
+            .ToList();
+
+        Assert.NotEmpty(samples);
+        Assert.All(samples, line => Assert.DoesNotContain("__name__", line, StringComparison.Ordinal));
+        Assert.All(samples, line => Assert.Contains("x=\"1\"", line, StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void WriteMetricWritesTagWhichContainsTheNameOfTheMetricNameLabelOnceEscapedWithDots()
+    {
+        var buffer = new byte[85000];
+        var metrics = new List<Metric>();
+
+        using var meter = CreateMeter();
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddInMemoryExporter(metrics)
+            .Build();
+
+        meter.CreateCounter<int>("test.counter").Add(1, new KeyValuePair<string, object?>("__name__", "up"));
+
+        provider.ForceFlush();
+
+        var output = WriteMetricWithDotsEscaping(buffer, metrics.Single());
+
+        // Underscores are escaped by the scheme, so the label is not the label of the name of the metric and is written.
+        Assert.Contains("____name____=\"up\"", output, StringComparison.Ordinal);
+    }
+
     [Fact]
     public async Task WriteExemplarEscapesReservedTraceIdKeyToPreventCollisionWithFilteredTag()
     {
@@ -3218,6 +3407,17 @@ public sealed partial class PrometheusSerializerTests
     private sealed class UnsupportedValue
     {
         public override string? ToString() => null;
+    }
+
+    private sealed class ThrowingValue
+    {
+        // The type of exception that the serializer throws when the buffer is full
+        public override string ToString() => throw new ArgumentException("Nope.");
+    }
+
+    private sealed class ThrowingFormattableValue : IFormattable
+    {
+        public string ToString(string? format, IFormatProvider? formatProvider) => throw new InvalidOperationException("Nope.");
     }
 
     private sealed class ReferenceKeyComparer : IEqualityComparer<string>

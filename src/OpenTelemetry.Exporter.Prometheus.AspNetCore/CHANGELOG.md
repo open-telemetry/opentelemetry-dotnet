@@ -7,6 +7,23 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Fixed every scrape failing once a metric point has an attribute value whose
+  conversion to a string throws an exception. The value of such an attribute is
+  now treated as empty, and a warning event is written.
+  ([#8141](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8141))
+
+* Fixed a metric tag, resource constant label or `target_info` resource
+  attribute named `__name__` being written as a label. Such a label is no
+  longer written.
+  ([#8146](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8146))
+
+* A scrape response which exceeds `MaxScrapeResponseSizeBytes`, or which has
+  metrics with tags that are too large to be serialized, now omits those
+  metrics and logs an error event, instead of failing with HTTP 500. The scrape
+  still fails when none of the metrics fit. Increase `MaxScrapeResponseSizeBytes`
+  if metrics are omitted because the response is too large.
+  ([#8139](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8139))
+
 ## 1.21.0-beta.1
 
 Released 2026-Nov-11
