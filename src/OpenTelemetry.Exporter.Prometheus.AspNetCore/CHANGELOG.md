@@ -21,7 +21,7 @@ Notes](../../RELEASENOTES.md).
   the exporter once a scrape has requested that format. Buffers which have not
   been needed for 5 minutes are now released the next time a scrape collects
   metrics.
-  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+  ([#8154](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8154))
 
 ## 1.21.0-beta.1
 
