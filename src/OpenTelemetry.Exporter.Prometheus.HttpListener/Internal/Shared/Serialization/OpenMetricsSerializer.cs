@@ -137,7 +137,7 @@ internal abstract class OpenMetricsSerializer : TextFormatSerializer
         }
         else
         {
-            cursor = this.WriteSeriesAndTags(buffer, cursor, metric, prometheusMetric, metricPoint.Tags, options, "_created", reservedOutputKeys: null);
+            cursor = this.WriteSeriesAndTags(buffer, cursor, metric, prometheusMetric, metricPoint.Tags, options, "_created", reservedOutputKeys: ReservedLabelNames);
         }
 
         return WriteCreatedValue(buffer, cursor, startTime);

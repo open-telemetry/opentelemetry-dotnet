@@ -2737,6 +2737,11 @@ public sealed class PrometheusCollectionManagerTests
         reservedHistogram.Record(1, new KeyValuePair<string, object?>("le", "5000"));
         reservedHistogram.Record(2);
 
+        // A counter with points that only differ by a tag that is not written, as it is the label of the name of the metric
+        var reservedCounter = meter.CreateCounter<int>("reserved_counter");
+        reservedCounter.Add(1, new KeyValuePair<string, object?>("__name__", "up"));
+        reservedCounter.Add(2, new KeyValuePair<string, object?>("__name__", "down"));
+
         // A histogram without any buckets, which only has a sum and a count
         var histogram = meter.CreateHistogram<double>("empty_histogram");
         histogram.Record(1, new KeyValuePair<string, object?>("a.b", "value"));
@@ -2792,6 +2797,8 @@ public sealed class PrometheusCollectionManagerTests
         Assert.Single(samples, s => s.StartsWith("bytes_gauge", StringComparison.Ordinal));
         Assert.Single(samples, s => s.StartsWith("ordered_counter_total", StringComparison.Ordinal));
         Assert.Single(samples, s => s.StartsWith("reserved_histogram_sum", StringComparison.Ordinal));
+        Assert.Single(samples, s => s.StartsWith("reserved_counter_total", StringComparison.Ordinal));
+        Assert.DoesNotContain(samples, s => s.Contains("__name__", StringComparison.Ordinal));
         Assert.Single(samples, s => s.StartsWith("empty_histogram_sum", StringComparison.Ordinal));
         Assert.Single(samples, s => s.StartsWith("empty_histogram_count", StringComparison.Ordinal));
     }
