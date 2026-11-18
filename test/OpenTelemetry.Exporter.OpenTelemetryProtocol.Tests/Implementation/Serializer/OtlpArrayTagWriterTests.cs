@@ -375,10 +375,10 @@ public sealed class OtlpArrayTagWriterTests : IDisposable
                 // Buffer should be expanded to accommodate the large array.
                 Assert.True(buffer.Length > 4096);
 
-                Assert.Single(request.ResourceSpans);
-                var scopeSpans = request.ResourceSpans.First().ScopeSpans;
-                Assert.Single(scopeSpans);
-                var otlpSpan = scopeSpans.First().Spans.First();
+                var resourceSpan = Assert.Single(request.ResourceSpans);
+                var scopeSpans = resourceSpan.ScopeSpans;
+                var scopeSpan = Assert.Single(scopeSpans);
+                var otlpSpan = scopeSpan.Spans.First();
                 Assert.NotNull(otlpSpan);
 
                 // The string is too large, hence not evaluating the content.

@@ -263,7 +263,7 @@ public class OtlpHttpExportClientTests
     [Fact]
     public void SendExportRequest_WithZstdCompression_RejectedByReceiver_RetriesWithGzipAndThenUsesGzip()
     {
-        const int ZstdCompressionRejectedEventId = 46;
+        const int ZstdCompressionRejectedEventId = 47;
 
         var payload = "00000000000000000000000000000000"u8.ToArray();
 
@@ -507,7 +507,7 @@ public class OtlpHttpExportClientTests
     [Fact]
     public void SendExportRequest_WithZstdCompression_UsesGzipWhenZstdIsNotSupported()
     {
-        const int ZstdCompressionNotSupportedEventId = 45;
+        const int ZstdCompressionNotSupportedEventId = 46;
 
         var payload = "00000000000000000000000000000000"u8.ToArray();
 

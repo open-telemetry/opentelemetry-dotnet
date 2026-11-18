@@ -36,8 +36,7 @@ public class MetricApiTests : MetricTestsBase
         counter.Add(100, new KeyValuePair<string, object?>("tagWithNullValue", null));
 
         meterProvider.ForceFlush(MaxTimeToAllowForFlush);
-        Assert.Single(exportedItems);
-        var metric = exportedItems[0];
+        var metric = Assert.Single(exportedItems);
         Assert.Equal("myCounter", metric.Name);
         List<MetricPoint> metricPoints = [];
         foreach (ref readonly var mp in metric.GetMetricPoints())
@@ -45,8 +44,7 @@ public class MetricApiTests : MetricTestsBase
             metricPoints.Add(mp);
         }
 
-        Assert.Single(metricPoints);
-        var metricPoint = metricPoints[0];
+        var metricPoint = Assert.Single(metricPoints);
         Assert.Equal(100, metricPoint.GetSumLong());
         Assert.Equal(1, metricPoint.Tags.Count);
         var tagEnumerator = metricPoint.Tags.GetEnumerator();
@@ -69,8 +67,7 @@ public class MetricApiTests : MetricTestsBase
         meter.CreateObservableGauge("myGauge", () => measurement);
 
         meterProvider.ForceFlush(MaxTimeToAllowForFlush);
-        Assert.Single(exportedItems);
-        var metric = exportedItems[0];
+        var metric = Assert.Single(exportedItems);
         Assert.Equal("myGauge", metric.Name);
         List<MetricPoint> metricPoints = [];
         foreach (ref readonly var mp in metric.GetMetricPoints())
@@ -78,8 +75,7 @@ public class MetricApiTests : MetricTestsBase
             metricPoints.Add(mp);
         }
 
-        Assert.Single(metricPoints);
-        var metricPoint = metricPoints[0];
+        var metricPoint = Assert.Single(metricPoints);
         Assert.Equal(100, metricPoint.GetGaugeLastValueLong());
         Assert.True(metricPoint.Tags.Count > 0);
     }
@@ -99,8 +95,7 @@ public class MetricApiTests : MetricTestsBase
         meter.CreateObservableGauge<long>("myBadGauge", observeValues: () => throw new InvalidOperationException("gauge read error"));
 
         meterProvider.ForceFlush(MaxTimeToAllowForFlush);
-        Assert.Single(exportedItems);
-        var metric = exportedItems[0];
+        var metric = Assert.Single(exportedItems);
         Assert.Equal("myGauge", metric.Name);
         List<MetricPoint> metricPoints = [];
         foreach (ref readonly var mp in metric.GetMetricPoints())
@@ -108,8 +103,7 @@ public class MetricApiTests : MetricTestsBase
             metricPoints.Add(mp);
         }
 
-        Assert.Single(metricPoints);
-        var metricPoint = metricPoints[0];
+        var metricPoint = Assert.Single(metricPoints);
         Assert.Equal(100, metricPoint.GetGaugeLastValueLong());
         Assert.True(metricPoint.Tags.Count > 0);
     }
@@ -131,8 +125,7 @@ public class MetricApiTests : MetricTestsBase
         var counter = meter.CreateCounter<long>("name1", unit);
         counter.Add(10);
         meterProvider.ForceFlush(MaxTimeToAllowForFlush);
-        Assert.Single(exportedItems);
-        var metric = exportedItems[0];
+        var metric = Assert.Single(exportedItems);
         Assert.Equal(unit ?? string.Empty, metric.Unit);
     }
 
@@ -153,8 +146,7 @@ public class MetricApiTests : MetricTestsBase
         var counter = meter.CreateCounter<long>("name1", null, description);
         counter.Add(10);
         meterProvider.ForceFlush(MaxTimeToAllowForFlush);
-        Assert.Single(exportedItems);
-        var metric = exportedItems[0];
+        var metric = Assert.Single(exportedItems);
         Assert.Equal(description ?? string.Empty, metric.Description);
     }
 
@@ -178,8 +170,7 @@ public class MetricApiTests : MetricTestsBase
         var counter = meter.CreateCounter<long>("name1");
         counter.Add(10);
         meterProvider.ForceFlush(MaxTimeToAllowForFlush);
-        Assert.Single(exportedItems);
-        var metric = exportedItems[0];
+        var metric = Assert.Single(exportedItems);
         Assert.Equal(meterName, metric.MeterName);
         Assert.Equal(meterVersion, metric.MeterVersion);
 
@@ -237,8 +228,7 @@ public class MetricApiTests : MetricTestsBase
             metricPoints.Add(mp);
         }
 
-        Assert.Single(metricPoints);
-        var metricPoint1 = metricPoints[0];
+        var metricPoint1 = Assert.Single(metricPoints);
         Assert.Equal(10, metricPoint1.GetSumLong());
 
         metric = exportedItems.First(m => TagComparator(m.MeterTags!.First(), meterTags2!.First()));
@@ -251,8 +241,7 @@ public class MetricApiTests : MetricTestsBase
             metricPoints.Add(mp);
         }
 
-        Assert.Single(metricPoints);
-        metricPoint1 = metricPoints[0];
+        metricPoint1 = Assert.Single(metricPoints);
         Assert.Equal(15, metricPoint1.GetSumLong());
     }
 
@@ -274,9 +263,8 @@ public class MetricApiTests : MetricTestsBase
         duplicateInstrument.Add(20);
 
         meterProvider.ForceFlush(MaxTimeToAllowForFlush);
-        Assert.Single(exportedItems);
 
-        var metric = exportedItems[0];
+        var metric = Assert.Single(exportedItems);
         Assert.Equal("instrumentName", metric.Name);
         List<MetricPoint> metricPoints = [];
         foreach (ref readonly var mp in metric.GetMetricPoints())
@@ -284,8 +272,7 @@ public class MetricApiTests : MetricTestsBase
             metricPoints.Add(mp);
         }
 
-        Assert.Single(metricPoints);
-        var metricPoint1 = metricPoints[0];
+        var metricPoint1 = Assert.Single(metricPoints);
         Assert.Equal(30, metricPoint1.GetSumLong());
     }
 
@@ -320,8 +307,7 @@ public class MetricApiTests : MetricTestsBase
             metric1MetricPoints.Add(mp);
         }
 
-        Assert.Single(metric1MetricPoints);
-        var metricPoint1 = metric1MetricPoints[0];
+        var metricPoint1 = Assert.Single(metric1MetricPoints);
         Assert.Equal(10, metricPoint1.GetSumLong());
 
         List<MetricPoint> metric2MetricPoints = [];
@@ -330,8 +316,7 @@ public class MetricApiTests : MetricTestsBase
             metric2MetricPoints.Add(mp);
         }
 
-        Assert.Single(metric2MetricPoints);
-        var metricPoint2 = metric2MetricPoints[0];
+        var metricPoint2 = Assert.Single(metric2MetricPoints);
         Assert.Equal(20, metricPoint2.GetSumLong());
     }
 
@@ -366,8 +351,7 @@ public class MetricApiTests : MetricTestsBase
             metric1MetricPoints.Add(mp);
         }
 
-        Assert.Single(metric1MetricPoints);
-        var metricPoint1 = metric1MetricPoints[0];
+        var metricPoint1 = Assert.Single(metric1MetricPoints);
         Assert.Equal(10, metricPoint1.GetSumLong());
 
         List<MetricPoint> metric2MetricPoints = [];
@@ -376,8 +360,7 @@ public class MetricApiTests : MetricTestsBase
             metric2MetricPoints.Add(mp);
         }
 
-        Assert.Single(metric2MetricPoints);
-        var metricPoint2 = metric2MetricPoints[0];
+        var metricPoint2 = Assert.Single(metric2MetricPoints);
         Assert.Equal(20, metricPoint2.GetSumLong());
     }
 
@@ -410,8 +393,7 @@ public class MetricApiTests : MetricTestsBase
             metric1MetricPoints.Add(mp);
         }
 
-        Assert.Single(metric1MetricPoints);
-        var metricPoint1 = metric1MetricPoints[0];
+        var metricPoint1 = Assert.Single(metric1MetricPoints);
         Assert.Equal(10, metricPoint1.GetSumLong());
 
         List<MetricPoint> metric2MetricPoints = [];
@@ -420,8 +402,7 @@ public class MetricApiTests : MetricTestsBase
             metric2MetricPoints.Add(mp);
         }
 
-        Assert.Single(metric2MetricPoints);
-        var metricPoint2 = metric2MetricPoints[0];
+        var metricPoint2 = Assert.Single(metric2MetricPoints);
         Assert.Equal(20D, metricPoint2.GetSumDouble());
     }
 
@@ -454,8 +435,7 @@ public class MetricApiTests : MetricTestsBase
             metric1MetricPoints.Add(mp);
         }
 
-        Assert.Single(metric1MetricPoints);
-        var metricPoint1 = metric1MetricPoints[0];
+        var metricPoint1 = Assert.Single(metric1MetricPoints);
         Assert.Equal(10, metricPoint1.GetSumLong());
 
         List<MetricPoint> metric2MetricPoints = [];
@@ -464,8 +444,7 @@ public class MetricApiTests : MetricTestsBase
             metric2MetricPoints.Add(mp);
         }
 
-        Assert.Single(metric2MetricPoints);
-        var metricPoint2 = metric2MetricPoints[0];
+        var metricPoint2 = Assert.Single(metric2MetricPoints);
         Assert.Equal(1, metricPoint2.GetHistogramCount());
         Assert.Equal(20D, metricPoint2.GetHistogramSum());
     }
@@ -644,8 +623,8 @@ public class MetricApiTests : MetricTestsBase
 
         meterProvider.ForceFlush(MaxTimeToAllowForFlush);
 
-        Assert.Single(exportedItems);
-        Assert.Equal("matching", exportedItems[0].Name);
+        var exportedItem = Assert.Single(exportedItems);
+        Assert.Equal("matching", exportedItem.Name);
     }
 
     [Fact]
@@ -691,8 +670,8 @@ public class MetricApiTests : MetricTestsBase
 
         meterProvider.ForceFlush(MaxTimeToAllowForFlush);
 
-        Assert.Single(exportedItems);
-        Assert.Equal("matching", exportedItems[0].Name);
+        var exportedItem = Assert.Single(exportedItems);
+        Assert.Equal("matching", exportedItem.Name);
     }
 
     [Fact]
@@ -975,8 +954,7 @@ public class MetricApiTests : MetricTestsBase
 
         // Export 1
         meterProvider.ForceFlush(MaxTimeToAllowForFlush);
-        Assert.Single(exportedItems);
-        var metric = exportedItems[0];
+        var metric = Assert.Single(exportedItems);
         Assert.Equal("observable-counter", metric.Name);
         List<MetricPoint> metricPoints = [];
         foreach (ref readonly var mp in metric.GetMetricPoints())
@@ -1001,8 +979,7 @@ public class MetricApiTests : MetricTestsBase
         // Export 2
         exportedItems.Clear();
         meterProvider.ForceFlush(MaxTimeToAllowForFlush);
-        Assert.Single(exportedItems);
-        metric = exportedItems[0];
+        metric = Assert.Single(exportedItems);
         Assert.Equal("observable-counter", metric.Name);
         metricPoints.Clear();
         foreach (ref readonly var mp in metric.GetMetricPoints())
@@ -1071,8 +1048,7 @@ public class MetricApiTests : MetricTestsBase
             .AddView("requestCount", new MetricStreamConfiguration() { TagKeys = [] }));
 
         meterProvider.ForceFlush(MaxTimeToAllowForFlush);
-        Assert.Single(exportedItems);
-        var metric = exportedItems[0];
+        var metric = Assert.Single(exportedItems);
         Assert.Equal("requestCount", metric.Name);
         List<MetricPoint> metricPoints = [];
         foreach (ref readonly var mp in metric.GetMetricPoints())
@@ -1080,10 +1056,8 @@ public class MetricApiTests : MetricTestsBase
             metricPoints.Add(mp);
         }
 
-        Assert.Single(metricPoints);
-
         var emptyTags = new List<KeyValuePair<string, object?>>();
-        var metricPoint1 = metricPoints[0];
+        var metricPoint1 = Assert.Single(metricPoints);
         ValidateMetricPointTags(emptyTags, metricPoint1.Tags);
 
         // This will fail, as SDK is not "spatially" aggregating the
@@ -1372,8 +1346,7 @@ public class MetricApiTests : MetricTestsBase
         // Record a measurement then export
         counter.Add(10, [.. tags1]);
         meterProvider.ForceFlush(MaxTimeToAllowForFlush);
-        Assert.Single(exportedItems);
-        var metric = exportedItems[0];
+        var metric = Assert.Single(exportedItems);
         Assert.Equal("sync-counter", metric.Name);
         List<MetricPoint> metricPoints = [];
         foreach (ref readonly var mp in metric.GetMetricPoints())
@@ -1381,8 +1354,8 @@ public class MetricApiTests : MetricTestsBase
             metricPoints.Add(mp);
         }
 
-        Assert.Single(metricPoints);
-        Assert.Equal(10, metricPoints[0].GetSumLong());
+        var singleMetricPoint = Assert.Single(metricPoints);
+        Assert.Equal(10, singleMetricPoint.GetSumLong());
 
         // Export again without recording new measurements.
         // For Cumulative temporality, synchronous counters must carry forward the total.
@@ -1392,16 +1365,15 @@ public class MetricApiTests : MetricTestsBase
 
         if (temporality == MetricReaderTemporalityPreference.Cumulative)
         {
-            Assert.Single(exportedItems);
-            metric = exportedItems[0];
+            metric = Assert.Single(exportedItems);
             metricPoints.Clear();
             foreach (ref readonly var mp in metric.GetMetricPoints())
             {
                 metricPoints.Add(mp);
             }
 
-            Assert.Single(metricPoints);
-            Assert.Equal(10, metricPoints[0].GetSumLong());
+            var metricPoint = Assert.Single(metricPoints);
+            Assert.Equal(10, metricPoint.GetSumLong());
         }
     }
 
@@ -1451,8 +1423,7 @@ public class MetricApiTests : MetricTestsBase
 
         // Export 1
         meterProvider.ForceFlush(MaxTimeToAllowForFlush);
-        Assert.Single(exportedItems);
-        var metric = exportedItems[0];
+        var metric = Assert.Single(exportedItems);
         Assert.Equal("observable-counter", metric.Name);
         List<MetricPoint> metricPoints = [];
         foreach (ref readonly var mp in metric.GetMetricPoints())
@@ -1477,8 +1448,7 @@ public class MetricApiTests : MetricTestsBase
         // Export 2
         exportedItems.Clear();
         meterProvider.ForceFlush(MaxTimeToAllowForFlush);
-        Assert.Single(exportedItems);
-        metric = exportedItems[0];
+        metric = Assert.Single(exportedItems);
         Assert.Equal("observable-counter", metric.Name);
         metricPoints.Clear();
         foreach (ref readonly var mp in metric.GetMetricPoints())
@@ -2061,8 +2031,7 @@ public class MetricApiTests : MetricTestsBase
         meterProvider.ForceFlush(MaxTimeToAllowForFlush);
 
         // Expecting one metric stream.
-        Assert.Single(exportedItems);
-        var metric = exportedItems[0];
+        var metric = Assert.Single(exportedItems);
         Assert.Equal(name, metric.Name);
     }
 
@@ -2104,8 +2073,7 @@ public class MetricApiTests : MetricTestsBase
         var gauge = meter.CreateGauge<long>(name: "NoiseLevel", unit: "dB", description: "Background Noise Level");
         gauge.Record(10);
         meterProvider.ForceFlush(MaxTimeToAllowForFlush);
-        Assert.Single(exportedItems);
-        var metric = exportedItems[0];
+        var metric = Assert.Single(exportedItems);
         Assert.Equal("Background Noise Level", metric.Description);
         List<MetricPoint> metricPoints = [];
         foreach (ref readonly var mp in metric.GetMetricPoints())
@@ -2146,8 +2114,7 @@ public class MetricApiTests : MetricTestsBase
             firstMetricPoints.Add(metricPoint);
         }
 
-        Assert.Single(firstMetricPoints);
-        var firstMetricPoint = firstMetricPoints[0];
+        var firstMetricPoint = Assert.Single(firstMetricPoints);
         Assert.Equal(10, firstMetricPoint.GetGaugeLastValueLong());
 
         // Flush the metrics again without recording any new measurements
@@ -2166,8 +2133,7 @@ public class MetricApiTests : MetricTestsBase
                 secondMetricPoints.Add(metricPoint);
             }
 
-            Assert.Single(secondMetricPoints);
-            var secondMetricPoint = secondMetricPoints[0];
+            var secondMetricPoint = Assert.Single(secondMetricPoints);
             Assert.Equal(10, secondMetricPoint.GetGaugeLastValueLong());
         }
         else if (temporalityPreference == MetricReaderTemporalityPreference.Delta)
@@ -2299,8 +2265,7 @@ public class MetricApiTests : MetricTestsBase
 
         // Export 1: Should get both time series
         meterProvider.ForceFlush(MaxTimeToAllowForFlush);
-        Assert.Single(exportedItems);
-        var metric = exportedItems[0];
+        var metric = Assert.Single(exportedItems);
         Assert.Equal("observable-updowncounter", metric.Name);
         List<MetricPoint> metricPoints = [];
         foreach (ref readonly var mp in metric.GetMetricPoints())
@@ -2321,8 +2286,7 @@ public class MetricApiTests : MetricTestsBase
         // Export 2: Should get only timeseries1
         exportedItems.Clear();
         meterProvider.ForceFlush(MaxTimeToAllowForFlush);
-        Assert.Single(exportedItems);
-        metric = exportedItems[0];
+        metric = Assert.Single(exportedItems);
         Assert.Equal("observable-updowncounter", metric.Name);
         metricPoints.Clear();
         foreach (ref readonly var mp in metric.GetMetricPoints())
@@ -2330,8 +2294,7 @@ public class MetricApiTests : MetricTestsBase
             metricPoints.Add(mp);
         }
 
-        Assert.Single(metricPoints);
-        metricPoint1 = metricPoints[0];
+        metricPoint1 = Assert.Single(metricPoints);
         Assert.Equal(10, getSum(metricPoint1));
         ValidateMetricPointTags(tags1, metricPoint1.Tags);
 
@@ -2392,8 +2355,7 @@ public class MetricApiTests : MetricTestsBase
 
         // Export 1: Should get both time series
         meterProvider.ForceFlush(MaxTimeToAllowForFlush);
-        Assert.Single(exportedItems);
-        var metric = exportedItems[0];
+        var metric = Assert.Single(exportedItems);
         Assert.Equal("observable-gauge", metric.Name);
         List<MetricPoint> metricPoints = [];
         foreach (ref readonly var mp in metric.GetMetricPoints())
@@ -2414,8 +2376,7 @@ public class MetricApiTests : MetricTestsBase
         // Export 2: Should get only tags1
         exportedItems.Clear();
         meterProvider.ForceFlush(MaxTimeToAllowForFlush);
-        Assert.Single(exportedItems);
-        metric = exportedItems[0];
+        metric = Assert.Single(exportedItems);
         Assert.Equal("observable-gauge", metric.Name);
         metricPoints.Clear();
         foreach (ref readonly var mp in metric.GetMetricPoints())
@@ -2423,8 +2384,7 @@ public class MetricApiTests : MetricTestsBase
             metricPoints.Add(mp);
         }
 
-        Assert.Single(metricPoints);
-        metricPoint1 = metricPoints[0];
+        metricPoint1 = Assert.Single(metricPoints);
         Assert.Equal(30, getLastValue(metricPoint1));
         ValidateMetricPointTags(tags1, metricPoint1.Tags);
 
@@ -2492,8 +2452,7 @@ public class MetricApiTests : MetricTestsBase
 
         // Collection 1: A=100, B=50
         meterProvider.ForceFlush(MaxTimeToAllowForFlush);
-        Assert.Single(exportedItems);
-        var metric = exportedItems[0];
+        var metric = Assert.Single(exportedItems);
         Assert.Equal("my_observable_counter", metric.Name);
         List<MetricPoint> metricPoints = [];
         foreach (ref readonly var mp in metric.GetMetricPoints())
@@ -2514,8 +2473,7 @@ public class MetricApiTests : MetricTestsBase
         // Collection 2: A=150, B missing
         exportedItems.Clear();
         meterProvider.ForceFlush(MaxTimeToAllowForFlush);
-        Assert.Single(exportedItems);
-        metric = exportedItems[0];
+        metric = Assert.Single(exportedItems);
         Assert.Equal("my_observable_counter", metric.Name);
         metricPoints.Clear();
         foreach (ref readonly var mp in metric.GetMetricPoints())
@@ -2523,16 +2481,14 @@ public class MetricApiTests : MetricTestsBase
             metricPoints.Add(mp);
         }
 
-        Assert.Single(metricPoints);
-        metricPointA = metricPoints[0];
+        metricPointA = Assert.Single(metricPoints);
         Assert.Equal(50, getSum(metricPointA));
         ValidateMetricPointTags(tagsA, metricPointA.Tags);
 
         // Collection 3: A=200, B=80 (B reappears)
         exportedItems.Clear();
         meterProvider.ForceFlush(MaxTimeToAllowForFlush);
-        Assert.Single(exportedItems);
-        metric = exportedItems[0];
+        metric = Assert.Single(exportedItems);
         Assert.Equal("my_observable_counter", metric.Name);
         metricPoints.Clear();
         foreach (ref readonly var mp in metric.GetMetricPoints())
@@ -2607,8 +2563,7 @@ public class MetricApiTests : MetricTestsBase
 
         // Export 1: Should get both time series
         meterProvider.ForceFlush(MaxTimeToAllowForFlush);
-        Assert.Single(exportedItems);
-        var metric = exportedItems[0];
+        var metric = Assert.Single(exportedItems);
         Assert.Equal("observable-counter", metric.Name);
         List<MetricPoint> metricPoints = [];
         foreach (ref readonly var mp in metric.GetMetricPoints())
@@ -2629,8 +2584,7 @@ public class MetricApiTests : MetricTestsBase
         // Export 2: Should get only tags1
         exportedItems.Clear();
         meterProvider.ForceFlush(MaxTimeToAllowForFlush);
-        Assert.Single(exportedItems);
-        metric = exportedItems[0];
+        metric = Assert.Single(exportedItems);
         Assert.Equal("observable-counter", metric.Name);
         metricPoints.Clear();
         foreach (ref readonly var mp in metric.GetMetricPoints())
@@ -2638,8 +2592,7 @@ public class MetricApiTests : MetricTestsBase
             metricPoints.Add(mp);
         }
 
-        Assert.Single(metricPoints);
-        metricPoint1 = metricPoints[0];
+        metricPoint1 = Assert.Single(metricPoints);
         Assert.Equal(temporality == MetricReaderTemporalityPreference.Cumulative ? 20 : 10, getSum(metricPoint1));
         ValidateMetricPointTags(tags1, metricPoint1.Tags);
 

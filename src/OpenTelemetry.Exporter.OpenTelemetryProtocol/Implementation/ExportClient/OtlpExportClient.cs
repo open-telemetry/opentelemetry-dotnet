@@ -45,6 +45,16 @@ internal abstract class OtlpExportClient : IExportClient
     private readonly ZstdCompressor? zstdCompressor;
 #endif
 
+#if NET
+    private readonly Func<HttpClient>? createReplacementHttpClient;
+#endif
+
+    private HttpClient httpClient;
+
+#if NET
+    private int replacementInProgress;
+#endif
+
     private int zstdRejected;
     private int zstdFallbackFailures;
 
@@ -70,7 +80,16 @@ internal abstract class OtlpExportClient : IExportClient
 
         this.Endpoint = new UriBuilder(exporterEndpoint).Uri;
         this.Headers = options.GetHeaders<Dictionary<string, string>>((d, k, v) => d.Add(k, v));
-        this.HttpClient = httpClient;
+        this.httpClient = httpClient;
+
+#if NET
+        // Only an HttpClient that the exporter created for itself is the exporter's to replace.
+        if (ReferenceEquals(options.HttpClientFactory, options.DefaultHttpClientFactory))
+        {
+            this.createReplacementHttpClient = options.DefaultHttpClientFactory;
+        }
+#endif
+
         this.compression = options.Compression;
 
         if (this.compression == OtlpExportCompression.Zstd)
@@ -91,7 +110,7 @@ internal abstract class OtlpExportClient : IExportClient
         this.MaxResponseSizeBytes = options.MaxResponseSizeBytes;
     }
 
-    internal HttpClient HttpClient { get; }
+    internal HttpClient HttpClient => Volatile.Read(ref this.httpClient);
 
     internal Uri Endpoint { get; }
 
@@ -165,7 +184,15 @@ internal abstract class OtlpExportClient : IExportClient
     /// <inheritdoc/>
     public bool Shutdown(int timeoutMilliseconds)
     {
-        this.HttpClient.CancelPendingRequests();
+        try
+        {
+            this.HttpClient.CancelPendingRequests();
+        }
+        catch (ObjectDisposedException)
+        {
+            // The HttpClient was replaced and disposed of concurrently,
+            // which has already canceled the requests that were pending on it.
+        }
 
 #if NET11_0_OR_GREATER
         this.zstdCompressor?.Shutdown();
@@ -405,15 +432,106 @@ internal abstract class OtlpExportClient : IExportClient
         }
     }
 
-    private HttpResponseMessage SendHttpRequest(HttpRequestMessage request, CancellationToken cancellationToken) =>
+    private HttpResponseMessage SendHttpRequest(HttpRequestMessage request, CancellationToken cancellationToken)
+    {
+        var httpClient = this.HttpClient;
+
 #if NET
-        // Note: SendAsync must be used with HTTP/2 because synchronous send is
-        // not supported.
-        this.RequireHttp2 || !SynchronousSendSupportedByCurrentPlatform
-            ? this.HttpClient.SendAsync(request, this.CompletionOption, cancellationToken).GetAwaiter().GetResult()
-            : this.HttpClient.Send(request, this.CompletionOption, cancellationToken);
+        try
+        {
+            // Note: SendAsync must be used with HTTP/2 because synchronous send is
+            // not supported.
+            return this.RequireHttp2 || !SynchronousSendSupportedByCurrentPlatform
+                ? httpClient.SendAsync(request, this.CompletionOption, cancellationToken).GetAwaiter().GetResult()
+                : httpClient.Send(request, this.CompletionOption, cancellationToken);
+        }
+        catch (HttpRequestException ex) when (ex.HttpRequestError == HttpRequestError.VersionNegotiationError)
+        {
+            // Once a connection to the endpoint has been established without HTTP/2
+            // being negotiated, the HttpClient does not attempt HTTP/2 with the
+            // endpoint again for as long as it keeps being used, so every later
+            // request that requires HTTP/2 fails without a connection being opened,
+            // even after the endpoint supports HTTP/2 again. This request has failed
+            // either way, but the next one is sent with a new HttpClient so that
+            // the protocol is negotiated again.
+            this.ReplaceHttpClient(httpClient);
+
+            throw;
+        }
 #else
-        this.HttpClient.SendAsync(request, this.CompletionOption, cancellationToken).GetAwaiter().GetResult();
+        return httpClient.SendAsync(request, this.CompletionOption, cancellationToken).GetAwaiter().GetResult();
+#endif
+    }
+
+#if NET
+    private void ReplaceHttpClient(HttpClient current)
+    {
+        if (this.createReplacementHttpClient is not { } createReplacement ||
+            Interlocked.CompareExchange(ref this.replacementInProgress, 1, 0) != 0)
+        {
+            // The HttpClient is not the exporter's to replace,
+            // or it is already being replaced.
+            return;
+        }
+
+        // Only the caller that holds the gate writes the HttpClient, so whether
+        // it has already been replaced must be checked while the gate is held.
+        if (!ReferenceEquals(this.HttpClient, current))
+        {
+            Volatile.Write(ref this.replacementInProgress, 0);
+            return;
+        }
+
+        // Creating an HttpClient can block, for example while certificates are
+        // checked for revocation, which does not respect the deadline of an export.
+        // It is therefore not done on the thread that is exporting, so that the
+        // failed export is not held up. A dedicated thread is used so that the
+        // replacement does not depend on the thread pool, and the next export
+        // is sent with the replacement once it is ready.
+        try
+        {
+            _ = Task.Factory.StartNew(
+                () => this.CreateReplacementHttpClient(current, createReplacement),
+                CancellationToken.None,
+                TaskCreationOptions.LongRunning,
+                TaskScheduler.Default);
+        }
+        catch (Exception)
+        {
+            // The thread could not be started. Keep the current HttpClient so that the
+            // original failure is reported, and try again after the next failure.
+            Volatile.Write(ref this.replacementInProgress, 0);
+        }
+    }
+
+    private void CreateReplacementHttpClient(HttpClient current, Func<HttpClient> createReplacement)
+    {
+        try
+        {
+            HttpClient replacement;
+
+            try
+            {
+                replacement = createReplacement();
+            }
+            catch (Exception)
+            {
+                // The replacement could not be created, for example because a
+                // certificate file could not be loaded. Keep the current HttpClient
+                // and try again after the next failure.
+                return;
+            }
+
+            // Only a single replacement is attempted at a time, so nothing else writes the HttpClient.
+            Volatile.Write(ref this.httpClient, replacement);
+
+            current.Dispose();
+        }
+        finally
+        {
+            Volatile.Write(ref this.replacementInProgress, 0);
+        }
+    }
 #endif
 
     /// <summary>

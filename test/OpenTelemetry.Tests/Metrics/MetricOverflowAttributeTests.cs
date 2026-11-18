@@ -41,8 +41,7 @@ public class MetricOverflowAttributeTests
 
         meterProvider.ForceFlush();
 
-        Assert.Single(exportedItems);
-        var metric = exportedItems[0];
+        var metric = Assert.Single(exportedItems);
 
         var metricPoints = new List<MetricPoint>();
         foreach (ref readonly var mp in metric.GetMetricPoints())
@@ -181,8 +180,7 @@ public class MetricOverflowAttributeTests
 
         meterProvider.ForceFlush();
 
-        Assert.Single(exportedItems);
-        var metric = exportedItems[0];
+        var metric = Assert.Single(exportedItems);
 
         var metricPoints = new List<MetricPoint>();
         foreach (ref readonly var mp in metric.GetMetricPoints())

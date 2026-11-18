@@ -54,9 +54,8 @@ public sealed class ResourceTests : IDisposable
         var resource = new Resource(attributes);
 
         // Assert
-        Assert.Single(resource.Attributes);
 
-        var attribute = resource.Attributes.Single();
+        var attribute = Assert.Single(resource.Attributes);
         Assert.Empty(attribute.Key);
         Assert.Equal("value", attribute.Value);
     }

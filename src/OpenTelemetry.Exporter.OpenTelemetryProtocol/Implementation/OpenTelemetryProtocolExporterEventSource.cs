@@ -8,6 +8,8 @@ using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 
+// Any redaction here is best-effort only - we do not guarantee that any exception will be free of potentially sensitive information
+
 [EventSource(Name = "OpenTelemetry-Exporter-OpenTelemetryProtocol")]
 internal sealed class OpenTelemetryProtocolExporterEventSource : EventSource, IConfigurationExtensionsLogger
 {
@@ -393,12 +395,41 @@ internal sealed class OpenTelemetryProtocolExporterEventSource : EventSource, IC
     internal void GrpcStatusDetailsCodeMismatch(int grpcStatusCode, int detailsStatusCode)
         => this.WriteEvent(44, grpcStatusCode, detailsStatusCode);
 
+    [NonEvent]
+    internal void LogRecordDataReadFailed(string dataName, Exception ex)
+    {
+        if (Log.IsEnabled(EventLevel.Warning, EventKeywords.All))
+        {
+            string exception;
+            try
+            {
+                exception = ex.ToInvariantString();
+            }
+            catch (Exception e) when (e is not OutOfMemoryException)
+            {
+                // The exception was thrown by data which could not be read, so it may
+                // not be possible to convert it to a string either. Reporting the
+                // failure must not fail the serialization of the log record.
+                exception = ex.GetType().ToString();
+            }
+
+            this.LogRecordDataReadFailed(dataName, exception);
+        }
+    }
+
     [Event(
         45,
+        Message = "Failed to read the {0} of a log record. The log record will be exported without it. Exception: {1}",
+        Level = EventLevel.Warning)]
+    internal void LogRecordDataReadFailed(string dataName, string exception)
+        => this.WriteEvent(45, dataName, exception);
+
+    [Event(
+        46,
         Message = "Zstandard compression is not supported on this platform. GZip compression will be used instead.",
         Level = EventLevel.Warning)]
     internal void ZstdCompressionNotSupported()
-        => this.WriteEvent(45);
+        => this.WriteEvent(46);
 
     [NonEvent]
     internal void ZstdCompressionRejected(Uri endpoint)
@@ -410,11 +441,11 @@ internal sealed class OpenTelemetryProtocolExporterEventSource : EventSource, IC
     }
 
     [Event(
-        46,
+        47,
         Message = "The request to endpoint '{0}' compressed with Zstandard was rejected. The request will be sent again compressed with GZip.",
         Level = EventLevel.Warning)]
     internal void ZstdCompressionRejected(string endpoint)
-        => this.WriteEvent(46, endpoint);
+        => this.WriteEvent(47, endpoint);
 
     private static string RedactEndpointUri(Uri endpoint)
     {

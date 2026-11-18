@@ -103,13 +103,9 @@ public sealed class LogRecordAttributeListTests
         Assert.Equal("key0", item.Key);
         Assert.Equal(0, (int)item.Value!);
 
-        Assert.Collection(
-            attributes,
-            exportedItem =>
-            {
-                Assert.Equal("key0", exportedItem.Key);
-                Assert.Equal(0, (int)exportedItem.Value!);
-            });
+        var exportedItem = Assert.Single(attributes);
+        Assert.Equal("key0", exportedItem.Key);
+        Assert.Equal(0, (int)exportedItem.Value!);
     }
 
     [Fact]
@@ -301,7 +297,7 @@ public sealed class LogRecordAttributeListTests
         attributes.Add("key0", 0);
         attributes.Add("key1", 1);
 
-        var list = Assert.IsAssignableFrom<IReadOnlyList<KeyValuePair<string, object?>>>(attributes);
+        var list = Assert.IsType<IReadOnlyList<KeyValuePair<string, object?>>>(attributes, exactMatch: false);
         Assert.Equal(2, list.Count);
         Assert.Equal("key1", list[1].Key);
         Assert.Equal(["key0", "key1"], list.Select(x => x.Key));

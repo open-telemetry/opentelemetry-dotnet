@@ -280,20 +280,20 @@ public class MultipleReadersTests
 
         // VALIDATE
         Assert.Equal(1, callbackInvocationCount);
-        Assert.Single(exportedItems1);
-        Assert.Single(exportedItems2);
-        AssertLongSumValueForMetric(exportedItems1[0], 10);
-        AssertLongSumValueForMetric(exportedItems2[0], 10);
+        var exportedItems1Item = Assert.Single(exportedItems1);
+        var exportedItems2Item = Assert.Single(exportedItems2);
+        AssertLongSumValueForMetric(exportedItems1Item, 10);
+        AssertLongSumValueForMetric(exportedItems2Item, 10);
 
         if (hasViews)
         {
-            Assert.Equal("renamedGauge", exportedItems1[0].Name);
-            Assert.Equal("renamedGauge", exportedItems2[0].Name);
+            Assert.Equal("renamedGauge", exportedItems1Item.Name);
+            Assert.Equal("renamedGauge", exportedItems2Item.Name);
         }
         else
         {
-            Assert.Equal("gauge", exportedItems1[0].Name);
-            Assert.Equal("gauge", exportedItems2[0].Name);
+            Assert.Equal("gauge", exportedItems1Item.Name);
+            Assert.Equal("gauge", exportedItems2Item.Name);
         }
 
         Assert.True(meterProvider.Shutdown());

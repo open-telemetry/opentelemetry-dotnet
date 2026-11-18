@@ -374,6 +374,17 @@ The following options are only applicable to `OtlpTraceExporter`:
   processor](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk.md#built-in-span-processors).
   The default is Batch.
 
+  With Simple each span is exported on its own as soon as it has ended, in the
+  order in which the spans ended. As with Batch, the export is done by a thread
+  of the processor and not by the thread which ended the span, so a span may not
+  have been exported yet when the call which ended it returns. At most 2048
+  spans wait to be exported, and a span which ends while that many are waiting
+  is dropped.
+
+  Call `ForceFlush()` and check its result before relying on pending exports
+  being complete. On single-threaded platforms `ForceFlush()` triggers export
+  without waiting and returns `false` while exports are still pending.
+
 * `BatchExportProcessorOptions`: Configuration options for the batch exporter.
   Only used if ExportProcessorType is set to Batch.
 
@@ -407,6 +418,18 @@ appBuilder.Services.Configure<LogRecordExportProcessorOptions>(o =>
 appBuilder.Services.Configure<LogRecordExportProcessorOptions>(
     appBuilder.Configuration.GetSection("OpenTelemetry:Logging"));
 ```
+
+When `ExportProcessorType` is set to `ExportProcessorType.Simple` each log
+record is exported on its own as soon as it has been written, in the order in
+which the log records were written. As with `ExportProcessorType.Batch`, the
+export is done by a thread of the processor and not by the thread which wrote
+the log record, so a log record may not have been exported yet when the call
+which wrote it returns. At most 2048 log records wait to be exported, and a log
+record which is written while that many are waiting is dropped.
+
+Call `ForceFlush()` and check its result before relying on pending exports
+being complete. On single-threaded platforms `ForceFlush()` triggers export
+without waiting and returns `false` while exports are still pending.
 
 ### MetricReaderOptions
 
@@ -682,16 +705,22 @@ services.AddHttpClient(
 > [!NOTE]
 > The `HttpClient` the exporter creates itself does not follow HTTP redirects,
   so the configured `Headers` and the telemetry are only sent to the configured
-  `Endpoint`, and a `3xx` response is treated as a failed export. An
-  `HttpClient` supplied through the `HttpClientFactory` option or created by
-  `IHttpClientFactory` uses its own redirect policy, which by default follows
-  redirects. To prevent the named `HttpClient` from following redirects,
-  configure its primary handler:
+  `Endpoint`, and a `3xx` response is treated as a failed export. Outside of
+  browser environments, where cookie handling is controlled by the browser and
+  is unchanged, it also does not automatically store cookies, so a `Set-Cookie`
+  header in a response from the `Endpoint` is ignored rather than being sent
+  with every later export. Headers configured explicitly, such as a `Cookie`
+  header, are still sent. An `HttpClient`
+  supplied through the `HttpClientFactory` option or created by
+  `IHttpClientFactory` uses its own redirect and cookie policy, which by
+  default follows redirects and stores cookies. To prevent the named
+  `HttpClient` from following redirects or using cookies, configure its
+  primary handler:
 
 ```csharp
 services.AddHttpClient("OtlpTraceExporter")
     .ConfigurePrimaryHttpMessageHandler(
-        () => new HttpClientHandler { AllowAutoRedirect = false });
+        () => new HttpClientHandler { AllowAutoRedirect = false, UseCookies = false });
 ```
 
 > [!IMPORTANT]

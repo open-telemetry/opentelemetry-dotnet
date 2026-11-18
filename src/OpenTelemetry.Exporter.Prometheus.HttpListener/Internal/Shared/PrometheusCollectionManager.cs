@@ -663,14 +663,23 @@ internal sealed class PrometheusCollectionManager
             var suppressScopeInfo = !this.scopeInfoEnabled;
             var resourceConstantLabels = this.GetResourceConstantLabels();
 
+            var droppedMetricCount = 0;
+            string? firstDroppedMetricName = null;
+
+            // The metadata of a family is written with its first metric. When that metric does not fit in
+            // the response, the metadata is written with the next metric of the family which does instead.
+            var writeDroppedMetadata = false;
+
             foreach (var metricState in metricStates)
             {
                 if (metricState.WriteType)
                 {
                     // This is the first metric of a new metric family, and only the metrics of a family can have the same series.
                     this.series.StartFamily();
+                    writeDroppedMetadata = false;
                 }
 
+                var writeMetadata = metricState.WriteType || writeDroppedMetadata;
                 var metricStart = cursor;
                 var seriesMark = this.series.Mark();
                 var deduplicate = metricState.Deduplicate;
@@ -692,9 +701,9 @@ internal sealed class PrometheusCollectionManager
                             metricStart,
                             metricState.Metric,
                             metricState.PrometheusMetric,
-                            metricState.WriteType,
-                            metricState.WriteUnit,
-                            metricState.WriteHelp,
+                            writeMetadata,
+                            writeMetadata && metricState.WriteUnit,
+                            writeMetadata && metricState.WriteHelp,
                             metricState.Unit,
                             metricState.Help,
                             options);
@@ -709,16 +718,29 @@ internal sealed class PrometheusCollectionManager
                             continue;
                         }
 
+                        // The end of the response follows the last metric, so a metric only fits in the response when
+                        // there is room for that too. What is written here is overwritten by the next metric, if any.
+                        _ = serializer.WriteEof(state.Buffer, cursor);
+
+                        writeDroppedMetadata = false;
                         break;
                     }
-                    catch (Exception ex) when (ex is IndexOutOfRangeException or ArgumentException)
+                    catch (Exception ex) when (ex is IndexOutOfRangeException or ArgumentException or SerializedTagsTooLargeException)
                     {
                         // The metric is written again, so the series that it had written must be forgotten.
                         this.series.Rollback(seriesMark);
 
-                        if (!state.TryExpandBuffer())
+                        // The tags of a metric point which are too large to be serialized do not fit in any response,
+                        // so growing the response would not help and the metric is left out of it straight away.
+                        if (ex is SerializedTagsTooLargeException || !state.TryExpandBuffer())
                         {
-                            throw;
+                            // The response cannot grow any further, so the metric is left out of it rather than the
+                            // whole response being discarded, which would lose the metrics which do fit as well.
+                            cursor = metricStart;
+                            writeDroppedMetadata = writeMetadata;
+                            droppedMetricCount++;
+                            firstDroppedMetricName ??= metricState.Metric.Name;
+                            break;
                         }
                     }
                 }
@@ -727,6 +749,20 @@ internal sealed class PrometheusCollectionManager
             if (this.series.DroppedCount > 0)
             {
                 PrometheusExporterEventSource.Log.DuplicateSeriesDropped(this.series.DroppedCount, this.series.FirstDroppedMetricName!);
+            }
+
+            if (droppedMetricCount > 0)
+            {
+                PrometheusExporterEventSource.Log.MetricsDroppedFromResponse(firstDroppedMetricName!, droppedMetricCount, this.maxBufferSize);
+
+                if (droppedMetricCount == metricStates.Count)
+                {
+                    // None of the metrics fit, so the scrape fails rather than being answered
+                    // with a response which misleadingly contains no metrics at all.
+                    state.ResetView();
+
+                    return false;
+                }
             }
 
             while (true)
@@ -1095,7 +1131,9 @@ internal sealed class PrometheusCollectionManager
             // with unit "logins"), is taken for the '_total' suffix of a counter, or may be changed by
             // escaping. The UNIT metadata is optional, but a unit which is not an underscore-separated
             // suffix of the name makes the whole OpenMetrics exposition invalid, so it is omitted then.
-            var writeUnit = writeMetadata &&
+            // Whether there is a unit and a help to write is known for every metric of the family, as
+            // the metadata is written with a later metric when the first one does not fit in the response.
+            var writeUnit =
                 metadataState.Unit != null &&
                 PrometheusMetric.HasUnitSuffix(metricState.MetadataName, metadataState.Unit);
 
@@ -1105,7 +1143,7 @@ internal sealed class PrometheusCollectionManager
                     metricState.PrometheusMetric,
                     writeMetadata,
                     writeUnit,
-                    writeMetadata && metadataState.Help != null,
+                    metadataState.Help != null,
                     metadataState.Unit,
                     metadataState.Help,
                     deduplicate));

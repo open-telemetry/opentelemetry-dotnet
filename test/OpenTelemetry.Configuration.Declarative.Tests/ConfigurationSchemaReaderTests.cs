@@ -272,7 +272,7 @@ public sealed class ConfigurationSchemaReaderTests
         var exception = Assert.Throws<InvalidOperationException>(() => Read(schema));
 
         Assert.StartsWith("The configuration schema is not valid JSON:", exception.Message, StringComparison.Ordinal);
-        Assert.IsAssignableFrom<YamlDotNet.Core.YamlException>(exception.InnerException);
+        Assert.IsType<YamlDotNet.Core.YamlException>(exception.InnerException, exactMatch: false);
     }
 
     [Fact]
