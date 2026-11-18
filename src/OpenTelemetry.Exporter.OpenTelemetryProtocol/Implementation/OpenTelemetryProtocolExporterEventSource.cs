@@ -395,20 +395,6 @@ internal sealed class OpenTelemetryProtocolExporterEventSource : EventSource, IC
     internal void GrpcStatusDetailsCodeMismatch(int grpcStatusCode, int detailsStatusCode)
         => this.WriteEvent(44, grpcStatusCode, detailsStatusCode);
 
-    [Event(
-        45,
-        Message = "A metric point of the metric '{0}' was dropped because its serialized size exceeds the maximum request size of {1} bytes.",
-        Level = EventLevel.Error)]
-    internal void MetricPointDroppedDueToSizeLimit(string metricName, int maxRequestSizeBytes)
-        => this.WriteEvent(45, metricName, maxRequestSizeBytes);
-
-    [Event(
-        46,
-        Message = "Metrics batch containing {0} item(s) exceeded the maximum request size of {1} bytes and was exported as {2} requests.",
-        Level = EventLevel.Warning)]
-    internal void BatchExportedAsMultipleRequests(long itemCount, long maxRequestSizeBytes, long requestCount)
-        => this.WriteEvent(46, itemCount, maxRequestSizeBytes, requestCount);
-
     [NonEvent]
     internal void LogRecordDataReadFailed(string dataName, Exception ex)
     {
@@ -432,11 +418,25 @@ internal sealed class OpenTelemetryProtocolExporterEventSource : EventSource, IC
     }
 
     [Event(
-        47,
+        45,
         Message = "Failed to read the {0} of a log record. The log record will be exported without it. Exception: {1}",
         Level = EventLevel.Warning)]
     internal void LogRecordDataReadFailed(string dataName, string exception)
-        => this.WriteEvent(47, dataName, exception);
+        => this.WriteEvent(45, dataName, exception);
+
+    [Event(
+        46,
+        Message = "A metric point of the metric '{0}' was dropped because its serialized size exceeds the maximum request size of {1} bytes.",
+        Level = EventLevel.Error)]
+    internal void MetricPointDroppedDueToSizeLimit(string metricName, int maxRequestSizeBytes)
+        => this.WriteEvent(46, metricName, maxRequestSizeBytes);
+
+    [Event(
+        47,
+        Message = "Metrics batch containing {0} item(s) exceeded the maximum request size of {1} bytes and was exported as {2} requests.",
+        Level = EventLevel.Warning)]
+    internal void BatchExportedAsMultipleRequests(long itemCount, long maxRequestSizeBytes, long requestCount)
+        => this.WriteEvent(47, itemCount, maxRequestSizeBytes, requestCount);
 
     private static string RedactEndpointUri(Uri endpoint)
     {
