@@ -334,7 +334,15 @@ public static class OtlpLogExporterHelperExtensions
 
             if (exportProcessorType == ExportProcessorType.Simple)
             {
-                return new SimpleLogRecordExportProcessor(otlpExporter);
+                // SimpleLogRecordExportProcessor is deliberately not used for
+                // ExportProcessorType.Simple. It exports on the thread which
+                // wrote the log record while holding a lock, and an export blocks
+                // that thread until thread pool threads have completed the HTTP
+                // request. A batch size of 1 still exports each log record on its
+                // own, in order and as soon as it has been written, but on a thread.
+                // The processor's export timeout is disabled so that, as before, only
+                // the timeout of the exporter itself limits how long an export takes.
+                return new BatchLogRecordExportProcessor(otlpExporter, exporterTimeoutMilliseconds: 0, maxExportBatchSize: 1);
             }
             else
             {

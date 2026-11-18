@@ -182,6 +182,9 @@ public class OtlpLogExporterTests
 
         logger.HelloFrom("tomato", 2.99);
 
+        // The log record is exported by a thread of the processor.
+        Assert.True(SpinWait.SpinUntil(() => testHandler.RequestCount == 1, TimeSpan.FromSeconds(10)));
+
         Assert.Equal(1, invocations);
         Assert.NotNull(testHandler.HttpRequestMessage);
     }
@@ -1949,8 +1952,9 @@ public class OtlpLogExporterTests
         var provider = sp.GetRequiredService<LoggerProvider>() as LoggerProviderSdk;
         Assert.NotNull(provider);
 
-        var simpleProcessor = provider.Processor as SimpleLogRecordExportProcessor;
+        var simpleProcessor = provider.Processor as BatchLogRecordExportProcessor;
         Assert.NotNull(simpleProcessor);
+        Assert.Equal(1, simpleProcessor.MaxExportBatchSize);
     }
 
     [Theory]
@@ -2059,9 +2063,84 @@ public class OtlpLogExporterTests
         }
         else
         {
-            var simpleProcessor = processor as SimpleLogRecordExportProcessor;
+            var simpleProcessor = processor as BatchLogRecordExportProcessor;
 
             Assert.NotNull(simpleProcessor);
+            Assert.Equal(1, simpleProcessor.MaxExportBatchSize);
+        }
+    }
+
+    [Fact]
+    public void SimpleExportProcessorTypeExportsEachLogRecordWithoutBlockingTheCallingThread()
+    {
+        const int LogRecordCount = 3;
+
+        using var logRecordsWritten = new ManualResetEventSlim();
+
+        var callingThreadId = Environment.CurrentManagedThreadId;
+        var exportedOnCallingThread = false;
+        var exportDeadlineSet = false;
+        var logRecordsWrittenDuringExport = true;
+        var exportedBatches = new List<string?[]>();
+        DelegatingExporter<LogRecord>? delegatingExporter = null;
+
+        using (var loggerFactory = LoggerFactory.Create(builder => builder
+            .UseOpenTelemetry(
+                logging => logging.AddProcessor(sp => OtlpLogExporterHelperExtensions.BuildOtlpLogExporter(
+                    sp,
+                    new OtlpExporterOptions(),
+                    new LogRecordExportProcessorOptions { ExportProcessorType = ExportProcessorType.Simple },
+                    new SdkLimitOptions(),
+                    new ExperimentalOptions(),
+                    configureExporterInstance: otlpExporter =>
+                    {
+                        otlpExporter.Dispose();
+
+                        return delegatingExporter = new DelegatingExporter<LogRecord>
+                        {
+                            OnExportFunc = batch =>
+                            {
+                                exportedOnCallingThread |= Environment.CurrentManagedThreadId == callingThreadId;
+                                exportDeadlineSet |= delegatingExporter!.ExportDeadlineUtc != DateTime.MaxValue;
+
+                                // An export in progress must not stop the other log records from being written.
+                                logRecordsWrittenDuringExport &= logRecordsWritten.Wait(TimeSpan.FromSeconds(5));
+
+                                var messages = new List<string?>();
+                                foreach (var logRecord in batch)
+                                {
+                                    messages.Add(logRecord.FormattedMessage);
+                                }
+
+                                exportedBatches.Add([.. messages]);
+                                return ExportResult.Success;
+                            },
+                        };
+                    })),
+                options => options.IncludeFormattedMessage = true)))
+        {
+            var logger = loggerFactory.CreateLogger(nameof(OtlpLogExporterTests));
+
+            for (var i = 0; i < LogRecordCount; i++)
+            {
+                logger.HelloFrom($"tomato-{i}", 2.99);
+            }
+
+            logRecordsWritten.Set();
+        }
+
+        Assert.False(exportedOnCallingThread);
+        Assert.True(logRecordsWrittenDuringExport);
+
+        // The processor does not limit the time an export may take, only the exporter's own timeout does.
+        Assert.False(exportDeadlineSet);
+
+        // Each log record is still exported on its own, in the order in which they were written.
+        Assert.Equal(LogRecordCount, exportedBatches.Count);
+        for (var i = 0; i < LogRecordCount; i++)
+        {
+            var message = Assert.Single(exportedBatches[i]);
+            Assert.Contains($"tomato-{i}", message, StringComparison.Ordinal);
         }
     }
 
