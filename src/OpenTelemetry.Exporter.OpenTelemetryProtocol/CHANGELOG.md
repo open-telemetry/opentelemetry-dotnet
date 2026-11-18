@@ -44,7 +44,7 @@ Notes](../../RELEASENOTES.md).
   determined is no longer accepted. Use a directory which only the
   application's user can write to, or disable the checks by setting
   `OTEL_DOTNET_EXPERIMENTAL_OTLP_DISK_RETRY_CHECK_PERMISSIONS` to `false`.
-  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+  ([#8160](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8160))
 
 ## 1.21.0
 
