@@ -931,18 +931,29 @@ public sealed partial class PrometheusSerializerTests
     }
 
     [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
-    public void WriteMetricDoesNotKeepMoreThanTheBufferCanHoldWhenAddingUpPoints(bool histogram)
+    [InlineData(false, false)]
+    [InlineData(true, false)]
+    [InlineData(true, true)]
+    public void WriteMetricDoesNotKeepMoreThanTheBufferCanHoldWhenAddingUpPoints(bool histogram, bool manyBuckets)
     {
         var buffer = new byte[85000];
         var metrics = new List<Metric>();
 
         using var meter = CreateMeter();
-        using var provider = Sdk.CreateMeterProviderBuilder()
+
+        var builder = Sdk.CreateMeterProviderBuilder()
             .AddMeter(meter.Name)
-            .AddInMemoryExporter(metrics)
-            .Build();
+            .AddInMemoryExporter(metrics);
+
+        if (manyBuckets)
+        {
+            // Many buckets for each series, which have short labels, so it is their counts that there are many of
+            builder = builder.AddView(
+                "test_histogram",
+                new ExplicitBucketHistogramConfiguration { Boundaries = Enumerable.Range(1, 500).Select(i => (double)i).ToArray() });
+        }
+
+        using var provider = builder.Build();
 
         var counter = meter.CreateCounter<long>("test_counter");
         var histogramInstrument = meter.CreateHistogram<double>("test_histogram");
@@ -963,7 +974,7 @@ public sealed partial class PrometheusSerializerTests
         RecordPoint(new KeyValuePair<string, object?>("method", "a"));
         RecordPoint(new KeyValuePair<string, object?>("method", "a"), new KeyValuePair<string, object?>("k", string.Empty));
 
-        var padding = new string('x', 4096);
+        var padding = manyBuckets ? string.Empty : new string('x', 4096);
 
         for (var i = 0; i < 1000; i++)
         {
@@ -986,7 +997,8 @@ public sealed partial class PrometheusSerializerTests
         Assert.True(exception is IndexOutOfRangeException or ArgumentException);
 
 #if NET
-        // Keeping the series of all of the points would need 1,000 times a string of 8 KB, but those of the buffer are all that are kept.
+        // Keeping the series of all of the points would need 1,000 times a string of 8 KB, or the 500 counts of the buckets of each,
+        // but those of the buffer are all that are kept.
         Assert.InRange(allocated, 0, 2 * 1024 * 1024);
 #endif
     }

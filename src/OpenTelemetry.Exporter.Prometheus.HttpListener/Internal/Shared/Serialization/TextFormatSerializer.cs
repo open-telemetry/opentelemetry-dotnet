@@ -2787,7 +2787,9 @@ internal abstract class TextFormatSerializer
         var points = new List<MergedPoint>();
 
         // The labels of each new series are kept where the metric is about to be, and are written over once the values
-        // are known, so that what is kept cannot be more than the buffer can hold.
+        // are known, as are the counts of its buckets, which are only accounted for, so that what is kept cannot be more
+        // than the buffer can hold. As each bucket is written as a line of its own, which is longer than its count, a metric
+        // that fits is never more than that.
         var scratch = cursor;
 
         foreach (ref readonly var metricPoint in metric.GetMetricPoints())
@@ -2803,12 +2805,16 @@ internal abstract class TextFormatSerializer
             {
                 var identity = SeriesRegistry.GetIdentity(serializedTagsBuffer, 0, serializedTagsLength);
 
+                var keep = false;
+
                 if (!series.TryGetValue(identity, out var mergedPoint))
                 {
                     series[identity] = mergedPoint = new MergedPoint(identity);
 
                     // A series that has been written for another metric is dropped, so it is not kept.
-                    if (options.Series?.Contains(identity) != true)
+                    keep = options.Series?.Contains(identity) != true;
+
+                    if (keep)
                     {
                         new ReadOnlySpan<byte>(serializedTagsBuffer, 0, serializedTagsLength).CopyTo(new Span<byte>(buffer, scratch, serializedTagsLength));
                         scratch += serializedTagsLength;
@@ -2830,6 +2836,16 @@ internal abstract class TextFormatSerializer
                     }
 
                     bucketIndex++;
+                }
+
+                if (keep)
+                {
+                    scratch += bucketIndex * sizeof(long);
+
+                    if (scratch > buffer.Length)
+                    {
+                        throw new ArgumentOutOfRangeException(nameof(buffer), "The buffer is not large enough for the buckets of the histogram.");
+                    }
                 }
 
                 mergedPoint.HistogramSum += metricPoint.GetHistogramSum();
