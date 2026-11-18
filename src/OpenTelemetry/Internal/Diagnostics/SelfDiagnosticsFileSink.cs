@@ -59,6 +59,13 @@ internal sealed class SelfDiagnosticsFileSink : ISelfDiagnosticsSink
     // instead of inventing a parallel one.
     private static readonly string ProcessIdentity = BuildProcessIdentity();
 
+    // Full paths of the files that sinks in this process created under bounded retention and
+    // have not pruned yet. The log directory may be shared with other users, so a file whose
+    // name matches the series is not necessarily one of ours: a recreated sink only takes over
+    // (and later deletes) files recorded here.
+    private static readonly HashSet<string> CreatedFiles = new(StringComparer.OrdinalIgnoreCase);
+    private static readonly Lock CreatedFilesLock = new();
+
     private readonly string logDirectory;
     private readonly long fileSizeLimitBytes;
     private readonly int maxRetainedFiles;
@@ -288,6 +295,51 @@ internal sealed class SelfDiagnosticsFileSink : ISelfDiagnosticsSink
     private static bool IsSamePath(string path, string? other)
         => other is not null && string.Equals(path, other, StringComparison.OrdinalIgnoreCase);
 
+    private static bool WasCreatedByThisProcess(string path)
+    {
+        lock (CreatedFilesLock)
+        {
+            return CreatedFiles.Contains(Path.GetFullPath(path));
+        }
+    }
+
+    private static void RecordCreatedFile(string path)
+    {
+        lock (CreatedFilesLock)
+        {
+            CreatedFiles.Add(Path.GetFullPath(path));
+        }
+    }
+
+    private static void ForgetCreatedFile(string path)
+    {
+        lock (CreatedFilesLock)
+        {
+            CreatedFiles.Remove(Path.GetFullPath(path));
+        }
+    }
+
+    // The modification time of a file that something else replaced can be unreadable (for
+    // example outside the range of DateTime). Such a file sorts as the oldest.
+    private static DateTime GetLastWriteTimeUtcOrMinValue(string path)
+    {
+        try
+        {
+            return File.GetLastWriteTimeUtc(path);
+        }
+        catch (Exception)
+        {
+            return DateTime.MinValue;
+        }
+    }
+
+    // An index that cannot be incremented is not one this process wrote.
+    private static int ParseSeedIndex(string path)
+    {
+        var index = ParseFileIndex(path);
+        return index == int.MaxValue ? 0 : index;
+    }
+
     private static void CreateLogDirectory(string path)
     {
 #if NET
@@ -357,18 +409,28 @@ internal sealed class SelfDiagnosticsFileSink : ISelfDiagnosticsSink
                     // historical path in memory when none of them will be pruned.
                     foreach (var existing in existingFiles)
                     {
-                        this.fileIndex = Math.Max(this.fileIndex, ParseFileIndex(existing));
+                        this.fileIndex = Math.Max(this.fileIndex, ParseSeedIndex(existing));
                     }
                 }
                 else
                 {
-                    // Seed bounded retention across sink recreations (e.g. hot-reload) and
-                    // continue the index series from the highest file already on disk.
-                    foreach (var existing in existingFiles.OrderBy(File.GetLastWriteTimeUtc))
+                    // Seed bounded retention across sink recreations (e.g. hot-reload). Every
+                    // matching name moves the index series on so that it is stepped over, but
+                    // only the files that this process created are retained: anything else in
+                    // the directory is not ours to count or to delete.
+                    var createdFiles = new List<string>();
+
+                    foreach (var existing in existingFiles)
                     {
-                        this.retainedFiles.Add(existing);
-                        this.fileIndex = Math.Max(this.fileIndex, ParseFileIndex(existing));
+                        this.fileIndex = Math.Max(this.fileIndex, ParseSeedIndex(existing));
+
+                        if (WasCreatedByThisProcess(existing))
+                        {
+                            createdFiles.Add(existing);
+                        }
                     }
+
+                    this.retainedFiles.AddRange(createdFiles.OrderBy(GetLastWriteTimeUtcOrMinValue));
                 }
 
                 this.retentionSeeded = true;
@@ -407,6 +469,7 @@ internal sealed class SelfDiagnosticsFileSink : ISelfDiagnosticsSink
 
             if (this.maxRetainedFiles > 0)
             {
+                RecordCreatedFile(filePath);
                 this.retainedFiles.Add(filePath);
                 this.PruneOldFiles();
             }
@@ -513,6 +576,7 @@ internal sealed class SelfDiagnosticsFileSink : ISelfDiagnosticsSink
                     File.Delete(oldest);
                 }
 
+                ForgetCreatedFile(oldest);
                 this.retainedFiles.RemoveAt(index);
             }
             catch

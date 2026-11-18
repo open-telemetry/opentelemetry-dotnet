@@ -20,6 +20,12 @@ Notes](../../RELEASENOTES.md).
   different name immediately.
   ([#8159](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8159))
 
+* Fixed the self-diagnostics file sink counting files it did not create
+  towards `MaxRetainedFiles` when their names matched its log file names, which
+  could cause it to delete its own earlier log files or fail to open a new one.
+  A recreated sink now only retains the files created by the process.
+  ([#8159](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8159))
+
 ## 1.21.0
 
 Released 2026-Nov-11

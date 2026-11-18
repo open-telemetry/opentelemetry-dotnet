@@ -411,6 +411,53 @@ public sealed class SelfDiagnosticsFileSinkTests : IDisposable
             $"expected at most 2 retained files, found {Directory.GetFiles(this.tempDirectory.Path).Length}");
     }
 
+    [Fact]
+    public void Retention_IgnoresMatchingFilesThatTheProcessDidNotCreate()
+    {
+        string[] ownFiles;
+        var otherFiles = new List<string>();
+
+        using (var first = this.CreateSink(fileSizeLimitKilobytes: 1, maxRetainedFiles: 3))
+        {
+            var line = new string('x', 1_100);
+            WriteLine(first, line);
+            WriteLine(first, line);
+            first.Flush();
+
+            ownFiles = Directory.GetFiles(this.tempDirectory.Path);
+            Assert.Equal(3, ownFiles.Length);
+
+            // Files with names in the series that were not created by this process.
+            var series = first.CurrentFilePath!.Substring(0, first.CurrentFilePath.Length - "3.log".Length);
+
+            for (var i = 0; i < 3; i++)
+            {
+                otherFiles.Add($"{series}other{i}.log");
+                File.WriteAllText(otherFiles[i], "not ours");
+            }
+
+            // Names with an index ahead of the series, including one that cannot be incremented,
+            // must not prevent a sink from opening a file.
+            otherFiles.Add($"{series}9.log");
+            File.WriteAllText(otherFiles[otherFiles.Count - 1], "not ours");
+            otherFiles.Add($"{series}{int.MaxValue}.log");
+            File.WriteAllText(otherFiles[otherFiles.Count - 1], "not ours");
+        }
+
+        for (var recreation = 0; recreation < 2; recreation++)
+        {
+            using var sink = this.CreateSink(fileSizeLimitKilobytes: 1, maxRetainedFiles: 3);
+            sink.OnInstalled();
+
+            Assert.True(sink.IsActive, "expected the sink to open a file");
+            Assert.DoesNotContain(GetRetainedFiles(sink), otherFiles.Contains);
+            Assert.All(otherFiles, file => Assert.True(File.Exists(file), $"deleted a file the process did not create: {file}"));
+
+            // Only the oldest of the process's own files makes way for the new one.
+            Assert.Equal(recreation == 0 ? 2 : 1, ownFiles.Count(File.Exists));
+        }
+    }
+
     [Theory]
     [InlineData(0)]
     [InlineData(-5)]
