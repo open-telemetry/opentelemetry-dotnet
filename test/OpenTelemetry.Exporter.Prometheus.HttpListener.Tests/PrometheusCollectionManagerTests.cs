@@ -109,7 +109,7 @@ public sealed class PrometheusCollectionManagerTests
             var parallelism = Math.Max((Environment.ProcessorCount + 1) / 2, 2);
 
 #if NET
-            var bag = new System.Collections.Concurrent.ConcurrentBag<Response>();
+            var bag = new ConcurrentBag<Response>();
 
             var parallel = Parallel.ForAsync(
                 0,
@@ -2278,6 +2278,306 @@ public sealed class PrometheusCollectionManagerTests
     [Theory]
     [InlineData(false)]
     [InlineData(true)]
+    public async Task EnterCollectOmitsOnlyTheMetricsWhichDoNotFitInTheResponse(bool openMetricsRequested)
+    {
+        var prefix = nameof(this.EnterCollectOmitsOnlyTheMetricsWhichDoNotFitInTheResponse);
+
+        using var firstMeter = new Meter(prefix + ".first");
+        using var secondMeter = new Meter(prefix + ".second");
+
+        using var listener = new DroppedListener(eventId: 18, "b_counter", countIndex: 1, nameIndex: 0);
+
+#pragma warning disable CA2000 // Dispose objects before losing scope
+        var exporter = new PrometheusExporter(new PrometheusExporterOptions
+        {
+            TargetInfoEnabled = false,
+            ScrapeResponseCacheDurationMilliseconds = 0,
+            MaxScrapeResponseSizeBytes = PrometheusExporterOptions.InitialScrapeResponseSizeBytes,
+        });
+
+        var reader = new BaseExportingMetricReader(exporter)
+        {
+            TemporalityPreference = MetricReaderTemporalityPreference.Cumulative,
+        };
+#pragma warning restore CA2000 // Dispose objects before losing scope
+
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(firstMeter.Name)
+            .AddMeter(secondMeter.Name)
+            .AddReader(reader)
+            .Build();
+
+        firstMeter.CreateCounter<long>("a_counter").Add(1);
+
+        // Neither of these fit in the response. The tags of a histogram are written with each of its
+        // buckets, so a tag value which is much shorter than the maximum is enough for it not to fit.
+        firstMeter.CreateCounter<long>("b_counter").Add(1, new KeyValuePair<string, object?>("label", new string('x', 90_000)));
+        firstMeter.CreateHistogram<double>("c_histogram").Record(1, new KeyValuePair<string, object?>("label", new string('x', 8_000)));
+
+        // The metadata of a family is written with its first metric, which can be one that does not fit.
+        firstMeter.CreateCounter<long>("d_counter", unit: "By", description: "Help text.").Add(1, new KeyValuePair<string, object?>("label", new string('x', 90_000)));
+        secondMeter.CreateCounter<long>("d_counter", unit: "By", description: "Help text.").Add(2);
+
+        firstMeter.CreateCounter<long>("e_counter").Add(3);
+
+        var response = await exporter.CollectionManager.EnterCollect(GetProtocol(openMetricsRequested), TestContext.Current.CancellationToken);
+
+        string output;
+
+        try
+        {
+            Assert.True(response.Succeeded, "The metrics which fit were not served.");
+            output = Encoding.UTF8.GetString(response.View.Array!, response.View.Offset, response.View.Count);
+        }
+        finally
+        {
+            exporter.CollectionManager.ExitCollect(response);
+        }
+
+        var lines = output.Split('\n');
+
+        Assert.Single(lines, line => line.StartsWith("a_counter_total{", StringComparison.Ordinal));
+        Assert.Single(lines, line => line.StartsWith("e_counter_total{", StringComparison.Ordinal));
+
+        Assert.DoesNotContain("b_counter", output, StringComparison.Ordinal);
+        Assert.DoesNotContain("c_histogram", output, StringComparison.Ordinal);
+
+        var sample = Assert.Single(lines, line => line.StartsWith("d_counter_bytes_total{", StringComparison.Ordinal));
+        Assert.Contains(secondMeter.Name, sample, StringComparison.Ordinal);
+        Assert.EndsWith(" 2", sample, StringComparison.Ordinal);
+
+        // The name in the metadata has the '_total' suffix in the Prometheus text format, but not in OpenMetrics.
+        Assert.Single(lines, line => line.StartsWith("# TYPE d_counter_bytes", StringComparison.Ordinal));
+        Assert.Single(lines, line => line.StartsWith("# HELP d_counter_bytes", StringComparison.Ordinal));
+        Assert.Equal(openMetricsRequested ? 1 : 0, lines.Count(line => line.StartsWith("# UNIT d_counter_bytes", StringComparison.Ordinal)));
+
+        if (openMetricsRequested)
+        {
+            Assert.EndsWith("# EOF\n", output, StringComparison.Ordinal);
+        }
+
+        Assert.Equal([3], listener.Counts);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task EnterCollectOmitsTheMetricsWhichFollowOnceTheResponseIsFull(bool openMetricsRequested)
+    {
+        const int MetricCount = 1_000; // The most metrics that the SDK collects for a provider.
+        const string MetricNamePrefix = "response_full_counter_";
+
+        using var meter = CreateMeter();
+
+        using var listener = new DroppedListener(eventId: 18, MetricNamePrefix, countIndex: 1, nameIndex: 0);
+
+#pragma warning disable CA2000 // Dispose objects before losing scope
+        var exporter = new PrometheusExporter(new PrometheusExporterOptions
+        {
+            TargetInfoEnabled = false,
+            ScrapeResponseCacheDurationMilliseconds = 0,
+            MaxScrapeResponseSizeBytes = PrometheusExporterOptions.InitialScrapeResponseSizeBytes,
+        });
+
+        var reader = new BaseExportingMetricReader(exporter)
+        {
+            TemporalityPreference = MetricReaderTemporalityPreference.Cumulative,
+        };
+#pragma warning restore CA2000 // Dispose objects before losing scope
+
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddReader(reader)
+            .Build();
+
+        // Each of the metrics fits in the response, but together they do not.
+        for (var i = 0; i < MetricCount; i++)
+        {
+            meter.CreateCounter<long>($"{MetricNamePrefix}{i:D4}", description: "Help text.").Add(1);
+        }
+
+        var response = await exporter.CollectionManager.EnterCollect(GetProtocol(openMetricsRequested), TestContext.Current.CancellationToken);
+
+        string output;
+
+        try
+        {
+            Assert.True(response.Succeeded, "The metrics which fit were not served.");
+            Assert.True(response.View.Count <= PrometheusExporterOptions.InitialScrapeResponseSizeBytes, $"The response is {response.View.Count} bytes.");
+            output = Encoding.UTF8.GetString(response.View.Array!, response.View.Offset, response.View.Count);
+        }
+        finally
+        {
+            exporter.CollectionManager.ExitCollect(response);
+        }
+
+        if (openMetricsRequested)
+        {
+            Assert.EndsWith("# EOF\n", output, StringComparison.Ordinal);
+        }
+
+        var lines = output.Split('\n');
+
+        // Every family in the response has its metadata and at least one sample, in the same order.
+        var familiesWithMetadata = lines
+            .Where(line => line.StartsWith("# TYPE ", StringComparison.Ordinal))
+            .Select(line => GetFamilyName(line.Split(' ')[2]))
+            .ToList();
+
+        var familiesWithSamples = lines
+            .Where(line => line.Length > 0 && line[0] != '#')
+            .Select(line => GetFamilyName(line.Split('{')[0]))
+            .Distinct()
+            .ToList();
+
+        Assert.Equal(familiesWithMetadata, familiesWithSamples);
+        Assert.Equal(familiesWithMetadata.Count, familiesWithMetadata.Distinct().Count());
+        Assert.Equal(lines.Count(line => line.StartsWith("# HELP ", StringComparison.Ordinal)), familiesWithMetadata.Count);
+
+        // The metrics are served in order of their names until the response is full, and the rest are dropped.
+        Assert.InRange(familiesWithSamples.Count, 1, MetricCount - 1);
+        Assert.Equal(Enumerable.Range(0, familiesWithSamples.Count).Select(i => $"{MetricNamePrefix}{i:D4}"), familiesWithSamples);
+        Assert.Equal([MetricCount - familiesWithSamples.Count], listener.Counts);
+
+        static string GetFamilyName(string name) =>
+            name.EndsWith("_total", StringComparison.Ordinal) ? name.Substring(0, name.Length - "_total".Length) :
+            name.EndsWith("_created", StringComparison.Ordinal) ? name.Substring(0, name.Length - "_created".Length) :
+            name;
+    }
+
+    [Fact]
+    public async Task EnterCollectOmitsTheMetricWhichLeavesNoRoomForTheEndOfTheResponse()
+    {
+        const int MaxScrapeResponseSizeBytes = PrometheusExporterOptions.InitialScrapeResponseSizeBytes;
+
+        // The response is ASCII, so each character of the tag value is one byte of it, and the
+        // tag value which makes the response exactly as large as it may be follows from any other.
+        var (succeeded, output) = await ScrapeAsync(tagLength: 1);
+
+        Assert.True(succeeded);
+
+        var largestTagLength = 1 + MaxScrapeResponseSizeBytes - output.Length;
+
+        for (var tagLength = largestTagLength - 8; tagLength <= largestTagLength + 2; tagLength++)
+        {
+            (succeeded, output) = await ScrapeAsync(tagLength);
+
+            Assert.True(succeeded, $"The scrape failed for a tag value of {tagLength} characters.");
+            Assert.Contains("a_gauge{", output, StringComparison.Ordinal);
+            Assert.EndsWith("# EOF\n", output, StringComparison.Ordinal);
+            Assert.Equal(tagLength <= largestTagLength, output.Contains("b_gauge{", StringComparison.Ordinal));
+        }
+
+        async Task<(bool Succeeded, string Output)> ScrapeAsync(int tagLength)
+        {
+            using var meter = new Meter(nameof(this.EnterCollectOmitsTheMetricWhichLeavesNoRoomForTheEndOfTheResponse));
+
+#pragma warning disable CA2000 // Dispose objects before losing scope
+            var exporter = new PrometheusExporter(new PrometheusExporterOptions
+            {
+                TargetInfoEnabled = false,
+                ScrapeResponseCacheDurationMilliseconds = 0,
+                MaxScrapeResponseSizeBytes = MaxScrapeResponseSizeBytes,
+            });
+
+            var reader = new BaseExportingMetricReader(exporter)
+            {
+                TemporalityPreference = MetricReaderTemporalityPreference.Cumulative,
+            };
+#pragma warning restore CA2000 // Dispose objects before losing scope
+
+            using var provider = Sdk.CreateMeterProviderBuilder()
+                .AddMeter(meter.Name)
+                .AddReader(reader)
+                .Build();
+
+            meter.CreateUpDownCounter<long>("a_gauge").Add(1);
+            meter.CreateUpDownCounter<long>("b_gauge").Add(1, new KeyValuePair<string, object?>("label", new string('x', tagLength)));
+
+            var response = await exporter.CollectionManager.EnterCollect(GetProtocol(openMetricsRequested: true), TestContext.Current.CancellationToken);
+
+            try
+            {
+                return response.Succeeded
+                    ? (true, Encoding.UTF8.GetString(response.View.Array!, response.View.Offset, response.View.Count))
+                    : (false, string.Empty);
+            }
+            finally
+            {
+                exporter.CollectionManager.ExitCollect(response);
+            }
+        }
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task EnterCollectOmitsOnlyTheHistogramWhichHasTagsTooLargeToSerialize(bool openMetricsRequested)
+    {
+        // The tags of a histogram point are serialized in a scratch buffer of their own, which doubles in size
+        // for as long as the result is no more than 100 MiB, so it is 64 MiB at the most. A tag value which
+        // is larger than that cannot be serialized, however large the response is allowed to be.
+        var tagValue = new string('x', 72 * 1024 * 1024);
+
+        using var meter = CreateMeter();
+
+        using var listener = new DroppedListener(eventId: 18, "b_histogram", countIndex: 1, nameIndex: 0);
+
+#pragma warning disable CA2000 // Dispose objects before losing scope
+        var exporter = new PrometheusExporter(new PrometheusExporterOptions
+        {
+            TargetInfoEnabled = false,
+            ScrapeResponseCacheDurationMilliseconds = 0,
+        });
+
+        var reader = new BaseExportingMetricReader(exporter)
+        {
+            TemporalityPreference = MetricReaderTemporalityPreference.Cumulative,
+        };
+#pragma warning restore CA2000 // Dispose objects before losing scope
+
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddReader(reader)
+            .Build();
+
+        meter.CreateCounter<long>("a_counter", description: "Help text.").Add(1);
+        meter.CreateHistogram<double>("b_histogram", description: "Help text.").Record(1, new KeyValuePair<string, object?>("label", tagValue));
+        meter.CreateCounter<long>("c_counter", description: "Help text.").Add(2);
+
+        var response = await exporter.CollectionManager.EnterCollect(GetProtocol(openMetricsRequested), TestContext.Current.CancellationToken);
+
+        string output;
+
+        try
+        {
+            Assert.True(response.Succeeded, "The metrics which fit were not served.");
+            output = Encoding.UTF8.GetString(response.View.Array!, response.View.Offset, response.View.Count);
+        }
+        finally
+        {
+            exporter.CollectionManager.ExitCollect(response);
+        }
+
+        var lines = output.Split('\n');
+
+        Assert.Single(lines, line => line.StartsWith("a_counter_total{", StringComparison.Ordinal));
+        Assert.Single(lines, line => line.StartsWith("c_counter_total{", StringComparison.Ordinal));
+        Assert.Single(lines, line => line.StartsWith("# TYPE a_counter", StringComparison.Ordinal));
+        Assert.Single(lines, line => line.StartsWith("# TYPE c_counter", StringComparison.Ordinal));
+        Assert.DoesNotContain("b_histogram", output, StringComparison.Ordinal);
+
+        if (openMetricsRequested)
+        {
+            Assert.EndsWith("# EOF\n", output, StringComparison.Ordinal);
+        }
+
+        Assert.Equal([1], listener.Counts);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
     public async Task EnterCollectDoesNotWriteTheSameSeriesMoreThanOnce(bool openMetricsRequested)
     {
         var prefix = nameof(this.EnterCollectDoesNotWriteTheSameSeriesMoreThanOnce);
@@ -2642,7 +2942,7 @@ public sealed class PrometheusCollectionManagerTests
         const int SeriesCount = 600; // Fewer than the default limit of the metric points of a metric
         const int UniqueSeriesCount = 600;
 
-        using var listener = new DuplicateSeriesListener("expanding_counter");
+        using var listener = new DroppedListener(eventId: 15, "expanding_counter");
 
         using var firstMeter = new Meter(nameof(this.EnterCollectDoesNotWriteTheSameSeriesMoreThanOnceWhenTheBufferHasToBeExpanded) + ".first");
         using var secondMeter = new Meter(nameof(this.EnterCollectDoesNotWriteTheSameSeriesMoreThanOnceWhenTheBufferHasToBeExpanded) + ".second");
@@ -2935,7 +3235,15 @@ public sealed class PrometheusCollectionManagerTests
     }
 #endif
 
-    private sealed class DuplicateSeriesListener(string metricName) : EventListener
+    /// <summary>
+    /// Collects the counts of the events which report dropping something of a metric, which have
+    /// the count and the name of the first metric affected in their payload at the given indexes.
+    /// </summary>
+    /// <remarks>
+    /// The events of the other tests which run at the same time are received too, so only those
+    /// whose metric name starts with <paramref name="metricNamePrefix"/> are collected.
+    /// </remarks>
+    private sealed class DroppedListener(int eventId, string metricNamePrefix, int countIndex = 0, int nameIndex = 1) : EventListener
     {
         private readonly ConcurrentQueue<int> counts = [];
 
@@ -2952,11 +3260,12 @@ public sealed class PrometheusCollectionManagerTests
 
         protected override void OnEventWritten(EventWrittenEventArgs eventData)
         {
-            if (eventData.EventId == 15 &&
-                eventData.Payload is { Count: 2 } payload &&
-                string.Equals(payload[1] as string, metricName, StringComparison.Ordinal))
+            if (eventData.EventId == eventId &&
+                eventData.Payload is { Count: >= 2 } payload &&
+                payload[nameIndex] is string metricName &&
+                metricName.StartsWith(metricNamePrefix, StringComparison.Ordinal))
             {
-                this.counts.Enqueue((int)payload[0]!);
+                this.counts.Enqueue((int)payload[countIndex]!);
             }
         }
     }

@@ -274,7 +274,17 @@ public class OtlpExporterOptions : IOtlpExporterOptions
     /// <summary>
     /// Gets or sets the export processor type to be used with the OpenTelemetry Protocol Exporter. The default value is <see cref="ExportProcessorType.Batch"/>.
     /// </summary>
-    /// <remarks>Note: This only applies when exporting traces.</remarks>
+    /// <remarks>
+    /// <para>Note: This only applies when exporting traces.</para>
+    /// <para>
+    /// With <see cref="ExportProcessorType.Simple"/> each span is exported on its own as soon as it has ended,
+    /// but by a thread of the processor and not by the thread which ended the span. At most 2048 spans wait
+    /// to be exported, and a span which ends while that many are waiting is dropped.
+    /// Call <c>ForceFlush()</c> and check its result before relying on pending exports being complete.
+    /// On single-threaded platforms a flush triggers export without waiting and returns <see langword="false"/>
+    /// while exports are still pending.
+    /// </para>
+    /// </remarks>
     public ExportProcessorType ExportProcessorType
     {
         get => this.exportProcessorType ?? ExportProcessorType.Batch;
