@@ -147,6 +147,7 @@ public class PrometheusExpositionFuzzTests
             ("# TYPE a gauge\n# TYPE a gauge\na 1\n", false, ErrorKind.Structure, false),
             ("# TYPE a gauge\na 1\n# TYPE b gauge\nb 1\na{x=\"1\"} 2\n", false, ErrorKind.Structure, false),
             ("# TYPE a gauge\na{x=\"1\",x=\"2\"} 1\n", false, ErrorKind.DuplicateLabels, false),
+            ("# TYPE a gauge\na{__name__=\"b\"} 1\n", false, ErrorKind.DuplicateLabels, false),
             ("# TYPE a gauge\na{x=\"1\"} 1\na{x=\"1\"} 2\n", false, ErrorKind.DuplicateSeries, false),
             ("# TYPE a gauge\na{x=\"1\",y=\"2\"} 1\na{y=\"2\",x=\"1\"} 2\n", false, ErrorKind.DuplicateSeries, false),
             ("# TYPE a gauge\na{} 1\na{x=\"\"} 2\n", false, ErrorKind.DuplicateSeries, false),
@@ -415,6 +416,8 @@ public class PrometheusExpositionFuzzTests
             "aZ",
             "a0",
             "le",
+            "__name__",
+            "_name_",
         ];
 
         private static readonly string[] InstrumentNames =
@@ -587,7 +590,7 @@ public class PrometheusExpositionFuzzTests
         }
 
         private static Gen<KeyValuePair<string, string>> ResourceAttributeGen() =>
-            from key in Gen.Elements("service.name", "service.namespace", "service.instance.id", "deployment.environment", "host_name", "a.b", "a_b")
+            from key in Gen.Elements("service.name", "service.namespace", "service.instance.id", "deployment.environment", "host_name", "a.b", "a_b", "__name__")
             from value in TextGen
             select new KeyValuePair<string, string>(key, value);
 
@@ -1122,7 +1125,8 @@ public class PrometheusExpositionFuzzTests
 
         private void RecordSample(string name, List<KeyValuePair<string, string>> labels, double value, string line)
         {
-            var seen = new HashSet<string>(StringComparer.Ordinal);
+            // The name of a sample is the value of its "__name__" label, so it is a label that the sample already has.
+            var seen = new HashSet<string>(StringComparer.Ordinal) { "__name__" };
 
             foreach (var label in labels)
             {
