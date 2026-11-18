@@ -543,6 +543,13 @@ internal sealed class SelfDiagnosticsFileSink : ISelfDiagnosticsSink
                 this.retainedFiles.Add(filePath);
                 this.PruneOldFiles();
             }
+            else
+            {
+                // A file written under unlimited retention is never counted or pruned, even
+                // if its name was registered by an earlier bounded sink whose file of that
+                // name has since been removed, letting the series reuse the name.
+                ForgetCreatedFile(this.directoryKey, Path.GetFileName(filePath));
+            }
 
             this.WriteFilePrologue();
 

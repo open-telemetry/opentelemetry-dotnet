@@ -611,6 +611,37 @@ public sealed class SelfDiagnosticsFileSinkTests : IDisposable
         Assert.False(File.Exists(firstFile), "expected the earlier file to be taken over and pruned");
     }
 
+    [Fact]
+    public void Retention_FileReusingNameOfRemovedFileUnderUnlimitedRetention_IsNotCounted()
+    {
+        string path;
+
+        using (var bounded = this.CreateSink(maxRetainedFiles: 2))
+        {
+            path = bounded.CurrentFilePath!;
+        }
+
+        // With the registered file gone, the series starts over and a sink with unlimited
+        // retention writes a file of the same name. That file was not written under bounded
+        // retention, so bounded retention re-enabled later must not count or prune it.
+        File.Delete(path);
+
+        using (var unlimited = this.CreateSink(maxRetainedFiles: 0))
+        {
+            Assert.Equal(path, unlimited.CurrentFilePath);
+        }
+
+        Assert.False(SelfDiagnosticsFileSink.WasCreatedByThisProcess(path));
+
+        using (var bounded = this.CreateSink(maxRetainedFiles: 1))
+        {
+            Assert.True(bounded.IsActive, "expected the sink to open a file");
+            Assert.DoesNotContain(path, GetRetainedFiles(bounded));
+        }
+
+        Assert.True(File.Exists(path), "expected the file written under unlimited retention to be kept");
+    }
+
     [Theory]
     [InlineData(0)]
     [InlineData(-5)]
