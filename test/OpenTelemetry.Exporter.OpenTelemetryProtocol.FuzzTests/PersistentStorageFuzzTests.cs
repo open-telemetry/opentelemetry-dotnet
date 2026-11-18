@@ -7,6 +7,7 @@ using FsCheck;
 using FsCheck.Fluent;
 using FsCheck.Xunit;
 using OpenTelemetry.PersistentStorage.FileSystem;
+using OpenTelemetry.Tests;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.FuzzTests;
 
@@ -227,24 +228,9 @@ public class PersistentStorageFuzzTests
 
     private static bool WithDirectory(Func<string, bool> test)
     {
-        var directory = Path.Combine(Path.GetTempPath(), "otel-fuzz-storage-" + Guid.NewGuid().ToString("N", CultureInfo.InvariantCulture));
+        using var directory = new TemporaryDirectory();
 
-        Directory.CreateDirectory(directory);
-
-        try
-        {
-            return test(directory);
-        }
-        finally
-        {
-            try
-            {
-                Directory.Delete(directory, recursive: true);
-            }
-            catch (IOException)
-            {
-            }
-        }
+        return test(directory.Path);
     }
 
     private static void Populate(string directory, List<StorageFile> files)

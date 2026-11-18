@@ -22,21 +22,20 @@ public class FileBlobProviderTests
     [Fact]
     public void FileBlobProvider_CreatesSubDirectory()
     {
-        var testDirectory = new DirectoryInfo(Path.Combine(Path.GetTempPath(), Path.GetRandomFileName()));
+        using var temp = new TemporaryDirectory();
+        var testDirectory = new DirectoryInfo(Path.Combine(temp.Path, "storage"));
 
         using var blobProvider = new FileBlobProvider(testDirectory.FullName);
 
         Assert.Equal(testDirectory.FullName, blobProvider.DirectoryPath);
-        Directory.Exists(testDirectory.FullName);
-
-        // clean up
-        Directory.Delete(testDirectory.FullName, true);
+        Assert.True(Directory.Exists(testDirectory.FullName));
     }
 
     [Fact]
     public void FileBlobProvider_E2E_Test()
     {
-        var testDirectory = new DirectoryInfo(Path.Combine(Path.GetTempPath(), Path.GetRandomFileName()));
+        using var temp = new TemporaryDirectory();
+        var testDirectory = new DirectoryInfo(Path.Combine(temp.Path, "storage"));
         using var blobProvider = new FileBlobProvider(testDirectory.FullName);
 
         var data = Encoding.UTF8.GetBytes("Hello, World!");
@@ -55,14 +54,13 @@ public class FileBlobProviderTests
         // Validate if content in the blob is same as buffer data passed to create blob.
         Assert.True(blob1.TryRead(out var blobContent));
         Assert.Equal(data, blobContent);
-
-        testDirectory.Delete(true);
     }
 
     [Fact]
     public void FileBlobProvider_CreateBlobReturnsNullIfBlobProviderIsFull()
     {
-        var testDirectory = new DirectoryInfo(Path.Combine(Path.GetTempPath(), Path.GetRandomFileName()));
+        using var temp = new TemporaryDirectory();
+        var testDirectory = new DirectoryInfo(Path.Combine(temp.Path, "storage"));
         using var blobProvider = new FileBlobProvider(testDirectory.FullName, 100);
 
         // write a file to fill up the configured max space.
@@ -72,15 +70,14 @@ public class FileBlobProviderTests
 
         Assert.False(blobProvider.TryCreateBlob(data.AsSpan(), out var blob));
         Assert.Null(blob);
-
-        testDirectory.Delete(true);
     }
 
     [Fact]
     [Obsolete("Validates obsolete byte[] overload compatibility.")]
     public void FileBlobProvider_CreateBlobReturnsFalseForNullByteArray()
     {
-        var testDirectory = new DirectoryInfo(Path.Combine(Path.GetTempPath(), Path.GetRandomFileName()));
+        using var temp = new TemporaryDirectory();
+        var testDirectory = new DirectoryInfo(Path.Combine(temp.Path, "storage"));
         using var blobProvider = new FileBlobProvider(testDirectory.FullName);
         byte[] buffer = null!;
 
@@ -90,14 +87,13 @@ public class FileBlobProviderTests
         Assert.Null(blob);
         Assert.Null(leasedBlob);
         Assert.Empty(Directory.EnumerateFiles(blobProvider.DirectoryPath));
-
-        testDirectory.Delete(true);
     }
 
     [Fact]
     public void FileBlobProvider_TestRetentionPeriod()
     {
-        var testDirectory = new DirectoryInfo(Path.Combine(Path.GetTempPath(), Path.GetRandomFileName()));
+        using var temp = new TemporaryDirectory();
+        var testDirectory = new DirectoryInfo(Path.Combine(temp.Path, "storage"));
         long maxSizeInBytes = 100000;
         var maintenancePeriodInMilliseconds = 3000;
         var retentionPeriodInMilliseconds = 1000;
@@ -119,14 +115,13 @@ public class FileBlobProviderTests
 
         // Blob will be deleted as retention period is 1 sec
         Assert.False(File.Exists(((FileBlob)blob).FullPath));
-
-        testDirectory.Delete(true);
     }
 
     [Fact]
     public void FileBlobProvider_TestWriteTimeoutPeriod()
     {
-        var testDirectory = new DirectoryInfo(Path.Combine(Path.GetTempPath(), Path.GetRandomFileName()));
+        using var temp = new TemporaryDirectory();
+        var testDirectory = new DirectoryInfo(Path.Combine(temp.Path, "storage"));
         long maxSizeInBytes = 100000;
         var maintenancePeriodInMilliseconds = 3000;
         var retentionPeriodInMilliseconds = 2000;
@@ -156,14 +151,13 @@ public class FileBlobProviderTests
         // tmp file will be deleted as write timeout period is 1 sec
         Assert.False(File.Exists(((FileBlob)blob).FullPath + ".tmp"));
         Assert.False(File.Exists(((FileBlob)blob).FullPath));
-
-        testDirectory.Delete(true);
     }
 
     [Fact]
     public void FileBlobProviderTests_TestLeaseExpiration()
     {
-        var testDirectory = new DirectoryInfo(Path.Combine(Path.GetTempPath(), Path.GetRandomFileName()));
+        using var temp = new TemporaryDirectory();
+        var testDirectory = new DirectoryInfo(Path.Combine(temp.Path, "storage"));
         long maxSizeInBytes = 100000;
         var maintenancePeriodInMilliseconds = 3000;
         var retentionPeriodInMilliseconds = 2000;
@@ -191,8 +185,6 @@ public class FileBlobProviderTests
         // File name will be change to .blob
         Assert.True(File.Exists(blobPath));
         Assert.False(File.Exists(leasePath));
-
-        testDirectory.Delete(true);
     }
 
     [Fact]
@@ -1028,6 +1020,7 @@ public class FileBlobProviderTests
     [Theory]
     [InlineData(UnixFileMode.GroupWrite)]
     [InlineData(UnixFileMode.OtherWrite)]
+    [InlineData(UnixFileMode.GroupWrite | UnixFileMode.OtherWrite | UnixFileMode.StickyBit)]
     public void Constructor_DirectoryInDirectoryWritableByOtherUsers_Throws(UnixFileMode mode)
     {
         if (OperatingSystem.IsWindows())
@@ -1038,7 +1031,8 @@ public class FileBlobProviderTests
 
         using var root = new TemporaryDirectory();
 
-        // Another user could replace the directory with one of their own after it has been verified
+        // Another user could replace the directory with one of their own after it has been verified, or (if the
+        // directory has the sticky bit set, like /tmp) replace an entry they own in it while it is being read
         var parent = Path.Combine(root.Path, "retry");
         CreateDirectory(parent, OwnerOnly | mode);
 
@@ -1048,7 +1042,7 @@ public class FileBlobProviderTests
     }
 
     [Fact]
-    public void Constructor_DirectoryInStickyDirectoryWritableByOtherUsers_DoesNotThrow()
+    public void VerifyDirectory_PathInStickyDirectoryReplacedWhileItIsVerified_DoesNotBlock()
     {
         if (OperatingSystem.IsWindows())
         {
@@ -1058,14 +1052,93 @@ public class FileBlobProviderTests
 
         using var root = new TemporaryDirectory();
 
-        // Like /tmp, other users cannot replace a directory they do not own in a directory with the sticky bit set
+        // Another user can replace an entry they own in a directory with the sticky bit set (such as /tmp) while it
+        // is being verified. If the entry were read, a regular file could be found and then opened, by which time it
+        // could be a named pipe, which blocks until it is opened for writing by someone else.
         var parent = Path.Combine(root.Path, "retry");
         CreateDirectory(parent, OwnerOnly | UnixFileMode.GroupWrite | UnixFileMode.OtherWrite | UnixFileMode.StickyBit);
 
         var path = Path.Combine(parent, "traces");
-        using var provider = new FileBlobProvider(path);
+        string[] spares = [Path.Combine(parent, "a"), Path.Combine(parent, "b"), Path.Combine(parent, "c")];
 
-        Assert.True(provider.TryCreateBlob([1, 2, 3], out _));
+        File.CreateSymbolicLink(path, "target");
+        File.WriteAllBytes(spares[0], []);
+
+        using (var mkfifo = System.Diagnostics.Process.Start("mkfifo", [spares[1]]))
+        {
+            mkfifo.WaitForExit();
+            Assert.Equal(0, mkfifo.ExitCode);
+        }
+
+        var stop = false;
+        var trusted = 0;
+
+        // Each replacement atomically moves the next spare to the path and keeps what was there as the spare after
+        // it, so the path holds a symbolic link, a regular file and a named pipe in turn
+        var swapping = new Thread(() =>
+        {
+            for (var i = 0; !Volatile.Read(ref stop); i = (i + 1) % spares.Length)
+            {
+                File.Replace(spares[i], path, spares[(i + 2) % spares.Length]);
+            }
+        });
+
+        var verifying = new Thread(() =>
+        {
+            var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+
+            while (stopwatch.Elapsed < TimeSpan.FromSeconds(2))
+            {
+                if (Record.Exception(() => PersistentStorageHelper.VerifyDirectory(path, checkPermissions: true)) is null)
+                {
+                    Interlocked.Increment(ref trusted);
+                }
+            }
+        })
+        {
+            // The thread cannot be stopped if it blocks
+            IsBackground = true,
+        };
+
+        swapping.Start();
+
+        try
+        {
+            verifying.Start();
+
+            Assert.True(verifying.Join(TimeSpan.FromSeconds(30)), "Verifying the directory blocked.");
+        }
+        finally
+        {
+            Volatile.Write(ref stop, true);
+            swapping.Join();
+        }
+
+        // The path is never a directory that only the current user can write to, so it is never trusted
+        Assert.Equal(0, Volatile.Read(ref trusted));
+    }
+
+    [Fact]
+    public void Constructor_SymbolicLinkWithTargetThatCouldNotBeDecoded_Throws()
+    {
+        if (OperatingSystem.IsWindows())
+        {
+            Assert.Skip("Unix file modes do not apply on Windows.");
+            return;
+        }
+
+        using var root = new TemporaryDirectory();
+
+        // The target of a link that is not valid UTF-8 is decoded with replacement characters, so the path that would
+        // be verified is not the path the operating system resolves the link to. A link to a path that contains the
+        // replacement character is indistinguishable from it.
+        var target = Path.Combine(root.Path, "target\uFFFD");
+        CreateDirectory(target, OwnerOnly);
+
+        var path = Path.Combine(root.Path, "traces");
+        Directory.CreateSymbolicLink(path, "target\uFFFD");
+
+        Assert.ThrowsAny<IOException>(() => new FileBlobProvider(path));
     }
 
     [Fact]

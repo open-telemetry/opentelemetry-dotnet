@@ -4,6 +4,7 @@
 using System.Text;
 using OpenTelemetry.PersistentStorage.Abstractions;
 using OpenTelemetry.PersistentStorage.FileSystem;
+using OpenTelemetry.Tests;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests.PersistentStorage;
 
@@ -117,7 +118,8 @@ public class FileBlobTests
     [Fact]
     public void FileBlobTests_DeleteFailsAfterLeaseIsExpired()
     {
-        var testDirectory = new DirectoryInfo(Path.Combine(Path.GetTempPath(), Path.GetRandomFileName()));
+        using var temp = new TemporaryDirectory();
+        var testDirectory = new DirectoryInfo(Path.Combine(temp.Path, "storage"));
 
         // set maintenance job interval to 2 ms, with enough space to store the blob
         using var storage = new FileBlobProvider(testDirectory.FullName, maxSizeInBytes: 100, maintenancePeriodInMilliseconds: 2);
@@ -139,8 +141,6 @@ public class FileBlobTests
         // Assert
         Assert.True(storage.TryGetBlob(out var outputBlob));
         Assert.NotNull(outputBlob);
-
-        testDirectory.Delete(true);
     }
 
     [Fact]

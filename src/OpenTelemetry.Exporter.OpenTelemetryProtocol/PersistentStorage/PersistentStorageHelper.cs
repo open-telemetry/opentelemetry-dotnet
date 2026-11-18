@@ -27,6 +27,16 @@ internal static class PersistentStorageHelper
     private const int MaximumEntryArchiveLength = 64 * 1024;
     private const int RootUserId = 0;
     private const UnixFileMode GroupOrOtherWrite = UnixFileMode.GroupWrite | UnixFileMode.OtherWrite;
+
+    // U+FFFD, which replaces each byte of a path that could not be decoded
+    private const char ReplacementCharacter = (char)0xFFFD;
+
+    // The layout of a tar header block (see TarHeader in System.Formats.Tar)
+    private const int TarBlockLength = 512;
+    private const int TarHeaderUserIdOffset = 108;
+    private const int TarHeaderSizeOffset = 124;
+    private const int TarHeaderSizeLength = 12;
+    private const int TarHeaderTypeFlagOffset = 156;
 #endif
 
     private static readonly TimeSpan MaximumPastTimestampOffset = TimeSpan.FromDays(100 * 365);
@@ -397,6 +407,37 @@ internal static class PersistentStorageHelper
 #endif
     }
 
+#if NET
+    /// <summary>
+    /// Gets whether the user ID field of the header of the first entry of a tar archive holds a value.
+    /// </summary>
+    /// <param name="archive">The archive.</param>
+    /// <returns><see langword="true"/> if the field holds a value; otherwise <see langword="false"/>.</returns>
+    internal static bool IsUserIdRecorded(ReadOnlySpan<byte> archive)
+    {
+        long offset = 0;
+
+        while (offset + TarBlockLength <= archive.Length)
+        {
+            var header = archive.Slice((int)offset, TarBlockLength);
+
+            // The extended headers of the PAX format precede the header of the entry they apply to,
+            // and are each followed by their data, which is padded to a whole number of blocks
+            if (header[TarHeaderTypeFlagOffset] is not ((byte)'x' or (byte)'g'))
+            {
+                // The field holds the user ID as octal digits, and is left empty when the user ID is not recorded
+                return header[TarHeaderUserIdOffset] is >= (byte)'0' and <= (byte)'7';
+            }
+
+            var size = ParseOctal(header.Slice(TarHeaderSizeOffset, TarHeaderSizeLength));
+
+            offset += TarBlockLength + ((size + TarBlockLength - 1) / TarBlockLength * TarBlockLength);
+        }
+
+        return false;
+    }
+#endif
+
     internal static DateTime GetDateTimeFromBlobName(string filePath)
     {
         var fileName = GetFileNameWithoutExtension(filePath);
@@ -656,8 +697,8 @@ internal static class PersistentStorageHelper
     /// Every blob in the storage directory is sent with the exporter's credentials, and blobs cannot authenticate
     /// themselves, so the directory has to be the boundary. It must be owned by the current user and must not be writable
     /// by other users. Every directory and symbolic link that is traversed to reach it must also be owned by the current
-    /// user or root, and must not be writable by other users unless it has the sticky bit set (such as <c>/tmp</c>), so
-    /// that no other user can replace the directory, or any directory it is in, after it has been verified.
+    /// user or root, and must not be writable by other users, so that no other user can replace the directory, or any
+    /// directory it is in, after it has been verified, or replace any of them while it is being read.
     /// </remarks>
     /// <param name="path">The path of the directory.</param>
     /// <exception cref="UnauthorizedAccessException">The directory could be changed by another user.</exception>
@@ -715,6 +756,13 @@ internal static class PersistentStorageHelper
                     throw new IOException($"Too many levels of symbolic links were found resolving '{path}'.");
                 }
 
+                // The target of the link is verified instead of the link, so it must be the path the operating system
+                // resolves the link to, which it is not if it could not be decoded
+                if (entry.LinkName.Contains(ReplacementCharacter, StringComparison.Ordinal))
+                {
+                    throw new IOException($"The target of the symbolic link '{candidate}' could not be read.");
+                }
+
                 // A relative link target is relative to the directory that contains the link
                 current = ResolveDirectory(Path.Combine(current, entry.LinkName), userId, ref links);
             }
@@ -737,7 +785,7 @@ internal static class PersistentStorageHelper
         if (entry.EntryType == TarEntryType.SymbolicLink)
         {
             // The permissions of a symbolic link are not used, and only the owner of the directory that
-            // contains it (or the owner of the link if that directory has the sticky bit set) can replace it.
+            // contains it can replace it.
             return;
         }
 
@@ -746,7 +794,9 @@ internal static class PersistentStorageHelper
             throw new IOException($"The path '{path}' is not a directory.");
         }
 
-        if ((entry.Mode & GroupOrOtherWrite) != 0 && (entry.Mode & UnixFileMode.StickyBit) == 0)
+        // The sticky bit (such as on /tmp) does not make a directory safe to traverse. Another user can still replace
+        // an entry they own in it, and the entry is read before its owner is known (see GetFileSystemEntry).
+        if ((entry.Mode & GroupOrOtherWrite) != 0)
         {
             throw new UnauthorizedAccessException($"The directory '{path}' can be written to by other users.");
         }
@@ -797,8 +847,15 @@ internal static class PersistentStorageHelper
                 {
                     var values = line.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries);
 
-                    return values.Length > 2
-                        && int.TryParse(values[2], NumberStyles.None, CultureInfo.InvariantCulture, out userId);
+                    // A user ID is unsigned, and is held the same way as the owner of an entry (see GetFileSystemEntry)
+                    if (values.Length > 2
+                        && uint.TryParse(values[2], NumberStyles.None, CultureInfo.InvariantCulture, out var value))
+                    {
+                        userId = unchecked((int)value);
+                        return true;
+                    }
+
+                    return false;
                 }
             }
         }
@@ -824,9 +881,11 @@ internal static class PersistentStorageHelper
         // .NET has no API that returns the owner of a file system entry, but tar archives record the owner, permissions
         // and type of each entry they contain, and TarWriter reads them from the file system without following symbolic
         // links. The entry is written to an in-memory archive and then read back. The PAX format is used so that user IDs
-        // of any size can be represented. The path could be replaced by a regular file after its attributes were read
-        // above, whose contents would then be copied into the archive, so the size of the archive is bounded. An entry for
-        // a directory or a symbolic link is a few kilobytes at most (the target of a link can be up to 4 KiB long).
+        // which do not fit in the header can be represented. The path could be replaced by a regular file after its
+        // attributes were read above, whose contents would then be copied into the archive, so the size of the archive is
+        // bounded. An entry for a directory or a symbolic link is a few kilobytes at most (the target of a link can be up
+        // to 4 KiB long). The path could also be replaced by something which blocks when it is opened, such as a named
+        // pipe, which is why no entry is read in a directory that other users can write to (see VerifyAncestor).
         using var stream = new BoundedMemoryStream(MaximumEntryArchiveLength);
 
         using (var writer = new TarWriter(stream, TarEntryFormat.Pax, leaveOpen: true))
@@ -838,8 +897,35 @@ internal static class PersistentStorageHelper
 
         using var reader = new TarReader(stream);
 
-        return reader.GetNextEntry() as PosixTarEntry
+        var entry = reader.GetNextEntry() as PosixTarEntry
             ?? throw new IOException($"The owner of '{path}' could not be determined.");
+
+        // Some versions of .NET do not record a user ID of 2^31 or more in the archive at all, which is then read back as
+        // the user ID of root. The owner of an entry is held as a signed integer, so such a user ID is held as a negative
+        // number, which is only ever compared for equality.
+        if (entry.Uid == RootUserId && !IsUserIdRecorded(stream.GetBuffer().AsSpan(0, (int)stream.Length)))
+        {
+            throw new IOException($"The owner of '{path}' could not be determined.");
+        }
+
+        return entry;
+    }
+
+    private static long ParseOctal(ReadOnlySpan<byte> field)
+    {
+        long value = 0;
+
+        foreach (var digit in field)
+        {
+            if (digit is < (byte)'0' or > (byte)'7')
+            {
+                break;
+            }
+
+            value = (value * 8) + (digit - '0');
+        }
+
+        return value;
     }
 #endif
 }

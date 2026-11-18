@@ -246,8 +246,8 @@ public class FileBlobProvider : PersistentBlobProvider, IDisposable
         }
 
         // The directory may have been removed and replaced by another user since it was last verified (for example
-        // beneath a sticky directory such as /tmp, where only its owner can remove it), so it is verified again
-        // even when it exists, and no files are removed from it if it can no longer be trusted.
+        // after it was removed by an operator), so it is verified again even when it exists, and no files are
+        // removed from it if it can no longer be trusted.
         if (!this.IsDirectoryTrusted())
         {
             return;

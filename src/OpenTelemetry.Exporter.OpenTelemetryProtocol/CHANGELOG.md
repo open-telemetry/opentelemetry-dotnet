@@ -37,6 +37,15 @@ Notes](../../RELEASENOTES.md).
   list, is now left out of that log record, and is counted as dropped.
   ([#8143](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8143))
 
+* **Breaking:** When running on .NET on non-Windows platforms, a directory in
+  the path of the experimental disk retry directory which is writable by its
+  group or by other users is no longer accepted even if it has the sticky bit
+  set (such as `/tmp`), and a directory or symbolic link whose owner cannot be
+  determined is no longer accepted. Use a directory which only the
+  application's user can write to, or disable the checks by setting
+  `OTEL_DOTNET_EXPERIMENTAL_OTLP_DISK_RETRY_CHECK_PERMISSIONS` to `false`.
+  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+
 ## 1.21.0
 
 Released 2026-Nov-11
