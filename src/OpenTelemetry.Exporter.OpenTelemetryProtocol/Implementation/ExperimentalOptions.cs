@@ -15,6 +15,8 @@ internal sealed class ExperimentalOptions
 
     public const string OtlpDiskRetryDirectoryPathEnvVar = "OTEL_DOTNET_EXPERIMENTAL_OTLP_DISK_RETRY_DIRECTORY_PATH";
 
+    public const string OtlpDiskRetryCheckPermissionsEnvVar = "OTEL_DOTNET_EXPERIMENTAL_OTLP_DISK_RETRY_CHECK_PERMISSIONS";
+
     public ExperimentalOptions()
         : this(EnvironmentVariablesConfiguration.Create())
     {
@@ -41,6 +43,11 @@ internal sealed class ExperimentalOptions
                     ? path
                     : throw new NotSupportedException(
                         $"Retry Policy '{retryPolicy}' requires '{OtlpDiskRetryDirectoryPathEnvVar}' to be configured.");
+
+                if (configuration.TryGetBoolValue(OpenTelemetryProtocolExporterEventSource.Log, OtlpDiskRetryCheckPermissionsEnvVar, out var checkPermissions))
+                {
+                    this.DiskRetryCheckPermissions = checkPermissions;
+                }
             }
             else
             {
@@ -72,4 +79,13 @@ internal sealed class ExperimentalOptions
     /// Gets the path on disk where the telemetry will be stored for retries at a later point.
     /// </summary>
     public string? DiskRetryDirectoryPath { get; }
+
+    /// <summary>
+    /// Gets a value indicating whether or not the permissions of the directory used for retry via disk should be checked.
+    /// </summary>
+    /// <remarks>
+    /// When <see langword="true"/>, which is the default, exporter creation fails on .NET on non-Windows platforms if the
+    /// directory could be changed by another user, as any file it contains is sent with the exporter's credentials.
+    /// </remarks>
+    public bool DiskRetryCheckPermissions { get; } = true;
 }

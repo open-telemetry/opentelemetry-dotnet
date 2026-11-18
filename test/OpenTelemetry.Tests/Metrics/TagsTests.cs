@@ -2,34 +2,32 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Globalization;
-using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Metrics.Tests;
 
 public class TagsTests
 {
-    public static TheoryData<object[]> GetEqualWideValues()
-    {
-        var ticks = new DateTime(2026, 10, 19, 12, 0, 0, DateTimeKind.Utc).Ticks;
-        object[][] equalValues =
-        [
-            [0.0, -0.0],
-            [double.NaN, -double.NaN, BitConverter.Int64BitsToDouble(0x7FF0000000000001)],
-            [0m, 0.00m, new decimal(0, 0, 0, true, 0), new decimal(0, 0, 0, true, 28)],
-            [1m, 1.0m, 1.0000000000000000000000000000m],
-            [-120m, -120.0m, -120.000m],
-            [0.5m, 0.50m, 0.5000000000000000000000000000m],
-            [7922816251426433759354395033m, 7922816251426433759354395033.0m],
-            [new decimal(0, 0, 10, false, 0), new decimal(0, 0, 100, false, 1)],
-            [new DateTime(ticks, DateTimeKind.Utc), new DateTime(ticks, DateTimeKind.Local)],
-            [
-                new DateTimeOffset(ticks, TimeSpan.Zero),
-                new DateTimeOffset(ticks + TimeSpan.FromHours(2).Ticks, TimeSpan.FromHours(2)),
-            ],
-        ];
+    private static readonly long WideValueTicks = new DateTime(2026, 10, 19, 12, 0, 0, DateTimeKind.Utc).Ticks;
 
-        return new TheoryData<object[]>(equalValues);
-    }
+    private static readonly Dictionary<string, object[]> EqualWideValues = new()
+    {
+        ["double zero"] = [0.0, -0.0],
+        ["double NaN"] = [double.NaN, -double.NaN, BitConverter.Int64BitsToDouble(0x7FF0000000000001)],
+        ["decimal zero"] = [0m, 0.00m, new decimal(0, 0, 0, true, 0), new decimal(0, 0, 0, true, 28)],
+        ["decimal one"] = [1m, 1.0m, 1.0000000000000000000000000000m],
+        ["decimal -120"] = [-120m, -120.0m, -120.000m],
+        ["decimal 0.5"] = [0.5m, 0.50m, 0.5000000000000000000000000000m],
+        ["decimal large"] = [7922816251426433759354395033m, 7922816251426433759354395033.0m],
+        ["decimal 10"] = [new decimal(0, 0, 10, false, 0), new decimal(0, 0, 100, false, 1)],
+        ["DateTime"] = [new DateTime(WideValueTicks, DateTimeKind.Utc), new DateTime(WideValueTicks, DateTimeKind.Local)],
+        ["DateTimeOffset"] =
+        [
+            new DateTimeOffset(WideValueTicks, TimeSpan.Zero),
+            new DateTimeOffset(WideValueTicks + TimeSpan.FromHours(2).Ticks, TimeSpan.FromHours(2)),
+        ],
+    };
+
+    public static TheoryData<string> EqualWideValueNames => [.. EqualWideValues.Keys];
 
     [Fact]
     public void Equals_ReturnsTrue_ForEqualTags()
@@ -283,10 +281,10 @@ public class TagsTests
     }
 
     [Theory]
-    [MemberData(nameof(GetEqualWideValues))]
-    public void ComputeHashCode_EqualWideValuesShareAHashCode(object[] values)
+    [MemberData(nameof(EqualWideValueNames))]
+    public void ComputeHashCode_EqualWideValuesShareAHashCode(string name)
     {
-        Guard.ThrowIfNull(values);
+        var values = EqualWideValues[name];
 
         var expected = new Tags([new("key", values[0])]);
 

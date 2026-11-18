@@ -41,6 +41,7 @@ OpenTelemetry.Context.Propagation.BaggagePropagator
 OpenTelemetry.Context.Propagation.BaggagePropagator.BaggagePropagator() -> void
 OpenTelemetry.Context.Propagation.CompositeTextMapPropagator
 OpenTelemetry.Context.Propagation.CompositeTextMapPropagator.CompositeTextMapPropagator(System.Collections.Generic.IEnumerable<OpenTelemetry.Context.Propagation.TextMapPropagator!>! propagators) -> void
+OpenTelemetry.Context.Propagation.EnvironmentVariableCarrier
 OpenTelemetry.Context.Propagation.PropagationContext
 OpenTelemetry.Context.Propagation.PropagationContext.ActivityContext.get -> System.Diagnostics.ActivityContext
 OpenTelemetry.Context.Propagation.PropagationContext.Baggage.get -> OpenTelemetry.Baggage
@@ -201,6 +202,11 @@ static OpenTelemetry.Baggage.operator ==(OpenTelemetry.Baggage left, OpenTelemet
 static OpenTelemetry.Baggage.RemoveBaggage(string! name, OpenTelemetry.Baggage baggage = default(OpenTelemetry.Baggage)) -> OpenTelemetry.Baggage
 static OpenTelemetry.Baggage.SetBaggage(string! name, string? value, OpenTelemetry.Baggage baggage = default(OpenTelemetry.Baggage)) -> OpenTelemetry.Baggage
 static OpenTelemetry.Baggage.SetBaggage(System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string!, string?>>! baggageItems, OpenTelemetry.Baggage baggage = default(OpenTelemetry.Baggage)) -> OpenTelemetry.Baggage
+static OpenTelemetry.Context.Propagation.EnvironmentVariableCarrier.Capture(System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string!, string?>>! environmentVariables) -> System.Collections.Generic.IReadOnlyDictionary<string!, string?>!
+static OpenTelemetry.Context.Propagation.EnvironmentVariableCarrier.CurrentProcess.get -> System.Collections.Generic.IReadOnlyDictionary<string!, string?>!
+static OpenTelemetry.Context.Propagation.EnvironmentVariableCarrier.Get<T>(T carrier, string! key) -> System.Collections.Generic.IEnumerable<string!>?
+static OpenTelemetry.Context.Propagation.EnvironmentVariableCarrier.NormalizeKey(string! key) -> string!
+static OpenTelemetry.Context.Propagation.EnvironmentVariableCarrier.Set<T>(T carrier, string! key, string! value) -> void
 static OpenTelemetry.Context.Propagation.PropagationContext.operator !=(OpenTelemetry.Context.Propagation.PropagationContext left, OpenTelemetry.Context.Propagation.PropagationContext right) -> bool
 static OpenTelemetry.Context.Propagation.PropagationContext.operator ==(OpenTelemetry.Context.Propagation.PropagationContext left, OpenTelemetry.Context.Propagation.PropagationContext right) -> bool
 static OpenTelemetry.Context.Propagation.Propagators.DefaultTextMapPropagator.get -> OpenTelemetry.Context.Propagation.TextMapPropagator!

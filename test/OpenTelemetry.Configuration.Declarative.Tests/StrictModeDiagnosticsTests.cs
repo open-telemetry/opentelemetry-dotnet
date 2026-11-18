@@ -295,6 +295,64 @@ public sealed class StrictModeDiagnosticsTests
         Assert.DoesNotContain(listener.Messages, e => e.EventId == SettingsIgnoredEventId);
     }
 
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void EnvironmentProviderAddedAfterDeclarativeConfiguration_SamplerSettings_AppearInWarningsOnlyWhenYamlOmitsSampler(bool documentSetsSampler)
+    {
+        Sampler? chosen = null;
+        using var yamlFile = CreateTracerProviderDocument(documentSetsSampler);
+        using var config = new ConfigurationManager();
+        var services = new ServiceCollection();
+        services.AddSingleton<IConfiguration>(config);
+        services.AddOpenTelemetry().UseDeclarativeConfiguration(yamlFile.Path);
+        services.ConfigureOpenTelemetryTracerProvider(b => b.ConfigureSampler((_, current) => chosen = current));
+
+        // Added after registration, so it is later than the declarative source.
+        ((IConfigurationBuilder)config).Add(new TestEnvironmentVariablesSource(new Dictionary<string, string?>
+        {
+            ["OTEL_TRACES_SAMPLER"] = "always_off",
+            ["OTEL_TRACES_SAMPLER_ARG"] = "0.5",
+            ["OTEL_SERVICE_NAME"] = "later",
+        }));
+
+        using var listener = CreateListener(EventLevel.Warning);
+
+        using var serviceProvider = services.BuildServiceProvider();
+        _ = serviceProvider.GetRequiredService<TracerProvider>();
+
+        var laterEnvironment = Assert.Single(listener.Messages, e => e.EventId == LaterEnvironmentVariablesEventId);
+        if (documentSetsSampler)
+        {
+            Assert.Equal("OTEL_SERVICE_NAME", laterEnvironment.Payload![1]);
+            Assert.IsType<AlwaysOnSampler>(chosen);
+        }
+        else
+        {
+            Assert.Equal("OTEL_SERVICE_NAME, OTEL_TRACES_SAMPLER, OTEL_TRACES_SAMPLER_ARG", laterEnvironment.Payload![1]);
+            Assert.IsType<AlwaysOffSampler>(chosen);
+        }
+    }
+
+    [Fact]
+    public void ProvidersAddedAfterDeclarativeConfiguration_SamplerOnlySettings_DoNotEmitWarningsWhenYamlSetsSampler()
+    {
+        using var yamlFile = CreateTracerProviderDocument(documentSetsSampler: true);
+        using var config = new ConfigurationManager();
+        var services = new ServiceCollection();
+        services.AddSingleton<IConfiguration>(config);
+        services.AddOpenTelemetry().UseDeclarativeConfiguration(yamlFile.Path);
+        config.AddInMemoryCollection(new Dictionary<string, string?> { ["OTEL_TRACES_SAMPLER"] = "always_off" });
+        ((IConfigurationBuilder)config).Add(new TestEnvironmentVariablesSource(new Dictionary<string, string?> { ["OTEL_TRACES_SAMPLER_ARG"] = "0.5" }));
+
+        using var listener = CreateListener(EventLevel.Warning);
+
+        using var serviceProvider = services.BuildServiceProvider();
+        _ = serviceProvider.GetRequiredService<TracerProvider>();
+
+        Assert.DoesNotContain(listener.Messages, e => e.EventId is LaterSourceEventId or LaterEnvironmentVariablesEventId);
+    }
+
     [Fact]
     public void ChainedConfiguration_ClassifiesProvidersByWhetherTheMaskReachesThem()
     {
@@ -751,6 +809,25 @@ public sealed class StrictModeDiagnosticsTests
         _ = serviceProvider.GetRequiredService<MeterProvider>();
         _ = serviceProvider.GetRequiredService<LoggerProvider>();
     }
+
+    private static DeclarativeYamlTestFile CreateTracerProviderDocument(bool documentSetsSampler) =>
+        DeclarativeYamlTestFile.CreateYamlFile(
+            """
+            file_format: "1.2"
+            tracer_provider:
+              processors:
+                - simple:
+                    exporter:
+                      console:
+
+            """
+            + (documentSetsSampler
+                ? """
+                    sampler:
+                      always_on:
+
+                  """
+                : string.Empty));
 
     private static TestEventListener CreateListener(EventLevel level)
     {

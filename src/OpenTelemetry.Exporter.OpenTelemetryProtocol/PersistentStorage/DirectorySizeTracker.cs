@@ -62,7 +62,7 @@ internal sealed class DirectorySizeTracker
         long directorySize = 0;
         try
         {
-            // Only the files written directly into the storage directory are counted. The exporter
+            // Only the files written directly into the storage directory are counted. The provider
             // never creates subdirectories, so recursing into them serves no purpose - and a
             // subdirectory that is actually a symbolic link or junction would let this walk follow
             // links out of the storage directory, potentially into a cycle or across the whole file system.

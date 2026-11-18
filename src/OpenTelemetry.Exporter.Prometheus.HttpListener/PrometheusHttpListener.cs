@@ -12,6 +12,8 @@ namespace OpenTelemetry.Exporter;
 
 internal sealed class PrometheusHttpListener : IDisposable
 {
+    private static readonly TimeSpan GetContextRetryDelay = TimeSpan.FromMilliseconds(100);
+    private static readonly TimeSpan GetContextMaximumRetryDelay = TimeSpan.FromSeconds(5);
     private static readonly TimeSpan RequestDrainTimeout = TimeSpan.FromSeconds(5);
     private static readonly TimeSpan WorkerShutdownTimeout = TimeSpan.FromSeconds(5);
 
@@ -192,18 +194,52 @@ internal sealed class PrometheusHttpListener : IDisposable
         try
         {
             using var scope = SuppressInstrumentationScope.Begin();
+            var consecutiveFailures = 0;
+
             while (!cancellationToken.IsCancellationRequested)
             {
+                HttpListenerContext context;
+
+                try
+                {
 #if NET
-                var context = await this.httpListener
-                    .GetContextAsync()
-                    .WaitAsync(cancellationToken)
-                    .ConfigureAwait(false);
+                    context = await this.httpListener
+                        .GetContextAsync()
+                        .WaitAsync(cancellationToken)
+                        .ConfigureAwait(false);
 #else
-                var task = this.httpListener.GetContextAsync();
-                task.Wait(cancellationToken);
-                var context = await task.ConfigureAwait(false);
+                    var task = this.httpListener.GetContextAsync();
+                    task.Wait(cancellationToken);
+                    context = await task.ConfigureAwait(false);
 #endif
+                }
+                catch (Exception ex) when (ex is not OperationCanceledException &&
+                    !cancellationToken.IsCancellationRequested &&
+                    this.httpListener.IsListening)
+                {
+                    // Failing to get one request does not mean that the listener has stopped.
+                    // For example, the managed (non-Windows) HttpListener implementation fails
+                    // the pending operation when it rejects a burst of requests that do not pass
+                    // its own authentication. Leaving the loop here would stop and close the
+                    // listener, so log the failure and carry on.
+                    PrometheusExporterEventSource.Log.AcceptRequestFailed(ex);
+
+                    if (consecutiveFailures++ > 0)
+                    {
+                        // Do not spin if the listener keeps failing without yielding a request.
+                        // Back off, up to a limit, so that a listener which keeps failing
+                        // does not flood the log either.
+                        var delay = TimeSpan.FromMilliseconds(Math.Min(
+                            GetContextRetryDelay.TotalMilliseconds * (1 << Math.Min(consecutiveFailures - 2, 8)),
+                            GetContextMaximumRetryDelay.TotalMilliseconds));
+
+                        await Task.Delay(delay, cancellationToken).ConfigureAwait(false);
+                    }
+
+                    continue;
+                }
+
+                consecutiveFailures = 0;
 
                 Interlocked.Increment(ref this.activeRequestCount);
                 _ = Task.Run(
@@ -247,16 +283,21 @@ internal sealed class PrometheusHttpListener : IDisposable
 
     private async Task ProcessRequestAsync(HttpListenerContext context, CancellationToken cancellationToken)
     {
-        if (context.Request.HasEntityBody)
-        {
-            // A scrape has no request body, and nothing here reads one. Do not keep the connection
-            // alive for such a request. On the managed (non-Windows) HttpListener implementation,
-            // Response.Close() on a keep-alive connection first synchronously drains any unread
-            // request body, waiting up to a second for each read, so a client that announces a body
-            // and trickles it in could hold a thread pool thread indefinitely after its response has
-            // been sent, beyond the reach of the scrape timeout.
-            context.Response.KeepAlive = false;
-        }
+        // Never keep a scrape connection alive: each connection carries exactly one response.
+        //
+        // On the managed (non-Windows) HttpListener implementation, Response.Close() on a keep-alive
+        // connection first synchronously drains any unread request body, waiting up to a second for
+        // each read, so a client that announces a body and trickles it in could hold a thread pool
+        // thread indefinitely after its response has been sent.
+        //
+        // The same implementation also writes any response headers that have not yet been sent (the
+        // status line of a body-less 408, 500 or 503, or the 404 or 400 that the listener itself
+        // sends) with a synchronous socket write that has no timeout, and so does HttpListener.Stop()
+        // for every open connection. A client that keeps a connection alive and does not read its
+        // earlier responses can fill the socket's send queue so that such a write never completes,
+        // holding a thread pool thread or blocking shutdown for as long as the client stays connected.
+        // With a single response per connection, none of our own responses can be left unread in the queue ahead of such a write.
+        context.Response.KeepAlive = false;
 
         if (this.disposed || cancellationToken.IsCancellationRequested)
         {

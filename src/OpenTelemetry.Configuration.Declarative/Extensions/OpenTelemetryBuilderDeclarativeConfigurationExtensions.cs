@@ -4,11 +4,13 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Options;
 using OpenTelemetry.Configuration.Declarative;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
+using OpenTelemetry.SelfDiagnostics;
 using OpenTelemetry.Trace;
 
 namespace OpenTelemetry;
@@ -261,6 +263,7 @@ public static class OpenTelemetryBuilderDeclarativeConfigurationExtensions
         TracerProviderSection? tracing)
     {
         var services = builder.Services;
+        BuiltInComponentProviders.Register(services);
         services.AddSingleton(new DeclarativeConfigurationRegistrationMarker(filePath));
 
         // Strict mode diagnostics run at the first provider build, against the final configuration.
@@ -269,6 +272,13 @@ public static class OpenTelemetryBuilderDeclarativeConfigurationExtensions
         services.ConfigureOpenTelemetryMeterProvider((sp, _) => sp.GetRequiredService<StrictModeDiagnostics>().ReportOnce(sp));
         services.ConfigureOpenTelemetryLoggerProvider((sp, _) => sp.GetRequiredService<StrictModeDiagnostics>().ReportOnce(sp));
 
+        // The document's log level goes in ahead of everything registered so far, so that
+        // configuration from code wins whatever the call order.
+        services.Insert(
+            0,
+            ServiceDescriptor.Singleton<IConfigureOptions<SelfDiagnosticsOptions>>(sp =>
+                new DocumentLogLevelConfigureOptions(sp.GetRequiredService<DeclarativeConfigurationDocumentAccessor>())));
+
         services.ConfigureOpenTelemetryTracerProvider(b => b.ConfigureResource(AddDeclarativeResourceDetector));
         services.ConfigureOpenTelemetryMeterProvider(b => b.ConfigureResource(AddDeclarativeResourceDetector));
         services.ConfigureOpenTelemetryLoggerProvider(b => b.ConfigureResource(AddDeclarativeResourceDetector));
@@ -276,8 +286,10 @@ public static class OpenTelemetryBuilderDeclarativeConfigurationExtensions
         // Processors are added when the tracer provider is built, from the document selected for the
         // service provider. Callbacks run in registration order, so processors added in code before
         // this call run first.
-        services.TryAddSingleton<PluginComponentProviderRegistry>();
         services.ConfigureOpenTelemetryTracerProvider(TracerProviderConfigurationApplier.Configure);
+
+        // Inserted first, so that a sampler set in code replaces the document's whatever the call order.
+        services.Insert(0, ServiceDescriptor.Singleton<IConfigureTracerProviderBuilder>(new DeclarativeSamplerConfigurationApplier()));
 
         if (tracing is not null)
         {

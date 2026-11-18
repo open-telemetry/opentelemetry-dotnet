@@ -167,6 +167,143 @@ public class SelfDiagnosticsTextFormatterTests
         Assert.Contains($"[{expected}]", line, StringComparison.Ordinal);
     }
 
+    [Theory]
+    [InlineData("\n")]
+    [InlineData("\r\n")]
+    [InlineData("\r")]
+    public void Format_MessageWithLineBreak_IndentsContinuationLines(string lineBreak)
+    {
+        const string Lookalike = "[2026-01-01T00:00:00.0000000Z][000001][------][Critical]    OpenTelemetry-Sdk: lookalike";
+        var entry = CreateEntry(LogLevel.Error, new EventId(17, "HttpRequestFailed"), $"Response: rejected{lineBreak}{Lookalike}{lineBreak}. Exception: none");
+
+        var text = SelfDiagnosticsTextFormatter.Instance.Format(in entry);
+
+        var lines = text.Split([Environment.NewLine], StringSplitOptions.None);
+
+        Assert.Equal(3, lines.Length);
+        Assert.StartsWith("[", lines[0], StringComparison.Ordinal);
+        Assert.EndsWith("Response: rejected", lines[0], StringComparison.Ordinal);
+        Assert.Equal($"    {Lookalike}", lines[1]);
+        Assert.Equal("    . Exception: none {EventId: 17, EventName: HttpRequestFailed}", lines[2]);
+    }
+
+    [Fact]
+    public void Format_EntryWithException_IndentsExceptionLines()
+    {
+        const string Lookalike = "[2026-01-01T00:00:00.0000000Z][000001][------][Critical]    OpenTelemetry-Sdk: lookalike";
+        var exception = new InvalidOperationException($"boom\n{Lookalike}");
+        var entry = CreateEntry(LogLevel.Error, default, "handled failure", exception);
+
+        var text = SelfDiagnosticsTextFormatter.Instance.Format(in entry);
+
+        var lines = text.Split([Environment.NewLine], StringSplitOptions.None);
+
+        Assert.Equal(3, lines.Length);
+        Assert.EndsWith("handled failure", lines[0], StringComparison.Ordinal);
+        Assert.Equal("    System.InvalidOperationException: boom", lines[1]);
+        Assert.Equal($"    {Lookalike}", lines[2]);
+    }
+
+    [Fact]
+    public void Format_EventNameWithLineBreak_IndentsContinuationLines()
+    {
+        var entry = CreateEntry(LogLevel.Warning, new EventId(1, "Name\n[line]"), "message");
+
+        var text = SelfDiagnosticsTextFormatter.Instance.Format(in entry);
+
+        Assert.EndsWith($"{{EventId: 1, EventName: Name{Environment.NewLine}    [line]}}", text, StringComparison.Ordinal);
+    }
+
+    [Theory]
+    [InlineData('\0', "\\u0000")]
+    [InlineData('\b', "\\u0008")]
+    [InlineData('\v', "\\u000B")]
+    [InlineData('\f', "\\u000C")]
+    [InlineData('\u001b', "\\u001B")]
+    [InlineData('\u007f', "\\u007F")]
+    [InlineData('\u0085', "\\u0085")]
+    [InlineData('\u2028', "\\u2028")]
+    [InlineData('\u2029', "\\u2029")]
+    public void Format_MessageWithControlCharacter_EscapesIt(char control, string expected)
+    {
+        var entry = CreateEntry(LogLevel.Warning, default, $"before{control}after");
+
+        var text = SelfDiagnosticsTextFormatter.Instance.Format(in entry);
+
+        Assert.EndsWith($"before{expected}after", text, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Format_ExceptionWithLineBreakAndControlCharacter_IndentsAndEscapesIt()
+    {
+        var exception = new InvalidOperationException("one\r\ntwo\u001bthree");
+        var entry = CreateEntry(LogLevel.Error, default, "handled failure", exception);
+
+        var text = SelfDiagnosticsTextFormatter.Instance.Format(in entry);
+
+        var lines = text.Split([Environment.NewLine], StringSplitOptions.None);
+
+        Assert.Equal(3, lines.Length);
+        Assert.Equal("    System.InvalidOperationException: one", lines[1]);
+        Assert.StartsWith("    two\\u001Bthree", lines[2], StringComparison.Ordinal);
+    }
+
+    [Theory]
+    [InlineData("first\n\rsecond", "first||    second")]
+    [InlineData("first\n\nsecond", "first||    second")]
+    [InlineData("first\r\n\r\nsecond", "first||    second")]
+    [InlineData("first\n\n\nsecond", "first|||    second")]
+    public void Format_MessageWithConsecutiveLineBreaks_LeavesEmptyLinesEmpty(string message, string expected)
+    {
+        var entry = CreateEntry(LogLevel.Warning, default, message);
+
+        var text = SelfDiagnosticsTextFormatter.Instance.Format(in entry);
+
+        var lines = text.Split([Environment.NewLine], StringSplitOptions.None);
+
+        // The first line also holds the entry prefix, so compare the end of the joined lines.
+        Assert.EndsWith(expected, string.Join("|", lines), StringComparison.Ordinal);
+    }
+
+    [Theory]
+    [InlineData("message\n")]
+    [InlineData("message\r\n")]
+    [InlineData("message\r")]
+    [InlineData("message\n\n\n")]
+    public void Format_MessageWithTrailingLineBreak_DropsIt(string message)
+    {
+        var entry = CreateEntry(LogLevel.Warning, new EventId(17, "HttpRequestFailed"), message);
+
+        var text = SelfDiagnosticsTextFormatter.Instance.Format(in entry);
+
+        Assert.DoesNotContain(Environment.NewLine, text, StringComparison.Ordinal);
+        Assert.EndsWith("message {EventId: 17, EventName: HttpRequestFailed}", text, StringComparison.Ordinal);
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("\n")]
+    [InlineData("\r\n\r\n")]
+    public void Format_MessageWithNoText_WritesNoText(string message)
+    {
+        var entry = CreateEntry(LogLevel.Warning, default, message);
+
+        var text = SelfDiagnosticsTextFormatter.Instance.Format(in entry);
+
+        Assert.DoesNotContain(Environment.NewLine, text, StringComparison.Ordinal);
+        Assert.EndsWith("[Warning]", text.TrimEnd(), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Format_MessageWithTab_IsPreserved()
+    {
+        var entry = CreateEntry(LogLevel.Warning, default, "before\tafter");
+
+        var text = SelfDiagnosticsTextFormatter.Instance.Format(in entry);
+
+        Assert.EndsWith("before\tafter", text, StringComparison.Ordinal);
+    }
+
     private static SelfDiagnosticsLogEntry CreateEntry(
         LogLevel level,
         EventId eventId,

@@ -1,10 +1,12 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-using System.Diagnostics.CodeAnalysis;
-using System.Diagnostics.Tracing;
 using System.Runtime.InteropServices;
-using OpenTelemetry.PersistentStorage.Abstractions;
+using System.Text;
+#if NET
+using System.Formats.Tar;
+using System.Runtime.Versioning;
+#endif
 using OpenTelemetry.PersistentStorage.FileSystem;
 using OpenTelemetry.Tests;
 
@@ -13,6 +15,186 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests.PersistentStorage;
 [Collection(EventSourceCollectionDefinition.Name)]
 public class FileBlobProviderTests
 {
+#if NET
+    private const UnixFileMode OwnerOnly = UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute;
+
+#endif
+    [Fact]
+    public void FileBlobProvider_CreatesSubDirectory()
+    {
+        var testDirectory = new DirectoryInfo(Path.Combine(Path.GetTempPath(), Path.GetRandomFileName()));
+
+        using var blobProvider = new FileBlobProvider(testDirectory.FullName);
+
+        Assert.Equal(testDirectory.FullName, blobProvider.DirectoryPath);
+        Directory.Exists(testDirectory.FullName);
+
+        // clean up
+        Directory.Delete(testDirectory.FullName, true);
+    }
+
+    [Fact]
+    public void FileBlobProvider_E2E_Test()
+    {
+        var testDirectory = new DirectoryInfo(Path.Combine(Path.GetTempPath(), Path.GetRandomFileName()));
+        using var blobProvider = new FileBlobProvider(testDirectory.FullName);
+
+        var data = Encoding.UTF8.GetBytes("Hello, World!");
+
+        // Create blob.
+        Assert.True(blobProvider.TryCreateBlob(data.AsSpan(), out var blob1));
+
+        // Get blob.
+        Assert.True(blobProvider.TryGetBlob(out var blob2));
+
+        Assert.Single(blobProvider.GetBlobs());
+
+        // Verify file name from both create blob and get blob are same.
+        Assert.Equal(((FileBlob)blob1).FullPath, ((FileBlob)blob2).FullPath);
+
+        // Validate if content in the blob is same as buffer data passed to create blob.
+        Assert.True(blob1.TryRead(out var blobContent));
+        Assert.Equal(data, blobContent);
+
+        testDirectory.Delete(true);
+    }
+
+    [Fact]
+    public void FileBlobProvider_CreateBlobReturnsNullIfBlobProviderIsFull()
+    {
+        var testDirectory = new DirectoryInfo(Path.Combine(Path.GetTempPath(), Path.GetRandomFileName()));
+        using var blobProvider = new FileBlobProvider(testDirectory.FullName, 100);
+
+        // write a file to fill up the configured max space.
+        Assert.True(blobProvider.TryCreateBlob(new byte[100].AsSpan(), out _));
+
+        var data = Encoding.UTF8.GetBytes("Hello, World!");
+
+        Assert.False(blobProvider.TryCreateBlob(data.AsSpan(), out var blob));
+        Assert.Null(blob);
+
+        testDirectory.Delete(true);
+    }
+
+    [Fact]
+    [Obsolete("Validates obsolete byte[] overload compatibility.")]
+    public void FileBlobProvider_CreateBlobReturnsFalseForNullByteArray()
+    {
+        var testDirectory = new DirectoryInfo(Path.Combine(Path.GetTempPath(), Path.GetRandomFileName()));
+        using var blobProvider = new FileBlobProvider(testDirectory.FullName);
+        byte[] buffer = null!;
+
+        Assert.False(blobProvider.TryCreateBlob(buffer, out var blob));
+        Assert.False(blobProvider.TryCreateBlob(buffer, 1000, out var leasedBlob));
+
+        Assert.Null(blob);
+        Assert.Null(leasedBlob);
+        Assert.Empty(Directory.EnumerateFiles(blobProvider.DirectoryPath));
+
+        testDirectory.Delete(true);
+    }
+
+    [Fact]
+    public void FileBlobProvider_TestRetentionPeriod()
+    {
+        var testDirectory = new DirectoryInfo(Path.Combine(Path.GetTempPath(), Path.GetRandomFileName()));
+        long maxSizeInBytes = 100000;
+        var maintenancePeriodInMilliseconds = 3000;
+        var retentionPeriodInMilliseconds = 1000;
+        var writeTimeOutInMilliseconds = 1000;
+        using var blobProvider = new FileBlobProvider(
+            testDirectory.FullName,
+            maxSizeInBytes,
+            maintenancePeriodInMilliseconds,
+            retentionPeriodInMilliseconds,
+            writeTimeOutInMilliseconds);
+
+        var data = Encoding.UTF8.GetBytes("Hello, World!");
+        Assert.True(blobProvider.TryCreateBlob(data.AsSpan(), out var blob));
+
+        // Wait for retention deadline to expire
+        Thread.Sleep(2000);
+        var retentionDeadline = DateTime.UtcNow - TimeSpan.FromMilliseconds(retentionPeriodInMilliseconds);
+        PersistentStorageHelper.RemoveExpiredBlob(retentionDeadline, ((FileBlob)blob).FullPath);
+
+        // Blob will be deleted as retention period is 1 sec
+        Assert.False(File.Exists(((FileBlob)blob).FullPath));
+
+        testDirectory.Delete(true);
+    }
+
+    [Fact]
+    public void FileBlobProvider_TestWriteTimeoutPeriod()
+    {
+        var testDirectory = new DirectoryInfo(Path.Combine(Path.GetTempPath(), Path.GetRandomFileName()));
+        long maxSizeInBytes = 100000;
+        var maintenancePeriodInMilliseconds = 3000;
+        var retentionPeriodInMilliseconds = 2000;
+        var writeTimeOutInMilliseconds = 1000;
+        using var blobProvider = new FileBlobProvider(
+            testDirectory.FullName,
+            maxSizeInBytes,
+            maintenancePeriodInMilliseconds,
+            retentionPeriodInMilliseconds,
+            writeTimeOutInMilliseconds);
+
+        var data = Encoding.UTF8.GetBytes("Hello, World!");
+
+        Assert.True(blobProvider.TryCreateBlob(data.AsSpan(), out var blob));
+
+        // Mock write
+        File.Move(((FileBlob)blob).FullPath, ((FileBlob)blob).FullPath + ".tmp");
+
+        // validate file moved successfully
+        Assert.True(File.Exists(((FileBlob)blob).FullPath + ".tmp"));
+
+        // wait for timeout period
+        Thread.Sleep(2000);
+        var timeoutDeadline = DateTime.UtcNow - TimeSpan.FromMilliseconds(writeTimeOutInMilliseconds);
+        PersistentStorageHelper.RemoveTimedOutTmpFiles(timeoutDeadline, ((FileBlob)blob).FullPath + ".tmp");
+
+        // tmp file will be deleted as write timeout period is 1 sec
+        Assert.False(File.Exists(((FileBlob)blob).FullPath + ".tmp"));
+        Assert.False(File.Exists(((FileBlob)blob).FullPath));
+
+        testDirectory.Delete(true);
+    }
+
+    [Fact]
+    public void FileBlobProviderTests_TestLeaseExpiration()
+    {
+        var testDirectory = new DirectoryInfo(Path.Combine(Path.GetTempPath(), Path.GetRandomFileName()));
+        long maxSizeInBytes = 100000;
+        var maintenancePeriodInMilliseconds = 3000;
+        var retentionPeriodInMilliseconds = 2000;
+        var writeTimeOutInMilliseconds = 1000;
+        using var blobProvider = new FileBlobProvider(
+            testDirectory.FullName,
+            maxSizeInBytes,
+            maintenancePeriodInMilliseconds,
+            retentionPeriodInMilliseconds,
+            writeTimeOutInMilliseconds);
+
+        var data = Encoding.UTF8.GetBytes("Hello, World!");
+
+        Assert.True(blobProvider.TryCreateBlob(data.AsSpan(), out var blob));
+        var blobPath = ((FileBlob)blob).FullPath;
+
+        blob.TryLease(1000);
+        var leasePath = ((FileBlob)blob).FullPath;
+        Assert.True(File.Exists(leasePath));
+
+        // Wait for lease to expire
+        Thread.Sleep(2000);
+        PersistentStorageHelper.RemoveExpiredLease(DateTime.UtcNow, leasePath);
+
+        // File name will be change to .blob
+        Assert.True(File.Exists(blobPath));
+        Assert.False(File.Exists(leasePath));
+
+        testDirectory.Delete(true);
+    }
+
     [Fact]
     public void TryCreateBlob_WhenWriteExceedsEmptyStorageLimit_RejectsWithoutPersisting()
     {
@@ -342,6 +524,23 @@ public class FileBlobProviderTests
     }
 
     [Fact]
+    public void TryWrite_ExistingBlobWithContentLargerThanStorageLimit_RejectsWithoutReplacingExistingContent()
+    {
+        using var temp = new TemporaryDirectory();
+        using var provider = new FileBlobProvider(temp.Path, maxSizeInBytes: 4);
+
+        Assert.True(provider.TryCreateBlob([1, 2, 3], out var blob));
+        Assert.False(blob.TryWrite([1, 2, 3, 4, 5]));
+        Assert.False(blob.TryWrite([1, 2, 3, 4, 5], 60_000));
+
+        // The existing content is still stored, is not leased, and is still readable
+        Assert.Single(Directory.EnumerateFiles(temp.Path));
+        Assert.Single(Directory.EnumerateFiles(temp.Path, "*.blob"));
+        Assert.True(blob.TryRead(out var content));
+        Assert.Equal<byte>([1, 2, 3], content);
+    }
+
+    [Fact]
     public void TryWrite_BlobWhoseFileWasRemoved_UsesTemporaryFileThatIsNotTimedOutImmediately()
     {
         using var temp = new TemporaryDirectory();
@@ -539,6 +738,193 @@ public class FileBlobProviderTests
 
 #if NET
     [Fact]
+    public void Constructor_RelativePath_UsesAbsolutePath()
+    {
+        using var root = new TemporaryDirectory();
+
+        // The directory that is verified must be the one that is used, even if the current directory changes later
+        var relativePath = Path.Combine(Path.GetRelativePath(Directory.GetCurrentDirectory(), root.Path), "traces");
+
+        if (Path.IsPathRooted(relativePath))
+        {
+            Assert.Skip("The temporary directory cannot be expressed as a relative path.");
+            return;
+        }
+
+        using var provider = new FileBlobProvider(relativePath);
+
+        Assert.True(Path.IsPathRooted(provider.DirectoryPath));
+        Assert.Equal(Path.GetFullPath(relativePath), provider.DirectoryPath);
+        Assert.True(provider.TryCreateBlob([1, 2, 3], out var blob));
+        Assert.Equal(provider.DirectoryPath, Path.GetDirectoryName(Assert.IsType<FileBlob>(blob).FullPath));
+    }
+
+    [Fact]
+    public void BoundedMemoryStream_FileReplacedAfterAttributesWereRead_DoesNotBufferTheFile()
+    {
+        using var root = new TemporaryDirectory();
+
+        // If a path is replaced by a regular file after it was checked to be a directory, archiving it
+        // would copy its contents into memory, so the size of the archive must be bounded
+        var path = Path.Combine(root.Path, "large");
+        File.WriteAllBytes(path, new byte[1024 * 1024]);
+
+        using var stream = new BoundedMemoryStream(64 * 1024);
+        using var writer = new TarWriter(stream, TarEntryFormat.Pax, leaveOpen: true);
+
+        Assert.Throws<IOException>(() => writer.WriteEntry(path, entryName: "entry"));
+        Assert.True(stream.Length <= 64 * 1024);
+    }
+
+    [Fact]
+    public void BoundedMemoryStream_WritesUpToTheMaximumLength()
+    {
+        using var stream = new BoundedMemoryStream(4);
+
+        stream.Write([1, 2], 0, 2);
+        stream.WriteByte(3);
+        stream.Write(new ReadOnlySpan<byte>([4]));
+
+        Assert.Equal([1, 2, 3, 4], stream.ToArray());
+        Assert.Throws<IOException>(() => stream.WriteByte(5));
+        Assert.Throws<IOException>(() => stream.Write([5], 0, 1));
+        Assert.Throws<IOException>(() => stream.Write(new ReadOnlySpan<byte>([5])));
+    }
+
+    [Fact]
+    public void BoundedMemoryStream_SetLengthOrCapacityBeyondTheMaximumLength_Throws()
+    {
+        using var stream = new BoundedMemoryStream(4);
+
+        // Neither can be used to allocate more memory than the stream is allowed to hold
+        Assert.Throws<IOException>(() => stream.SetLength(5));
+        Assert.Equal(0, stream.Length);
+
+        stream.Capacity = 1024;
+
+        Assert.Equal(4, stream.Capacity);
+
+        stream.SetLength(4);
+
+        Assert.Equal(4, stream.Length);
+    }
+
+    [Fact]
+    public void BoundedMemoryStream_GrowthDoesNotExceedTheMaximumLength()
+    {
+        // The stream doubles its capacity as it grows, from a minimum of 256 bytes
+        using var stream = new BoundedMemoryStream(300);
+
+        stream.Write(new byte[200], 0, 200);
+        stream.Write(new byte[100], 0, 100);
+
+        Assert.Equal(300, stream.Length);
+        Assert.Equal(300, stream.Capacity);
+        Assert.Throws<IOException>(() => stream.WriteByte(0));
+    }
+
+    [Fact]
+    public void TryGetBlob_DirectoryReplacedByDirectoryWritableByOtherUsers_DoesNotReturnForeignBlobs()
+    {
+        if (OperatingSystem.IsWindows())
+        {
+            Assert.Skip("Unix file modes do not apply on Windows.");
+            return;
+        }
+
+        using var root = new TemporaryDirectory();
+
+        var path = Path.Combine(root.Path, "traces");
+        using var provider = new FileBlobProvider(path);
+
+        // Another user recreates the directory after it was verified, for example after it was cleaned up
+        Directory.Delete(path, recursive: true);
+        CreateDirectory(path, OwnerOnly | UnixFileMode.OtherWrite);
+
+        var blobPath = Path.Combine(path, PersistentStorageHelper.GetUniqueFileName(".blob"));
+        File.WriteAllBytes(blobPath, [1, 2, 3]);
+
+        Assert.False(provider.TryGetBlob(out _));
+        Assert.False(provider.TryCreateBlob([4, 5, 6], out _));
+        Assert.Equal([blobPath], Directory.GetFiles(path));
+    }
+
+    [Fact]
+    public void TryRead_DirectoryReplacedByDirectoryWritableByOtherUsersAfterBlobWasListed_DoesNotReturnForeignContent()
+    {
+        if (OperatingSystem.IsWindows())
+        {
+            Assert.Skip("Unix file modes do not apply on Windows.");
+            return;
+        }
+
+        using var root = new TemporaryDirectory();
+
+        var path = Path.Combine(root.Path, "traces");
+        using var provider = new FileBlobProvider(path);
+
+        Assert.True(provider.TryCreateBlob([1, 2, 3], out _));
+        Assert.True(provider.TryGetBlob(out var blob));
+
+        var blobPath = Assert.IsType<FileBlob>(blob).FullPath;
+
+        // Another user replaces the directory after the blob was listed, and before its content is read
+        Directory.Delete(path, recursive: true);
+        CreateDirectory(path, OwnerOnly | UnixFileMode.OtherWrite);
+        File.WriteAllBytes(blobPath, [4, 5, 6]);
+
+        Assert.False(blob.TryRead(out var data));
+        Assert.Null(data);
+    }
+
+    [Fact]
+    public void TryGetBlob_DirectoryReplacedByDirectoryWritableByOtherUsersWithoutPermissionChecks_ReturnsBlobs()
+    {
+        if (OperatingSystem.IsWindows())
+        {
+            Assert.Skip("Unix file modes do not apply on Windows.");
+            return;
+        }
+
+        using var root = new TemporaryDirectory();
+
+        var path = Path.Combine(root.Path, "traces");
+        using var provider = new FileBlobProvider(path, checkPermissions: false);
+
+        Directory.Delete(path, recursive: true);
+        CreateDirectory(path, OwnerOnly | UnixFileMode.OtherWrite);
+
+        Assert.True(provider.TryCreateBlob([1, 2, 3], out _));
+        Assert.True(provider.TryGetBlob(out _));
+    }
+
+    [Fact]
+    public async Task MaintenanceEvent_DirectoryReplacedByDirectoryWritableByOtherUsers_DoesNotRemoveFiles()
+    {
+        if (OperatingSystem.IsWindows())
+        {
+            Assert.Skip("Unix file modes do not apply on Windows.");
+            return;
+        }
+
+        using var root = new TemporaryDirectory();
+
+        var path = Path.Combine(root.Path, "traces");
+        using var provider = new FileBlobProvider(path, maintenancePeriodInMilliseconds: 50, retentionPeriodInMilliseconds: 1);
+
+        Directory.Delete(path, recursive: true);
+        CreateDirectory(path, OwnerOnly | UnixFileMode.OtherWrite);
+
+        // The blob has expired, so it would be removed by maintenance if the directory was trusted
+        var blobPath = Path.Combine(path, PersistentStorageHelper.GetUniqueFileName(".blob"));
+        File.WriteAllBytes(blobPath, [1, 2, 3]);
+
+        await Task.Delay(TimeSpan.FromSeconds(1), TestContext.Current.CancellationToken);
+
+        Assert.True(File.Exists(blobPath));
+    }
+
+    [Fact]
     public async Task MaintenanceEvent_RecreatesDeletedDirectoryWithOwnerOnlyPermissions()
     {
         if (OperatingSystem.IsWindows())
@@ -596,6 +982,227 @@ public class FileBlobProviderTests
         Assert.Equal(UnixFileMode.None, File.GetUnixFileMode(blobPath) & GroupAndOther);
     }
 
+    [Theory]
+    [InlineData(UnixFileMode.GroupWrite)]
+    [InlineData(UnixFileMode.OtherWrite)]
+    [InlineData(UnixFileMode.OtherWrite | UnixFileMode.StickyBit)]
+    public void Constructor_ExistingDirectoryWritableByOtherUsers_Throws(UnixFileMode mode)
+    {
+        if (OperatingSystem.IsWindows())
+        {
+            Assert.Skip("Unix file modes do not apply on Windows.");
+            return;
+        }
+
+        using var root = new TemporaryDirectory();
+
+        // Another user could plant blobs in the directory that would be sent with the exporter's credentials
+        var path = Path.Combine(root.Path, "traces");
+        CreateDirectory(path, OwnerOnly | mode);
+
+        Assert.Throws<UnauthorizedAccessException>(() => new FileBlobProvider(path));
+    }
+
+    [Theory]
+    [InlineData(UnixFileMode.GroupWrite)]
+    [InlineData(UnixFileMode.OtherWrite)]
+    [InlineData(UnixFileMode.OtherWrite | UnixFileMode.StickyBit)]
+    public void Constructor_ExistingDirectoryWritableByOtherUsersWithoutPermissionChecks_DoesNotThrow(UnixFileMode mode)
+    {
+        if (OperatingSystem.IsWindows())
+        {
+            Assert.Skip("Unix file modes do not apply on Windows.");
+            return;
+        }
+
+        using var root = new TemporaryDirectory();
+
+        var path = Path.Combine(root.Path, "traces");
+        CreateDirectory(path, OwnerOnly | mode);
+
+        using var provider = new FileBlobProvider(path, checkPermissions: false);
+
+        Assert.True(provider.TryCreateBlob([1, 2, 3], out _));
+    }
+
+    [Theory]
+    [InlineData(UnixFileMode.GroupWrite)]
+    [InlineData(UnixFileMode.OtherWrite)]
+    public void Constructor_DirectoryInDirectoryWritableByOtherUsers_Throws(UnixFileMode mode)
+    {
+        if (OperatingSystem.IsWindows())
+        {
+            Assert.Skip("Unix file modes do not apply on Windows.");
+            return;
+        }
+
+        using var root = new TemporaryDirectory();
+
+        // Another user could replace the directory with one of their own after it has been verified
+        var parent = Path.Combine(root.Path, "retry");
+        CreateDirectory(parent, OwnerOnly | mode);
+
+        var path = Path.Combine(parent, "traces");
+
+        Assert.Throws<UnauthorizedAccessException>(() => new FileBlobProvider(path));
+    }
+
+    [Fact]
+    public void Constructor_DirectoryInStickyDirectoryWritableByOtherUsers_DoesNotThrow()
+    {
+        if (OperatingSystem.IsWindows())
+        {
+            Assert.Skip("Unix file modes do not apply on Windows.");
+            return;
+        }
+
+        using var root = new TemporaryDirectory();
+
+        // Like /tmp, other users cannot replace a directory they do not own in a directory with the sticky bit set
+        var parent = Path.Combine(root.Path, "retry");
+        CreateDirectory(parent, OwnerOnly | UnixFileMode.GroupWrite | UnixFileMode.OtherWrite | UnixFileMode.StickyBit);
+
+        var path = Path.Combine(parent, "traces");
+        using var provider = new FileBlobProvider(path);
+
+        Assert.True(provider.TryCreateBlob([1, 2, 3], out _));
+    }
+
+    [Fact]
+    public void Constructor_ExistingDirectoryOwnedByAnotherUser_Throws()
+    {
+        if (OperatingSystem.IsWindows())
+        {
+            Assert.Skip("Unix file modes do not apply on Windows.");
+            return;
+        }
+
+        if (Environment.IsPrivilegedProcess)
+        {
+            Assert.Skip("The root directory is owned by the current user.");
+            return;
+        }
+
+        // The root directory is owned by root and is not writable by other users
+        var path = Path.GetPathRoot(Path.GetTempPath())!;
+
+        Assert.Throws<UnauthorizedAccessException>(() => new FileBlobProvider(path));
+    }
+
+    [Fact]
+    public void Constructor_SymbolicLinkToPrivateDirectory_DoesNotThrow()
+    {
+        if (OperatingSystem.IsWindows())
+        {
+            Assert.Skip("Unix file modes do not apply on Windows.");
+            return;
+        }
+
+        using var root = new TemporaryDirectory();
+
+        var target = Path.Combine(root.Path, "target");
+        CreateDirectory(target, OwnerOnly);
+
+        var path = Path.Combine(root.Path, "traces");
+        Directory.CreateSymbolicLink(path, "target");
+
+        using var provider = new FileBlobProvider(path);
+
+        Assert.True(provider.TryCreateBlob([1, 2, 3], out _));
+        Assert.Single(Directory.GetFiles(target));
+    }
+
+    [Fact]
+    public void Constructor_SymbolicLinkToDirectoryWritableByOtherUsers_Throws()
+    {
+        if (OperatingSystem.IsWindows())
+        {
+            Assert.Skip("Unix file modes do not apply on Windows.");
+            return;
+        }
+
+        using var root = new TemporaryDirectory();
+
+        var target = Path.Combine(root.Path, "shared");
+        CreateDirectory(target, OwnerOnly | UnixFileMode.OtherWrite);
+
+        var path = Path.Combine(root.Path, "traces");
+        Directory.CreateSymbolicLink(path, target);
+
+        Assert.Throws<UnauthorizedAccessException>(() => new FileBlobProvider(path));
+    }
+
+    [Fact]
+    public void Constructor_SymbolicLinkWithParentSegmentAfterSymbolicLink_VerifiesDirectoryTheOperatingSystemUses()
+    {
+        if (OperatingSystem.IsWindows())
+        {
+            Assert.Skip("Unix file modes do not apply on Windows.");
+            return;
+        }
+
+        using var root = new TemporaryDirectory();
+
+        var shared = Path.Combine(root.Path, "shared");
+        var target = Path.Combine(shared, "target");
+
+        CreateDirectory(shared, OwnerOnly | UnixFileMode.OtherWrite);
+        CreateDirectory(target, OwnerOnly);
+        Directory.CreateSymbolicLink(Path.Combine(root.Path, "link"), target);
+
+        // The operating system resolves "link/.." in the target of a link to the shared directory, not to the root directory
+        Directory.CreateSymbolicLink(Path.Combine(root.Path, "retry"), "link/..");
+
+        var path = Path.Combine(root.Path, "retry", "traces");
+
+        Assert.Throws<UnauthorizedAccessException>(() => new FileBlobProvider(path));
+        Assert.True(Directory.Exists(Path.Combine(shared, "traces")));
+    }
+
+    [Fact]
+    public void Constructor_ParentSegment_VerifiesDirectoryTheFileSystemApisUse()
+    {
+        if (OperatingSystem.IsWindows())
+        {
+            Assert.Skip("Unix file modes do not apply on Windows.");
+            return;
+        }
+
+        using var root = new TemporaryDirectory();
+
+        var shared = Path.Combine(root.Path, "shared");
+        var target = Path.Combine(shared, "target");
+
+        CreateDirectory(shared, OwnerOnly | UnixFileMode.OtherWrite);
+        CreateDirectory(target, OwnerOnly);
+        Directory.CreateSymbolicLink(Path.Combine(root.Path, "link"), target);
+
+        // .NET removes "link/.." from a path before using it, unlike the operating system
+        var path = Path.Combine(root.Path, "link", "..", "traces");
+        using var provider = new FileBlobProvider(path);
+
+        Assert.True(provider.TryCreateBlob([1, 2, 3], out _));
+        Assert.Single(Directory.GetFiles(Path.Combine(root.Path, "traces")));
+        Assert.False(Directory.Exists(Path.Combine(shared, "traces")));
+    }
+
+    [Fact]
+    public void Constructor_SymbolicLinkLoop_Throws()
+    {
+        if (OperatingSystem.IsWindows())
+        {
+            Assert.Skip("Unix file modes do not apply on Windows.");
+            return;
+        }
+
+        using var root = new TemporaryDirectory();
+
+        Directory.CreateSymbolicLink(Path.Combine(root.Path, "a"), "b");
+        Directory.CreateSymbolicLink(Path.Combine(root.Path, "b"), "a");
+
+        Assert.ThrowsAny<IOException>(() => new FileBlobProvider(Path.Combine(root.Path, "a", "traces")));
+    }
+
     [Fact]
     public void TryRead_BlobThatIsSymbolicLink_DoesNotReadIt()
     {
@@ -621,219 +1228,13 @@ public class FileBlobProviderTests
     }
 #endif
 
-    [Fact]
-    [Obsolete("Exercises obsolete PersistentBlob and PersistentBlobProvider overloads.")]
-    public void PersistentBlob_DelegatesToImplementation()
+#if NET
+    [UnsupportedOSPlatform("windows")]
+    private static void CreateDirectory(string path, UnixFileMode mode)
     {
-        var blob = new StubBlob();
-        byte[] array = [1, 2, 3];
-        ReadOnlySpan<byte> span = [4, 5, 6];
-
-        Assert.True(blob.TryRead(out var buffer));
-        Assert.Equal<byte>([9, 9], buffer);
-
-        Assert.True(blob.TryWrite(span, 100));
-        Assert.NotNull(blob.Written);
-        Assert.Equal<byte>([4, 5, 6], blob.Written);
-        Assert.Equal(100, blob.LeasePeriod);
-
-        Assert.True(blob.TryLease(200));
-        Assert.Equal(200, blob.LeasePeriod);
-
-        Assert.True(blob.TryDelete());
-        Assert.True(blob.Deleted);
-
-        Assert.True(blob.TryWrite(array, 50));
-        Assert.NotNull(blob.Written);
-        Assert.Equal<byte>([1, 2, 3], blob.Written);
+        // The mode is set after the directory is created, as the mode it is created with is restricted by the umask
+        Directory.CreateDirectory(path);
+        File.SetUnixFileMode(path, mode);
     }
-
-    [Fact]
-    [Obsolete("Exercises obsolete PersistentBlob and PersistentBlobProvider overloads.")]
-    public void PersistentBlob_WhenImplementationThrows_ReturnsFalseAndLogsError()
-    {
-        using var listener = new TestEventListener();
-        listener.EnableEvents(PersistentStorageAbstractionsEventSource.Log, EventLevel.Error, EventKeywords.All);
-
-        var blob = new StubBlob { Throw = true };
-        byte[] array = [1, 2, 3];
-        ReadOnlySpan<byte> span = [4, 5, 6];
-
-        Assert.False(blob.TryRead(out var buffer));
-        Assert.Null(buffer);
-        Assert.False(blob.TryWrite(span));
-        Assert.False(blob.TryWrite(array, 50));
-        Assert.False(blob.TryLease(100));
-        Assert.False(blob.TryDelete());
-
-        Assert.Equal(5, listener.CurrentMessages.Count);
-    }
-
-    [Fact]
-    [Obsolete("Exercises obsolete PersistentBlob and PersistentBlobProvider overloads.")]
-    public void PersistentBlobProvider_DelegatesToImplementation()
-    {
-        var provider = new StubBlobProvider();
-        byte[] array = [1, 2, 3];
-        ReadOnlySpan<byte> span = [4, 5, 6];
-
-        Assert.True(provider.TryCreateBlob(span, 100, out var blob));
-        Assert.NotNull(blob);
-        Assert.NotNull(provider.Created);
-        Assert.Equal<byte>([4, 5, 6], provider.Created);
-        Assert.Equal(100, provider.LeasePeriod);
-
-        Assert.True(provider.TryCreateBlob(span, out blob));
-        Assert.NotNull(blob);
-        Assert.NotNull(provider.Created);
-        Assert.Equal<byte>([4, 5, 6], provider.Created);
-        Assert.Null(provider.LeasePeriod);
-
-        Assert.True(provider.TryCreateBlob(array, 200, out blob));
-        Assert.NotNull(provider.Created);
-        Assert.Equal<byte>([1, 2, 3], provider.Created);
-        Assert.Equal(200, provider.LeasePeriod);
-
-        Assert.True(provider.TryCreateBlob(array, out blob));
-        Assert.NotNull(provider.Created);
-        Assert.Equal<byte>([1, 2, 3], provider.Created);
-        Assert.Null(provider.LeasePeriod);
-
-        Assert.True(provider.TryGetBlob(out blob));
-        Assert.NotNull(blob);
-
-        Assert.Equal(2, provider.GetBlobs().Count());
-    }
-
-    [Fact]
-    [Obsolete("Exercises obsolete PersistentBlob and PersistentBlobProvider overloads.")]
-    public void PersistentBlobProvider_WhenImplementationThrows_ReturnsFalseAndLogsError()
-    {
-        using var listener = new TestEventListener();
-        listener.EnableEvents(PersistentStorageAbstractionsEventSource.Log, EventLevel.Error, EventKeywords.All);
-
-        var provider = new StubBlobProvider { Throw = true };
-        byte[] array = [1, 2, 3];
-        ReadOnlySpan<byte> span = [4, 5, 6];
-
-        Assert.False(provider.TryCreateBlob(span, 100, out var blob));
-        Assert.Null(blob);
-        Assert.False(provider.TryCreateBlob(span, out blob));
-        Assert.Null(blob);
-        Assert.False(provider.TryCreateBlob(array, 200, out blob));
-        Assert.Null(blob);
-        Assert.False(provider.TryCreateBlob(array, out blob));
-        Assert.Null(blob);
-        Assert.False(provider.TryGetBlob(out blob));
-        Assert.Null(blob);
-        Assert.Empty(provider.GetBlobs());
-
-        Assert.Equal(6, listener.CurrentMessages.Count);
-    }
-
-    [Fact]
-    public void PersistentBlobProvider_GetBlobs_WhenImplementationReturnsNull_ReturnsEmpty()
-    {
-        var provider = new StubBlobProvider { ReturnNullBlobs = true };
-
-        Assert.Empty(provider.GetBlobs());
-    }
-
-    private sealed class StubBlob : PersistentBlob
-    {
-        public bool Throw { get; set; }
-
-        public byte[]? Written { get; private set; }
-
-        public int? LeasePeriod { get; private set; }
-
-        public bool Deleted { get; private set; }
-
-        protected override bool OnTryRead([NotNullWhen(true)] out byte[]? buffer)
-        {
-            this.ThrowIfRequested();
-            buffer = [9, 9];
-            return true;
-        }
-
-        protected override bool OnTryWrite(byte[] buffer, int leasePeriodMilliseconds = 0)
-        {
-            this.ThrowIfRequested();
-            this.Written = buffer;
-            this.LeasePeriod = leasePeriodMilliseconds;
-            return true;
-        }
-
-        protected override bool OnTryLease(int leasePeriodMilliseconds)
-        {
-            this.ThrowIfRequested();
-            this.LeasePeriod = leasePeriodMilliseconds;
-            return true;
-        }
-
-        protected override bool OnTryDelete()
-        {
-            this.ThrowIfRequested();
-            this.Deleted = true;
-            return true;
-        }
-
-        private void ThrowIfRequested()
-        {
-            if (this.Throw)
-            {
-                throw new InvalidOperationException("boom");
-            }
-        }
-    }
-
-    private sealed class StubBlobProvider : PersistentBlobProvider
-    {
-        public bool Throw { get; set; }
-
-        public bool ReturnNullBlobs { get; set; }
-
-        public byte[]? Created { get; private set; }
-
-        public int? LeasePeriod { get; private set; }
-
-        protected override IEnumerable<PersistentBlob> OnGetBlobs()
-        {
-            this.ThrowIfRequested();
-            return this.ReturnNullBlobs ? null! : [new StubBlob(), new StubBlob()];
-        }
-
-        protected override bool OnTryCreateBlob(byte[] buffer, int leasePeriodMilliseconds, [NotNullWhen(true)] out PersistentBlob? blob)
-        {
-            this.ThrowIfRequested();
-            this.Created = buffer;
-            this.LeasePeriod = leasePeriodMilliseconds;
-            blob = new StubBlob();
-            return true;
-        }
-
-        protected override bool OnTryCreateBlob(byte[] buffer, [NotNullWhen(true)] out PersistentBlob? blob)
-        {
-            this.ThrowIfRequested();
-            this.Created = buffer;
-            this.LeasePeriod = null;
-            blob = new StubBlob();
-            return true;
-        }
-
-        protected override bool OnTryGetBlob([NotNullWhen(true)] out PersistentBlob? blob)
-        {
-            this.ThrowIfRequested();
-            blob = new StubBlob();
-            return true;
-        }
-
-        private void ThrowIfRequested()
-        {
-            if (this.Throw)
-            {
-                throw new InvalidOperationException("boom");
-            }
-        }
-    }
+#endif
 }

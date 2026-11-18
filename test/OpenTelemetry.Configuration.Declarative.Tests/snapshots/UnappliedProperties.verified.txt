@@ -1,23 +1,18 @@
 ﻿examples/otel-getting-started.yaml
   Experimental resource.detection/development
   Stable propagator
-  Stable tracer_provider.sampler (fails the tracer provider build)
   Stable meter_provider
   Stable logger_provider
 examples/otel-sdk-config.yaml
-  Stable log_level
   Stable attribute_limits
   Stable propagator
   Stable tracer_provider.limits (fails the tracer provider build)
-  Stable tracer_provider.sampler (fails the tracer provider build)
   Stable meter_provider
   Stable logger_provider
 examples/otel-sdk-migration-config.yaml
-  Stable log_level
   Stable attribute_limits
   Stable propagator
   Stable tracer_provider.limits (fails the tracer provider build)
-  Stable tracer_provider.sampler (fails the tracer provider build)
   Stable meter_provider
   Stable logger_provider
 snippets/CardinalityLimits_kitchen_sink.yaml
@@ -69,15 +64,10 @@ snippets/Propagator_kitchen_sink.yaml
 snippets/Resource_kitchen_sink.yaml
   Experimental resource.detection/development
 snippets/Sampler_always_record_typical.yaml
-  Stable tracer_provider.sampler (fails the tracer provider build)
 snippets/Sampler_composite_rule_based_drop_redis_ping.yaml
-  Stable tracer_provider.sampler (fails the tracer provider build)
 snippets/Sampler_parent_based_typical.yaml
-  Stable tracer_provider.sampler (fails the tracer provider build)
 snippets/Sampler_probability_kitchen_sink.yaml
-  Stable tracer_provider.sampler (fails the tracer provider build)
 snippets/Sampler_rule_based_kitchen_sink.yaml
-  Stable tracer_provider.sampler (fails the tracer provider build)
 snippets/SpanLimits_kitchen_sink.yaml
   Stable attribute_limits
   Stable tracer_provider.limits (fails the tracer provider build)

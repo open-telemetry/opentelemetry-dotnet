@@ -7,9 +7,7 @@ using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient.G
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient.Tests;
 
-#pragma warning disable CA1515 // Consider making public types internal
-public class GrpcRetryTestCase
-#pragma warning restore CA1515 // Consider making public types internal
+internal sealed class GrpcRetryTestCase
 {
     private static readonly TimeSpan MinThrottleDelay = TimeSpan.FromMilliseconds(100);
 
@@ -26,7 +24,34 @@ public class GrpcRetryTestCase
 
     internal GrpcRetryAttempt[] RetryAttempts { get; }
 
-    public static TheoryData<GrpcRetryTestCase> GetGrpcTestCases() =>
+    public static TheoryData<string> GetGrpcTestCases()
+        => [.. CreateTestCases().Select(testCase => testCase.testRunnerName)];
+
+    public static GrpcRetryTestCase GetTestCase(string name)
+        => CreateTestCases().Single(testCase => string.Equals(testCase.testRunnerName, name, StringComparison.Ordinal));
+
+    public override string ToString()
+        => this.testRunnerName;
+
+    internal static string GetThrottleDelayString(Duration throttleDelay, StatusCode statusCode)
+    {
+        var status = new Google.Rpc.Status
+        {
+            Code = (int)statusCode,
+            Message = "Only nanos",
+            Details =
+            {
+                Any.Pack(new Google.Rpc.RetryInfo
+                {
+                    RetryDelay = throttleDelay,
+                }),
+            },
+        };
+
+        return Convert.ToBase64String(status.ToByteArray());
+    }
+
+    private static GrpcRetryTestCase[] CreateTestCases() =>
     [
         new GrpcRetryTestCase("Cancelled", [new(StatusCode.Cancelled)]),
         new GrpcRetryTestCase("DeadlineExceeded", [new(StatusCode.DeadlineExceeded)]),
@@ -94,27 +119,6 @@ public class GrpcRetryTestCase
             ],
             expectedRetryAttempts: 9),
     ];
-
-    public override string ToString()
-        => this.testRunnerName;
-
-    internal static string GetThrottleDelayString(Duration throttleDelay, StatusCode statusCode)
-    {
-        var status = new Google.Rpc.Status
-        {
-            Code = (int)statusCode,
-            Message = "Only nanos",
-            Details =
-            {
-                Any.Pack(new Google.Rpc.RetryInfo
-                {
-                    RetryDelay = throttleDelay,
-                }),
-            },
-        };
-
-        return Convert.ToBase64String(status.ToByteArray());
-    }
 
     internal readonly struct GrpcRetryAttempt
     {

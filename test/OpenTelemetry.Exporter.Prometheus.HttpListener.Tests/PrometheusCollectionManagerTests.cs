@@ -2437,6 +2437,11 @@ public sealed class PrometheusCollectionManagerTests
         reservedHistogram.Record(1, new KeyValuePair<string, object?>("le", "5000"));
         reservedHistogram.Record(2);
 
+        // A counter with points that only differ by a tag that is not written, as it is the label of the name of the metric
+        var reservedCounter = meter.CreateCounter<int>("reserved_counter");
+        reservedCounter.Add(1, new KeyValuePair<string, object?>("__name__", "up"));
+        reservedCounter.Add(2, new KeyValuePair<string, object?>("__name__", "down"));
+
         // A histogram without any buckets, which only has a sum and a count
         var histogram = meter.CreateHistogram<double>("empty_histogram");
         histogram.Record(1, new KeyValuePair<string, object?>("a.b", "value"));
@@ -2479,8 +2484,8 @@ public sealed class PrometheusCollectionManagerTests
         // Only OpenMetrics has the "_created" sample of a counter, so that is the only format in which the gauge is dropped
         var createdSamples = samples.Where(s => s.StartsWith("generated_counter_created", StringComparison.Ordinal)).ToList();
 
-        Assert.Single(createdSamples);
-        Assert.Equal(!openMetricsRequested, createdSamples[0].EndsWith(" 100", StringComparison.Ordinal));
+        var createdSample = Assert.Single(createdSamples);
+        Assert.Equal(!openMetricsRequested, createdSample.EndsWith(" 100", StringComparison.Ordinal));
 
         Assert.Single(samples, s => s.StartsWith("dropped_histogram_sum_count", StringComparison.Ordinal));
         Assert.Single(samples, s => s.StartsWith("mixed_gauge", StringComparison.Ordinal));
@@ -2492,6 +2497,8 @@ public sealed class PrometheusCollectionManagerTests
         Assert.Single(samples, s => s.StartsWith("bytes_gauge", StringComparison.Ordinal));
         Assert.Single(samples, s => s.StartsWith("ordered_counter_total", StringComparison.Ordinal));
         Assert.Single(samples, s => s.StartsWith("reserved_histogram_sum", StringComparison.Ordinal));
+        Assert.Single(samples, s => s.StartsWith("reserved_counter_total", StringComparison.Ordinal));
+        Assert.DoesNotContain(samples, s => s.Contains("__name__", StringComparison.Ordinal));
         Assert.Single(samples, s => s.StartsWith("empty_histogram_sum", StringComparison.Ordinal));
         Assert.Single(samples, s => s.StartsWith("empty_histogram_count", StringComparison.Ordinal));
     }
@@ -2750,6 +2757,56 @@ public sealed class PrometheusCollectionManagerTests
         finally
         {
             exporter.CollectionManager.ExitCollect(response);
+        }
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task EnterCollectIgnoresTagValueWhichCannotBeConvertedToString(bool openMetricsRequested)
+    {
+        using var meter = CreateMeter();
+        using var provider = CreateMeterProviderWithCache(meter, scrapeResponseCacheDurationMilliseconds: 0);
+
+#pragma warning disable CA2000 // MeterProvider owns exporter lifecycle
+        var exporter = GetExporter(provider);
+#pragma warning restore CA2000 // MeterProvider owns exporter lifecycle
+
+        var counter = meter.CreateCounter<long>("test_counter");
+
+        counter.Add(1, new KeyValuePair<string, object?>("key", "value"));
+
+        // ArgumentException is also how the serializer signals that the response buffer is full
+        counter.Add(2, new KeyValuePair<string, object?>("key", new CallbackLabelValue(static () => throw new ArgumentException("Nope."))));
+
+        // A point without the attribute is written as the same series as the one whose value could not be converted
+        counter.Add(4);
+
+        var protocol = GetProtocol(openMetricsRequested);
+
+        // The metric point is cumulative, so it is written by every scrape
+        for (var i = 0; i < 2; i++)
+        {
+            var response = await EnterCollectAsync(exporter, protocol);
+
+            try
+            {
+                Assert.True(response.Succeeded);
+
+                // The exception must not be taken for a full buffer either
+                Assert.Equal(PrometheusExporterOptions.InitialScrapeResponseSizeBytes, response.View.Array!.Length);
+
+                var output = Encoding.UTF8.GetString(response.View.Array, response.View.Offset, response.View.Count);
+
+                Assert.Contains($"test_counter_total{{key=\"value\",otel_scope_name=\"{meter.Name}\"}} 1\n", output, StringComparison.Ordinal);
+
+                // A label with an empty value is the same as one that does not exist, so the two points are one series
+                Assert.Equal(1, CountOccurrences(output, $"test_counter_total{{otel_scope_name=\"{meter.Name}\"}}"));
+            }
+            finally
+            {
+                exporter.CollectionManager.ExitCollect(response);
+            }
         }
     }
 

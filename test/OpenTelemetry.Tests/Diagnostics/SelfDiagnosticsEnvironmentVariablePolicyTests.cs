@@ -87,14 +87,18 @@ public class SelfDiagnosticsEnvironmentVariablePolicyTests
         Assert.Equal("k8s.namespace.name=payments,host.name=node-7,cloud.region=eu-west-1", value);
     }
 
-    [Fact]
-    public void ResourceAttributes_MalformedPairsAreRedactedButPreserveShape()
+    [Theory]
+    [InlineData("service.name=checkout,noequalssign,,service.version=2", $"service.name=checkout,{Redacted},service.version=2")]
+    [InlineData("service.name=checkout,broken", $"service.name=checkout,{Redacted}")]
+    [InlineData("service.name=checkout,", "service.name=checkout")]
+    [InlineData("service.name=checkout,,", "service.name=checkout")]
+    [InlineData(",service.name=checkout", "service.name=checkout")]
+    [InlineData(",,", "")]
+    public void ResourceAttributes_MalformedPairsAreRedactedAndEmptyPairsAreDropped(string input, string expected)
     {
-        var value = SelfDiagnosticsEnvironmentVariablePolicy.GetDisplayValue(
-            "OTEL_RESOURCE_ATTRIBUTES",
-            "service.name=checkout,noequalssign,,service.version=2");
+        var value = SelfDiagnosticsEnvironmentVariablePolicy.GetDisplayValue("OTEL_RESOURCE_ATTRIBUTES", input);
 
-        Assert.Equal($"service.name=checkout,{Redacted},,service.version=2", value);
+        Assert.Equal(expected, value);
     }
 
     [Fact]

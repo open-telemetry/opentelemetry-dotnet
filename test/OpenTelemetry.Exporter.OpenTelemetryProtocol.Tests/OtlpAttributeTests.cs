@@ -12,21 +12,23 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests;
 public class OtlpAttributeTests
 {
 #if NET
+    private static readonly Dictionary<string, IFormattable> BoundedUtf8SpanFormattables = new()
+    {
+        [nameof(Half)] = Half.MinValue,
+        [nameof(DateOnly)] = DateOnly.MaxValue,
+        [nameof(System.Text.Rune)] = new System.Text.Rune(0x1F600), // 4-byte UTF-8 sequence (U+1F600)
+        ["nint"] = nint.MinValue,
+        ["nuint"] = nuint.MaxValue,
+        [nameof(System.Runtime.InteropServices.NFloat)] = System.Runtime.InteropServices.NFloat.MinValue,
+        [nameof(TimeOnly)] = TimeOnly.MaxValue,
+        [nameof(Int128)] = Int128.MinValue,
+        [nameof(UInt128)] = UInt128.MaxValue,
+        [nameof(System.Net.IPNetwork)] = System.Net.IPNetwork.Parse("ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff/128"),
+        [nameof(System.Numerics.Complex)] = new System.Numerics.Complex(double.MinValue, double.MinValue),
+    };
 
-    public static TheoryData<IFormattable> BoundedUtf8SpanFormattableValues() =>
-    [
-        Half.MinValue,
-        DateOnly.MaxValue,
-        new System.Text.Rune(0x1F600), // 4-byte UTF-8 sequence (U+1F600)
-        nint.MinValue,
-        nuint.MaxValue,
-        System.Runtime.InteropServices.NFloat.MinValue,
-        TimeOnly.MaxValue,
-        Int128.MinValue,
-        UInt128.MaxValue,
-        System.Net.IPNetwork.Parse("ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff/128"),
-        new System.Numerics.Complex(double.MinValue, double.MinValue),
-    ];
+    public static TheoryData<string> BoundedUtf8SpanFormattableValues() => [.. BoundedUtf8SpanFormattables.Keys];
+
 #endif
 
     [Fact]
@@ -505,9 +507,9 @@ public class OtlpAttributeTests
 
     [Theory]
     [MemberData(nameof(BoundedUtf8SpanFormattableValues))]
-    public void BoundedUtf8SpanFormattableIsWrittenWithSingleByteLengthPrefixes(IFormattable value)
+    public void BoundedUtf8SpanFormattableIsWrittenWithSingleByteLengthPrefixes(string name)
     {
-        Assert.NotNull(value);
+        var value = BoundedUtf8SpanFormattables[name];
 
         var utf8 = System.Text.Encoding.UTF8.GetBytes(value.ToString(null, CultureInfo.InvariantCulture));
         Assert.InRange(utf8.Length + 2, 0, 127);

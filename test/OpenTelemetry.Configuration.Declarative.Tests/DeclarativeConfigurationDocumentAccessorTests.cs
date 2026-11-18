@@ -777,8 +777,8 @@ public sealed class DeclarativeConfigurationDocumentAccessorTests
                 - simple:
                     exporter:
                       console:
-              sampler:
-                always_on:
+              limits:
+                attribute_count_limit: 10
             """);
         var accessor = new DeclarativeConfigurationDocumentAccessor(new FilePath(yamlFile.Path));
 
@@ -786,7 +786,7 @@ public sealed class DeclarativeConfigurationDocumentAccessorTests
         var document = accessor.GetDocument();
 
         var unapplied = Assert.Single(document.UnappliedProperties);
-        Assert.Equal("tracer_provider.sampler", unapplied.Path);
+        Assert.Equal("tracer_provider.limits", unapplied.Path);
         Assert.DoesNotContain(listener.Messages, e => e.EventId is ConfiguredPropertyNotAppliedEventId or DevelopmentPropertyNotAppliedEventId);
     }
 
@@ -860,7 +860,7 @@ public sealed class DeclarativeConfigurationDocumentAccessorTests
         var events = listener.Messages.Where(e => e.EventId is ConfiguredPropertyNotAppliedEventId or DevelopmentPropertyNotAppliedEventId).ToList();
         Assert.All(events, e => Assert.Equal(EventLevel.Error, e.Level));
         Assert.Equal(
-            ["log_level", "attribute_limits", "propagator", "meter_provider", "logger_provider"],
+            ["attribute_limits", "propagator", "meter_provider", "logger_provider"],
             events.Select(e => (string)e.Payload![1]!));
         Assert.All(events, e => Assert.Equal(filePath.DisplayPath, e.Payload![0]));
         Assert.All(events, e => Assert.Equal(1L, e.Payload![3]));

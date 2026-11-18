@@ -7,6 +7,37 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* **Breaking:** `HttpClient` instances created by the exporter directly no
+  longer automatically store cookies set by responses from the endpoint or
+  send them with later export requests, except in browser environments where
+  cookie handling is unchanged. Explicitly configured `Cookie` headers are
+  still sent. See [Configure HttpClient](README.md#configure-httpclient)
+  to prevent `HttpClient` created by `IHttpClientFactory` from using cookies.
+  ([#8131](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8131))
+
+* Fixed the OTLP/gRPC exporter not exporting again on .NET after a connection
+  to the `https` endpoint was made without HTTP/2 being negotiated. The
+  `HttpClient` created by the exporter is now replaced when this happens. An
+  `HttpClient` supplied through `HttpClientFactory` is not replaced.
+  ([#8144](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8144))
+
+## 1.21.0
+
+Released 2026-Nov-11
+
+* Hardened the experimental disk retry feature.
+  * **Breaking:** When running on .NET on non-Windows platforms, creating the
+    exporter now throws an `UnauthorizedAccessException` if the retry
+    directory could be changed by another user. The retry directory must be
+    owned by the current user and must not be writable by its group or by
+    other users. Each directory and symbolic link in its path must be owned by
+    the current user or by root, and those directories must not be writable
+    by their group or by other users unless they have the sticky bit set (such
+    as `/tmp`). These checks can be disabled by setting the new
+    `OTEL_DOTNET_EXPERIMENTAL_OTLP_DISK_RETRY_CHECK_PERMISSIONS` setting to
+    `false`.
+  ([#7964](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7964))
+
 ## 1.21.0-rc.2
 
 Released 2026-Nov-09

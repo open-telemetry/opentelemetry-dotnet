@@ -8,6 +8,10 @@ tracer_provider:
     - simple:
         exporter:
           console:
+  sampler:
+    parent_based:
+      root:
+        always_on:
   # Remove this block to listen to every source, including the .NET runtime's.
   tracer_configurator/development:
     default_config:

@@ -159,7 +159,7 @@ public sealed class RuntimeContextTests : IDisposable
                 Assert.IsType<ThreadLocalRuntimeContextSlot<int>>(slot);
                 Assert.Equal("threadlocal_valuetype", slot.Name);
 
-                var accessor = Assert.IsAssignableFrom<IRuntimeContextSlotValueAccessor>(slot);
+                var accessor = Assert.IsType<IRuntimeContextSlotValueAccessor>(slot, exactMatch: false);
 
                 Assert.Equal(0, slot.Get());
 
@@ -199,7 +199,7 @@ public sealed class RuntimeContextTests : IDisposable
             () =>
             {
                 var slot = RuntimeContext.RegisterSlot<RuntimeContextTests>("threadlocal_referencetype");
-                var accessor = Assert.IsAssignableFrom<IRuntimeContextSlotValueAccessor>(slot);
+                var accessor = Assert.IsType<IRuntimeContextSlotValueAccessor>(slot, exactMatch: false);
 
                 Assert.Null(slot.Get());
                 Assert.Null(accessor.Value);
@@ -258,7 +258,7 @@ public sealed class RuntimeContextTests : IDisposable
                 var valueSlot = RuntimeContext.RegisterSlot<int>("remoting_valuetype");
                 Assert.IsType<RemotingRuntimeContextSlot<int>>(valueSlot);
 
-                var valueAccessor = Assert.IsAssignableFrom<IRuntimeContextSlotValueAccessor>(valueSlot);
+                var valueAccessor = Assert.IsType<IRuntimeContextSlotValueAccessor>(valueSlot, exactMatch: false);
 
                 Assert.Equal(0, valueSlot.Get());
 
@@ -272,7 +272,7 @@ public sealed class RuntimeContextTests : IDisposable
                 Assert.Throws<InvalidCastException>(() => valueAccessor.Value = false);
 
                 var referenceSlot = RuntimeContext.RegisterSlot<RuntimeContextTests>("remoting_referencetype");
-                var referenceAccessor = Assert.IsAssignableFrom<IRuntimeContextSlotValueAccessor>(referenceSlot);
+                var referenceAccessor = Assert.IsType<IRuntimeContextSlotValueAccessor>(referenceSlot, exactMatch: false);
 
                 Assert.Null(referenceSlot.Get());
 

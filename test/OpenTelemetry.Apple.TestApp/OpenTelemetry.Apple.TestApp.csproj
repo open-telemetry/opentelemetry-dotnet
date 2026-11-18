@@ -6,6 +6,7 @@
     <NoWarn>$(NoWarn);CA1515;CA1707;CA1848</NoWarn>
     <OutputType>Exe</OutputType>
     <TargetFrameworks>net11.0-ios;net10.0-ios</TargetFrameworks>
+    <ValidateSceneManifest>false</ValidateSceneManifest>
   </PropertyGroup>
 
   <!--

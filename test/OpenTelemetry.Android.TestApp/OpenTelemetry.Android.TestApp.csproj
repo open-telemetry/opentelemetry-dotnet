@@ -14,8 +14,8 @@
     that do not support trimming we cannot publish the application as trimmed.
   -->
   <PropertyGroup>
+    <PublishReadyToRun>false</PublishReadyToRun>
     <PublishTrimmed>false</PublishTrimmed>
-    <RunAOTCompilation>false</RunAOTCompilation>
   </PropertyGroup>
 
   <PropertyGroup>

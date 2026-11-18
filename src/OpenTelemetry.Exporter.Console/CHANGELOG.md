@@ -10,6 +10,10 @@ Notes](../../RELEASENOTES.md).
   `OpenTelemetry:Exporters:Console` configuration section.
   ([#7880](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7880))
 
+## 1.21.0
+
+Released 2026-Nov-11
+
 ## 1.21.0-rc.2
 
 Released 2026-Nov-09

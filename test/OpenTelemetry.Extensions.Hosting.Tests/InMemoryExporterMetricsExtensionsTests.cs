@@ -40,8 +40,8 @@ public class InMemoryExporterMetricsExtensionsTests
                 counter.Add(10);
             });
 
-        Assert.Single(exportedItems);
-        var metricPointsEnumerator = exportedItems[0].GetMetricPoints().GetEnumerator();
+        var exportedItem = Assert.Single(exportedItems);
+        var metricPointsEnumerator = exportedItem.GetMetricPoints().GetEnumerator();
         Assert.True(metricPointsEnumerator.MoveNext());
         Assert.Equal(10, metricPointsEnumerator.Current.GetSumLong());
     }
@@ -63,8 +63,8 @@ public class InMemoryExporterMetricsExtensionsTests
                 counter.Add(10);
             });
 
-        Assert.Single(exportedItems);
-        Assert.Equal(10, exportedItems[0].MetricPoints[0].GetSumLong());
+        var exportedItem = Assert.Single(exportedItems);
+        Assert.Equal(10, exportedItem.MetricPoints[0].GetSumLong());
     }
 
     private static async Task RunMetricsTest(Action<MeterProviderBuilder> configure, Action testAction)

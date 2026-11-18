@@ -7,6 +7,20 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Fixed every scrape failing once a metric point has an attribute value whose
+  conversion to a string throws an exception. The value of such an attribute is
+  now treated as empty, and a warning event is written.
+  ([#8141](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8141))
+
+* Fixed a metric tag, resource constant label or `target_info` resource
+  attribute named `__name__` being written as a label. Such a label is no
+  longer written.
+  ([#8146](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8146))
+
+## 1.21.0-beta.1
+
+Released 2026-Nov-11
+
 * Fixed OpenMetrics scrape responses containing a `# UNIT` line whose unit is
   not an underscore-separated suffix of the metric family name (for example
   `auth.failedlogins` with the unit `logins`), which caused scrapers such as
@@ -57,6 +71,9 @@ Notes](../../RELEASENOTES.md).
 * An `OutOfMemoryException` thrown while converting an attribute value to a
   string is no longer swallowed and the attribute dropped; it now propagates.
   ([#7929](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7929))
+
+* Updated OpenTelemetry core component version(s) to `1.21.0`.
+  ([#8119](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8119))
 
 ## 1.20.1-beta.1
 

@@ -732,36 +732,41 @@ public sealed class DeclarativeTracerProviderTests
     }
 
     [Fact]
-    public void ConsoleExporter_IsCreatedByBuiltInProvider()
+    public void ConsoleExporter_IsCreatedThroughTheRegistry()
     {
-        var provider = Assert.IsType<ConsoleSpanExporterProvider>(BuiltInComponentProviders.FindSpanExporter("console"));
-
-        Assert.Same(ConsoleSpanExporterProvider.Instance, provider);
-        Assert.Null(BuiltInComponentProviders.FindSpanExporter("otlp_http"));
-
-        using var services = new ServiceCollection().BuildServiceProvider();
-        using var exporter = provider.Create(ConfigProperties.Empty, services);
+        using var yamlFile = CreateDocument(SimpleProcessor("console"));
+        using var services = CreateServices(yamlFile.Path);
+        var registry = services.GetRequiredService<PluginComponentProviderRegistry>();
+        using var exporter = registry.Create<BaseExporter<Activity>>("console", ConfigProperties.Empty);
 
         Assert.IsType<ConsoleActivityExporter>(exporter);
     }
 
-    [Fact]
-    public void ConsoleExporter_RegisteredProviderDoesNotReplaceBuiltIn()
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void ConsoleExporter_ConflictingRegisteredProvider_Throws(bool registerBefore)
     {
-        var sourceName = NewSourceName();
-        var exported = new List<Activity>();
-
         using var yamlFile = CreateDocument(SimpleProcessor("console"));
+        var services = new ServiceCollection();
+        var builder = services.AddOpenTelemetry();
+        var provider = new MemoryExporterProvider([]);
 
-        using var services = Build(
-            RegistrationPath.ServiceCollection,
-            yamlFile.Path,
-            s => s.AddPluginComponentProvider("console", new MemoryExporterProvider(exported)));
-        _ = services.Provider.GetRequiredService<TracerProvider>();
+        InvalidOperationException exception;
+        if (registerBefore)
+        {
+            services.AddPluginComponentProvider("console", provider);
+            exception = Assert.Throws<InvalidOperationException>(() => builder.UseDeclarativeConfiguration(yamlFile.Path));
+        }
+        else
+        {
+            builder.UseDeclarativeConfiguration(yamlFile.Path);
+            exception = Assert.Throws<InvalidOperationException>(() => services.AddPluginComponentProvider("console", provider));
+        }
 
-        StartAndStop(sourceName);
-
-        Assert.Empty(exported);
+        Assert.Contains("console", exception.Message, StringComparison.Ordinal);
+        Assert.Contains(nameof(ConsoleSpanExporterProvider), exception.Message, StringComparison.Ordinal);
+        Assert.Contains(nameof(MemoryExporterProvider), exception.Message, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -1017,13 +1022,13 @@ public sealed class DeclarativeTracerProviderTests
                     exporter:
                       otlp_http:
               sampler:
-                always_on:
+                x_vendor_sampler:
               limits:
                 attribute_count_limit: 10
             """);
 
         var exporter = exception.Message.IndexOf("'tracer_provider.processors[0].batch.exporter.otlp_http'", StringComparison.Ordinal);
-        var sampler = exception.Message.IndexOf("'tracer_provider.sampler' (line 7, column 3) is a Stable setting", StringComparison.Ordinal);
+        var sampler = exception.Message.IndexOf("'tracer_provider.sampler.x_vendor_sampler' (line 8, column 5) is a sampler", StringComparison.Ordinal);
         var limits = exception.Message.IndexOf("'tracer_provider.limits' (line 9, column 3) is a Stable setting", StringComparison.Ordinal);
 
         Assert.True(
@@ -1179,6 +1184,43 @@ public sealed class DeclarativeTracerProviderTests
 
         Assert.Same(thrown, exception);
         Assert.Equal(["Shutdown(0)", "Dispose"], log);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void BatchProcessorConstructionFailure_DisposesTheExporter_AndPreservesTheOriginalException(bool throwOnDispose)
+    {
+        using var yamlFile = CreateDocument("""
+            tracer_provider:
+              processors:
+                - batch:
+                    exporter:
+                      test_lifecycle:
+            """);
+
+        var log = new List<string>();
+        using var provider = CreateServices(
+            yamlFile.Path,
+            s => s.AddPluginComponentProvider("test_lifecycle", new LifecycleExporterProvider(log, throwOnDispose)));
+
+        var registry = provider.GetRequiredService<PluginComponentProviderRegistry>();
+        var entry = Assert.Single(Bind(BatchProcessor("console")).Processors);
+
+        // Validation of the document prevents this combination, so build the entry directly to make
+        // core reject the settings after the exporter exists.
+        var invalid = entry with
+        {
+            Exporter = Assert.Single(Bind(BatchProcessor("test_lifecycle")).Processors).Exporter,
+            BatchSection = new BatchSpanProcessorSection(5000, 30000, MaxQueueSize: 10, MaxExportBatchSize: 11),
+        };
+
+        var exception = Assert.Throws<ArgumentOutOfRangeException>(
+            () => TracerProviderConfigurationApplier.CreateProcessor(new FilePath("otel.yaml"), invalid, registry));
+
+        Assert.Equal("maxExportBatchSize", exception.ParamName);
+        Assert.Equal(11, exception.ActualValue);
+        Assert.Equal(["Dispose"], log);
     }
 
     private static string SimpleProcessor(string exporter) => $"""
@@ -1430,13 +1472,13 @@ public sealed class DeclarativeTracerProviderTests
         }
     }
 
-    private sealed class LifecycleExporterProvider(List<string> log) : PluginComponentProvider<BaseExporter<Activity>>
+    private sealed class LifecycleExporterProvider(List<string> log, bool throwOnDispose = false) : PluginComponentProvider<BaseExporter<Activity>>
     {
         public override BaseExporter<Activity> Create(ConfigProperties properties, IServiceProvider serviceProvider) =>
-            new LifecycleExporter(log);
+            new LifecycleExporter(log, throwOnDispose);
     }
 
-    private sealed class LifecycleExporter(List<string> log) : BaseExporter<Activity>
+    private sealed class LifecycleExporter(List<string> log, bool throwOnDispose) : BaseExporter<Activity>
     {
         public override ExportResult Export(in Batch<Activity> batch) => ExportResult.Success;
 
@@ -1452,6 +1494,10 @@ public sealed class DeclarativeTracerProviderTests
             if (disposing)
             {
                 log.Add("Dispose");
+                if (throwOnDispose)
+                {
+                    throw new InvalidOperationException("dispose failure");
+                }
             }
         }
     }
