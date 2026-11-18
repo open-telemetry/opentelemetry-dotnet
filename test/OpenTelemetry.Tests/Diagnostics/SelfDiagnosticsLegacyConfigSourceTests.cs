@@ -220,6 +220,33 @@ public sealed class SelfDiagnosticsLegacyConfigSourceTests : IDisposable
     }
 
     [Fact]
+    public void Refresh_KeepsAppliedConfigurationWhileFileIsLocked()
+    {
+        this.WriteConfiguration();
+        using var source = this.CreateSource();
+
+        // A lock on the file makes the read fail, which must not be published as its removal.
+        using (new FileStream(this.ConfigFilePath, FileMode.Open, FileAccess.Read, FileShare.None))
+        {
+            Assert.False(source.Refresh(), "Expected a locked file not to be published as a change.");
+            Assert.Equal(this.ConfigFilePath, source.ConfigFilePath);
+        }
+
+        Assert.False(source.Refresh(), "Expected the unchanged file not to be republished once unlocked.");
+        Assert.Equal(this.ConfigFilePath, Assert.Single(this.published).ConfigFilePath);
+
+        // Changes made while the file could not be read are picked up afterwards.
+        this.WriteConfiguration("Error");
+        Assert.True(source.Refresh(), "Expected the source to refresh after writing new configuration.");
+        Assert.Equal(LogLevel.Error, this.Latest.MinimumLevel);
+
+        File.Delete(this.ConfigFilePath);
+        Assert.True(source.Refresh(), "Expected the source to refresh after the file is deleted.");
+        Assert.Null(this.published[this.published.Count - 1].Options);
+        Assert.Null(source.ConfigFilePath);
+    }
+
+    [Fact]
     public void Refresh_RawInputsAndFilePathArePartOfChangeDetection()
     {
         this.WriteConfiguration("0", fileSize: 10);

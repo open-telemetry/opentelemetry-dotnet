@@ -11,6 +11,10 @@ Notes](../../RELEASENOTES.md).
   longer start a line that reads as a separate entry.
   ([#8145](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8145))
 
+* The self-diagnostics `OTEL_DIAGNOSTICS.json` file being temporarily locked by
+  another process is no longer treated as the file having been removed.
+  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+
 ## 1.21.0
 
 Released 2026-Nov-11
