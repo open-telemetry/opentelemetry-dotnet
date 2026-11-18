@@ -558,11 +558,13 @@ and
 context.
 
 > [!NOTE]
-> If you are using the instrumentation libraries shipped from this repo [e.g.
+> If you are using the instrumentation libraries shipped from the
+[opentelemetry-dotnet-contrib](https://github.com/open-telemetry/opentelemetry-dotnet-contrib)
+repo [e.g.
 [ASP.NET
-Core](https://github.com/open-telemetry/opentelemetry-dotnet/tree/main/src/OpenTelemetry.Instrumentation.AspNetCore)
+Core](https://github.com/open-telemetry/opentelemetry-dotnet-contrib/tree/main/src/OpenTelemetry.Instrumentation.AspNetCore)
 or
-[HttpClient](https://github.com/open-telemetry/opentelemetry-dotnet/tree/main/src/OpenTelemetry.Instrumentation.Http)],
+[HttpClient](https://github.com/open-telemetry/opentelemetry-dotnet-contrib/tree/main/src/OpenTelemetry.Instrumentation.Http)],
 context propagation is done by using the
 [default](https://github.com/open-telemetry/opentelemetry-dotnet/blob/d924663dc3d6bfdf737bc49ceaa1addcec90a2d6/src/OpenTelemetry/Sdk.cs#L34-L38)
 propagator. The default can be updated by calling
