@@ -17,6 +17,12 @@ Notes](../../RELEASENOTES.md).
   longer written.
   ([#8146](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8146))
 
+* Fixed the response buffers of a scrape format being kept for the lifetime of
+  the exporter once a scrape has requested that format. Buffers which have not
+  been needed for 5 minutes are now released the next time a scrape collects
+  metrics.
+  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+
 ## 1.21.0-beta.1
 
 Released 2026-Nov-11
