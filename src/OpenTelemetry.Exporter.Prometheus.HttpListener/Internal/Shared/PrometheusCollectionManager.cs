@@ -22,6 +22,8 @@ internal sealed class PrometheusCollectionManager
     // looping forever.
     private const int MaxCollectAttempts = 1024;
 
+    private static readonly TimeSpan BufferRetentionPeriod = TimeSpan.FromMinutes(5);
+
     private readonly ConcurrentDictionary<PrometheusProtocol, PrometheusProtocolState> protocolStates = new();
 
     private readonly PrometheusExporter exporter;
@@ -79,6 +81,25 @@ internal sealed class PrometheusCollectionManager
             }
 
             return count;
+        }
+    }
+
+    /// <summary>
+    /// Gets the total size of the response buffers which are allocated, across all
+    /// protocols. Exposed for tests, which use it to tell when buffers have been released.
+    /// </summary>
+    internal long AllocatedBufferSize
+    {
+        get
+        {
+            long size = 0;
+
+            foreach (var state in this.protocolStates.Values)
+            {
+                size += state.GetAllocatedBufferSize();
+            }
+
+            return size;
         }
     }
 
@@ -206,7 +227,9 @@ internal sealed class PrometheusCollectionManager
             {
                 var state = this.GetProtocolState(protocol);
 
-                state.OnRequested(this.IsNearCollection());
+                var elapsed = this.GetElapsedTime();
+
+                state.OnRequested(this.IsNearCollection(elapsed), elapsed);
 
                 // If we are within {ScrapeResponseCacheDurationMilliseconds} of the
                 // last successful collect, return the previous view.
@@ -416,12 +439,15 @@ internal sealed class PrometheusCollectionManager
                 this.collectionContext = null;
             }
 
-            this.lastCollectionCompletedElapsed = this.GetElapsedTime();
+            var completedElapsed = this.GetElapsedTime();
+            this.lastCollectionCompletedElapsed = completedElapsed;
 
             foreach (var protocol in collectionContext.FreezeProtocols())
             {
                 this.GetProtocolState(protocol).OnWritten(collectionContext.IsSpeculative(protocol));
             }
+
+            this.ReleaseIdleBuffers(completedElapsed);
         }
         finally
         {
@@ -872,10 +898,35 @@ internal sealed class PrometheusCollectionManager
     /// <returns>
     /// <see langword="true"/> if a scrape arriving now is near a collection; otherwise <see langword="false"/>.
     /// </returns>
-    private bool IsNearCollection()
+    private bool IsNearCollection(TimeSpan elapsed)
         => this.collectionContext is not null ||
            (this.lastCollectionCompletedElapsed is { } lastCollectionCompletedElapsed &&
-            this.GetElapsedTime() - lastCollectionCompletedElapsed < this.scrapeResponseCacheDuration);
+            elapsed - lastCollectionCompletedElapsed < this.scrapeResponseCacheDuration);
+
+    /// <summary>
+    /// Releases the response buffers which no scrape has needed for <see cref="BufferRetentionPeriod"/>.
+    /// A format which has not been requested for that long is forgotten with its buffers, and a
+    /// format which is still requested gives up a second buffer which scrapes have not overlapped
+    /// for that long. This is called with the global lock held, once a collection has been written,
+    /// so no collection is writing a buffer and no scrape can start reading one while it runs.
+    /// </summary>
+    /// <param name="elapsed">The time elapsed since the manager was created.</param>
+    private void ReleaseIdleBuffers(TimeSpan elapsed)
+    {
+        foreach (var entry in this.protocolStates)
+        {
+            var state = entry.Value;
+
+            if (state.IsIdle(elapsed, BufferRetentionPeriod) && !this.IsCached(state, elapsed))
+            {
+                this.protocolStates.TryRemove(entry.Key, out _);
+            }
+            else
+            {
+                state.ReleaseIdleSpare(elapsed, BufferRetentionPeriod);
+            }
+        }
+    }
 
     /// <summary>
     /// Registers other formats with a collection, so that scrapes which keep negotiating
@@ -1622,6 +1673,14 @@ internal sealed class PrometheusCollectionManager
         // Completed once a buffer is free again, for a scrape which has to wait for one.
         private TaskCompletionSource<bool>? bufferFreed;
 
+        // When this protocol was last requested by a scrape.
+        private TimeSpan lastRequestedElapsed;
+
+        // Whether the spare has been reserved for a collection since it was last checked
+        // for being needed, and when it was last found to be needed.
+        private bool spareReserved;
+        private TimeSpan spareLastNeededElapsed;
+
         public PrometheusProtocolState(int maxBufferSize)
         {
             this.maxBufferSize = Math.Max(maxBufferSize, InitialBufferSize);
@@ -1725,6 +1784,7 @@ internal sealed class PrometheusCollectionManager
             // Scrapes only start reading a buffer while it is published, so the readers of the
             // spare can only drain, and it becomes free again once they have all finished.
             this.spare ??= new ResponseBuffer(this.published.Buffer.Length, this.onReadersDrained);
+            this.spareReserved = true;
 
             if (this.spare.ReaderCount == 0)
             {
@@ -1769,11 +1829,60 @@ internal sealed class PrometheusCollectionManager
             return delay < spareDelay ? delay : spareDelay;
         }
 
-        public void OnRequested(bool nearCollection)
+        public void OnRequested(bool nearCollection, TimeSpan elapsed)
         {
             this.LastRequestNearCollection = nearCollection;
             this.RequestedSinceWritten = true;
+            this.lastRequestedElapsed = elapsed;
         }
+
+        /// <summary>
+        /// Gets a value indicating whether no scrape has requested this protocol for
+        /// <paramref name="retention"/>, and none is reading or about to write its buffers.
+        /// </summary>
+        /// <param name="elapsed">The time elapsed since the manager was created.</param>
+        /// <param name="retention">How long the buffers of an unrequested protocol are kept.</param>
+        /// <returns>
+        /// <see langword="true"/> if the protocol, with its buffers, can be forgotten; otherwise <see langword="false"/>.
+        /// </returns>
+        public bool IsIdle(TimeSpan elapsed, TimeSpan retention)
+            => this.target is null &&
+               this.ReaderCount == 0 &&
+               elapsed - this.lastRequestedElapsed >= retention;
+
+        /// <summary>
+        /// Drops the spare buffer if no collection has needed it for <paramref name="retention"/>.
+        /// </summary>
+        /// <param name="elapsed">The time elapsed since the manager was created.</param>
+        /// <param name="retention">How long a spare buffer which is not needed is kept.</param>
+        public void ReleaseIdleSpare(TimeSpan elapsed, TimeSpan retention)
+        {
+            var spare = this.spare;
+
+            if (spare is null)
+            {
+                return;
+            }
+
+            if (this.spareReserved || spare.ReaderCount > 0)
+            {
+                this.spareReserved = false;
+                this.spareLastNeededElapsed = elapsed;
+            }
+            else if (this.target is null && elapsed - this.spareLastNeededElapsed >= retention)
+            {
+                // Scrapes only start reading the published buffer, so none can be reading the
+                // spare, and a scrape still holding the array it was written to keeps it alive.
+                this.spare = null;
+            }
+        }
+
+        /// <summary>
+        /// Gets the total size of the response buffers which this protocol has allocated.
+        /// </summary>
+        /// <returns>The total size of the buffers, in bytes.</returns>
+        public long GetAllocatedBufferSize()
+            => this.published.Buffer.Length + (this.spare?.Buffer.Length ?? 0);
 
         public void OnWritten(bool speculative)
         {
