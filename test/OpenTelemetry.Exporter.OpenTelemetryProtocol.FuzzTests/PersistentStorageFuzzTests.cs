@@ -20,6 +20,10 @@ public class PersistentStorageFuzzTests
     private const int MaxBlobSize = 256;
     private const string TimestampFormat = "yyyy-MM-ddTHHmmss.fffffffZ";
 
+    private const int MaxFileNameLength = 240;
+
+    private static readonly string ShortDirectory = Path.DirectorySeparatorChar == '\\' ? @"C:\t" : "/t";
+
     private static readonly Regex Timestamp = new("[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{6}[.][0-9]{7}Z", RegexOptions.CultureInvariant);
 
     // A blob is {timestamp}-{guid}.blob, a lease is {blob}@{timestamp}.lock (possibly repeated) and a temporary file is {blob or lease}.tmp.
@@ -44,7 +48,7 @@ public class PersistentStorageFuzzTests
         Generators.FileNameArbitrary(),
         static (name) =>
         {
-            var path = Path.Combine(Path.GetTempPath(), name);
+            var path = Path.Combine(ShortDirectory, name);
 
             _ = PersistentStorageHelper.IsBlobFileName(name);
             _ = PersistentStorageHelper.GetDateTimeFromBlobName(path);
@@ -303,7 +307,10 @@ public class PersistentStorageFuzzTests
                 from chars in Gen.ArrayOf(Gen.Elements("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_.@[]".ToCharArray()), length)
                 select new string(chars));
 
-            return Gen.OneOf(gen, noise).Select(static s => s.Length == 0 ? "x" : s).ToArbitrary();
+            return Gen.OneOf(gen, noise)
+                .Select(static s => s.Length == 0 ? "x" : s)
+                .Where(static s => s.Length <= MaxFileNameLength)
+                .ToArbitrary();
         }
 
         public static Arbitrary<(string Name, DateTime Timestamp)> BlobNameArbitrary()

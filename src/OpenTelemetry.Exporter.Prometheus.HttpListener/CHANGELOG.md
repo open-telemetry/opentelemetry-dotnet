@@ -19,6 +19,16 @@ Notes](../../RELEASENOTES.md).
   listener keeps accepting requests.
   ([#8135](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8135))
 
+* Fixed every scrape failing once a metric point has an attribute value whose
+  conversion to a string throws an exception. The value of such an attribute is
+  now treated as empty, and a warning event is written.
+  ([#8141](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8141))
+
+* Fixed a metric tag, resource constant label or `target_info` resource
+  attribute named `__name__` being written as a label. Such a label is no
+  longer written.
+  ([#8146](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8146))
+
 ## 1.21.0-beta.1
 
 Released 2026-Nov-11

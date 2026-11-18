@@ -10,6 +10,8 @@ namespace OpenTelemetry.Context.Propagation;
 /// </summary>
 public readonly struct PropagationContext : IEquatable<PropagationContext>
 {
+    private readonly Baggage baggage;
+
     /// <summary>
     /// Initializes a new instance of the <see cref="PropagationContext"/> struct.
     /// </summary>
@@ -18,7 +20,7 @@ public readonly struct PropagationContext : IEquatable<PropagationContext>
     public PropagationContext(ActivityContext activityContext, Baggage baggage)
     {
         this.ActivityContext = activityContext;
-        this.Baggage = baggage;
+        this.baggage = baggage;
     }
 
     /// <summary>
@@ -29,7 +31,7 @@ public readonly struct PropagationContext : IEquatable<PropagationContext>
     /// <summary>
     /// Gets <see cref="Baggage"/>.
     /// </summary>
-    public Baggage Baggage { get; }
+    public Baggage Baggage => this.baggage.OrEmpty();
 
     /// <summary>
     /// Compare two entries of <see cref="PropagationContext"/> for equality.
