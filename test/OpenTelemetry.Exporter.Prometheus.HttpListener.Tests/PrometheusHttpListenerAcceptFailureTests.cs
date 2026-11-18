@@ -85,11 +85,13 @@ public class PrometheusHttpListenerAcceptFailureTests
         // The accept loop only forgets its earlier failures once it is handed a request, which none
         // of the rejected ones are, so repeating this without a scrape in between makes it fail
         // repeatedly and exercises the back-off between attempts. A request is then handed to the
-        // operation that failed, so only some of the rounds fail the pending operation.
+        // operation that failed, so only some of the rounds fail the pending operation. How many
+        // depends on timing, so keep going after the first few rounds until enough of them have.
         const int Rounds = 5;
+        const int MaximumRounds = 20;
         const int MinimumFailures = 2;
 
-        for (var round = 0; round < Rounds; round++)
+        for (var round = 0; round < MaximumRounds && (round < Rounds || eventListener.Count < MinimumFailures); round++)
         {
             requestHeld.Reset();
             allowRequestToBeRejected.Reset();
