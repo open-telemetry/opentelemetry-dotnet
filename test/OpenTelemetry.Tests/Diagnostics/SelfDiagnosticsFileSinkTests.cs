@@ -154,6 +154,10 @@ public sealed class SelfDiagnosticsFileSinkTests : IDisposable
             Assert.NotEqual($"{series}2.log", first.CurrentFilePath);
         }
 
+        // Remove the file that forced the fallback so that the file with the unpredictable name
+        // is the only thing in the directory that can move the recreated sink past index 2.
+        File.Delete($"{series}2.log");
+
         using var second = this.CreateSink(maxRetainedFiles: 0);
 
         Assert.EndsWith("-3.log", second.CurrentFilePath, StringComparison.Ordinal);
