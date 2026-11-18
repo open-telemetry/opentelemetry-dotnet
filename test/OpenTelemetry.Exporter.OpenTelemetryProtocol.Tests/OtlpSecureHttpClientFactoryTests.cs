@@ -4,6 +4,7 @@
 #if NET
 
 using System.Net.Security;
+using System.Reflection;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using OpenTelemetry.Tests;
@@ -46,7 +47,7 @@ public class OtlpSecureHttpClientFactoryTests
         var options = new OtlpMtlsOptions
         {
             ClientCertificatePath = tempCertFile,
-            EnableCertificateChainValidation = false, // Ignore validation for test cert
+            EnableCertificateChainValidation = false,
         };
 
         using var httpClient = OpenTelemetryProtocol.Implementation.OtlpSecureHttpClientFactory.CreateSecureHttpClient(options);
@@ -56,7 +57,7 @@ public class OtlpSecureHttpClientFactoryTests
         // Verify the HttpClientHandler has client certificates configured
         var handlerField = typeof(HttpMessageInvoker).GetField(
             "_handler",
-            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            BindingFlags.NonPublic | BindingFlags.Instance);
         if (handlerField?.GetValue(httpClient) is HttpClientHandler handler)
         {
             Assert.NotEmpty(handler.ClientCertificates);
@@ -75,18 +76,44 @@ public class OtlpSecureHttpClientFactoryTests
         var options = new OtlpMtlsOptions
         {
             ClientCertificatePath = tempCertFile,
-            EnableCertificateChainValidation = false, // Ignore validation for test cert
+            EnableCertificateChainValidation = false,
         };
 
         using var httpClient = OpenTelemetryProtocol.Implementation.OtlpSecureHttpClientFactory.CreateSecureHttpClient(options);
 
         var handlerField = typeof(HttpMessageInvoker).GetField(
             "_handler",
-            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            BindingFlags.NonPublic | BindingFlags.Instance);
 
         var handler = Assert.IsType<HttpClientHandler>(handlerField?.GetValue(httpClient), exactMatch: false);
 
         Assert.False(handler.AllowAutoRedirect);
+    }
+
+    [Fact]
+    public void CreateHttpClient_DoesNotUseCookies()
+    {
+        using var directory = new TemporaryDirectory();
+        var tempCertFile = Path.Combine(directory.Path, "client.pfx");
+
+        using var cert = CreateSelfSignedCertificate();
+        File.WriteAllBytes(tempCertFile, cert.Export(X509ContentType.Pfx));
+
+        var options = new OtlpMtlsOptions
+        {
+            ClientCertificatePath = tempCertFile,
+            EnableCertificateChainValidation = false,
+        };
+
+        using var httpClient = OpenTelemetryProtocol.Implementation.OtlpSecureHttpClientFactory.CreateSecureHttpClient(options);
+
+        var handlerField = typeof(HttpMessageInvoker).GetField(
+            "_handler",
+            BindingFlags.NonPublic | BindingFlags.Instance);
+
+        var handler = Assert.IsType<HttpClientHandler>(handlerField?.GetValue(httpClient), exactMatch: false);
+
+        Assert.False(handler.UseCookies);
     }
 
     [Fact]
@@ -101,7 +128,7 @@ public class OtlpSecureHttpClientFactoryTests
         var options = new OtlpMtlsOptions
         {
             ClientCertificatePath = tempCertFile,
-            EnableCertificateChainValidation = false, // Ignore validation for test cert
+            EnableCertificateChainValidation = false,
         };
 
         using var httpClient = OpenTelemetryProtocol.Implementation.OtlpSecureHttpClientFactory.CreateSecureHttpClient(options);
@@ -133,7 +160,8 @@ public class OtlpSecureHttpClientFactoryTests
             // Verify the HttpClientHandler has server certificate validation configured
             var handlerField = typeof(HttpMessageInvoker).GetField(
                 "_handler",
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                BindingFlags.NonPublic | BindingFlags.Instance);
+
             if (handlerField?.GetValue(httpClient) is HttpClientHandler handler)
             {
                 Assert.NotNull(handler.ServerCertificateCustomValidationCallback);
@@ -160,7 +188,7 @@ public class OtlpSecureHttpClientFactoryTests
 
             var handlerField = typeof(HttpMessageInvoker).GetField(
                 "_handler",
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                BindingFlags.NonPublic | BindingFlags.Instance);
 
             Assert.NotNull(handlerField);
 
@@ -191,7 +219,8 @@ public class OtlpSecureHttpClientFactoryTests
 
             var handlerField = typeof(HttpMessageInvoker).GetField(
                 "_handler",
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                BindingFlags.NonPublic | BindingFlags.Instance);
+
             Assert.NotNull(handlerField);
 
             var handler = handlerField.GetValue(httpClient) as HttpClientHandler;

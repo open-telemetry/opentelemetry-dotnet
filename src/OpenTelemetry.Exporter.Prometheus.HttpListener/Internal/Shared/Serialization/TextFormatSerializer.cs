@@ -54,7 +54,11 @@ internal abstract class TextFormatSerializer
 
     protected const int MaxExemplarLabelSetCharacters = 128;
 
-    protected static readonly string[] ReservedHistogramLabelNames = ["le"];
+    // The name of a metric is the value of its "__name__" label, so a tag which is written with that name would give
+    // a sample a second name, which is not valid. Such a tag is not written, like one named "le" for a histogram.
+    protected static readonly string[] ReservedLabelNames = ["__name__"];
+
+    protected static readonly string[] ReservedHistogramLabelNames = [.. ReservedLabelNames, "le"];
 
     // A double never requires more than 17 significant digits to round-trip, so the longest
     // rendering the runtime can produce is a sign, 17 digits, a decimal point and an exponent
@@ -203,7 +207,7 @@ internal abstract class TextFormatSerializer
                     metricPoint.Tags,
                     options,
                     suffix: null,
-                    reservedOutputKeys: null);
+                    reservedOutputKeys: ReservedLabelNames);
 
                 var seriesEnd = cursor;
 
@@ -370,7 +374,7 @@ internal abstract class TextFormatSerializer
         do
         {
             var attribute = attributes.Current;
-            this.AddLabel(attribute.Key, attribute.Value, ref labels);
+            this.AddLabel(attribute.Key, attribute.Value, ref labels, ReservedLabelNames);
         }
         while (attributes.MoveNext());
 
@@ -640,11 +644,10 @@ internal abstract class TextFormatSerializer
             case Array or IEnumerable<KeyValuePair<string, object?>> or IEnumerable<KeyValuePair<string, string?>> or IDictionary:
                 return WriteLabelValue(buffer, cursor, PrometheusAnyValueWriter.Instance.ToLabelValueString(key, value));
 
-            case IFormattable formattableValue:
-                return WriteLabelValue(buffer, cursor, formattableValue.ToString(null, CultureInfo.InvariantCulture) ?? string.Empty);
-
             default:
-                return WriteLabelValue(buffer, cursor, value.ToString() ?? string.Empty);
+                // The value is converted before it is written so that an exception thrown by the value itself
+                // is not mistaken for the buffer being full, which the caller handles by resizing it and retrying.
+                return WriteLabelValue(buffer, cursor, ConvertToLabelValueString(key, value));
         }
     }
 
@@ -883,13 +886,13 @@ internal abstract class TextFormatSerializer
 
         // The keys are almost always unchanged by escaping, in which case none of them can be the same as another.
         var anyChanged = false;
-        var reservedKeys = metric.MetricType.IsHistogram() ? ReservedHistogramLabelNames : null;
+        var reservedKeys = metric.MetricType.IsHistogram() ? ReservedHistogramLabelNames : ReservedLabelNames;
 
         foreach (var key in tracker.Keys)
         {
             var outputKey = this.GetOutputLabelKey(key, tracker.OutputKeys);
 
-            if (reservedKeys is not null && Array.IndexOf(reservedKeys, outputKey) >= 0)
+            if (Array.IndexOf(reservedKeys, outputKey) >= 0)
             {
                 return true;
             }
@@ -1539,9 +1542,25 @@ internal abstract class TextFormatSerializer
         decimal decimalValue => decimalValue.ToString(CultureInfo.InvariantCulture),
         byte[] byteArrayValue when byteArrayValue.GetType() == typeof(byte[]) => Convert.ToBase64String(byteArrayValue),
         Array or IEnumerable<KeyValuePair<string, object?>> or IEnumerable<KeyValuePair<string, string?>> or IDictionary => PrometheusAnyValueWriter.Instance.ToLabelValueString(key, labelValue),
-        IFormattable formattableValue => formattableValue.ToString(null, CultureInfo.InvariantCulture) ?? string.Empty,
-        _ => labelValue.ToString() ?? string.Empty,
+        _ => ConvertToLabelValueString(key, labelValue),
     };
+
+    private static string ConvertToLabelValueString(string key, object value)
+    {
+        try
+        {
+            return (value is IFormattable formattableValue
+                ? formattableValue.ToString(null, CultureInfo.InvariantCulture)
+                : value.ToString()) ?? string.Empty;
+        }
+        catch (Exception ex) when (ex is not OutOfMemoryException)
+        {
+            // If ToString throws an exception then the value is ignored, as it is for the other exporters.
+            // Otherwise the scrape would fail, as would every later one that writes the same metric point.
+            PrometheusExporterEventSource.Log.UnsupportedAttributeType(value.GetType().ToString(), key);
+            return string.Empty;
+        }
+    }
 
     private static string ReplaceInvalidSurrogates(string value)
     {
