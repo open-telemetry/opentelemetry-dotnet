@@ -13,7 +13,7 @@ Notes](../../RELEASENOTES.md).
 
 * The self-diagnostics `OTEL_DIAGNOSTICS.json` file being temporarily locked by
   another process is no longer treated as the file having been removed.
-  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+  ([#8158](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8158))
 
 ## 1.21.0
 
