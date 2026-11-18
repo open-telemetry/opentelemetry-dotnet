@@ -18,7 +18,7 @@ Notes](../../RELEASENOTES.md).
 * Fixed the self-diagnostics file sink dropping entries for 30 seconds when
   the name of its next log file was already in use. It now opens a file with a
   different name immediately.
-  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+  ([#8159](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8159))
 
 ## 1.21.0
 
