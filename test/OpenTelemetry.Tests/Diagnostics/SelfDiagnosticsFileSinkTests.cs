@@ -461,6 +461,10 @@ public sealed class SelfDiagnosticsFileSinkTests : IDisposable
             sink.OnInstalled();
 
             Assert.True(sink.IsActive, "expected the sink to open a file");
+
+            // The series carries on after the highest index it can increment: the name that
+            // cannot be incremented is stepped over rather than wrapped around.
+            Assert.EndsWith($"-{10 + recreation}.log", sink.CurrentFilePath, StringComparison.Ordinal);
             Assert.DoesNotContain(GetRetainedFiles(sink), otherFiles.Contains);
             Assert.All(otherFiles, file => Assert.True(File.Exists(file), $"deleted a file the process did not create: {file}"));
 
@@ -491,8 +495,10 @@ public sealed class SelfDiagnosticsFileSinkTests : IDisposable
         }
 
         var otherFile = $"{series}{ownFile.Substring(series.Length, 32).ToUpperInvariant()}-2.log";
-        Assert.NotEqual(ownFile, otherFile);
-        Assert.SkipWhen(File.Exists(otherFile), "The file system is not case-sensitive.");
+
+        // The name is only different when the unpredictable part contains a letter (it may not),
+        // and the files are only distinct on a case-sensitive file system.
+        Assert.SkipWhen(File.Exists(otherFile), "The name has no letters, or the file system is not case-sensitive.");
 
         File.WriteAllText(otherFile, "not ours");
 
@@ -505,6 +511,46 @@ public sealed class SelfDiagnosticsFileSinkTests : IDisposable
 
         Assert.False(File.Exists(ownFile), "expected the file created by the process to be pruned");
         Assert.Equal("not ours", File.ReadAllText(otherFile));
+    }
+
+    [Fact]
+    public void Retention_ForgetsFilesRemovedByOtherMeansBeforeRecreation()
+    {
+        using var otherDirectory = new TemporaryDirectory();
+        string otherFile;
+
+        using (var other = new SelfDiagnosticsFileSink(
+            otherDirectory.Path,
+            fileSizeLimitKilobytes: 10_240,
+            maxRetainedFiles: 2,
+            preambleFactory: null,
+            retryInterval: TimeSpan.Zero,
+            announceLogFile: false,
+            createdFiles: this.createdFiles))
+        {
+            otherFile = other.CurrentFilePath!;
+        }
+
+        for (var recreation = 0; recreation < 5; recreation++)
+        {
+            string path;
+
+            using (var sink = this.CreateSink(maxRetainedFiles: 2))
+            {
+                path = sink.CurrentFilePath!;
+            }
+
+            // Something else keeps only the newest log between recreations.
+            foreach (var file in Directory.GetFiles(this.tempDirectory.Path).Where(file => file != path))
+            {
+                File.Delete(file);
+            }
+        }
+
+        // Only the file that is still there, and the one the last sink was seeded with, are
+        // recorded for the directory, and the record of the other directory is left alone.
+        Assert.Equal(2, this.createdFiles.Count(path => path.StartsWith(this.tempDirectory.Path, StringComparison.Ordinal)));
+        Assert.Contains(otherFile, this.createdFiles);
     }
 
     [Fact]

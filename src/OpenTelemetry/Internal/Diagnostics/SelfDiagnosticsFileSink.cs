@@ -407,8 +407,18 @@ internal sealed class SelfDiagnosticsFileSink : ISelfDiagnosticsSink
                         existingPaths.Add(existing);
                     }
 
+                    // The listing succeeded, so a file of this series recorded for this
+                    // directory that is not in it was removed by something else: forget it, so
+                    // the record does not grow with every log removed between recreations.
+                    // Records for other directories are not touched.
+                    var existingSet = new HashSet<string>(existingPaths, StringComparer.Ordinal);
+                    var seriesPrefix = Path.Combine(this.logDirectory, $"otel-dotnet-{ProcessIdentity}-");
+
                     lock (this.createdFiles)
                     {
+                        this.createdFiles.RemoveWhere(
+                            path => path.StartsWith(seriesPrefix, StringComparison.Ordinal) && !existingSet.Contains(path));
+
                         existingPaths.RemoveAll(path => !this.createdFiles.Contains(path));
                     }
 
