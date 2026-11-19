@@ -37,6 +37,14 @@ Notes](../../RELEASENOTES.md).
   list, is now left out of that log record, and is counted as dropped.
   ([#8143](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8143))
 
+* Fixed `OtlpMetricExporter` dropping every collection once the metrics did not
+  fit in a single request of `OtlpExporterOptions.MaxRequestSizeBytes`, which
+  with cumulative temporality stopped the export of all metrics until the
+  process was restarted. Such a batch is now sent as several requests, each cut
+  at the end of a metric point, and only a metric point which does not fit in a
+  request on its own is dropped.
+  ([#8132](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8132))
+
 ## 1.21.0
 
 Released 2026-Nov-11

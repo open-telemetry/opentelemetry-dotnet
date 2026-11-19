@@ -424,6 +424,20 @@ internal sealed class OpenTelemetryProtocolExporterEventSource : EventSource, IC
     internal void LogRecordDataReadFailed(string dataName, string exception)
         => this.WriteEvent(45, dataName, exception);
 
+    [Event(
+        46,
+        Message = "A metric point of the metric '{0}' was dropped because its serialized size exceeds the maximum request size of {1} bytes.",
+        Level = EventLevel.Error)]
+    internal void MetricPointDroppedDueToSizeLimit(string metricName, int maxRequestSizeBytes)
+        => this.WriteEvent(46, metricName, maxRequestSizeBytes);
+
+    [Event(
+        47,
+        Message = "Metrics batch containing {0} item(s) exceeded the maximum request size of {1} bytes and was exported as {2} requests.",
+        Level = EventLevel.Warning)]
+    internal void BatchExportedAsMultipleRequests(long itemCount, long maxRequestSizeBytes, long requestCount)
+        => this.WriteEvent(47, itemCount, maxRequestSizeBytes, requestCount);
+
     private static string RedactEndpointUri(Uri endpoint)
     {
         var authority = endpoint.GetComponents(UriComponents.SchemeAndServer, UriFormat.UriEscaped);
