@@ -943,7 +943,9 @@ public class FileBlobProviderTests
         var path = Path.Combine(signal, "destination");
         using var provider = new FileBlobProvider(path, maintenancePeriodInMilliseconds: 50);
 
-        Directory.Delete(signal, recursive: true);
+        // Move the directories aside rather than deleting them, as the maintenance timer is already
+        // running and could recreate a deleted child while its parent is still being deleted
+        Directory.Move(signal, Path.Combine(root.Path, "moved"));
 
         var timeout = TimeSpan.FromSeconds(30);
         var stopwatch = System.Diagnostics.Stopwatch.StartNew();
