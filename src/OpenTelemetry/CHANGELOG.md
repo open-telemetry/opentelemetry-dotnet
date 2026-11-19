@@ -19,6 +19,10 @@ Notes](../../RELEASENOTES.md).
   succession when a periodic wait returns early.
   ([#8161](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8161))
 
+* The self-diagnostics `OTEL_DIAGNOSTICS.json` file being temporarily locked by
+  another process is no longer treated as the file having been removed.
+  ([#8158](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8158))
+
 * Non-finite histogram measurements (`NaN`, `+Inf`, `-Inf`) are now dropped
   rather than recorded, so they can no longer permanently corrupt the sum,
   min, and max of a cumulative histogram stream. This aligns the explicit-bucket

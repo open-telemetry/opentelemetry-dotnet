@@ -3103,6 +3103,12 @@ public sealed class PrometheusCollectionManagerTests
         reservedHistogram.Record(1, new KeyValuePair<string, object?>("le", "5000"));
         reservedHistogram.Record(2);
 
+        // A counter with points that only differ by a tag with an empty or no value, which is written as the same series
+        var emptyCounter = meter.CreateCounter<int>("empty_counter");
+        emptyCounter.Add(2, new KeyValuePair<string, object?>("method", "password"), new KeyValuePair<string, object?>("app.build", string.Empty));
+        emptyCounter.Add(5, new KeyValuePair<string, object?>("method", "password"));
+        emptyCounter.Add(11, new KeyValuePair<string, object?>("method", "password"), new KeyValuePair<string, object?>("app.build", null));
+
         // A counter with points that only differ by a tag that is not written, as it is the label of the name of the metric
         var reservedCounter = meter.CreateCounter<int>("reserved_counter");
         reservedCounter.Add(1, new KeyValuePair<string, object?>("__name__", "up"));
@@ -3161,12 +3167,13 @@ public sealed class PrometheusCollectionManagerTests
         Assert.Single(samples, s => s.StartsWith("surrogate_gauge", StringComparison.Ordinal));
         Assert.Single(samples, s => s.StartsWith("character_gauge", StringComparison.Ordinal));
         Assert.Single(samples, s => s.StartsWith("bytes_gauge", StringComparison.Ordinal));
-        Assert.Single(samples, s => s.StartsWith("ordered_counter_total", StringComparison.Ordinal));
+        Assert.Single(samples, s => s.StartsWith("ordered_counter_total", StringComparison.Ordinal) && s.EndsWith(" 3", StringComparison.Ordinal));
+        Assert.Single(samples, s => s.StartsWith("empty_counter_total", StringComparison.Ordinal) && s.EndsWith(" 18", StringComparison.Ordinal));
         Assert.Single(samples, s => s.StartsWith("reserved_histogram_sum", StringComparison.Ordinal));
-        Assert.Single(samples, s => s.StartsWith("reserved_counter_total", StringComparison.Ordinal));
+        Assert.Single(samples, s => s.StartsWith("reserved_counter_total", StringComparison.Ordinal) && s.EndsWith(" 3", StringComparison.Ordinal));
         Assert.DoesNotContain(samples, s => s.Contains("__name__", StringComparison.Ordinal));
-        Assert.Single(samples, s => s.StartsWith("empty_histogram_sum", StringComparison.Ordinal));
-        Assert.Single(samples, s => s.StartsWith("empty_histogram_count", StringComparison.Ordinal));
+        Assert.Single(samples, s => s.StartsWith("empty_histogram_sum", StringComparison.Ordinal) && s.EndsWith(" 3", StringComparison.Ordinal));
+        Assert.Single(samples, s => s.StartsWith("empty_histogram_count", StringComparison.Ordinal) && s.EndsWith(" 2", StringComparison.Ordinal));
     }
 
     [Theory]
