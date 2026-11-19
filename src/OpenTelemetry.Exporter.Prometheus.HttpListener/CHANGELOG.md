@@ -36,6 +36,12 @@ Notes](../../RELEASENOTES.md).
   if metrics are omitted because the response is too large.
   ([#8139](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8139))
 
+* Fixed the response buffers of a scrape format being kept for the lifetime of
+  the exporter once a scrape has requested that format. Buffers which have not
+  been needed for 5 minutes are now released the next time a scrape collects
+  metrics.
+  ([#8154](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8154))
+
 * Fixed the values of counter and histogram points being missing from a scrape
   response when the points are written as the same series, such as when they
   only differ by a tag with an empty or `null` value. The values of such points
