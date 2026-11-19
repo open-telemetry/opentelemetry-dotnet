@@ -680,10 +680,11 @@ internal static class PersistentStorageHelper
         // The path is normalized the same way that the file system APIs normalize it before they use it
         var existing = Path.GetFullPath(path);
 
-        // A symbolic link that cannot be followed is not missing, as nothing can be created in its place.
-        // It is left to be refused when the path that contains it is verified.
+        // When the permissions are checked, a symbolic link that cannot be followed is not missing, as nothing can be
+        // created in its place. It is left to be refused when the path that contains it is verified. Otherwise, it is
+        // left to be refused when it is created, as Directory.CreateDirectory() does for a path that cannot be created.
         while (!Directory.Exists(existing)
-            && new DirectoryInfo(existing).LinkTarget == null
+            && (!checkPermissions || new DirectoryInfo(existing).LinkTarget == null)
             && Path.GetDirectoryName(existing) is { Length: > 0 } parent)
         {
             missing.Push(existing);

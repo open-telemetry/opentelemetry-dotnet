@@ -1064,6 +1064,35 @@ public class FileBlobProviderTests
     }
 
     [Theory]
+    [InlineData(true, false)]
+    [InlineData(true, true)]
+    [InlineData(false, false)]
+    [InlineData(false, true)]
+    public void Constructor_SymbolicLinkThatDoesNotLeadToDirectory_Throws(bool checkPermissions, bool targetIsFile)
+    {
+        if (OperatingSystem.IsWindows())
+        {
+            Assert.Skip("Unix file modes do not apply on Windows.");
+            return;
+        }
+
+        using var root = new TemporaryDirectory();
+
+        var target = Path.Combine(root.Path, "target");
+
+        if (targetIsFile)
+        {
+            File.WriteAllText(target, string.Empty);
+        }
+
+        var path = Path.Combine(root.Path, "traces");
+        File.CreateSymbolicLink(path, target);
+
+        Assert.ThrowsAny<IOException>(() => new FileBlobProvider(path, checkPermissions: checkPermissions));
+        Assert.False(Directory.Exists(target));
+    }
+
+    [Theory]
     [InlineData(UnixFileMode.GroupWrite)]
     [InlineData(UnixFileMode.OtherWrite)]
     public void Constructor_DirectoryInDirectoryWritableByOtherUsers_Throws(UnixFileMode mode)
