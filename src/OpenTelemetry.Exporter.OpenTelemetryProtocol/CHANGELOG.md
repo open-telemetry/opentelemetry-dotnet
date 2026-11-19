@@ -44,7 +44,7 @@ Notes](../../RELEASENOTES.md).
   exporter to fail when the umask of the process left them writable by other
   users. Directories that already exist are not changed, so those created by
   earlier versions need their permissions restricted manually.
-  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+  ([#8162](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8162))
 
 ## 1.21.0
 
