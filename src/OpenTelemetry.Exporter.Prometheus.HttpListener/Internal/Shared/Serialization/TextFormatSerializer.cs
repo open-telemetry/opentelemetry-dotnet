@@ -2810,15 +2810,22 @@ internal abstract class TextFormatSerializer
                 if (!series.TryGetValue(identity, out var mergedPoint))
                 {
                     series[identity] = mergedPoint = new MergedPoint(identity);
+                    keep = true;
+                }
 
-                    // A series that has been written for another metric is dropped, so it is not kept.
-                    keep = options.Series?.Contains(identity) != true;
+                points.Add(mergedPoint);
 
-                    if (keep)
-                    {
-                        new ReadOnlySpan<byte>(serializedTagsBuffer, 0, serializedTagsLength).CopyTo(new Span<byte>(buffer, scratch, serializedTagsLength));
-                        scratch += serializedTagsLength;
-                    }
+                // A series written for another metric will be dropped, so its bucket counts are not needed.
+                // Keep its identity so that it is reported as dropped once, even if several points share it.
+                if (options.Series?.Contains(identity) == true)
+                {
+                    continue;
+                }
+
+                if (keep)
+                {
+                    new ReadOnlySpan<byte>(serializedTagsBuffer, 0, serializedTagsLength).CopyTo(new Span<byte>(buffer, scratch, serializedTagsLength));
+                    scratch += serializedTagsLength;
                 }
 
                 // The points of a metric all have the same buckets.
@@ -2850,8 +2857,6 @@ internal abstract class TextFormatSerializer
 
                 mergedPoint.HistogramSum += metricPoint.GetHistogramSum();
                 mergedPoint.HistogramCount += metricPoint.GetHistogramCount();
-
-                points.Add(mergedPoint);
             }
             finally
             {

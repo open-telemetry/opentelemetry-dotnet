@@ -930,6 +930,54 @@ public sealed partial class PrometheusSerializerTests
         Assert.Equal(count, series.DroppedCount);
     }
 
+#if NET
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void WriteMetricDoesNotBufferBucketsForDroppedSeries(bool useOpenMetrics)
+    {
+        const int SeriesCount = 512;
+        var metrics = new List<Metric>();
+        using var firstMeter = CreateMeter();
+        using var secondMeter = CreateMeter(firstMeter.Name + ".other");
+        var boundaries = Enumerable.Range(1, 500).Select(i => (double)i).ToArray();
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(firstMeter.Name, secondMeter.Name)
+            .AddView(instrument => new ExplicitBucketHistogramConfiguration
+            {
+                Boundaries = instrument.Meter == firstMeter ? [] : boundaries,
+            })
+            .AddInMemoryExporter(metrics)
+            .Build();
+
+        var firstHistogram = firstMeter.CreateHistogram<double>("test_histogram");
+        var secondHistogram = secondMeter.CreateHistogram<double>("test_histogram");
+        for (var i = 0; i < SeriesCount; i++)
+        {
+            var tag = new KeyValuePair<string, object?>("id", i.ToString(CultureInfo.InvariantCulture));
+            firstHistogram.Record(1, tag);
+            secondHistogram.Record(1, tag);
+        }
+
+        provider.ForceFlush();
+
+        // The sum-only histogram fits. The overlapping histogram must be dropped without buffering its buckets.
+        var firstMetric = Assert.Single(metrics, metric => metric.MeterName == firstMeter.Name);
+        var secondMetric = Assert.Single(metrics, metric => metric.MeterName == secondMeter.Name);
+        var buffer = new byte[85000];
+        var series = new SeriesRegistry();
+        var cursor = WriteMetric(buffer, 0, firstMetric, useOpenMetrics, suppressScopeInfo: true, series: series);
+
+        var allocated = GC.GetAllocatedBytesForCurrentThread();
+        _ = WriteMetric(buffer, cursor, secondMetric, useOpenMetrics, suppressScopeInfo: true, series: series);
+        allocated = GC.GetAllocatedBytesForCurrentThread() - allocated;
+
+        // Buffering 512 lists of 501 bucket counts would allocate more than 4 MB.
+        Assert.InRange(allocated, 0, 2 * 1024 * 1024);
+        Assert.Equal(SeriesCount, series.DroppedCount);
+    }
+#endif
+
     [Theory]
     [InlineData(false, false)]
     [InlineData(true, false)]
