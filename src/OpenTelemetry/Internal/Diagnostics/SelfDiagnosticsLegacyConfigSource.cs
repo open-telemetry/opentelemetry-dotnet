@@ -137,9 +137,16 @@ internal sealed class SelfDiagnosticsLegacyConfigSource : IDisposable
                 return false;
             }
 
-            SelfDiagnosticsLegacyConfiguration? next = this.parser.TryGetConfiguration(out var configuration)
+            SelfDiagnosticsLegacyConfiguration? next = this.parser.TryGetConfiguration(out var configuration, out var transientFailure)
                 ? configuration
                 : null;
+
+            if (transientFailure)
+            {
+                // The file could not be read this time, which says nothing about its content.
+                // Keep what is applied and read it again at the next poll.
+                return false;
+            }
 
             if (Nullable.Equals(this.current, next))
             {
