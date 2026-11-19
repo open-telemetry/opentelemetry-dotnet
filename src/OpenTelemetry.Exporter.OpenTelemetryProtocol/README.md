@@ -778,10 +778,10 @@ want to solicit feedback from the community.
       user only. Creating the exporter fails if one of them is not owned by the
       current user or is writable by its group or by other users, or if any
       directory in its path is not owned by the current user or by root, or is
-      writable by its group or by other users without having the sticky bit
-      set. On Windows and .NET Framework, ensure that the access control list of
-      the directory only allows the application's user to write to it. These
-      checks can be disabled using
+      writable by its group or by other users (such as `/tmp`, even though it
+      has the sticky bit set). On Windows and .NET Framework, ensure that the
+      access control list of the directory only allows the application's user
+      to write to it. These checks can be disabled using
       `OTEL_DOTNET_EXPERIMENTAL_OTLP_DISK_RETRY_CHECK_PERMISSIONS`.
 
       The OTLP exporter utilizes a forked version of the

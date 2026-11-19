@@ -1,6 +1,9 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+#if NET
+using System.Formats.Tar;
+#endif
 using System.Globalization;
 using System.Runtime.InteropServices;
 using OpenTelemetry.PersistentStorage.FileSystem;
@@ -594,6 +597,30 @@ public class PersistentStorageHelperTests
         Assert.InRange(PersistentStorageHelper.GetDateTimeFromBlobName(fileName), before, after);
     }
 
+#if NET
+    [Theory]
+    [InlineData(0)]
+    [InlineData(1000)]
+    [InlineData(2097151)]
+    [InlineData(2097152)]
+    [InlineData(int.MaxValue)]
+    public void IsUserIdRecorded_UserIdWritten_ReturnsTrue(int uid)
+        => Assert.True(PersistentStorageHelper.IsUserIdRecorded(CreateArchive(uid)));
+
+    [Theory]
+    [InlineData(int.MinValue)]
+    [InlineData(-2)]
+    public void IsUserIdRecorded_UserIdNotRepresentable_ReturnsFalse(int uid)
+    {
+        // A user ID of 2^31 or more is held as a negative number, which TarWriter does not write to the header
+        Assert.False(PersistentStorageHelper.IsUserIdRecorded(CreateArchive(uid)));
+    }
+
+    [Fact]
+    public void IsUserIdRecorded_NoEntry_ReturnsFalse()
+        => Assert.False(PersistentStorageHelper.IsUserIdRecorded(new byte[1024]));
+#endif
+
     internal static string BlobName(DateTime timestamp)
         => $"{FormatTimestamp(timestamp)}-{Guid.NewGuid().ToString("N", CultureInfo.InvariantCulture)}.blob";
 
@@ -606,4 +633,18 @@ public class PersistentStorageHelperTests
         File.WriteAllText(path, "data");
         return path;
     }
+
+#if NET
+    private static byte[] CreateArchive(int uid)
+    {
+        using var stream = new MemoryStream();
+
+        using (var writer = new TarWriter(stream, TarEntryFormat.Pax, leaveOpen: true))
+        {
+            writer.WriteEntry(new PaxTarEntry(TarEntryType.Directory, "entry") { Uid = uid });
+        }
+
+        return stream.ToArray();
+    }
+#endif
 }
