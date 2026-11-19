@@ -106,6 +106,7 @@ internal sealed class PeriodicExportingMetricReaderTaskWorker : PeriodicExportin
     {
         var cancellationToken = this.cancellationTokenSource.Token;
         var startedAt = Stopwatch.GetTimestamp();
+        var schedule = new PeriodicExportingMetricReaderSchedule(this.ExportIntervalMilliseconds);
 
         try
         {
@@ -114,7 +115,7 @@ internal sealed class PeriodicExportingMetricReaderTaskWorker : PeriodicExportin
             while (true)
             {
                 var elapsedMilliseconds = Stopwatch.GetElapsedTime(startedAt).Ticks / TimeSpan.TicksPerMillisecond;
-                var timeout = this.ExportIntervalMilliseconds - (int)(elapsedMilliseconds % this.ExportIntervalMilliseconds);
+                var timeout = schedule.GetTimeout(elapsedMilliseconds);
 
                 Task? exportTriggerTask = null;
                 Task? triggeredTask = null;
@@ -153,6 +154,7 @@ internal sealed class PeriodicExportingMetricReaderTaskWorker : PeriodicExportin
                 }
                 else
                 {
+                    schedule.OnExportIntervalElapsed();
                     OpenTelemetrySdkEventSource.Log.MetricReaderEvent("PeriodicExportingMetricReader calling MetricReader.Collect because the export interval has elapsed.");
                 }
 
