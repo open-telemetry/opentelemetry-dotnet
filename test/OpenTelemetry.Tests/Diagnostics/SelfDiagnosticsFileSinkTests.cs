@@ -12,6 +12,7 @@ namespace OpenTelemetry.Tests.Diagnostics;
 public sealed class SelfDiagnosticsFileSinkTests : IDisposable
 {
     private readonly TemporaryDirectory tempDirectory = new();
+    private readonly HashSet<string> createdFiles = new(StringComparer.Ordinal);
 
     public void Dispose() => this.tempDirectory.Dispose();
 
@@ -74,19 +75,94 @@ public sealed class SelfDiagnosticsFileSinkTests : IDisposable
             File.CreateSymbolicLink(firstPath[..^"-1.log".Length] + "-2.log", linkTarget);
 
             WriteLine(sink, new string('x', 1_100));
-            Assert.False(sink.IsActive, "expected the rollover to fail on the name taken by the link");
-
-            // The retry interval is zero, so the next write moves on to the next index.
             WriteLine(sink, "after the rollover");
             sink.Flush();
 
-            Assert.True(sink.IsActive, "expected sink to recover by skipping the name taken by the link");
-            Assert.EndsWith("-3.log", sink.CurrentFilePath, StringComparison.Ordinal);
+            Assert.True(sink.IsActive, "expected the rollover to move on from the name taken by the link");
+            Assert.EndsWith("-2.log", sink.CurrentFilePath, StringComparison.Ordinal);
+            Assert.NotEqual(firstPath[..^"-1.log".Length] + "-2.log", sink.CurrentFilePath);
         }
 
         Assert.Equal("target content", File.ReadAllText(linkTarget));
     }
 #endif
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(2)]
+    public void RollOver_NamesAlreadyTaken_DoesNotWaitForRetryInterval(int maxRetainedFiles)
+    {
+        var errors = new List<string>();
+        string series;
+
+        using (var sink = new SelfDiagnosticsFileSink(
+            this.tempDirectory.Path,
+            fileSizeLimitKilobytes: 1,
+            maxRetainedFiles,
+            preambleFactory: null,
+            reportError: errors.Add,
+            retryInterval: TimeSpan.FromHours(1),
+            announceLogFile: false))
+        {
+            var firstPath = sink.CurrentFilePath;
+            Assert.NotNull(firstPath);
+            Assert.EndsWith("-1.log", firstPath, StringComparison.Ordinal);
+
+            series = firstPath.Substring(0, firstPath.Length - "1.log".Length);
+
+            // The next names in the series are taken by something else, as files and as a directory.
+            File.WriteAllText($"{series}2.log", "not ours");
+            File.WriteAllText($"{series}3.log", "not ours");
+            Directory.CreateDirectory($"{series}4.log");
+
+            var previous = firstPath;
+
+            for (var rollover = 0; rollover < 3; rollover++)
+            {
+                WriteLine(sink, new string('x', 1_100));
+                WriteLine(sink, $"after rollover {rollover}");
+                sink.Flush();
+
+                Assert.True(sink.IsActive, "expected the rollover to find a free name without waiting");
+                Assert.NotEqual(previous, sink.CurrentFilePath);
+                Assert.Contains($"after rollover {rollover}", SelfDiagnosticsTestHelpers.ReadAllTextShared(sink.CurrentFilePath!), StringComparison.Ordinal);
+                previous = sink.CurrentFilePath;
+            }
+
+            Assert.Empty(errors);
+        }
+
+        Assert.Equal("not ours", File.ReadAllText($"{series}2.log"));
+        Assert.Equal("not ours", File.ReadAllText($"{series}3.log"));
+        Assert.True(Directory.Exists($"{series}4.log"));
+    }
+
+    [Fact]
+    public void Recreation_FileWithUnpredictableName_ContinuesAfterItsIndex()
+    {
+        string series;
+
+        using (var first = this.CreateSink(fileSizeLimitKilobytes: 1, maxRetainedFiles: 0))
+        {
+            series = first.CurrentFilePath!.Substring(0, first.CurrentFilePath.Length - "1.log".Length);
+            File.WriteAllText($"{series}2.log", "not ours");
+
+            WriteLine(first, new string('x', 1_100));
+            WriteLine(first, "entry");
+            first.Flush();
+
+            Assert.EndsWith("-2.log", first.CurrentFilePath, StringComparison.Ordinal);
+            Assert.NotEqual($"{series}2.log", first.CurrentFilePath);
+        }
+
+        // Remove the file that forced the fallback so that the file with the unpredictable name
+        // is the only thing in the directory that can move the recreated sink past index 2.
+        File.Delete($"{series}2.log");
+
+        using var second = this.CreateSink(maxRetainedFiles: 0);
+
+        Assert.EndsWith("-3.log", second.CurrentFilePath, StringComparison.Ordinal);
+    }
 
     [Fact]
     public void FirstOpen_WritesStartupMessageToStderr()
@@ -334,6 +410,219 @@ public sealed class SelfDiagnosticsFileSinkTests : IDisposable
         Assert.True(
             Directory.GetFiles(this.tempDirectory.Path).Length <= 2,
             $"expected at most 2 retained files, found {Directory.GetFiles(this.tempDirectory.Path).Length}");
+    }
+
+    [Fact]
+    public void Retention_IgnoresMatchingFilesThatTheProcessDidNotCreate()
+    {
+        string[] ownFiles;
+        var otherFiles = new List<string>();
+
+        using (var first = this.CreateSink(fileSizeLimitKilobytes: 1, maxRetainedFiles: 3))
+        {
+            var line = new string('x', 1_100);
+            WriteLine(first, line);
+            WriteLine(first, line);
+            first.Flush();
+
+            ownFiles = Directory.GetFiles(this.tempDirectory.Path);
+            Assert.Equal(3, ownFiles.Length);
+
+            // Files with names in the series that were not created by this process.
+            var series = first.CurrentFilePath!.Substring(0, first.CurrentFilePath.Length - "3.log".Length);
+
+            for (var i = 0; i < 3; i++)
+            {
+                otherFiles.Add($"{series}other{i}.log");
+                File.WriteAllText(otherFiles[i], "not ours");
+            }
+
+            // Names with an index ahead of the series, including one that cannot be incremented,
+            // must not prevent a sink from opening a file.
+            otherFiles.Add($"{series}9.log");
+            File.WriteAllText(otherFiles[otherFiles.Count - 1], "not ours");
+            otherFiles.Add($"{series}{int.MaxValue}.log");
+            File.WriteAllText(otherFiles[otherFiles.Count - 1], "not ours");
+        }
+
+        // Make the original files unambiguously older than the files the recreated sinks
+        // create, so that the pruning order does not fall back to the directory enumeration
+        // order on a file system whose timestamps are too coarse to tell them apart.
+        var past = DateTime.UtcNow.AddMinutes(-ownFiles.Length);
+
+        for (var i = 0; i < ownFiles.Length; i++)
+        {
+            File.SetLastWriteTimeUtc(ownFiles[i], past.AddMinutes(i));
+        }
+
+        for (var recreation = 0; recreation < 2; recreation++)
+        {
+            using var sink = this.CreateSink(fileSizeLimitKilobytes: 1, maxRetainedFiles: 3);
+            sink.OnInstalled();
+
+            Assert.True(sink.IsActive, "expected the sink to open a file");
+
+            // The series carries on after the highest index it can increment: the name that
+            // cannot be incremented is stepped over rather than wrapped around.
+            Assert.EndsWith($"-{10 + recreation}.log", sink.CurrentFilePath, StringComparison.Ordinal);
+            Assert.DoesNotContain(GetRetainedFiles(sink), otherFiles.Contains);
+            Assert.All(otherFiles, file => Assert.True(File.Exists(file), $"deleted a file the process did not create: {file}"));
+
+            // Only the oldest of the process's own files makes way for the new one.
+            Assert.Equal(recreation == 0 ? 2 : 1, ownFiles.Count(File.Exists));
+        }
+    }
+
+    [Fact]
+    public void Retention_IgnoresFileWhoseNameDiffersOnlyInCase()
+    {
+        string series;
+        string ownFile;
+
+        using (var first = this.CreateSink(fileSizeLimitKilobytes: 1, maxRetainedFiles: 3))
+        {
+            // Only the unpredictable part of a fallback name can differ in case and still match
+            // the pattern a recreated sink discovers the series with, so force a fallback name.
+            series = first.CurrentFilePath!.Substring(0, first.CurrentFilePath.Length - "1.log".Length);
+            File.WriteAllText($"{series}2.log", "not ours");
+
+            WriteLine(first, new string('x', 1_100));
+            first.Flush();
+
+            ownFile = first.CurrentFilePath;
+            Assert.EndsWith("-2.log", ownFile, StringComparison.Ordinal);
+            Assert.Equal(series.Length + 32 + "-2.log".Length, ownFile.Length);
+        }
+
+        var otherFile = $"{series}{ownFile.Substring(series.Length, 32).ToUpperInvariant()}-2.log";
+
+        // The name is only different when the unpredictable part contains a letter (it may not),
+        // and the files are only distinct on a case-sensitive file system.
+        Assert.SkipWhen(File.Exists(otherFile), "The name has no letters, or the file system is not case-sensitive.");
+
+        File.WriteAllText(otherFile, "not ours");
+
+        // A limit of one prunes every file the process created before, but nothing else.
+        using (var second = this.CreateSink(fileSizeLimitKilobytes: 1, maxRetainedFiles: 1))
+        {
+            Assert.True(second.IsActive, "expected the sink to open a file");
+            Assert.DoesNotContain(otherFile, GetRetainedFiles(second));
+        }
+
+        Assert.False(File.Exists(ownFile), "expected the file created by the process to be pruned");
+        Assert.Equal("not ours", File.ReadAllText(otherFile));
+    }
+
+    [Fact]
+    public void Retention_ForgetsFilesRemovedByOtherMeansBeforeRecreation()
+    {
+        using var otherDirectory = new TemporaryDirectory();
+        string otherFile;
+
+        using (var other = new SelfDiagnosticsFileSink(
+            otherDirectory.Path,
+            fileSizeLimitKilobytes: 10_240,
+            maxRetainedFiles: 2,
+            preambleFactory: null,
+            retryInterval: TimeSpan.Zero,
+            announceLogFile: false,
+            createdFiles: this.createdFiles))
+        {
+            otherFile = other.CurrentFilePath!;
+        }
+
+        for (var recreation = 0; recreation < 5; recreation++)
+        {
+            string path;
+
+            using (var sink = this.CreateSink(maxRetainedFiles: 2))
+            {
+                path = sink.CurrentFilePath!;
+            }
+
+            // Something else keeps only the newest log between recreations.
+            foreach (var file in Directory.GetFiles(this.tempDirectory.Path).Where(file => file != path))
+            {
+                File.Delete(file);
+            }
+        }
+
+        // Only the file that is still there, and the one the last sink was seeded with, are
+        // recorded for the directory, and the record of the other directory is left alone.
+        Assert.Equal(2, this.createdFiles.Count(path => path.StartsWith(this.tempDirectory.Path, StringComparison.Ordinal)));
+        Assert.Contains(otherFile, this.createdFiles);
+    }
+
+    [Fact]
+    public void Retention_SeededAfterFileLoggingIsSwitchedOffAndOn_OnlyFromFilesCreatedBeforehand()
+    {
+        var manager = new SelfDiagnosticsSinkManager(
+            static _ => string.Empty,
+            static _ => { },
+            fileRetryInterval: TimeSpan.Zero);
+        var options = new SelfDiagnosticsOptions
+        {
+            LogDirectory = this.tempDirectory.Path,
+            MaxRetainedFiles = 1,
+        };
+
+        string firstFile;
+        string otherFile;
+
+        using (var first = Assert.IsType<SelfDiagnosticsFileSink>(
+            Assert.Single(manager.ApplyOptions(SelfDiagnosticsOptions.SelfDiagnosticsConfiguration.Create(options)))))
+        {
+            firstFile = first.CurrentFilePath!;
+            var series = firstFile.Substring(0, firstFile.Length - "1.log".Length);
+            otherFile = $"{series}other.log";
+            File.WriteAllText(otherFile, "not ours");
+        }
+
+        options.LogDirectory = null;
+        Assert.Empty(manager.ApplyOptions(SelfDiagnosticsOptions.SelfDiagnosticsConfiguration.Create(options)));
+
+        options.LogDirectory = this.tempDirectory.Path;
+
+        using (var second = Assert.IsType<SelfDiagnosticsFileSink>(
+            Assert.Single(manager.ApplyOptions(SelfDiagnosticsOptions.SelfDiagnosticsConfiguration.Create(options)))))
+        {
+            Assert.True(second.IsActive, "expected the sink to open a file");
+            Assert.EndsWith("-2.log", second.CurrentFilePath, StringComparison.Ordinal);
+        }
+
+        Assert.False(File.Exists(firstFile), "expected the file created before logging was switched off to be pruned");
+        Assert.Equal("not ours", File.ReadAllText(otherFile));
+    }
+
+    [Fact]
+    public void Retention_FileReusingNameOfRemovedFileUnderUnlimitedRetention_IsNotCounted()
+    {
+        string path;
+
+        using (var bounded = this.CreateSink(maxRetainedFiles: 2))
+        {
+            path = bounded.CurrentFilePath!;
+        }
+
+        // With the registered file gone, the series starts over and a sink with unlimited
+        // retention writes a file of the same name. That file was not written under bounded
+        // retention, so bounded retention re-enabled later must not count or prune it.
+        File.Delete(path);
+
+        using (var unlimited = this.CreateSink(maxRetainedFiles: 0))
+        {
+            Assert.Equal(path, unlimited.CurrentFilePath);
+        }
+
+        Assert.DoesNotContain(path, this.createdFiles);
+
+        using (var bounded = this.CreateSink(maxRetainedFiles: 1))
+        {
+            Assert.True(bounded.IsActive, "expected the sink to open a file");
+            Assert.DoesNotContain(path, GetRetainedFiles(bounded));
+        }
+
+        Assert.True(File.Exists(path), "expected the file written under unlimited retention to be kept");
     }
 
     [Theory]
@@ -719,7 +1008,8 @@ public sealed class SelfDiagnosticsFileSinkTests : IDisposable
             preamble,
             reportError: null,
             retryInterval: TimeSpan.Zero,
-            excludeFromPruning: excludeFromPruning);
+            excludeFromPruning: excludeFromPruning,
+            createdFiles: this.createdFiles);
 
     private sealed class FlushThrowingStream : Stream
     {

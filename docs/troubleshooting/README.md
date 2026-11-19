@@ -557,6 +557,10 @@ otel-dotnet-{pid}-{processName}-{processStartTime:yyyyMMdd-HHmmss.fffffff}-{inde
 The index increases monotonically for the lifetime of the process. When the
 current file reaches `FileSizeLimitKilobytes` it is closed and index `+ 1` is
 opened with its own preamble; nothing is ever truncated or overwritten in place.
+If the next name is already in use by something else, that entry is left
+untouched and the file is opened immediately with a unique identifier added
+before the index instead, for example
+`otel-dotnet-{pid}-{processName}-{processStartTime}-{unique}-{index}.log`.
 When `MaxRetainedFiles` is positive, opening a new file after that limit is
 reached deletes the oldest. Setting `FileSizeLimitKilobytes` to `0` produces a
 single unbounded file.

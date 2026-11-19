@@ -23,6 +23,16 @@ Notes](../../RELEASENOTES.md).
   another process is no longer treated as the file having been removed.
   ([#8158](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8158))
 
+* Fixed the self-diagnostics file sink dropping entries for 30 seconds when
+  the name of its next log file was already in use. It now opens a file with a
+  different name immediately.
+  ([#8159](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8159))
+
+* Fixed the self-diagnostics file sink counting files it did not create
+  towards `MaxRetainedFiles` when their names matched its log file names.
+  Files written while retention was unlimited are no longer counted either.
+  ([#8159](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8159))
+
 ## 1.21.0
 
 Released 2026-Nov-11

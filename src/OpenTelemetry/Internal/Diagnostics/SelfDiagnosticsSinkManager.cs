@@ -46,6 +46,11 @@ internal sealed class SelfDiagnosticsSinkManager
     private readonly Func<TextWriter>? stderrWriter;
     private readonly TimeSpan? fileRetryInterval;
 
+    // The files created by the file sinks of this manager. It outlives any one sink, so a sink
+    // that is recreated (including after file logging was switched off and on again) continues to
+    // retain the files that its predecessors created, and nothing else in the log directory.
+    private readonly HashSet<string> createdFiles = new(StringComparer.Ordinal);
+
     private SelfDiagnosticsFileSink? fileSink;
     private SelfDiagnosticsConsoleSink? consoleSink;
 
@@ -134,7 +139,8 @@ internal sealed class SelfDiagnosticsSinkManager
             this.reportError,
             this.fileRetryInterval,
             excludeFromPruning: this.fileSink?.CurrentFilePath,
-            announceLogFile: configuration.AnnounceLogFile);
+            announceLogFile: configuration.AnnounceLogFile,
+            createdFiles: this.createdFiles);
 
         this.activeFileDirectory = configuration.LogDirectory;
         this.activeFileSizeLimitKilobytes = configuration.FileSizeLimitKilobytes;

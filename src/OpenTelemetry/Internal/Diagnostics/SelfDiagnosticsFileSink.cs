@@ -60,6 +60,15 @@ internal sealed class SelfDiagnosticsFileSink : ISelfDiagnosticsSink
     private static readonly string ProcessIdentity = BuildProcessIdentity();
 
     private readonly string logDirectory;
+
+    // The paths of the files that sinks sharing this record created under bounded retention and
+    // have not pruned yet, compared exactly. It is owned by whoever creates the sinks (see
+    // SelfDiagnosticsSinkManager) and passed to each one, so that a recreated sink only takes over
+    // files that an earlier sink created: the log directory may be shared with other users, so a
+    // file whose name matches the series is not necessarily one of ours. A sink recreated for the
+    // same directory under another spelling leaves the earlier files alone rather than taking
+    // them over. Guarded by itself: the sink being replaced can still be rolling over.
+    private readonly HashSet<string> createdFiles;
     private readonly long fileSizeLimitBytes;
     private readonly int maxRetainedFiles;
     private readonly TimeSpan retryInterval;
@@ -94,9 +103,11 @@ internal sealed class SelfDiagnosticsFileSink : ISelfDiagnosticsSink
         TimeSpan? retryInterval = null,
         string? excludeFromPruning = null,
         Func<DateTime>? utcNow = null,
-        bool announceLogFile = true)
+        bool announceLogFile = true,
+        HashSet<string>? createdFiles = null)
     {
         this.logDirectory = logDirectory;
+        this.createdFiles = createdFiles ?? new(StringComparer.Ordinal);
         this.preambleFactory = preambleFactory;
         this.reportError = reportError;
         this.retryInterval = retryInterval ?? DefaultRetryInterval;
@@ -288,6 +299,27 @@ internal sealed class SelfDiagnosticsFileSink : ISelfDiagnosticsSink
     private static bool IsSamePath(string path, string? other)
         => other is not null && string.Equals(path, other, StringComparison.OrdinalIgnoreCase);
 
+    // The modification time of a file that something else replaced can be unreadable (for
+    // example outside the range of DateTime). Such a file sorts as the oldest.
+    private static DateTime GetLastWriteTimeUtcOrMinValue(string path)
+    {
+        try
+        {
+            return File.GetLastWriteTimeUtc(path);
+        }
+        catch (Exception)
+        {
+            return DateTime.MinValue;
+        }
+    }
+
+    // An index that cannot be incremented is not one this process wrote.
+    private static int ParseSeedIndex(string path)
+    {
+        var index = ParseFileIndex(path);
+        return index == int.MaxValue ? 0 : index;
+    }
+
     private static void CreateLogDirectory(string path)
     {
 #if NET
@@ -306,7 +338,7 @@ internal sealed class SelfDiagnosticsFileSink : ISelfDiagnosticsSink
         // The index is always past any file already in the series, so the name is expected to
         // be free; an existing entry is most likely a symbolic link planted by another user of
         // the log directory. FileMode.CreateNew fails instead of following it (and writing into
-        // its target), and the next attempt moves on to the next index.
+        // its target), and the caller then tries again with a different name.
         // FileShare.Read lets external tools tail the log while it's open.
 #if NET
         var options = new FileStreamOptions
@@ -357,18 +389,40 @@ internal sealed class SelfDiagnosticsFileSink : ISelfDiagnosticsSink
                     // historical path in memory when none of them will be pruned.
                     foreach (var existing in existingFiles)
                     {
-                        this.fileIndex = Math.Max(this.fileIndex, ParseFileIndex(existing));
+                        this.fileIndex = Math.Max(this.fileIndex, ParseSeedIndex(existing));
                     }
                 }
                 else
                 {
-                    // Seed bounded retention across sink recreations (e.g. hot-reload) and
-                    // continue the index series from the highest file already on disk.
-                    foreach (var existing in existingFiles.OrderBy(File.GetLastWriteTimeUtc))
+                    // Seed bounded retention across sink recreations (e.g. hot-reload). Every
+                    // matching name moves the index series on so that it is stepped over, but
+                    // only the files that were created by a sink that shared the record of
+                    // created files, and that are still there, are retained: anything else in
+                    // the directory is not ours to count or to delete.
+                    var existingPaths = new List<string>();
+
+                    foreach (var existing in existingFiles)
                     {
-                        this.retainedFiles.Add(existing);
-                        this.fileIndex = Math.Max(this.fileIndex, ParseFileIndex(existing));
+                        this.fileIndex = Math.Max(this.fileIndex, ParseSeedIndex(existing));
+                        existingPaths.Add(existing);
                     }
+
+                    // The listing succeeded, so a file of this series recorded for this
+                    // directory that is not in it was removed by something else: forget it, so
+                    // the record does not grow with every log removed between recreations.
+                    // Records for other directories are not touched.
+                    var existingSet = new HashSet<string>(existingPaths, StringComparer.Ordinal);
+                    var seriesPrefix = Path.Combine(this.logDirectory, $"otel-dotnet-{ProcessIdentity}-");
+
+                    lock (this.createdFiles)
+                    {
+                        this.createdFiles.RemoveWhere(
+                            path => path.StartsWith(seriesPrefix, StringComparison.Ordinal) && !existingSet.Contains(path));
+
+                        existingPaths.RemoveAll(path => !this.createdFiles.Contains(path));
+                    }
+
+                    this.retainedFiles.AddRange(existingPaths.OrderBy(GetLastWriteTimeUtcOrMinValue));
                 }
 
                 this.retentionSeeded = true;
@@ -378,7 +432,25 @@ internal sealed class SelfDiagnosticsFileSink : ISelfDiagnosticsSink
             var fileName = $"otel-dotnet-{ProcessIdentity}-{this.fileIndex}.log";
             var filePath = Path.Combine(this.logDirectory, fileName);
 
-            var stream = OpenLogFile(filePath);
+            FileStream stream;
+
+            try
+            {
+                stream = OpenLogFile(filePath);
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                // The name is already in use (or otherwise cannot be created). Names of the
+                // form above are predictable, so rather than waiting out the retry interval
+                // and then trying the next predictable name, try once straight away with a
+                // name that cannot be known in advance. A further failure is handled below.
+                filePath = Path.Combine(
+                    this.logDirectory,
+                    $"otel-dotnet-{ProcessIdentity}-{Guid.NewGuid():N}-{this.fileIndex}.log");
+
+                stream = OpenLogFile(filePath);
+            }
+
             var newWriter = new StreamWriter(stream, Utf8NoBom) { AutoFlush = false };
 
             this.CurrentFilePath = filePath;
@@ -389,8 +461,23 @@ internal sealed class SelfDiagnosticsFileSink : ISelfDiagnosticsSink
 
             if (this.maxRetainedFiles > 0)
             {
+                lock (this.createdFiles)
+                {
+                    this.createdFiles.Add(filePath);
+                }
+
                 this.retainedFiles.Add(filePath);
                 this.PruneOldFiles();
+            }
+            else
+            {
+                // A file written under unlimited retention is never counted or pruned, even
+                // if its name was registered by an earlier bounded sink whose file of that
+                // name has since been removed, letting the series reuse the name.
+                lock (this.createdFiles)
+                {
+                    this.createdFiles.Remove(filePath);
+                }
             }
 
             this.WriteFilePrologue();
@@ -493,6 +580,11 @@ internal sealed class SelfDiagnosticsFileSink : ISelfDiagnosticsSink
                 if (File.Exists(oldest))
                 {
                     File.Delete(oldest);
+                }
+
+                lock (this.createdFiles)
+                {
+                    this.createdFiles.Remove(oldest);
                 }
 
                 this.retainedFiles.RemoveAt(index);
