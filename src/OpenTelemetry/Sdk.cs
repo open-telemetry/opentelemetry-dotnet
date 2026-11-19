@@ -21,11 +21,7 @@ public static class Sdk
 {
     static Sdk()
     {
-        Propagators.DefaultTextMapPropagator = new CompositeTextMapPropagator(
-        [
-            new TraceContextPropagator(),
-            new BaggagePropagator(),
-        ]);
+        Propagators.DefaultTextMapPropagator = DefaultTextMapPropagator;
 
         Activity.DefaultIdFormat = ActivityIdFormat.W3C;
         Activity.ForceDefaultIdFormat = true;
@@ -47,6 +43,26 @@ public static class Sdk
     /// Gets a value indicating whether instrumentation is suppressed (disabled).
     /// </summary>
     public static bool SuppressInstrumentation => SuppressInstrumentationScope.IsSuppressed;
+
+    /// <summary>
+    /// Gets the default <see cref="TextMapPropagator"/> used by the SDK.
+    /// </summary>
+    /// <remarks>
+    /// The default propagator is a composite of the W3C Trace Context and W3C Baggage
+    /// propagators. The same instance is returned every time.
+    /// <para/>
+    /// This is not necessarily the propagator currently in use, which is
+    /// available from <see cref="Propagators.DefaultTextMapPropagator"/> and can be
+    /// replaced using <see cref="SetDefaultTextMapPropagator(TextMapPropagator)"/>.
+    /// This property always returns the propagator the SDK installs by default, so
+    /// it can be used to restore the SDK default after a custom propagator has been
+    /// set, or to determine whether the current propagator has been replaced.
+    /// </remarks>
+    public static TextMapPropagator DefaultTextMapPropagator { get; } = new CompositeTextMapPropagator(
+    [
+        new TraceContextPropagator(),
+        new BaggagePropagator(),
+    ]);
 
     internal static string InformationalVersion { get; }
 

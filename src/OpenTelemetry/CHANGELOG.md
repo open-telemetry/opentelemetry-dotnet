@@ -23,6 +23,10 @@ Notes](../../RELEASENOTES.md).
   another process is no longer treated as the file having been removed.
   ([#8158](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8158))
 
+* Added `Sdk.DefaultTextMapPropagator` to expose the SDK's default
+  `TextMapPropagator`.
+  ([#8129](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8129))
+
 ## 1.21.0
 
 Released 2026-Nov-11
