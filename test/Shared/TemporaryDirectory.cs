@@ -67,20 +67,34 @@ internal sealed class TemporaryDirectory : IDisposable
 
         // The temporary directory of the system, or one of the directories that it is in, can be written to by other
         // users (such as /tmp, even if TMPDIR is a private directory within it), which some of the code under test
-        // refuses, so the directory is created in one that only the current user can write to instead. If there is
-        // no such directory, the system temporary directory is used, as most users of this class only need a scratch
+        // refuses, so the directory is created in one that only the current user can write to instead. The runtime
+        // directory of the user (for example /run/user/1000) is tried first, then the test output directory. If there
+        // is no such directory, the system temporary directory is used, as most users of this class only need a scratch
         // directory. Those that require a private directory fail with an error about the permissions of the directory.
-        if (!CanOnlyBeChangedByOwner(AppContext.BaseDirectory))
+        var runtimeDirectory = Environment.GetEnvironmentVariable("XDG_RUNTIME_DIR");
+
+        if (!string.IsNullOrEmpty(runtimeDirectory)
+            && System.IO.Path.IsPathRooted(runtimeDirectory)
+            && CanOnlyBeChangedByOwner(runtimeDirectory))
         {
-            return Directory.CreateTempSubdirectory("otel-tests-");
+            return CreateIn(runtimeDirectory);
         }
 
-        var root = System.IO.Path.Combine(AppContext.BaseDirectory, "temp");
+        if (CanOnlyBeChangedByOwner(AppContext.BaseDirectory))
+        {
+            var root = System.IO.Path.Combine(AppContext.BaseDirectory, "temp");
 
-        Directory.CreateDirectory(root, OwnerOnly);
+            Directory.CreateDirectory(root, OwnerOnly);
 
-        return Directory.CreateDirectory(System.IO.Path.Combine(root, "otel-tests-" + Guid.NewGuid().ToString("N")), OwnerOnly);
+            return CreateIn(root);
+        }
+
+        return Directory.CreateTempSubdirectory("otel-tests-");
     }
+
+    [UnsupportedOSPlatform("windows")]
+    private static DirectoryInfo CreateIn(string root)
+        => Directory.CreateDirectory(System.IO.Path.Combine(root, "otel-tests-" + Guid.NewGuid().ToString("N")), OwnerOnly);
 
     /// <summary>
     /// Gets whether a directory, and every directory that is traversed to reach it (resolving symbolic links),
