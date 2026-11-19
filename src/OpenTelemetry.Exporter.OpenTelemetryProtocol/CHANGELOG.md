@@ -40,7 +40,7 @@ Notes](../../RELEASENOTES.md).
 * Fixed the experimental disk retry feature resending stored requests without
   suppressing instrumentation, so that the exporter's own requests could be
   traced and exported by the application's exporters.
-  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+  ([#8164](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8164))
 
 ## 1.21.0
 
