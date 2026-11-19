@@ -1233,6 +1233,372 @@ public sealed class PrometheusCollectionManagerTests
     }
 
     [Fact]
+    public async Task EnterCollectReleasesBuffersOfProtocolsWhichAreNoLongerRequested()
+    {
+        const int InitialSize = PrometheusExporterOptions.InitialScrapeResponseSizeBytes;
+
+        using var meter = CreateMeter();
+        using var provider = CreateMeterProviderWithCache(meter, scrapeResponseCacheDurationMilliseconds: 300);
+#pragma warning disable CA2000 // MeterProvider owns exporter lifecycle
+        var exporter = GetExporter(provider);
+#pragma warning restore CA2000 // MeterProvider owns exporter lifecycle
+
+        var elapsed = TimeSpan.Zero;
+        UseManualClock(exporter, () => elapsed);
+
+        meter.CreateCounter<int>("counter_int").Add(100);
+
+        var prometheusProtocol = GetProtocol(openMetricsRequested: false);
+        var openMetricsProtocol = GetProtocol(openMetricsRequested: true);
+
+        async Task ScrapeAsync(PrometheusProtocol protocol, TimeSpan at)
+        {
+            elapsed = at;
+            await ScrapeAndExitAsync(exporter, protocol);
+        }
+
+        await ScrapeAsync(prometheusProtocol, TimeSpan.Zero);
+        await ScrapeAsync(openMetricsProtocol, TimeSpan.FromMilliseconds(100));
+
+        Assert.Equal(2 * InitialSize, exporter.CollectionManager.AllocatedBufferSize);
+
+        // A format which was requested less than 5 minutes ago keeps its buffers
+        await ScrapeAsync(prometheusProtocol, TimeSpan.FromMinutes(4));
+        Assert.Equal(2 * InitialSize, exporter.CollectionManager.AllocatedBufferSize);
+
+        // The time is counted from its most recent request
+        await ScrapeAsync(openMetricsProtocol, TimeSpan.FromMinutes(4.5));
+        await ScrapeAsync(prometheusProtocol, TimeSpan.FromMinutes(5.2));
+        Assert.Equal(2 * InitialSize, exporter.CollectionManager.AllocatedBufferSize);
+
+        // Once it has not been requested for 5 minutes, its buffers are released
+        await ScrapeAsync(prometheusProtocol, TimeSpan.FromMinutes(10));
+        Assert.Equal(InitialSize, exporter.CollectionManager.AllocatedBufferSize);
+
+        // The buffers are allocated again if the format is requested again
+        await ScrapeAsync(openMetricsProtocol, TimeSpan.FromMinutes(11));
+        Assert.Equal(2 * InitialSize, exporter.CollectionManager.AllocatedBufferSize);
+    }
+
+    [Fact]
+    public async Task EnterCollectSharesCollectionsAgainAfterProtocolSkippedAnInterval()
+    {
+        const int InitialSize = PrometheusExporterOptions.InitialScrapeResponseSizeBytes;
+
+        using var meter = CreateMeter();
+        using var provider = CreateMeterProviderWithCache(meter, scrapeResponseCacheDurationMilliseconds: 300);
+#pragma warning disable CA2000 // MeterProvider owns exporter lifecycle
+        var exporter = GetExporter(provider);
+#pragma warning restore CA2000 // MeterProvider owns exporter lifecycle
+
+        var elapsed = TimeSpan.Zero;
+        UseManualClock(exporter, () => elapsed);
+
+        var collectCount = CountCollections(exporter);
+
+        meter.CreateCounter<int>("counter_int").Add(100);
+
+        var prometheusProtocol = GetProtocol(openMetricsRequested: false);
+        var openMetricsProtocol = GetProtocol(openMetricsRequested: true);
+
+        async Task<PrometheusCollectionManager.CollectionResponse> ScrapeAsync(PrometheusProtocol protocol, TimeSpan at)
+        {
+            elapsed = at;
+            return await ScrapeAndExitAsync(exporter, protocol);
+        }
+
+        // Two scrapers poll together every 10 minutes, which is longer than the time a format is retained
+        static TimeSpan Interval(int count) => TimeSpan.FromMinutes(10 * count);
+
+        var offset = TimeSpan.FromMilliseconds(1);
+
+        var response = await ScrapeAsync(prometheusProtocol, TimeSpan.Zero);
+        Assert.False(response.FromCache, "Response was served from the cache.");
+
+        response = await ScrapeAsync(openMetricsProtocol, offset);
+        Assert.False(response.FromCache, "Response was served from the cache.");
+        Assert.Equal(2, collectCount());
+
+        response = await ScrapeAsync(prometheusProtocol, Interval(1));
+        Assert.False(response.FromCache, "Response was served from the cache.");
+
+        response = await ScrapeAsync(openMetricsProtocol, Interval(1) + offset);
+        Assert.True(response.FromCache, "Response was not served from the cache.");
+        Assert.Equal(3, collectCount());
+
+        // One of them then does not scrape for an interval, and its response is written once more
+        // for the scrape which requested it last, but not again as nobody has requested it since
+        response = await ScrapeAsync(prometheusProtocol, Interval(2));
+        Assert.False(response.FromCache, "Response was served from the cache.");
+        Assert.Equal(4, collectCount());
+        Assert.Equal(2 * InitialSize, exporter.CollectionManager.AllocatedBufferSize);
+
+        // Having not been requested for longer than it is retained, its buffers are released
+        response = await ScrapeAsync(prometheusProtocol, Interval(3));
+        Assert.False(response.FromCache, "Response was served from the cache.");
+        Assert.Equal(5, collectCount());
+        Assert.Equal(InitialSize, exporter.CollectionManager.AllocatedBufferSize);
+
+        // When it scrapes again it is collected for on its own, as it would have been had its buffers been kept
+        response = await ScrapeAsync(openMetricsProtocol, Interval(3) + offset);
+        Assert.False(response.FromCache, "Response was served from the cache.");
+        Assert.Equal(6, collectCount());
+
+        // After which the two share a collection again
+        response = await ScrapeAsync(prometheusProtocol, Interval(4));
+        Assert.False(response.FromCache, "Response was served from the cache.");
+
+        response = await ScrapeAsync(openMetricsProtocol, Interval(4) + offset);
+        Assert.True(response.FromCache, "Response was not served from the cache.");
+        Assert.Equal(7, collectCount());
+        Assert.Equal(2 * InitialSize, exporter.CollectionManager.AllocatedBufferSize);
+    }
+
+    [Fact]
+    public async Task EnterCollectReleasesSpareBufferWhichOverlappingScrapesNoLongerNeed()
+    {
+        const int InitialSize = PrometheusExporterOptions.InitialScrapeResponseSizeBytes;
+
+        using var meter = CreateMeter();
+        using var provider = CreateMeterProviderWithCache(meter, scrapeResponseCacheDurationMilliseconds: 300);
+#pragma warning disable CA2000 // MeterProvider owns exporter lifecycle
+        var exporter = GetExporter(provider);
+#pragma warning restore CA2000 // MeterProvider owns exporter lifecycle
+
+        var elapsed = TimeSpan.Zero;
+        UseManualClock(exporter, () => elapsed);
+
+        meter.CreateCounter<int>("counter_int").Add(100);
+
+        var protocol = GetProtocol(openMetricsRequested: false);
+
+        // A second scrape collects while the response to the first is still being read
+        var firstResponse = await EnterCollectAsync(exporter, protocol);
+        PrometheusCollectionManager.CollectionResponse secondResponse;
+
+        try
+        {
+            elapsed = TimeSpan.FromSeconds(1);
+            secondResponse = await EnterCollectAsync(exporter, protocol);
+        }
+        finally
+        {
+            exporter.CollectionManager.ExitCollect(firstResponse);
+        }
+
+        exporter.CollectionManager.ExitCollect(secondResponse);
+
+        Assert.True(firstResponse.Succeeded, "The first scrape did not succeed.");
+        Assert.True(secondResponse.Succeeded, "The second scrape did not succeed.");
+        Assert.Equal(2 * InitialSize, exporter.CollectionManager.AllocatedBufferSize);
+
+        // The second buffer is kept for 5 minutes after it was last needed
+        elapsed = TimeSpan.FromMinutes(4);
+        await ScrapeAndExitAsync(exporter, protocol);
+        Assert.Equal(2 * InitialSize, exporter.CollectionManager.AllocatedBufferSize);
+
+        elapsed = TimeSpan.FromMinutes(6);
+        await ScrapeAndExitAsync(exporter, protocol);
+        Assert.Equal(InitialSize, exporter.CollectionManager.AllocatedBufferSize);
+
+        // Scrapes which overlap again allocate it again
+        var thirdResponse = await EnterCollectAsync(exporter, protocol);
+        PrometheusCollectionManager.CollectionResponse fourthResponse;
+
+        try
+        {
+            elapsed = TimeSpan.FromMinutes(7);
+            fourthResponse = await EnterCollectAsync(exporter, protocol);
+        }
+        finally
+        {
+            exporter.CollectionManager.ExitCollect(thirdResponse);
+        }
+
+        exporter.CollectionManager.ExitCollect(fourthResponse);
+
+        Assert.True(thirdResponse.Succeeded, "The third scrape did not succeed.");
+        Assert.True(fourthResponse.Succeeded, "The fourth scrape did not succeed.");
+        Assert.Equal(2 * InitialSize, exporter.CollectionManager.AllocatedBufferSize);
+    }
+
+    [Fact]
+    public async Task EnterCollectDoesNotReleaseBuffersWhichAreStillBeingRead()
+    {
+        const int InitialSize = PrometheusExporterOptions.InitialScrapeResponseSizeBytes;
+
+        using var meter = CreateMeter();
+        using var provider = CreateMeterProviderWithCache(meter, scrapeResponseCacheDurationMilliseconds: 300);
+#pragma warning disable CA2000 // MeterProvider owns exporter lifecycle
+        var exporter = GetExporter(provider);
+#pragma warning restore CA2000 // MeterProvider owns exporter lifecycle
+
+        var elapsed = TimeSpan.Zero;
+        UseManualClock(exporter, () => elapsed);
+
+        meter.CreateCounter<int>("counter_int").Add(100);
+
+        var prometheusProtocol = GetProtocol(openMetricsRequested: false);
+        var openMetricsProtocol = GetProtocol(openMetricsRequested: true);
+        var otherProtocol = PrometheusProtocol.Fallback;
+
+        static string GetPayload(PrometheusCollectionManager.CollectionResponse response)
+            => Encoding.UTF8.GetString(response.View.Array!, response.View.Offset, response.View.Count);
+
+        // The responses of two formats are still being read when the formats have not been requested for longer than they are retained
+        var prometheusResponse = await EnterCollectAsync(exporter, prometheusProtocol);
+
+        elapsed = TimeSpan.FromSeconds(1);
+        var openMetricsResponse = await EnterCollectAsync(exporter, openMetricsProtocol);
+
+        try
+        {
+            elapsed = TimeSpan.FromMinutes(6);
+            await ScrapeAndExitAsync(exporter, otherProtocol);
+
+            // Collecting another format does not release buffers which are being read, and does not overwrite them
+            Assert.Equal(3 * InitialSize, exporter.CollectionManager.AllocatedBufferSize);
+            Assert.Equal(2, exporter.CollectionManager.ActiveReaderCount);
+            Assert.Contains("counter_int_total", GetPayload(prometheusResponse), StringComparison.Ordinal);
+            Assert.Contains("counter_int", GetPayload(openMetricsResponse), StringComparison.Ordinal);
+        }
+        finally
+        {
+            exporter.CollectionManager.ExitCollect(prometheusResponse);
+            exporter.CollectionManager.ExitCollect(openMetricsResponse);
+        }
+
+        Assert.Equal(0, exporter.CollectionManager.ActiveReaderCount);
+
+        // Once they are no longer being read, the next collection releases them
+        elapsed = TimeSpan.FromMinutes(6) + TimeSpan.FromSeconds(1);
+        await ScrapeAndExitAsync(exporter, otherProtocol);
+
+        Assert.Equal(InitialSize, exporter.CollectionManager.AllocatedBufferSize);
+    }
+
+    [Fact]
+    public async Task EnterCollectDoesNotReleaseSpareBufferWhichIsStillBeingRead()
+    {
+        const int InitialSize = PrometheusExporterOptions.InitialScrapeResponseSizeBytes;
+
+        using var meter = CreateMeter();
+        using var provider = CreateMeterProviderWithCache(meter, scrapeResponseCacheDurationMilliseconds: 300);
+#pragma warning disable CA2000 // MeterProvider owns exporter lifecycle
+        var exporter = GetExporter(provider);
+#pragma warning restore CA2000 // MeterProvider owns exporter lifecycle
+
+        var elapsed = TimeSpan.Zero;
+        UseManualClock(exporter, () => elapsed);
+
+        meter.CreateCounter<int>("counter_int").Add(100);
+
+        var protocol = GetProtocol(openMetricsRequested: false);
+        var otherProtocol = GetProtocol(openMetricsRequested: true);
+
+        // A second scrape collects while the response to the first is still being read, so two buffers are in use
+        var firstResponse = await EnterCollectAsync(exporter, protocol);
+
+        elapsed = TimeSpan.FromSeconds(1);
+        var secondResponse = await EnterCollectAsync(exporter, protocol);
+
+        var secondResponseExited = false;
+
+        try
+        {
+            Assert.Equal(2 * InitialSize, exporter.CollectionManager.AllocatedBufferSize);
+
+            // Both are still being read when the second buffer has not been needed to collect for longer than it is retained
+            elapsed = TimeSpan.FromMinutes(6);
+            await ScrapeAndExitAsync(exporter, otherProtocol);
+
+            Assert.Equal(3 * InitialSize, exporter.CollectionManager.AllocatedBufferSize);
+            Assert.Equal(2, exporter.CollectionManager.ActiveReaderCount);
+
+            // The scrape which was reading it is done, so the time it is kept for counts from when it was last read
+            exporter.CollectionManager.ExitCollect(firstResponse);
+
+            elapsed = TimeSpan.FromMinutes(6) + TimeSpan.FromSeconds(1);
+            await ScrapeAndExitAsync(exporter, otherProtocol);
+
+            Assert.Equal(3 * InitialSize, exporter.CollectionManager.AllocatedBufferSize);
+            Assert.Equal(1, exporter.CollectionManager.ActiveReaderCount);
+
+            exporter.CollectionManager.ExitCollect(secondResponse);
+            secondResponseExited = true;
+        }
+        finally
+        {
+            if (!secondResponseExited)
+            {
+                exporter.CollectionManager.ExitCollect(secondResponse);
+            }
+        }
+
+        // Once nothing is reading either, the format has not been requested for long enough to be released
+        elapsed = TimeSpan.FromMinutes(12);
+        await ScrapeAndExitAsync(exporter, otherProtocol);
+
+        Assert.Equal(InitialSize, exporter.CollectionManager.AllocatedBufferSize);
+    }
+
+    [Fact]
+    public async Task EnterCollectDoesNotReleaseBuffersWhileTheirResponseIsStillCached()
+    {
+        const int InitialSize = PrometheusExporterOptions.InitialScrapeResponseSizeBytes;
+
+        using var meter = CreateMeter();
+        using var provider = CreateMeterProviderWithCache(meter, scrapeResponseCacheDurationMilliseconds: 600_000);
+#pragma warning disable CA2000 // MeterProvider owns exporter lifecycle
+        var exporter = GetExporter(provider);
+#pragma warning restore CA2000 // MeterProvider owns exporter lifecycle
+
+        var elapsed = TimeSpan.Zero;
+        UseManualClock(exporter, () => elapsed);
+
+        var collectCount = CountCollections(exporter);
+
+        meter.CreateCounter<int>("counter_int").Add(100);
+
+        var protocol = GetProtocol(openMetricsRequested: false);
+        var otherProtocol = GetProtocol(openMetricsRequested: true);
+
+        async Task<PrometheusCollectionManager.CollectionResponse> ScrapeAsync(PrometheusProtocol protocol, TimeSpan at)
+        {
+            elapsed = at;
+            return await ScrapeAndExitAsync(exporter, protocol);
+        }
+
+        var response = await ScrapeAsync(protocol, TimeSpan.Zero);
+        Assert.False(response.FromCache, "Response was served from the cache.");
+        Assert.Equal(1, collectCount());
+
+        // The format has not been requested for longer than it is retained, but its response is still cached
+        response = await ScrapeAsync(otherProtocol, TimeSpan.FromMinutes(6));
+        Assert.False(response.FromCache, "Response was served from the cache.");
+        Assert.Equal(2, collectCount());
+        Assert.Equal(2 * InitialSize, exporter.CollectionManager.AllocatedBufferSize);
+
+        // So its buffers are still there to serve it without collecting again
+        response = await ScrapeAsync(protocol, TimeSpan.FromMinutes(7));
+        Assert.True(response.FromCache, "Response was not served from the cache.");
+        Assert.Equal(2, collectCount());
+
+        // The scrape which requested it most recently arrived near a collection, so it is written once more
+        // when the other format is collected for again, which is when its response is no longer cached
+        response = await ScrapeAsync(otherProtocol, TimeSpan.FromMinutes(30));
+        Assert.False(response.FromCache, "Response was served from the cache.");
+        Assert.Equal(3, collectCount());
+        Assert.Equal(2 * InitialSize, exporter.CollectionManager.AllocatedBufferSize);
+
+        // Once that response is no longer cached either, and has not been requested since, the buffers are released
+        response = await ScrapeAsync(otherProtocol, TimeSpan.FromMinutes(41));
+        Assert.False(response.FromCache, "Response was served from the cache.");
+        Assert.Equal(4, collectCount());
+        Assert.Equal(InitialSize, exporter.CollectionManager.AllocatedBufferSize);
+    }
+
+    [Fact]
     public async Task EnterCollectServesCachedResponseWhileCollectingAnotherProtocol()
     {
         const int ScrapeResponseCacheDurationMilliseconds = 15_000;
