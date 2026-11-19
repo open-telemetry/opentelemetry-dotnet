@@ -361,17 +361,6 @@ The following options are only applicable to `OtlpTraceExporter`:
   processor](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk.md#built-in-span-processors).
   The default is Batch.
 
-  With Simple each span is exported on its own as soon as it has ended, in the
-  order in which the spans ended. As with Batch, the export is done by a thread
-  of the processor and not by the thread which ended the span, so a span may not
-  have been exported yet when the call which ended it returns. At most 2048
-  spans wait to be exported, and a span which ends while that many are waiting
-  is dropped.
-
-  Call `ForceFlush()` and check its result before relying on pending exports
-  being complete. On single-threaded platforms `ForceFlush()` triggers export
-  without waiting and returns `false` while exports are still pending.
-
 * `BatchExportProcessorOptions`: Configuration options for the batch exporter.
   Only used if ExportProcessorType is set to Batch.
 
@@ -406,18 +395,6 @@ appBuilder.Services.Configure<LogRecordExportProcessorOptions>(
     appBuilder.Configuration.GetSection("OpenTelemetry:Logging"));
 ```
 
-When `ExportProcessorType` is set to `ExportProcessorType.Simple` each log
-record is exported on its own as soon as it has been written, in the order in
-which the log records were written. As with `ExportProcessorType.Batch`, the
-export is done by a thread of the processor and not by the thread which wrote
-the log record, so a log record may not have been exported yet when the call
-which wrote it returns. At most 2048 log records wait to be exported, and a log
-record which is written while that many are waiting is dropped.
-
-Call `ForceFlush()` and check its result before relying on pending exports
-being complete. On single-threaded platforms `ForceFlush()` triggers export
-without waiting and returns `false` while exports are still pending.
-
 ### MetricReaderOptions
 
 The `MetricReaderOptions` class may be used to configure reader settings for
@@ -449,12 +426,13 @@ appBuilder.Services.Configure<MetricReaderOptions>(
 ```
 
 By default, all the metric points of a collection are sent in a single export
-request. Set `PeriodicExportingMetricReaderOptions.MaxExportBatchSize` to split
-them into batches of at most that many metric points instead, even if that
-splits up the metric points of a single metric, with each batch sent in its own
-export request. The batches are exported one after another and the export
-timeout applies to each request. This keeps the size of each request bounded
-when a collection is large (see [Dropped batches](#dropped-batches)).
+request, unless they do not fit in one (see [Dropped batches](#dropped-batches)).
+Set `PeriodicExportingMetricReaderOptions.MaxExportBatchSize` to split them into
+batches of at most that many metric points instead, even if that splits up the
+metric points of a single metric, with each batch sent in its own export
+request. The batches are exported one after another and the export timeout
+applies to each request. This keeps the size of each request bounded when a
+collection is large.
 
 ## Environment Variables
 
@@ -861,11 +839,18 @@ Variables](#environment-variables)), and the size of individual items with the
 [attribute limits](#attribute-limits).
 
 For metrics, a batch contains every metric point collected by the reader unless
-batching is enabled, so limit the number of metric points in each batch with
+batching is enabled. A batch of metrics which is too large for a single request
+is not dropped, as with cumulative temporality every later collection would be
+too large as well. It is sent as several requests instead, each cut at the end
+of a metric point and each within `MaxRequestSizeBytes`.
+
+A batch sent as several requests takes longer to export and is more likely to
+reach the export timeout, so keep the size of a collection down by limiting
+the number of metric points in each batch with
 `PeriodicExportingMetricReaderOptions.MaxExportBatchSize` (see
-[MetricReaderOptions](#metricreaderoptions)). The size of the payload can also
-be reduced by dropping instruments or attribute keys using views, or by lowering
-the cardinality of the attributes being recorded.
+[MetricReaderOptions](#metricreaderoptions)), by dropping instruments or
+attribute keys using views, or by lowering the cardinality of the attributes
+being recorded.
 
 ## References
 

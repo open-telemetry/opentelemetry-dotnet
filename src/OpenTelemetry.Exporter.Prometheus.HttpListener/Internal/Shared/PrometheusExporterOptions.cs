@@ -98,8 +98,6 @@ internal sealed class PrometheusExporterOptions
     /// </summary>
     /// <remarks>
     /// Increase this value when exposing a very large number of time series.
-    /// Metrics which do not fit in a response of this size are omitted from it
-    /// and an error event is logged. The scrape fails when none of the metrics fit.
     /// </remarks>
     public int MaxScrapeResponseSizeBytes
     {

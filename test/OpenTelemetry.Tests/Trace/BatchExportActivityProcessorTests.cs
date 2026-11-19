@@ -3,7 +3,6 @@
 
 using System.Diagnostics;
 using OpenTelemetry.Exporter;
-using OpenTelemetry.Internal;
 using OpenTelemetry.Tests;
 
 namespace OpenTelemetry.Trace.Tests;
@@ -109,71 +108,6 @@ public class BatchExportActivityProcessorTests
         Assert.Equal(expectedCount, processor.ProcessedCount);
         Assert.Equal(expectedCount, processor.ReceivedCount);
         Assert.Equal(0, processor.DroppedCount);
-    }
-
-    [Theory]
-    [InlineData(false)]
-#if NET
-    [InlineData(true)]
-#endif
-    public void CheckForceFlushWaitsForExportInProgress(bool threadingDisabled)
-    {
-        using var threadingOverride = ThreadingHelper.BeginThreadingOverride(threadingDisabled);
-        using var exportStarted = new ManualResetEventSlim();
-        using var releaseExport = new ManualResetEventSlim();
-
-        var itemsRead = 0;
-
-        // The exporter must not throw, as it runs on the processor's own thread
-        // and an unhandled exception there would terminate the whole test host.
-        using var exporter = new DelegatingExporter<Activity>
-        {
-            OnExportFunc = batch =>
-            {
-                // Read the item, as an exporter does when serializing it, so that it
-                // has left the queue before the export itself has finished.
-                foreach (var item in batch)
-                {
-                    itemsRead++;
-                }
-
-                exportStarted.Set();
-                _ = releaseExport.Wait(TimeSpan.FromSeconds(30));
-                return ExportResult.Success;
-            },
-        };
-
-        using var processor = new BatchActivityExportProcessor(exporter, maxQueueSize: 2, maxExportBatchSize: 1);
-
-        using var activity = new Activity("start")
-        {
-            ActivityTraceFlags = ActivityTraceFlags.Recorded,
-        };
-
-        try
-        {
-            Assert.True(processor.ForceFlush(100));
-
-            processor.OnEnd(activity);
-
-            Assert.True(exportStarted.Wait(TimeSpan.FromSeconds(30), TestContext.Current.CancellationToken));
-
-            // The export is still in progress, so the item has not been flushed yet
-            Assert.False(processor.ForceFlush(100));
-
-            releaseExport.Set();
-
-            // With threading disabled ForceFlush cannot wait for the worker,
-            // so poll until the export has actually completed.
-            Assert.True(SpinWait.SpinUntil(() => processor.ForceFlush(100), TimeSpan.FromSeconds(30)));
-            Assert.Equal(1, itemsRead);
-        }
-        finally
-        {
-            // Never leave the exporter blocked, even if an assertion failed
-            releaseExport.Set();
-            processor.Shutdown(30_000);
-        }
     }
 
     [Theory]

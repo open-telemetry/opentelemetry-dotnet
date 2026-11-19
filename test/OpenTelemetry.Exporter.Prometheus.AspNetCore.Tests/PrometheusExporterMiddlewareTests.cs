@@ -767,10 +767,13 @@ public sealed class PrometheusExporterMiddlewareTests
 
         using var meter = new Meter(MeterName, MeterVersion);
 
-        // Emit a series whose serialized form far exceeds the configured maximum, so the response
-        // buffer cannot grow to hold the only metric there is and the scrape fails rather than
-        // returning a misleading empty 200 response.
-        meter.CreateCounter<double>("counter_double", unit: "By").Add(1, new KeyValuePair<string, object?>("label", new string('x', 90_000)));
+        // Emit enough series that the serialized response far exceeds the configured maximum, so
+        // the response buffer cannot grow to hold it and the scrape fails rather than returning a
+        // misleading empty 200 response.
+        for (var x = 0; x < 2_000; x++)
+        {
+            meter.CreateCounter<double>("counter_double_" + x, unit: "By").Add(1);
+        }
 
         host.Services.GetRequiredService<MeterProvider>().ForceFlush();
 
@@ -779,38 +782,6 @@ public sealed class PrometheusExporterMiddlewareTests
         using var response = await client.GetAsync(new Uri("/metrics", UriKind.Relative), TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.InternalServerError, response.StatusCode);
-
-        await host.StopAsync(TestContext.Current.CancellationToken);
-    }
-
-    [Fact]
-    public async Task ScrapeWithMetricExceedingMaxResponseSizeReturnsTheOtherMetrics()
-    {
-        using var host = await StartTestHostAsync(
-            app => app.UseOpenTelemetryPrometheusScrapingEndpoint(),
-            configureOptions: o => o.MaxScrapeResponseSizeBytes = PrometheusExporterOptions.InitialScrapeResponseSizeBytes);
-
-        using var meter = new Meter(MeterName, MeterVersion);
-
-        meter.CreateCounter<double>("counter_double", unit: "By").Add(1);
-
-        // The tags of a histogram are written with each of its buckets, so a tag value which is
-        // much shorter than the configured maximum is enough for the metric not to fit. Only that
-        // metric is omitted from the response, rather than the scrape failing.
-        meter.CreateHistogram<double>("histogram_double").Record(1, new KeyValuePair<string, object?>("label", new string('x', 8_000)));
-
-        host.Services.GetRequiredService<MeterProvider>().ForceFlush();
-
-        using var client = host.GetTestClient();
-
-        using var response = await client.GetAsync(new Uri("/metrics", UriKind.Relative), TestContext.Current.CancellationToken);
-
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-
-        var output = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
-
-        Assert.Contains("counter_double_bytes_total", output, StringComparison.Ordinal);
-        Assert.DoesNotContain("histogram_double", output, StringComparison.Ordinal);
 
         await host.StopAsync(TestContext.Current.CancellationToken);
     }

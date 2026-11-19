@@ -135,31 +135,10 @@ public sealed class SelfDiagnosticsConfigParserTests : IDisposable
     [Fact]
     public void TryGetConfiguration_MissingOrUnavailableFile_ReturnsFalse()
     {
-        Assert.False(new SelfDiagnosticsConfigParser(() => null).TryGetConfiguration(out _, out var transientFailure), "Expected the parser to fail when the file path is null.");
-        Assert.False(transientFailure, "Expected a null file path not to be a transient failure.");
-        Assert.False(new SelfDiagnosticsConfigParser(() => Path.Combine(this.directory.Path, "missing.json")).TryGetConfiguration(out _, out transientFailure), "Expected the parser to fail when the file is missing.");
-        Assert.False(transientFailure, "Expected a missing file not to be a transient failure.");
-        Assert.False(new SelfDiagnosticsConfigParser(() => this.directory.Path).TryGetConfiguration(out _, out transientFailure), "Expected the parser to fail when the path is a directory.");
-        Assert.False(transientFailure, "Expected a directory not to be a transient failure.");
-        Assert.False(new SelfDiagnosticsConfigParser(() => throw new IOException("Unavailable.")).TryGetConfiguration(out _, out transientFailure), "Expected the parser to fail when an IOException is thrown.");
-        Assert.True(transientFailure, "Expected an IOException to be a transient failure.");
-    }
-
-    [Fact]
-    public void TryGetConfiguration_LockedFile_IsTransientFailure()
-    {
-        var path = Path.Combine(this.directory.Path, SelfDiagnosticsConfigParser.ConfigFileName);
-        File.WriteAllText(path, "{\"LogDirectory\":\"Diagnostics\",\"FileSize\":1024,\"LogLevel\":\"Warning\"}");
-        var parser = new SelfDiagnosticsConfigParser(() => path);
-
-        using (new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.None))
-        {
-            Assert.False(parser.TryGetConfiguration(out _, out var transientFailure), "Expected the parser to fail while the file is locked.");
-            Assert.True(transientFailure, "Expected a locked file to be a transient failure.");
-        }
-
-        Assert.True(parser.TryGetConfiguration(out _, out var unlockedTransientFailure), "Expected the parser to succeed once the file is unlocked.");
-        Assert.False(unlockedTransientFailure, "Expected a successful read not to be a transient failure.");
+        Assert.False(new SelfDiagnosticsConfigParser(() => null).TryGetConfiguration(out _), "Expected the parser to fail when the file path is null.");
+        Assert.False(new SelfDiagnosticsConfigParser(() => Path.Combine(this.directory.Path, "missing.json")).TryGetConfiguration(out _), "Expected the parser to fail when the file is missing.");
+        Assert.False(new SelfDiagnosticsConfigParser(() => this.directory.Path).TryGetConfiguration(out _), "Expected the parser to fail when the path is a directory.");
+        Assert.False(new SelfDiagnosticsConfigParser(() => throw new IOException("Unavailable.")).TryGetConfiguration(out _), "Expected the parser to fail when an IOException is thrown.");
     }
 
     [Fact]

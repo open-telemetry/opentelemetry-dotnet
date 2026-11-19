@@ -328,8 +328,10 @@ public sealed class IntegrationTests : IDisposable
         switch (processorOptions.ExportProcessorType)
         {
             case ExportProcessorType.Batch:
-            case ExportProcessorType.Simple:
                 Assert.True(exported.WaitOne(ExportIntervalMilliseconds * 2));
+                break;
+
+            case ExportProcessorType.Simple:
                 break;
 
             default:

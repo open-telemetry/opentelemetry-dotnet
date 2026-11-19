@@ -69,7 +69,7 @@ internal sealed class BatchExportThreadWorker<T> : BatchExportWorker<T>
     /// <inheritdoc/>
     public override bool WaitForExport(int timeoutMilliseconds)
     {
-        var tail = this.ExportedCount;
+        var tail = this.CircularBuffer.RemovedCount;
         var head = this.CircularBuffer.AddedCount;
 
         if (head == tail)
@@ -106,7 +106,7 @@ internal sealed class BatchExportThreadWorker<T> : BatchExportWorker<T>
 
                 if (remainingMilliseconds <= 0)
                 {
-                    return this.ExportedCount >= head;
+                    return this.CircularBuffer.RemovedCount >= head;
                 }
 
                 timeout = Math.Min(remainingMilliseconds, pollingMilliseconds);
@@ -121,7 +121,7 @@ internal sealed class BatchExportThreadWorker<T> : BatchExportWorker<T>
                 return false;
             }
 
-            if (this.ExportedCount >= head)
+            if (this.CircularBuffer.RemovedCount >= head)
             {
                 return true;
             }
