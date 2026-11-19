@@ -15,6 +15,10 @@ Notes](../../RELEASENOTES.md).
   pending exports had finished.
   ([#8134](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8134))
 
+* Fixed `PeriodicExportingMetricReader` sometimes collecting twice in quick
+  succession when a periodic wait returns early.
+  ([#8161](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8161))
+
 * Added `Sdk.DefaultTextMapPropagator` to expose the SDK's default
   `TextMapPropagator`.
   ([#8129](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8129))
