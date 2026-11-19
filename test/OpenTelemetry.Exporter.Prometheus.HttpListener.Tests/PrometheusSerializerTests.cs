@@ -467,7 +467,7 @@ public sealed partial class PrometheusSerializerTests
     [Theory]
     [InlineData(false)]
     [InlineData(true)]
-    public void WriteMetricAddsUpPointsWithTagKeysThatCollideOnceEscaped(bool useOpenMetrics)
+    public void WriteMetricDropsPointsWithTagKeysThatCollideOnceEscaped(bool useOpenMetrics)
     {
         var buffer = new byte[85000];
         var metrics = new List<Metric>();
@@ -489,13 +489,14 @@ public sealed partial class PrometheusSerializerTests
         var cursor = WriteMetric(buffer, 0, metrics.Single(), useOpenMetrics, series: series);
         var output = Encoding.UTF8.GetString(buffer, 0, cursor);
 
-        // The two points that are the same series are written as one, with the sum of their values.
+        // The first of the two points that are the same series is written, and the other is dropped.
         var samples = GetSampleLines(output, "test_counter_total");
 
         Assert.Equal(2, samples.Count);
-        Assert.Single(samples, line => line.Contains("a_b=\"value\"", StringComparison.Ordinal) && line.EndsWith(" 3", StringComparison.Ordinal));
-        Assert.Single(samples, line => line.Contains("a_b=\"other\"", StringComparison.Ordinal) && line.EndsWith(" 4", StringComparison.Ordinal));
-        Assert.Equal(0, series.DroppedCount);
+        Assert.Single(samples, line => line.Contains("a_b=\"value\"", StringComparison.Ordinal));
+        Assert.Single(samples, line => line.Contains("a_b=\"other\"", StringComparison.Ordinal));
+        Assert.Equal(1, series.DroppedCount);
+        Assert.Equal("test_counter", series.FirstDroppedMetricName);
     }
 
     [Theory]
@@ -545,7 +546,7 @@ public sealed partial class PrometheusSerializerTests
     [Theory]
     [InlineData(false)]
     [InlineData(true)]
-    public void WriteMetricAddsUpPointsWhichOnlyDifferByATagWithTheNameOfTheMetricNameLabel(bool useOpenMetrics)
+    public void WriteMetricDropsPointsWhichOnlyDifferByATagWithTheNameOfTheMetricNameLabel(bool useOpenMetrics)
     {
         var buffer = new byte[85000];
         var metrics = new List<Metric>();
@@ -567,14 +568,14 @@ public sealed partial class PrometheusSerializerTests
         var cursor = WriteMetric(buffer, 0, metrics.Single(), useOpenMetrics, series: series);
         var output = Encoding.UTF8.GetString(buffer, 0, cursor);
 
-        // The tag is not written, so the two points which have it are the same series, and are written as one.
+        // The tag is not written, so the two points which have it are the same series, and the second is dropped.
         var samples = GetSampleLines(output, "test_counter_total");
 
         Assert.Equal(2, samples.Count);
-        Assert.Single(samples, line => line.Contains("x=\"1\"", StringComparison.Ordinal) && line.EndsWith(" 4", StringComparison.Ordinal));
-        Assert.Single(samples, line => !line.Contains("x=\"1\"", StringComparison.Ordinal) && line.EndsWith(" 3", StringComparison.Ordinal));
+        Assert.Single(samples, line => line.Contains("x=\"1\"", StringComparison.Ordinal));
         Assert.DoesNotContain("__name__", output, StringComparison.Ordinal);
-        Assert.Equal(0, series.DroppedCount);
+        Assert.Equal(1, series.DroppedCount);
+        Assert.Equal("test_counter", series.FirstDroppedMetricName);
     }
 
     [Theory]
@@ -666,7 +667,7 @@ public sealed partial class PrometheusSerializerTests
     [Theory]
     [InlineData(false)]
     [InlineData(true)]
-    public void WriteMetricAddsUpPointsWithTheSameLabelsInADifferentOrderOnceEscaped(bool useOpenMetrics)
+    public void WriteMetricDropsPointsWithTheSameLabelsInADifferentOrderOnceEscaped(bool useOpenMetrics)
     {
         var buffer = new byte[85000];
         var metrics = new List<Metric>();
@@ -688,14 +689,14 @@ public sealed partial class PrometheusSerializerTests
         var cursor = WriteMetric(buffer, 0, metrics.Single(), useOpenMetrics, suppressScopeInfo: true, series: series);
         var output = Encoding.UTF8.GetString(buffer, 0, cursor);
 
-        Assert.Single(GetSampleLines(output, "test_counter_total"), line => line.EndsWith(" 3", StringComparison.Ordinal));
-        Assert.Equal(0, series.DroppedCount);
+        Assert.Single(GetSampleLines(output, "test_counter_total"));
+        Assert.Equal(1, series.DroppedCount);
     }
 
     [Theory]
     [InlineData(false)]
     [InlineData(true)]
-    public void WriteMetricAddsUpHistogramsWithoutBucketsWithTheSameSeries(bool useOpenMetrics)
+    public void WriteMetricDropsHistogramsWithoutBucketsWithTheSameSeries(bool useOpenMetrics)
     {
         var buffer = new byte[85000];
         var metrics = new List<Metric>();
@@ -722,333 +723,8 @@ public sealed partial class PrometheusSerializerTests
         Assert.Empty(GetSampleLines(output, "test_histogram_bucket"));
         Assert.Equal(2, GetSampleLines(output, "test_histogram_sum").Count);
         Assert.Equal(2, GetSampleLines(output, "test_histogram_count").Count);
-        Assert.Single(GetSampleLines(output, "test_histogram_sum"), line => line.Contains("a_b=\"value\"", StringComparison.Ordinal) && line.EndsWith(" 3", StringComparison.Ordinal));
-        Assert.Single(GetSampleLines(output, "test_histogram_count"), line => line.Contains("a_b=\"value\"", StringComparison.Ordinal) && line.EndsWith(" 2", StringComparison.Ordinal));
-        Assert.Single(GetSampleLines(output, "test_histogram_count"), line => line.Contains("a_b=\"other\"", StringComparison.Ordinal) && line.EndsWith(" 1", StringComparison.Ordinal));
-        Assert.Equal(0, series.DroppedCount);
-    }
-
-    [Theory]
-    [InlineData(false, "", false)]
-    [InlineData(false, "", true)]
-    [InlineData(false, null, false)]
-    [InlineData(false, null, true)]
-    [InlineData(true, "", false)]
-    [InlineData(true, "", true)]
-    [InlineData(true, null, false)]
-    [InlineData(true, null, true)]
-    public void WriteMetricAddsUpPointsWithAnEmptyTagValueToThoseWithoutTheTag(bool useOpenMetrics, string? value, bool valueFirst)
-    {
-        var buffer = new byte[85000];
-        var metrics = new List<Metric>();
-
-        using var meter = CreateMeter();
-        using var provider = Sdk.CreateMeterProviderBuilder()
-            .AddMeter(meter.Name)
-            .AddInMemoryExporter(metrics)
-            .Build();
-
-        var counter = meter.CreateCounter<long>("test_counter");
-        var upDownCounter = meter.CreateUpDownCounter<double>("test_up_down_counter");
-        var histogram = meter.CreateHistogram<double>("test_histogram");
-        var gauge = meter.CreateGauge<long>("test_gauge");
-
-        void Record(bool withTag, long amount)
-        {
-            var tags = new TagList { { "method", "password" } };
-
-            if (withTag)
-            {
-                tags.Add("app.build", value);
-            }
-
-            counter.Add(amount, tags);
-            upDownCounter.Add(amount, tags);
-            histogram.Record(amount, tags);
-            gauge.Record(amount, tags);
-        }
-
-        // The order that the points are created in decides which is first, and neither should be lost.
-        if (valueFirst)
-        {
-            Record(withTag: true, 10);
-            Record(withTag: false, 20);
-        }
-        else
-        {
-            Record(withTag: false, 20);
-            Record(withTag: true, 10);
-        }
-
-        // A point with a different tag is its own series
-        counter.Add(5, new KeyValuePair<string, object?>("method", "password"), new KeyValuePair<string, object?>("app.build", "7"));
-
-        provider.ForceFlush();
-
-        var series = new SeriesRegistry();
-        var cursor = 0;
-
-        foreach (var metric in metrics)
-        {
-            cursor = WriteMetric(buffer, cursor, metric, useOpenMetrics, suppressScopeInfo: true, series: series);
-        }
-
-        var output = Encoding.UTF8.GetString(buffer, 0, cursor);
-
-        var counterSamples = GetSampleLines(output, "test_counter_total");
-        Assert.Equal(2, counterSamples.Count);
-        Assert.Single(counterSamples, line => line.Contains("app_build=\"7\"", StringComparison.Ordinal) && line.EndsWith(" 5", StringComparison.Ordinal));
-        Assert.Single(counterSamples, line => !line.Contains("app_build", StringComparison.Ordinal) && line.EndsWith(" 30", StringComparison.Ordinal));
-
-        Assert.Single(GetSampleLines(output, "test_up_down_counter"), line => line.EndsWith(" 30", StringComparison.Ordinal));
-
-        Assert.Single(GetSampleLines(output, "test_histogram_count"), line => line.EndsWith(" 2", StringComparison.Ordinal));
-        Assert.Single(GetSampleLines(output, "test_histogram_sum"), line => line.EndsWith(" 30", StringComparison.Ordinal));
-
-        // The buckets are cumulative, with the point that has the value in the bucket of 10 and the other in that of 25.
-        var buckets = GetSampleLines(output, "test_histogram_bucket");
-        Assert.Single(buckets, line => line.Contains($"le=\"{(useOpenMetrics ? "5.0" : "5")}\"", StringComparison.Ordinal) && line.EndsWith(" 0", StringComparison.Ordinal));
-        Assert.Single(buckets, line => line.Contains($"le=\"{(useOpenMetrics ? "10.0" : "10")}\"", StringComparison.Ordinal) && line.EndsWith(" 1", StringComparison.Ordinal));
-        Assert.Single(buckets, line => line.Contains($"le=\"{(useOpenMetrics ? "25.0" : "25")}\"", StringComparison.Ordinal) && line.EndsWith(" 2", StringComparison.Ordinal));
-        Assert.Single(buckets, line => line.Contains("le=\"+Inf\"", StringComparison.Ordinal) && line.EndsWith(" 2", StringComparison.Ordinal));
-
-        // The values of a gauge cannot be added up, so only the first is written, and the other is dropped.
-        Assert.Single(GetSampleLines(output, "test_gauge"));
+        Assert.Single(GetSampleLines(output, "test_histogram_sum"), line => line.Contains("a_b=\"value\"", StringComparison.Ordinal));
         Assert.Equal(1, series.DroppedCount);
-        Assert.Equal("test_gauge", series.FirstDroppedMetricName);
-    }
-
-    [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
-    public void WriteMetricAddsUpPointsWithATotalThatIsMoreThanALongCanBe(bool useOpenMetrics)
-    {
-        var buffer = new byte[85000];
-        var metrics = new List<Metric>();
-
-        using var meter = CreateMeter();
-        using var provider = Sdk.CreateMeterProviderBuilder()
-            .AddMeter(meter.Name)
-            .AddInMemoryExporter(metrics)
-            .Build();
-
-        var counter = meter.CreateCounter<long>("test_counter");
-        counter.Add(long.MaxValue, new KeyValuePair<string, object?>("method", "a"), new KeyValuePair<string, object?>("k", string.Empty));
-        counter.Add(1, new KeyValuePair<string, object?>("method", "a"));
-
-        // The total is more than a long can be after the second point, but is less again after the third.
-        var upDownCounter = meter.CreateUpDownCounter<long>("test_up_down_counter");
-        upDownCounter.Add(long.MaxValue, new KeyValuePair<string, object?>("method", "a"), new KeyValuePair<string, object?>("k", string.Empty));
-        upDownCounter.Add(1, new KeyValuePair<string, object?>("method", "a"), new KeyValuePair<string, object?>("k", null));
-        upDownCounter.Add(-long.MaxValue, new KeyValuePair<string, object?>("method", "a"));
-
-        provider.ForceFlush();
-
-        var series = new SeriesRegistry();
-        var cursor = 0;
-
-        foreach (var metric in metrics)
-        {
-            cursor = WriteMetric(buffer, cursor, metric, useOpenMetrics, suppressScopeInfo: true, series: series);
-        }
-
-        var output = Encoding.UTF8.GetString(buffer, 0, cursor);
-
-        // The total is written as a floating-point number, instead of wrapping around to a negative integer.
-        var sample = Assert.Single(GetSampleLines(output, "test_counter_total"));
-        var value = double.Parse(sample.Split(' ').Last(), CultureInfo.InvariantCulture);
-
-        Assert.Equal(Math.Pow(2, 63), value);
-
-        // The total is exact, and so is an integer, when it is not more than a long can be.
-        Assert.Single(GetSampleLines(output, "test_up_down_counter"), line => line.EndsWith(" 1", StringComparison.Ordinal));
-        Assert.Equal(0, series.DroppedCount);
-    }
-
-    [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
-    public void WriteMetricDoesNotKeepTheSeriesOfAnotherMetricWhenAddingUpPoints(bool histogram)
-    {
-        var metrics = new List<Metric>();
-
-        using var firstMeter = new Meter(nameof(this.WriteMetricDoesNotKeepTheSeriesOfAnotherMetricWhenAddingUpPoints) + ".first");
-        using var secondMeter = new Meter(nameof(this.WriteMetricDoesNotKeepTheSeriesOfAnotherMetricWhenAddingUpPoints) + ".second");
-        using var provider = Sdk.CreateMeterProviderBuilder()
-            .AddMeter(firstMeter.Name)
-            .AddMeter(secondMeter.Name)
-            .AddInMemoryExporter(metrics)
-            .Build();
-
-        var count = histogram ? 4 : 12;
-        var padding = new string('x', histogram ? 1024 : 4096);
-
-        // The meters have the same series, which are the same series once the scope information is suppressed
-        foreach (var meter in new[] { firstMeter, secondMeter })
-        {
-            var counter = meter.CreateCounter<long>("test_counter");
-            var histogramInstrument = meter.CreateHistogram<double>("test_histogram");
-
-            for (var i = 0; i < count; i++)
-            {
-                var tag = new KeyValuePair<string, object?>("method", i.ToString(CultureInfo.InvariantCulture) + padding);
-
-                if (histogram)
-                {
-                    histogramInstrument.Record(1, tag);
-                }
-                else
-                {
-                    counter.Add(1, tag);
-                }
-            }
-        }
-
-        provider.ForceFlush();
-
-        var name = histogram ? "test_histogram" : "test_counter";
-        var ordered = metrics.Where(m => m.Name == name).OrderBy(m => m.MeterName, StringComparer.Ordinal).ToList();
-
-        Assert.Equal(2, ordered.Count);
-
-        // The buffer has room for the series of the first metric, and for half of what it takes to keep them again, which
-        // they are not as the series of the second metric are dropped, so there is no need for that.
-        var length = WriteMetric(new byte[4 * 1024 * 1024], 0, ordered[0], useOpenMetrics: false, suppressScopeInfo: true);
-        var buffer = new byte[length + (count * padding.Length / 2)];
-
-        var series = new SeriesRegistry();
-        var cursor = 0;
-
-        foreach (var metric in ordered)
-        {
-            cursor = WriteMetric(buffer, cursor, metric, useOpenMetrics: false, suppressScopeInfo: true, series: series);
-        }
-
-        var output = Encoding.UTF8.GetString(buffer, 0, cursor);
-
-        Assert.Equal(count, CountSamples(output, histogram ? "test_histogram_count" : "test_counter_total"));
-        Assert.Equal(count, series.DroppedCount);
-    }
-
-#if NET
-    [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
-    public void WriteMetricDoesNotBufferBucketsForDroppedSeries(bool useOpenMetrics)
-    {
-        const int SeriesCount = 512;
-        var metrics = new List<Metric>();
-        using var firstMeter = CreateMeter();
-        using var secondMeter = CreateMeter(firstMeter.Name + ".other");
-        var boundaries = Enumerable.Range(1, 500).Select(i => (double)i).ToArray();
-        using var provider = Sdk.CreateMeterProviderBuilder()
-            .AddMeter(firstMeter.Name, secondMeter.Name)
-            .AddView(instrument => new ExplicitBucketHistogramConfiguration
-            {
-                Boundaries = instrument.Meter == firstMeter ? [] : boundaries,
-            })
-            .AddInMemoryExporter(metrics)
-            .Build();
-
-        var firstHistogram = firstMeter.CreateHistogram<double>("test_histogram");
-        var secondHistogram = secondMeter.CreateHistogram<double>("test_histogram");
-        for (var i = 0; i < SeriesCount; i++)
-        {
-            var tag = new KeyValuePair<string, object?>("id", i.ToString(CultureInfo.InvariantCulture));
-            firstHistogram.Record(1, tag);
-            secondHistogram.Record(1, tag);
-        }
-
-        provider.ForceFlush();
-
-        // The sum-only histogram fits. The overlapping histogram must be dropped without buffering its buckets.
-        var firstMetric = Assert.Single(metrics, metric => metric.MeterName == firstMeter.Name);
-        var secondMetric = Assert.Single(metrics, metric => metric.MeterName == secondMeter.Name);
-        var buffer = new byte[85000];
-        var series = new SeriesRegistry();
-        var cursor = WriteMetric(buffer, 0, firstMetric, useOpenMetrics, suppressScopeInfo: true, series: series);
-
-        var allocated = GC.GetAllocatedBytesForCurrentThread();
-        _ = WriteMetric(buffer, cursor, secondMetric, useOpenMetrics, suppressScopeInfo: true, series: series);
-        allocated = GC.GetAllocatedBytesForCurrentThread() - allocated;
-
-        // Buffering 512 lists of 501 bucket counts would allocate more than 4 MB.
-        Assert.InRange(allocated, 0, 2 * 1024 * 1024);
-        Assert.Equal(SeriesCount, series.DroppedCount);
-    }
-#endif
-
-    [Theory]
-    [InlineData(false, false)]
-    [InlineData(true, false)]
-    [InlineData(true, true)]
-    public void WriteMetricDoesNotKeepMoreThanTheBufferCanHoldWhenAddingUpPoints(bool histogram, bool manyBuckets)
-    {
-        var buffer = new byte[85000];
-        var metrics = new List<Metric>();
-
-        using var meter = CreateMeter();
-
-        var builder = Sdk.CreateMeterProviderBuilder()
-            .AddMeter(meter.Name)
-            .AddInMemoryExporter(metrics);
-
-        if (manyBuckets)
-        {
-            // Many buckets for each series, which have short labels, so it is their counts that there are many of
-            builder = builder.AddView(
-                "test_histogram",
-                new ExplicitBucketHistogramConfiguration { Boundaries = Enumerable.Range(1, 500).Select(i => (double)i).ToArray() });
-        }
-
-        using var provider = builder.Build();
-
-        var counter = meter.CreateCounter<long>("test_counter");
-        var histogramInstrument = meter.CreateHistogram<double>("test_histogram");
-
-        void RecordPoint(params KeyValuePair<string, object?>[] tags)
-        {
-            if (histogram)
-            {
-                histogramInstrument.Record(1, tags);
-            }
-            else
-            {
-                counter.Add(1, tags);
-            }
-        }
-
-        // Two points that are the same series, followed by many that are not and that are too many to be written
-        RecordPoint(new KeyValuePair<string, object?>("method", "a"));
-        RecordPoint(new KeyValuePair<string, object?>("method", "a"), new KeyValuePair<string, object?>("k", string.Empty));
-
-        var padding = manyBuckets ? string.Empty : new string('x', 4096);
-
-        for (var i = 0; i < 1000; i++)
-        {
-            RecordPoint(new KeyValuePair<string, object?>("method", i.ToString(CultureInfo.InvariantCulture) + padding));
-        }
-
-        provider.ForceFlush();
-
-#if NET
-        var allocated = GC.GetAllocatedBytesForCurrentThread();
-#endif
-
-        var exception = Record.Exception(() => WriteMetric(buffer, 0, metrics.Single(), useOpenMetrics: false, suppressScopeInfo: true, series: new SeriesRegistry()));
-
-#if NET
-        allocated = GC.GetAllocatedBytesForCurrentThread() - allocated;
-#endif
-
-        // The buffer is too small for the points, which is the same as when it is too small for any other, so it is grown by the caller.
-        Assert.True(exception is IndexOutOfRangeException or ArgumentException);
-
-#if NET
-        // Keeping the series of all of the points would need 1,000 times a string of 8 KB, or the 500 counts of the buckets of each,
-        // but those of the buffer are all that are kept.
-        Assert.InRange(allocated, 0, 2 * 1024 * 1024);
-#endif
     }
 
     [Theory]
@@ -2264,7 +1940,7 @@ public sealed partial class PrometheusSerializerTests
             TextFormatSerializer.GetNextSerializedTagsBufferSize(TextFormatSerializer.MaxSerializedTagsBufferSize / 2));
 
         // Growth beyond the maximum fails fast rather than allocating without bound.
-        Assert.Throws<SerializedTagsTooLargeException>(
+        Assert.Throws<InvalidOperationException>(
             () => TextFormatSerializer.GetNextSerializedTagsBufferSize((TextFormatSerializer.MaxSerializedTagsBufferSize / 2) + 1));
     }
 

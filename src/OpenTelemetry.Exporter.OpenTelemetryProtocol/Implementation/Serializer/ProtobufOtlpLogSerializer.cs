@@ -286,8 +286,8 @@ internal static class ProtobufOtlpLogSerializer
         if (logRecord.Exception != null)
         {
             AddLogAttribute(state, SemanticConventions.AttributeExceptionType, logRecord.Exception.GetType().Name);
-            AddExceptionTextAttribute(state, SemanticConventions.AttributeExceptionMessage, logRecord.Exception, static exception => exception.Message);
-            AddExceptionTextAttribute(state, SemanticConventions.AttributeExceptionStacktrace, logRecord.Exception, static exception => exception.ToInvariantString());
+            AddLogAttribute(state, SemanticConventions.AttributeExceptionMessage, logRecord.Exception.Message);
+            AddLogAttribute(state, SemanticConventions.AttributeExceptionStacktrace, logRecord.Exception.ToInvariantString());
         }
 
         var bodyPopulatedFromFormattedMessage = false;
@@ -303,8 +303,10 @@ internal static class ProtobufOtlpLogSerializer
         var attributes = logRecord.Attributes;
         if (attributes != null)
         {
-            for (var i = 0; TryGetAttribute(attributes, i, state, out var attribute); i++)
+            for (var i = 0; i < attributes.Count; i++)
             {
+                var attribute = attributes[i];
+
                 // Special casing {OriginalFormat}
                 // See https://github.com/open-telemetry/opentelemetry-dotnet/pull/3182
                 // for explanation.
@@ -368,127 +370,36 @@ internal static class ProtobufOtlpLogSerializer
 
         static void ProcessScope(LogRecordScope scope, SerializationState state)
         {
-            // Only an exception thrown while reading the scope is handled here.
-            // One thrown while writing is let through so that a full buffer
-            // is still detected and resized by the caller.
-            var isReadingScope = true;
-
-            try
+            foreach (var scopeItem in scope)
             {
-                foreach (var scopeItem in scope)
+                if (string.IsNullOrEmpty(scopeItem.Key) || string.Equals(scopeItem.Key, "{OriginalFormat}", StringComparison.Ordinal))
                 {
-                    if (string.IsNullOrEmpty(scopeItem.Key) || string.Equals(scopeItem.Key, "{OriginalFormat}", StringComparison.Ordinal))
-                    {
-                        // Ignore if the scope key is empty.
-                        // Ignore if the scope key is {OriginalFormat}
-                        // Attributes should not contain duplicates,
-                        // and it is expensive to de-dup, so this
-                        // exporter is going to pass the scope items as is.
-                        // {OriginalFormat} is going to be the key
-                        // if one uses formatted string for scopes
-                        // and if there are nested scopes, this is
-                        // guaranteed to create duplicate keys.
-                        // Similar for empty keys, which is what the
-                        // key is going to be if user simply
-                        // passes a string as scope.
-                        // To summarize this exporter only allows
-                        // IReadOnlyList<KeyValuePair<string, object?>>
-                        // or IEnumerable<KeyValuePair<string, object?>>.
-                        // and expect users to provide unique keys.
-                        // Note: It is possible that we allow users
-                        // to override this exporter feature. So not blocking
-                        // empty/{OriginalFormat} in the SDK itself.
-                    }
-                    else
-                    {
-                        isReadingScope = false;
-                        AddLogAttribute(state, scopeItem);
-                        isReadingScope = true;
-                    }
+                    // Ignore if the scope key is empty.
+                    // Ignore if the scope key is {OriginalFormat}
+                    // Attributes should not contain duplicates,
+                    // and it is expensive to de-dup, so this
+                    // exporter is going to pass the scope items as is.
+                    // {OriginalFormat} is going to be the key
+                    // if one uses formatted string for scopes
+                    // and if there are nested scopes, this is
+                    // guaranteed to create duplicate keys.
+                    // Similar for empty keys, which is what the
+                    // key is going to be if user simply
+                    // passes a string as scope.
+                    // To summarize this exporter only allows
+                    // IReadOnlyList<KeyValuePair<string, object?>>
+                    // or IEnumerable<KeyValuePair<string, object?>>.
+                    // and expect users to provide unique keys.
+                    // Note: It is possible that we allow users
+                    // to override this exporter feature. So not blocking
+                    // empty/{OriginalFormat} in the SDK itself.
+                }
+                else
+                {
+                    AddLogAttribute(state, scopeItem);
                 }
             }
-            catch (Exception ex) when (isReadingScope && ex is not OutOfMemoryException)
-            {
-                // A scope whose items cannot be read (e.g. a message template with
-                // more placeholders than arguments) costs the rest of that scope,
-                // not the log record or the batch.
-                state.TagWriterState.DroppedTagCount++;
-                OpenTelemetryProtocolExporterEventSource.Log.LogRecordDataReadFailed("scopes", ex);
-            }
         }
-    }
-
-    private static void AddExceptionTextAttribute(SerializationState state, string key, Exception exception, Func<Exception, string> getText)
-    {
-        string text;
-        try
-        {
-            text = getText(exception);
-        }
-        catch (Exception ex) when (ex is not OutOfMemoryException)
-        {
-            // Exception.Message and Exception.ToString() are virtual and may
-            // format values held by the exception on demand (e.g.
-            // ArgumentOutOfRangeException.ActualValue), so they can throw. As
-            // for any other attribute whose value cannot be converted to a
-            // string, only the attribute is dropped. The text is obtained
-            // before anything is written so that an exception thrown here is
-            // not mistaken for the buffer being full.
-            state.TagWriterState.DroppedTagCount++;
-            OpenTelemetryProtocolExporterEventSource.Log.LogRecordDataReadFailed(key, ex);
-            return;
-        }
-
-        AddLogAttribute(state, key, text);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static bool TryGetAttribute(IReadOnlyList<KeyValuePair<string, object?>> attributes, int index, SerializationState state, out KeyValuePair<string, object?> attribute)
-    {
-        // Attributes buffered by the SDK are held in a List, which cannot throw
-        // when read, so only other implementations pay for the guarded read.
-        // The exact type is required as a derived type may implement the
-        // interface differently to the List it derives from.
-        if (attributes.GetType() == typeof(List<KeyValuePair<string, object?>>))
-        {
-            var list = (List<KeyValuePair<string, object?>>)attributes;
-
-            if ((uint)index < (uint)list.Count)
-            {
-                attribute = list[index];
-                return true;
-            }
-
-            attribute = default;
-            return false;
-        }
-
-        return TryGetAttributeGuarded(attributes, index, state, out attribute);
-    }
-
-    [MethodImpl(MethodImplOptions.NoInlining)]
-    private static bool TryGetAttributeGuarded(IReadOnlyList<KeyValuePair<string, object?>> attributes, int index, SerializationState state, out KeyValuePair<string, object?> attribute)
-    {
-        // Reading is separated from writing so that an exception thrown by
-        // reading the attributes is not mistaken for the buffer being full.
-        try
-        {
-            if (index < attributes.Count)
-            {
-                attribute = attributes[index];
-                return true;
-            }
-        }
-        catch (Exception ex) when (ex is not OutOfMemoryException)
-        {
-            // The attributes from this one onwards are left out. The number which
-            // could not be read is unknown, so only the failure itself is counted.
-            state.TagWriterState.DroppedTagCount++;
-            OpenTelemetryProtocolExporterEventSource.Log.LogRecordDataReadFailed("attributes", ex);
-        }
-
-        attribute = default;
-        return false;
     }
 
     private static int WriteLogRecordBody(byte[] buffer, int writePosition, string value) =>

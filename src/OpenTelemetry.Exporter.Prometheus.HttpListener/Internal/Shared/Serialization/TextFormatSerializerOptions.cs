@@ -33,39 +33,21 @@ internal readonly struct TextFormatSerializerOptions
     public readonly TagKeyTracker? TagKeys;
 
     /// <summary>
-    /// A value indicating whether the points of a metric that are the same series are written as one, with their values added up.
-    /// </summary>
-    /// <remarks>
-    /// This is only used once a metric has been found to have such points, as finding them is not free.
-    /// </remarks>
-    public readonly bool MergePoints;
-
-    /// <summary>
     /// Initializes a new instance of the <see cref="TextFormatSerializerOptions"/> struct.
     /// </summary>
     /// <param name="suppressScopeInfo">Whether the scope information is suppressed from the scrape response.</param>
     /// <param name="resourceConstantLabels">The resource attributes to add to each metric as constant labels, or <see langword="null"/> if none.</param>
     /// <param name="series">The registry used to drop series that have already been written to the scrape response, or <see langword="null"/> to write them all.</param>
     /// <param name="tagKeys">The tracker of the keys of the tags of the points of a metric, or <see langword="null"/> to not track them.</param>
-    /// <param name="mergePoints">Whether the points of a metric that are the same series are written as one, with their values added up.</param>
     public TextFormatSerializerOptions(
         bool suppressScopeInfo,
         IReadOnlyList<KeyValuePair<string, object>>? resourceConstantLabels,
         SeriesRegistry? series = null,
-        TagKeyTracker? tagKeys = null,
-        bool mergePoints = false)
+        TagKeyTracker? tagKeys = null)
     {
         this.SuppressScopeInfo = suppressScopeInfo;
         this.ResourceConstantLabels = resourceConstantLabels;
         this.Series = series;
         this.TagKeys = tagKeys;
-        this.MergePoints = mergePoints;
     }
-
-    /// <summary>
-    /// Gets a copy of the options with which the points of a metric that are the same series are written as one.
-    /// </summary>
-    /// <returns>The options.</returns>
-    public TextFormatSerializerOptions WithMergedPoints()
-        => new(this.SuppressScopeInfo, this.ResourceConstantLabels, this.Series, this.TagKeys, mergePoints: true);
 }

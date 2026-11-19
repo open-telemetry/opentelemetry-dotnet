@@ -21,21 +21,13 @@ Notes](../../RELEASENOTES.md).
   `HttpClient` supplied through `HttpClientFactory` is not replaced.
   ([#8144](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8144))
 
-* **Breaking:** `ExportProcessorType.Simple` no longer exports each span or log
-  record on the thread which ended it, which could stall an application under
-  concurrent load. Each is still exported on its own, in order, as soon as it
-  has ended, but by a thread of the processor, so it may not have been exported
-  when the call that ended it returns, and at most 2048 are queued before
-  further ones are dropped. Call `ForceFlush()` and check its result to wait
-  for pending exports. On single-threaded platforms, it triggers export without
-  waiting and returns `false` while exports are still pending.
-  ([#8134](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8134))
-
-* Fixed a whole batch of log records being dropped when the exception, scopes
-  or attributes of one of the log records cannot be read. Only the data which
-  could not be read, and any that follows it in the same scope or attribute
-  list, is now left out of that log record, and is counted as dropped.
-  ([#8143](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8143))
+* Fixed `OtlpMetricExporter` dropping every collection once the metrics did not
+  fit in a single request of `OtlpExporterOptions.MaxRequestSizeBytes`, which
+  with cumulative temporality stopped the export of all metrics until the
+  process was restarted. Such a batch is now sent as several requests, each cut
+  at the end of a metric point, and only a metric point which does not fit in a
+  request on its own is dropped.
+  ([#8132](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8132))
 
 ## 1.21.0
 

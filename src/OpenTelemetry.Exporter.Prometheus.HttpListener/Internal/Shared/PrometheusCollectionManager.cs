@@ -22,8 +22,6 @@ internal sealed class PrometheusCollectionManager
     // looping forever.
     private const int MaxCollectAttempts = 1024;
 
-    private static readonly TimeSpan BufferRetentionPeriod = TimeSpan.FromMinutes(5);
-
     private readonly ConcurrentDictionary<PrometheusProtocol, PrometheusProtocolState> protocolStates = new();
 
     private readonly PrometheusExporter exporter;
@@ -81,25 +79,6 @@ internal sealed class PrometheusCollectionManager
             }
 
             return count;
-        }
-    }
-
-    /// <summary>
-    /// Gets the total size of the response buffers which are allocated, across all
-    /// protocols. Exposed for tests, which use it to tell when buffers have been released.
-    /// </summary>
-    internal long AllocatedBufferSize
-    {
-        get
-        {
-            long size = 0;
-
-            foreach (var state in this.protocolStates.Values)
-            {
-                size += state.GetAllocatedBufferSize();
-            }
-
-            return size;
         }
     }
 
@@ -227,9 +206,7 @@ internal sealed class PrometheusCollectionManager
             {
                 var state = this.GetProtocolState(protocol);
 
-                var elapsed = this.GetElapsedTime();
-
-                state.OnRequested(this.IsNearCollection(elapsed), elapsed);
+                state.OnRequested(this.IsNearCollection());
 
                 // If we are within {ScrapeResponseCacheDurationMilliseconds} of the
                 // last successful collect, return the previous view.
@@ -439,15 +416,12 @@ internal sealed class PrometheusCollectionManager
                 this.collectionContext = null;
             }
 
-            var completedElapsed = this.GetElapsedTime();
-            this.lastCollectionCompletedElapsed = completedElapsed;
+            this.lastCollectionCompletedElapsed = this.GetElapsedTime();
 
             foreach (var protocol in collectionContext.FreezeProtocols())
             {
                 this.GetProtocolState(protocol).OnWritten(collectionContext.IsSpeculative(protocol));
             }
-
-            this.ReleaseIdleBuffers(completedElapsed);
         }
         finally
         {
@@ -689,23 +663,14 @@ internal sealed class PrometheusCollectionManager
             var suppressScopeInfo = !this.scopeInfoEnabled;
             var resourceConstantLabels = this.GetResourceConstantLabels();
 
-            var droppedMetricCount = 0;
-            string? firstDroppedMetricName = null;
-
-            // The metadata of a family is written with its first metric. When that metric does not fit in
-            // the response, the metadata is written with the next metric of the family which does instead.
-            var writeDroppedMetadata = false;
-
             foreach (var metricState in metricStates)
             {
                 if (metricState.WriteType)
                 {
                     // This is the first metric of a new metric family, and only the metrics of a family can have the same series.
                     this.series.StartFamily();
-                    writeDroppedMetadata = false;
                 }
 
-                var writeMetadata = metricState.WriteType || writeDroppedMetadata;
                 var metricStart = cursor;
                 var seriesMark = this.series.Mark();
                 var deduplicate = metricState.Deduplicate;
@@ -727,9 +692,9 @@ internal sealed class PrometheusCollectionManager
                             metricStart,
                             metricState.Metric,
                             metricState.PrometheusMetric,
-                            writeMetadata,
-                            writeMetadata && metricState.WriteUnit,
-                            writeMetadata && metricState.WriteHelp,
+                            metricState.WriteType,
+                            metricState.WriteUnit,
+                            metricState.WriteHelp,
                             metricState.Unit,
                             metricState.Help,
                             options);
@@ -744,29 +709,16 @@ internal sealed class PrometheusCollectionManager
                             continue;
                         }
 
-                        // The end of the response follows the last metric, so a metric only fits in the response when
-                        // there is room for that too. What is written here is overwritten by the next metric, if any.
-                        _ = serializer.WriteEof(state.Buffer, cursor);
-
-                        writeDroppedMetadata = false;
                         break;
                     }
-                    catch (Exception ex) when (ex is IndexOutOfRangeException or ArgumentException or SerializedTagsTooLargeException)
+                    catch (Exception ex) when (ex is IndexOutOfRangeException or ArgumentException)
                     {
                         // The metric is written again, so the series that it had written must be forgotten.
                         this.series.Rollback(seriesMark);
 
-                        // The tags of a metric point which are too large to be serialized do not fit in any response,
-                        // so growing the response would not help and the metric is left out of it straight away.
-                        if (ex is SerializedTagsTooLargeException || !state.TryExpandBuffer())
+                        if (!state.TryExpandBuffer())
                         {
-                            // The response cannot grow any further, so the metric is left out of it rather than the
-                            // whole response being discarded, which would lose the metrics which do fit as well.
-                            cursor = metricStart;
-                            writeDroppedMetadata = writeMetadata;
-                            droppedMetricCount++;
-                            firstDroppedMetricName ??= metricState.Metric.Name;
-                            break;
+                            throw;
                         }
                     }
                 }
@@ -775,20 +727,6 @@ internal sealed class PrometheusCollectionManager
             if (this.series.DroppedCount > 0)
             {
                 PrometheusExporterEventSource.Log.DuplicateSeriesDropped(this.series.DroppedCount, this.series.FirstDroppedMetricName!);
-            }
-
-            if (droppedMetricCount > 0)
-            {
-                PrometheusExporterEventSource.Log.MetricsDroppedFromResponse(firstDroppedMetricName!, droppedMetricCount, this.maxBufferSize);
-
-                if (droppedMetricCount == metricStates.Count)
-                {
-                    // None of the metrics fit, so the scrape fails rather than being answered
-                    // with a response which misleadingly contains no metrics at all.
-                    state.ResetView();
-
-                    return false;
-                }
             }
 
             while (true)
@@ -898,35 +836,10 @@ internal sealed class PrometheusCollectionManager
     /// <returns>
     /// <see langword="true"/> if a scrape arriving now is near a collection; otherwise <see langword="false"/>.
     /// </returns>
-    private bool IsNearCollection(TimeSpan elapsed)
+    private bool IsNearCollection()
         => this.collectionContext is not null ||
            (this.lastCollectionCompletedElapsed is { } lastCollectionCompletedElapsed &&
-            elapsed - lastCollectionCompletedElapsed < this.scrapeResponseCacheDuration);
-
-    /// <summary>
-    /// Releases the response buffers which no scrape has needed for <see cref="BufferRetentionPeriod"/>.
-    /// A format which has not been requested for that long is forgotten with its buffers, and a
-    /// format which is still requested gives up a second buffer which scrapes have not overlapped
-    /// for that long. This is called with the global lock held, once a collection has been written,
-    /// so no collection is writing a buffer and no scrape can start reading one while it runs.
-    /// </summary>
-    /// <param name="elapsed">The time elapsed since the manager was created.</param>
-    private void ReleaseIdleBuffers(TimeSpan elapsed)
-    {
-        foreach (var entry in this.protocolStates)
-        {
-            var state = entry.Value;
-
-            if (state.IsIdle(elapsed, BufferRetentionPeriod) && !this.IsCached(state, elapsed))
-            {
-                this.protocolStates.TryRemove(entry.Key, out _);
-            }
-            else
-            {
-                state.ReleaseIdleSpare(elapsed, BufferRetentionPeriod);
-            }
-        }
-    }
+            this.GetElapsedTime() - lastCollectionCompletedElapsed < this.scrapeResponseCacheDuration);
 
     /// <summary>
     /// Registers other formats with a collection, so that scrapes which keep negotiating
@@ -1182,9 +1095,7 @@ internal sealed class PrometheusCollectionManager
             // with unit "logins"), is taken for the '_total' suffix of a counter, or may be changed by
             // escaping. The UNIT metadata is optional, but a unit which is not an underscore-separated
             // suffix of the name makes the whole OpenMetrics exposition invalid, so it is omitted then.
-            // Whether there is a unit and a help to write is known for every metric of the family, as
-            // the metadata is written with a later metric when the first one does not fit in the response.
-            var writeUnit =
+            var writeUnit = writeMetadata &&
                 metadataState.Unit != null &&
                 PrometheusMetric.HasUnitSuffix(metricState.MetadataName, metadataState.Unit);
 
@@ -1194,7 +1105,7 @@ internal sealed class PrometheusCollectionManager
                     metricState.PrometheusMetric,
                     writeMetadata,
                     writeUnit,
-                    metadataState.Help != null,
+                    writeMetadata && metadataState.Help != null,
                     metadataState.Unit,
                     metadataState.Help,
                     deduplicate));
@@ -1673,14 +1584,6 @@ internal sealed class PrometheusCollectionManager
         // Completed once a buffer is free again, for a scrape which has to wait for one.
         private TaskCompletionSource<bool>? bufferFreed;
 
-        // When this protocol was last requested by a scrape.
-        private TimeSpan lastRequestedElapsed;
-
-        // Whether the spare has been reserved for a collection since it was last checked
-        // for being needed, and when it was last found to be needed.
-        private bool spareReserved;
-        private TimeSpan spareLastNeededElapsed;
-
         public PrometheusProtocolState(int maxBufferSize)
         {
             this.maxBufferSize = Math.Max(maxBufferSize, InitialBufferSize);
@@ -1784,7 +1687,6 @@ internal sealed class PrometheusCollectionManager
             // Scrapes only start reading a buffer while it is published, so the readers of the
             // spare can only drain, and it becomes free again once they have all finished.
             this.spare ??= new ResponseBuffer(this.published.Buffer.Length, this.onReadersDrained);
-            this.spareReserved = true;
 
             if (this.spare.ReaderCount == 0)
             {
@@ -1829,60 +1731,11 @@ internal sealed class PrometheusCollectionManager
             return delay < spareDelay ? delay : spareDelay;
         }
 
-        public void OnRequested(bool nearCollection, TimeSpan elapsed)
+        public void OnRequested(bool nearCollection)
         {
             this.LastRequestNearCollection = nearCollection;
             this.RequestedSinceWritten = true;
-            this.lastRequestedElapsed = elapsed;
         }
-
-        /// <summary>
-        /// Gets a value indicating whether no scrape has requested this protocol for
-        /// <paramref name="retention"/>, and none is reading or about to write its buffers.
-        /// </summary>
-        /// <param name="elapsed">The time elapsed since the manager was created.</param>
-        /// <param name="retention">How long the buffers of an unrequested protocol are kept.</param>
-        /// <returns>
-        /// <see langword="true"/> if the protocol, with its buffers, can be forgotten; otherwise <see langword="false"/>.
-        /// </returns>
-        public bool IsIdle(TimeSpan elapsed, TimeSpan retention)
-            => this.target is null &&
-               this.ReaderCount == 0 &&
-               elapsed - this.lastRequestedElapsed >= retention;
-
-        /// <summary>
-        /// Drops the spare buffer if no collection has needed it for <paramref name="retention"/>.
-        /// </summary>
-        /// <param name="elapsed">The time elapsed since the manager was created.</param>
-        /// <param name="retention">How long a spare buffer which is not needed is kept.</param>
-        public void ReleaseIdleSpare(TimeSpan elapsed, TimeSpan retention)
-        {
-            var spare = this.spare;
-
-            if (spare is null)
-            {
-                return;
-            }
-
-            if (this.spareReserved || spare.ReaderCount > 0)
-            {
-                this.spareReserved = false;
-                this.spareLastNeededElapsed = elapsed;
-            }
-            else if (this.target is null && elapsed - this.spareLastNeededElapsed >= retention)
-            {
-                // Scrapes only start reading the published buffer, so none can be reading the
-                // spare, and a scrape still holding the array it was written to keeps it alive.
-                this.spare = null;
-            }
-        }
-
-        /// <summary>
-        /// Gets the total size of the response buffers which this protocol has allocated.
-        /// </summary>
-        /// <returns>The total size of the buffers, in bytes.</returns>
-        public long GetAllocatedBufferSize()
-            => this.published.Buffer.Length + (this.spare?.Buffer.Length ?? 0);
 
         public void OnWritten(bool speculative)
         {
