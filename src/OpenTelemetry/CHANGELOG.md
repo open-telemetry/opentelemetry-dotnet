@@ -19,6 +19,10 @@ Notes](../../RELEASENOTES.md).
   succession when a periodic wait returns early.
   ([#8161](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8161))
 
+* The self-diagnostics `OTEL_DIAGNOSTICS.json` file being temporarily locked by
+  another process is no longer treated as the file having been removed.
+  ([#8158](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8158))
+
 * Fixed the self-diagnostics file sink dropping entries for 30 seconds when
   the name of its next log file was already in use. It now opens a file with a
   different name immediately.

@@ -783,7 +783,9 @@ without a restart. Deleting it disables this source.
   `Information`, `Verbose` becomes `Debug`, and `LogAlways` becomes `Trace`.
 
 `LogDirectory`, `FileSize`, and `LogLevel` are required. Missing, unreadable, or
-invalid configuration disables this source.
+invalid configuration disables this source. A file that cannot be read right
+now because another process holds a lock on it does not: the configuration
+already applied is kept and the file is read again at the next poll.
 
 `FormatMessage` is now ignored; messages are always formatted. Output uses the
 standard [entry format](#log-entries), [preamble](#file-preamble), and
