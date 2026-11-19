@@ -15,6 +15,10 @@ Notes](../../RELEASENOTES.md).
   pending exports had finished.
   ([#8134](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8134))
 
+* Fixed `PeriodicExportingMetricReader` sometimes collecting twice in quick
+  succession when a periodic wait returns early.
+  ([#8161](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8161))
+
 * The self-diagnostics `OTEL_DIAGNOSTICS.json` file being temporarily locked by
   another process is no longer treated as the file having been removed.
   ([#8158](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8158))
