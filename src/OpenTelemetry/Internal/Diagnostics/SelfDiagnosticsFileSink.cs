@@ -59,20 +59,16 @@ internal sealed class SelfDiagnosticsFileSink : ISelfDiagnosticsSink
     // instead of inventing a parallel one.
     private static readonly string ProcessIdentity = BuildProcessIdentity();
 
-    // Names of the files that sinks in this process created under bounded retention and have
-    // not pruned yet, by the directory they are in. The log directory may be shared with other
-    // users, so a file whose name matches the series is not necessarily one of ours: a
-    // recreated sink only takes over (and later deletes) files recorded here. Names are
-    // compared exactly: the file system returns the names of our files as we created them, so a
-    // name that differs from one of them only in case belongs to another file, which it is on
-    // a case-sensitive file system. Directories are compared as configured (see
-    // GetDirectoryKey), so a sink recreated for the same directory under another spelling
-    // leaves the earlier files alone rather than taking them over.
-    private static readonly Dictionary<string, HashSet<string>> CreatedFiles = new(StringComparer.Ordinal);
-    private static readonly Lock CreatedFilesLock = new();
-
     private readonly string logDirectory;
-    private readonly string directoryKey;
+
+    // The paths of the files that sinks sharing this record created under bounded retention and
+    // have not pruned yet, compared exactly. It is owned by whoever creates the sinks (see
+    // SelfDiagnosticsSinkManager) and passed to each one, so that a recreated sink only takes over
+    // files that an earlier sink created: the log directory may be shared with other users, so a
+    // file whose name matches the series is not necessarily one of ours. A sink recreated for the
+    // same directory under another spelling leaves the earlier files alone rather than taking
+    // them over. Guarded by itself: the sink being replaced can still be rolling over.
+    private readonly HashSet<string> createdFiles;
     private readonly long fileSizeLimitBytes;
     private readonly int maxRetainedFiles;
     private readonly TimeSpan retryInterval;
@@ -107,10 +103,11 @@ internal sealed class SelfDiagnosticsFileSink : ISelfDiagnosticsSink
         TimeSpan? retryInterval = null,
         string? excludeFromPruning = null,
         Func<DateTime>? utcNow = null,
-        bool announceLogFile = true)
+        bool announceLogFile = true,
+        HashSet<string>? createdFiles = null)
     {
         this.logDirectory = logDirectory;
-        this.directoryKey = GetDirectoryKey(logDirectory);
+        this.createdFiles = createdFiles ?? new(StringComparer.Ordinal);
         this.preambleFactory = preambleFactory;
         this.reportError = reportError;
         this.retryInterval = retryInterval ?? DefaultRetryInterval;
@@ -240,18 +237,6 @@ internal sealed class SelfDiagnosticsFileSink : ISelfDiagnosticsSink
     internal static string CreateFallbackProcessIdentity(Guid processInstanceId)
         => $"unknown-{processInstanceId:N}";
 
-    internal static bool WasCreatedByThisProcess(string path)
-    {
-        var fullPath = Path.GetFullPath(path);
-        var directoryKey = GetDirectoryKey(Path.GetDirectoryName(fullPath) ?? string.Empty);
-
-        lock (CreatedFilesLock)
-        {
-            return CreatedFiles.TryGetValue(directoryKey, out var names)
-                && names.Contains(Path.GetFileName(fullPath));
-        }
-    }
-
     internal void UpdateAnnouncement(bool announceLogFile)
         => this.announceLogFile = announceLogFile;
 
@@ -313,78 +298,6 @@ internal sealed class SelfDiagnosticsFileSink : ISelfDiagnosticsSink
 
     private static bool IsSamePath(string path, string? other)
         => other is not null && string.Equals(path, other, StringComparison.OrdinalIgnoreCase);
-
-    // The registry is keyed by the directory as the sink was configured with it, made absolute
-    // and stripped of a trailing separator, so that the spellings a configuration reload is
-    // likely to vary between agree. Resolving links or letter case would need file system
-    // specific calls; a key that does not match only leaves the earlier files unpruned.
-    private static string GetDirectoryKey(string directory)
-    {
-        try
-        {
-            directory = Path.GetFullPath(directory);
-        }
-        catch (Exception)
-        {
-            // An unusable path fails, and is reported, when the directory is created.
-        }
-
-        return directory.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
-    }
-
-    // Something other than the sink that created a file can remove it from the log directory.
-    // The names recorded for a directory are reconciled with a listing of it when a sink seeds
-    // its retention there, so that a process whose logs keep being removed between sink
-    // recreations does not accumulate the name of every log it has ever written. Only that
-    // directory is touched, and only a listing that succeeded is trusted, so a file that cannot
-    // be checked at the time stays recorded. Returns the recorded names that are present.
-    private static HashSet<string> ReconcileCreatedFiles(string directoryKey, HashSet<string> existingNames)
-    {
-        lock (CreatedFilesLock)
-        {
-            if (!CreatedFiles.TryGetValue(directoryKey, out var names))
-            {
-                return [];
-            }
-
-            names.IntersectWith(existingNames);
-
-            if (names.Count == 0)
-            {
-                CreatedFiles.Remove(directoryKey);
-                return [];
-            }
-
-            return new HashSet<string>(names, names.Comparer);
-        }
-    }
-
-    private static void RecordCreatedFile(string directoryKey, string fileName)
-    {
-        lock (CreatedFilesLock)
-        {
-            if (!CreatedFiles.TryGetValue(directoryKey, out var names))
-            {
-                names = new HashSet<string>(StringComparer.Ordinal);
-                CreatedFiles.Add(directoryKey, names);
-            }
-
-            names.Add(fileName);
-        }
-    }
-
-    private static void ForgetCreatedFile(string directoryKey, string fileName)
-    {
-        lock (CreatedFilesLock)
-        {
-            if (CreatedFiles.TryGetValue(directoryKey, out var names)
-                && names.Remove(fileName)
-                && names.Count == 0)
-            {
-                CreatedFiles.Remove(directoryKey);
-            }
-        }
-    }
 
     // The modification time of a file that something else replaced can be unreadable (for
     // example outside the range of DateTime). Such a file sorts as the oldest.
@@ -483,24 +396,23 @@ internal sealed class SelfDiagnosticsFileSink : ISelfDiagnosticsSink
                 {
                     // Seed bounded retention across sink recreations (e.g. hot-reload). Every
                     // matching name moves the index series on so that it is stepped over, but
-                    // only the files that this process created are retained: anything else in
+                    // only the files that were created by a sink that shared the record of
+                    // created files, and that are still there, are retained: anything else in
                     // the directory is not ours to count or to delete.
                     var existingPaths = new List<string>();
-                    var existingNames = new HashSet<string>(StringComparer.Ordinal);
 
                     foreach (var existing in existingFiles)
                     {
                         this.fileIndex = Math.Max(this.fileIndex, ParseSeedIndex(existing));
                         existingPaths.Add(existing);
-                        existingNames.Add(Path.GetFileName(existing));
                     }
 
-                    var createdNames = ReconcileCreatedFiles(this.directoryKey, existingNames);
+                    lock (this.createdFiles)
+                    {
+                        existingPaths.RemoveAll(path => !this.createdFiles.Contains(path));
+                    }
 
-                    this.retainedFiles.AddRange(
-                        existingPaths
-                            .Where(path => createdNames.Contains(Path.GetFileName(path)))
-                            .OrderBy(GetLastWriteTimeUtcOrMinValue));
+                    this.retainedFiles.AddRange(existingPaths.OrderBy(GetLastWriteTimeUtcOrMinValue));
                 }
 
                 this.retentionSeeded = true;
@@ -539,7 +451,11 @@ internal sealed class SelfDiagnosticsFileSink : ISelfDiagnosticsSink
 
             if (this.maxRetainedFiles > 0)
             {
-                RecordCreatedFile(this.directoryKey, Path.GetFileName(filePath));
+                lock (this.createdFiles)
+                {
+                    this.createdFiles.Add(filePath);
+                }
+
                 this.retainedFiles.Add(filePath);
                 this.PruneOldFiles();
             }
@@ -548,7 +464,10 @@ internal sealed class SelfDiagnosticsFileSink : ISelfDiagnosticsSink
                 // A file written under unlimited retention is never counted or pruned, even
                 // if its name was registered by an earlier bounded sink whose file of that
                 // name has since been removed, letting the series reuse the name.
-                ForgetCreatedFile(this.directoryKey, Path.GetFileName(filePath));
+                lock (this.createdFiles)
+                {
+                    this.createdFiles.Remove(filePath);
+                }
             }
 
             this.WriteFilePrologue();
@@ -653,7 +572,11 @@ internal sealed class SelfDiagnosticsFileSink : ISelfDiagnosticsSink
                     File.Delete(oldest);
                 }
 
-                ForgetCreatedFile(this.directoryKey, Path.GetFileName(oldest));
+                lock (this.createdFiles)
+                {
+                    this.createdFiles.Remove(oldest);
+                }
+
                 this.retainedFiles.RemoveAt(index);
             }
             catch

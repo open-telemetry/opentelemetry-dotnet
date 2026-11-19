@@ -12,6 +12,7 @@ namespace OpenTelemetry.Tests.Diagnostics;
 public sealed class SelfDiagnosticsFileSinkTests : IDisposable
 {
     private readonly TemporaryDirectory tempDirectory = new();
+    private readonly HashSet<string> createdFiles = new(StringComparer.Ordinal);
 
     public void Dispose() => this.tempDirectory.Dispose();
 
@@ -507,108 +508,44 @@ public sealed class SelfDiagnosticsFileSinkTests : IDisposable
     }
 
     [Fact]
-    public void Retention_ForgetsFilesDeletedBeforeRecreation()
+    public void Retention_SeededAfterFileLoggingIsSwitchedOffAndOn_OnlyFromFilesCreatedBeforehand()
     {
-        var deletedFiles = new List<string>();
-        string? previous = null;
-
-        for (var recreation = 0; recreation < 3; recreation++)
+        var manager = new SelfDiagnosticsSinkManager(
+            static _ => string.Empty,
+            static _ => { },
+            fileRetryInterval: TimeSpan.Zero);
+        var options = new SelfDiagnosticsOptions
         {
-            string path;
+            LogDirectory = this.tempDirectory.Path,
+            MaxRetainedFiles = 1,
+        };
 
-            using (var sink = this.CreateSink(maxRetainedFiles: 2))
-            {
-                path = sink.CurrentFilePath!;
-                Assert.EndsWith($"-{recreation + 1}.log", path, StringComparison.Ordinal);
-                Assert.True(SelfDiagnosticsFileSink.WasCreatedByThisProcess(path));
-            }
-
-            // Keep only the newest log between recreations: the series carries on from it, so
-            // every recreation creates a file with a new name and removes one with an old name.
-            if (previous is not null)
-            {
-                File.Delete(previous);
-                deletedFiles.Add(previous);
-            }
-
-            previous = path;
-        }
-
-        // The next sink to seed its retention drops the files that are no longer there.
-        using (var sink = this.CreateSink(maxRetainedFiles: 2))
-        {
-            Assert.True(SelfDiagnosticsFileSink.WasCreatedByThisProcess(sink.CurrentFilePath!));
-            Assert.NotNull(previous);
-            Assert.True(SelfDiagnosticsFileSink.WasCreatedByThisProcess(previous));
-            Assert.All(deletedFiles, file => Assert.False(SelfDiagnosticsFileSink.WasCreatedByThisProcess(file), $"expected a deleted file to be forgotten: {file}"));
-        }
-    }
-
-    [Fact]
-    public void Retention_DirectoryUnavailableWhileAnotherSinkSeeds_DoesNotForgetFiles()
-    {
         string firstFile;
+        string otherFile;
 
-        using (var first = this.CreateSink(maxRetainedFiles: 2))
+        using (var first = Assert.IsType<SelfDiagnosticsFileSink>(
+            Assert.Single(manager.ApplyOptions(SelfDiagnosticsOptions.SelfDiagnosticsConfiguration.Create(options)))))
         {
             firstFile = first.CurrentFilePath!;
+            var series = firstFile.Substring(0, firstFile.Length - "1.log".Length);
+            otherFile = $"{series}other.log";
+            File.WriteAllText(otherFile, "not ours");
         }
 
-        // While the directory cannot be reached (here it is temporarily renamed, as if its
-        // volume were unmounted), a sink for another directory seeds its own retention. That
-        // must not forget the files recorded for the unavailable directory.
-        var unavailable = this.tempDirectory.Path + "-unavailable";
-        Directory.Move(this.tempDirectory.Path, unavailable);
+        options.LogDirectory = null;
+        Assert.Empty(manager.ApplyOptions(SelfDiagnosticsOptions.SelfDiagnosticsConfiguration.Create(options)));
 
-        try
-        {
-            using var otherDirectory = new TemporaryDirectory();
+        options.LogDirectory = this.tempDirectory.Path;
 
-            using var other = new SelfDiagnosticsFileSink(
-                otherDirectory.Path,
-                fileSizeLimitKilobytes: 10_240,
-                maxRetainedFiles: 2,
-                preambleFactory: null,
-                retryInterval: TimeSpan.Zero);
-
-            Assert.True(other.IsActive, "expected the sink to open a file");
-        }
-        finally
-        {
-            Directory.Move(unavailable, this.tempDirectory.Path);
-        }
-
-        Assert.True(SelfDiagnosticsFileSink.WasCreatedByThisProcess(firstFile));
-
-        using (var second = this.CreateSink(maxRetainedFiles: 1))
+        using (var second = Assert.IsType<SelfDiagnosticsFileSink>(
+            Assert.Single(manager.ApplyOptions(SelfDiagnosticsOptions.SelfDiagnosticsConfiguration.Create(options)))))
         {
             Assert.True(second.IsActive, "expected the sink to open a file");
+            Assert.EndsWith("-2.log", second.CurrentFilePath, StringComparison.Ordinal);
         }
 
-        Assert.False(File.Exists(firstFile), "expected the earlier file to be taken over and pruned");
-    }
-
-    [Fact]
-    public void Retention_SeededAcrossSinkRecreation_WithTrailingDirectorySeparator()
-    {
-        string firstFile;
-
-        using (var first = this.CreateSink(maxRetainedFiles: 1))
-        {
-            firstFile = first.CurrentFilePath!;
-        }
-
-        using (var second = new SelfDiagnosticsFileSink(
-            this.tempDirectory.Path + Path.DirectorySeparatorChar,
-            fileSizeLimitKilobytes: 10_240,
-            maxRetainedFiles: 1,
-            preambleFactory: null,
-            retryInterval: TimeSpan.Zero))
-        {
-            Assert.True(second.IsActive, "expected the sink to open a file");
-        }
-
-        Assert.False(File.Exists(firstFile), "expected the earlier file to be taken over and pruned");
+        Assert.False(File.Exists(firstFile), "expected the file created before logging was switched off to be pruned");
+        Assert.Equal("not ours", File.ReadAllText(otherFile));
     }
 
     [Fact]
@@ -631,7 +568,7 @@ public sealed class SelfDiagnosticsFileSinkTests : IDisposable
             Assert.Equal(path, unlimited.CurrentFilePath);
         }
 
-        Assert.False(SelfDiagnosticsFileSink.WasCreatedByThisProcess(path));
+        Assert.DoesNotContain(path, this.createdFiles);
 
         using (var bounded = this.CreateSink(maxRetainedFiles: 1))
         {
@@ -1025,7 +962,8 @@ public sealed class SelfDiagnosticsFileSinkTests : IDisposable
             preamble,
             reportError: null,
             retryInterval: TimeSpan.Zero,
-            excludeFromPruning: excludeFromPruning);
+            excludeFromPruning: excludeFromPruning,
+            createdFiles: this.createdFiles);
 
     private sealed class FlushThrowingStream : Stream
     {
