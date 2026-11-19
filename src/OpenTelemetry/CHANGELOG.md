@@ -17,6 +17,7 @@ Notes](../../RELEASENOTES.md).
 
 * Fixed `PeriodicExportingMetricReader` sometimes collecting twice in quick
   succession when a periodic wait returns early.
+  ([#8161](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8161))
 
 ## 1.21.0
 
