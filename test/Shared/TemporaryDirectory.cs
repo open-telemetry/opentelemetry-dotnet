@@ -67,13 +67,12 @@ internal sealed class TemporaryDirectory : IDisposable
 
         // The temporary directory of the system, or one of the directories that it is in, can be written to by other
         // users (such as /tmp, even if TMPDIR is a private directory within it), which some of the code under test
-        // refuses, so the directory is created in one that only the current user can write to instead.
+        // refuses, so the directory is created in one that only the current user can write to instead. If there is
+        // no such directory, the system temporary directory is used, as most users of this class only need a scratch
+        // directory. Those that require a private directory fail with an error about the permissions of the directory.
         if (!CanOnlyBeChangedByOwner(AppContext.BaseDirectory))
         {
-            throw new InvalidOperationException(
-                $"Neither the temporary directory '{System.IO.Path.GetTempPath()}' nor the test output directory '{AppContext.BaseDirectory}' "
-                + "can be used for tests that require a directory that other users cannot write to, as they, or one of the directories "
-                + "they are in, can be written to by other users. Set TMPDIR to a directory that only the current user can write to.");
+            return Directory.CreateTempSubdirectory("otel-tests-");
         }
 
         var root = System.IO.Path.Combine(AppContext.BaseDirectory, "temp");
@@ -115,8 +114,9 @@ internal sealed class TemporaryDirectory : IDisposable
                 return false;
             }
 
-            // The mode is that of the target of a symbolic link, but the directories that the target is in must be checked too
-            var target = new DirectoryInfo(current).ResolveLinkTarget(returnFinalTarget: true);
+            // The mode is that of the target of a symbolic link, but the directories that the target is in must be checked too.
+            // Only the next target is resolved, so that the target of every link in a chain of links is checked.
+            var target = new DirectoryInfo(current).ResolveLinkTarget(returnFinalTarget: false);
 
             if (target is not null && !CanOnlyBeChangedByOwner(target.FullName, links + 1))
             {
