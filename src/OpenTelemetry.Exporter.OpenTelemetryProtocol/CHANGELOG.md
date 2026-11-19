@@ -37,6 +37,11 @@ Notes](../../RELEASENOTES.md).
   list, is now left out of that log record, and is counted as dropped.
   ([#8143](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8143))
 
+* Fixed the experimental disk retry feature resending stored requests without
+  suppressing instrumentation, so that the exporter's own requests could be
+  traced and exported by the application's exporters.
+  ([#8164](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8164))
+
 ## 1.21.0
 
 Released 2026-Nov-11
