@@ -71,30 +71,43 @@ internal sealed class TemporaryDirectory : IDisposable
         // directory of the user (for example /run/user/1000) is tried first, then the test output directory. If there
         // is no such directory, the system temporary directory is used, as most users of this class only need a scratch
         // directory. Those that require a private directory fail with an error about the permissions of the directory.
-        var runtimeDirectory = Environment.GetEnvironmentVariable("XDG_RUNTIME_DIR");
-
-        if (!string.IsNullOrEmpty(runtimeDirectory)
-            && System.IO.Path.IsPathRooted(runtimeDirectory)
-            && CanOnlyBeChangedByOwner(runtimeDirectory))
+        // The permissions of a directory are not the only thing that decides whether it can be used (it can be read-only,
+        // or be owned by another user, for example), so a location that cannot be created in is skipped too.
+        var candidates = new (string? Parent, string? Subdirectory)[]
         {
-            return CreateIn(runtimeDirectory);
-        }
+            (Environment.GetEnvironmentVariable("XDG_RUNTIME_DIR"), null),
+            (AppContext.BaseDirectory, "temp"),
+        };
 
-        if (CanOnlyBeChangedByOwner(AppContext.BaseDirectory))
+        foreach (var (parent, subdirectory) in candidates)
         {
-            var root = System.IO.Path.Combine(AppContext.BaseDirectory, "temp");
+            if (string.IsNullOrEmpty(parent)
+                || !System.IO.Path.IsPathRooted(parent)
+                || !CanOnlyBeChangedByOwner(parent))
+            {
+                continue;
+            }
 
-            Directory.CreateDirectory(root, OwnerOnly);
+            try
+            {
+                var root = parent;
 
-            return CreateIn(root);
+                if (subdirectory is not null)
+                {
+                    root = System.IO.Path.Combine(parent, subdirectory);
+                    Directory.CreateDirectory(root, OwnerOnly);
+                }
+
+                return Directory.CreateDirectory(System.IO.Path.Combine(root, "otel-tests-" + Guid.NewGuid().ToString("N")), OwnerOnly);
+            }
+            catch (Exception ex) when (ex is UnauthorizedAccessException or IOException)
+            {
+                // Try the next location
+            }
         }
 
         return Directory.CreateTempSubdirectory("otel-tests-");
     }
-
-    [UnsupportedOSPlatform("windows")]
-    private static DirectoryInfo CreateIn(string root)
-        => Directory.CreateDirectory(System.IO.Path.Combine(root, "otel-tests-" + Guid.NewGuid().ToString("N")), OwnerOnly);
 
     /// <summary>
     /// Gets whether a directory, and every directory that is traversed to reach it (resolving symbolic links),
