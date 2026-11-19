@@ -82,6 +82,38 @@ internal static class GrpcProtocolHelpers
         return new Status((StatusCode)statusValue, grpcMessage ?? string.Empty);
     }
 
+    /// <summary>
+    /// Gets the value of a header that is a comma-separated list, joining the values of
+    /// the header if it was sent as more than one field, which is equivalent to one field
+    /// with the values joined by commas (RFC 9110 section 5.3).
+    /// </summary>
+    /// <param name="headers">The headers to get the value from.</param>
+    /// <param name="name">The name of the header.</param>
+    /// <returns>The value of the header, or <see langword="null"/> if it was not sent.</returns>
+    public static string? GetListHeaderValue(HttpHeaders? headers, string name)
+    {
+        if (headers == null)
+        {
+            return null;
+        }
+
+#if NET
+        if (!headers.NonValidated.TryGetValues(name, out var values))
+        {
+            return null;
+        }
+#else
+        if (!headers.TryGetValues(name, out var values))
+        {
+            return null;
+        }
+#endif
+
+        var joined = string.Join(",", values);
+
+        return joined.Length == 0 ? null : joined;
+    }
+
     public static string? GetHeaderValue(HttpHeaders? headers, string name, bool first = false)
     {
         if (headers == null)
