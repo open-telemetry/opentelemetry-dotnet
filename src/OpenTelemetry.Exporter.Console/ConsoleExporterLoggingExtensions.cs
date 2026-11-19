@@ -78,6 +78,8 @@ public static class ConsoleExporterLoggingExtensions
             loggerProviderBuilder.ConfigureServices(services => services.Configure(name, configure));
         }
 
+        loggerProviderBuilder.ConfigureServices(services => services.AddConsoleExporterServices());
+
         return loggerProviderBuilder.AddProcessor(sp =>
         {
             var options = sp.GetRequiredService<IOptionsMonitor<ConsoleExporterOptions>>().Get(name);

@@ -19,7 +19,18 @@ public sealed class StrictModeKeyScopeTests
     [InlineData("OTEL_", true)]
     [InlineData("", false)]
     [InlineData("OTELX", false)]
+    [InlineData("OpenTelemetry:Exporters:Console", true)]
+    [InlineData("OpenTelemetry:Exporters:Console:Targets", true)]
+    [InlineData("opentelemetry:exporters:console:targets", true)]
+    [InlineData("OpenTelemetry", false)]
     [InlineData("OpenTelemetry:X", false)]
+    [InlineData("OpenTelemetry:ServiceName", false)]
+    [InlineData("OpenTelemetry:Enabled", false)]
+    [InlineData("OpenTelemetry:Tracing:SamplingRatio", false)]
+    [InlineData("OpenTelemetry:Otlp:Endpoint", false)]
+    [InlineData("OpenTelemetry:Exporters:ConsoleFoo", false)]
+    [InlineData("OpenTelemetry:Exporters:ConsoleFoo:Targets", false)]
+    [InlineData("OpenTelemetryFoo:X", false)]
     [InlineData("X_OTEL_Y", false)]
     public void IsInScope_ClassifiesKeyByFirstSegment(string key, bool expected)
         => Assert.Equal(expected, StrictModeKeyScope.IsInScope(key));

@@ -84,3 +84,8 @@ Notes](../../RELEASENOTES.md).
   `always_on`, `always_off`, `always_record`, `trace_id_ratio_based` and
   `parent_based`, nested to any depth.
   ([#8117](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8117))
+
+* Strict mode now also masks the `OpenTelemetry:Exporters:Console` configuration
+  section, which the Console exporter binds into its options. Other keys under
+  `OpenTelemetry` remain visible.
+  ([#7880](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7880))
