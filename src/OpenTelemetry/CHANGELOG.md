@@ -15,6 +15,10 @@ Notes](../../RELEASENOTES.md).
   pending exports had finished.
   ([#8134](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8134))
 
+* Fixed `PeriodicExportingMetricReader` sometimes collecting twice in quick
+  succession when a periodic wait returns early.
+  ([#8161](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8161))
+
 * Non-finite histogram measurements (`NaN`, `+Inf`, `-Inf`) are now dropped
   rather than recorded, so they can no longer permanently corrupt the sum,
   min, and max of a cumulative histogram stream. This aligns the explicit-bucket
