@@ -19,6 +19,10 @@ Notes](../../RELEASENOTES.md).
   succession when a periodic wait returns early.
   ([#8161](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8161))
 
+* The self-diagnostics `OTEL_DIAGNOSTICS.json` file being temporarily locked by
+  another process is no longer treated as the file having been removed.
+  ([#8158](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8158))
+
 * Added `Sdk.DefaultTextMapPropagator` to expose the SDK's default
   `TextMapPropagator`.
   ([#8129](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8129))
