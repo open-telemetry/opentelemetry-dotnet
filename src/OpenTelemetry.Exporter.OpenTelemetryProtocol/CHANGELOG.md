@@ -37,6 +37,15 @@ Notes](../../RELEASENOTES.md).
   list, is now left out of that log record, and is counted as dropped.
   ([#8143](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8143))
 
+* Fixed the experimental disk retry feature creating the retry directory and
+  its `traces`, `metrics` and `logs` subdirectories with the default
+  permissions instead of being accessible to the current user only when
+  running on .NET on non-Windows platforms. This could also cause creating the
+  exporter to fail when the umask of the process left them writable by other
+  users. Directories that already exist are not changed, so those created by
+  earlier versions need their permissions restricted manually.
+  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+
 ## 1.21.0
 
 Released 2026-Nov-11

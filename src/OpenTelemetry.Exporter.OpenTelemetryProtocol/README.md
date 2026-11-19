@@ -774,8 +774,10 @@ want to solicit feedback from the community.
       Every file stored in the directory is sent with the exporter's headers
       and credentials, so only the application's user must be able to write
       to it. When running on .NET on non-Windows platforms, the exporter creates
-      the `traces`, `metrics` and `logs` subdirectories accessible to the current
-      user only. Creating the exporter fails if one of them is not owned by the
+      the `traces`, `metrics` and `logs` subdirectories, and any directory in
+      their path that does not exist, accessible to the current user only. The
+      permissions of directories that already exist are not changed. Creating
+      the exporter fails if one of them is not owned by the
       current user or is writable by its group or by other users, or if any
       directory in its path is not owned by the current user or by root, or is
       writable by its group or by other users without having the sticky bit

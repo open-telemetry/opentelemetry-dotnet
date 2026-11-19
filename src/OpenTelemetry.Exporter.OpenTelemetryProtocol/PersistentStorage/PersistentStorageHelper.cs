@@ -9,6 +9,9 @@ using System.Runtime.CompilerServices;
 #if !NETFRAMEWORK
 using System.Runtime.InteropServices;
 #endif
+#if NET
+using System.Runtime.Versioning;
+#endif
 
 namespace OpenTelemetry.PersistentStorage.FileSystem;
 
@@ -27,6 +30,7 @@ internal static class PersistentStorageHelper
     private const int MaximumEntryArchiveLength = 64 * 1024;
     private const int RootUserId = 0;
     private const UnixFileMode GroupOrOtherWrite = UnixFileMode.GroupWrite | UnixFileMode.OtherWrite;
+    private const UnixFileMode OwnerOnly = UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute;
 #endif
 
     private static readonly TimeSpan MaximumPastTimestampOffset = TimeSpan.FromDays(100 * 365);
@@ -344,16 +348,16 @@ internal static class PersistentStorageHelper
             // read the stored telemetry or plant blobs that would be sent on the application's behalf.
             // The mode is applied atomically when the directory is created, and the permissions of a
             // directory that already exists (for example one an operator has deliberately configured
-            // and shared) are left unchanged. On Windows the created directory inherits the parent ACL.
+            // and shared) are left unchanged. The same applies to every directory in its path that does
+            // not exist, as the names of the directories below the retry directory are derived from the
+            // exporter's options. On Windows the created directory inherits the parent ACL.
             if (OperatingSystem.IsWindows())
             {
                 Directory.CreateDirectory(path);
             }
             else
             {
-                Directory.CreateDirectory(
-                    path,
-                    UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute);
+                CreatePrivateDirectory(path);
 
                 // A directory that already exists may have been created by another user before the
                 // application first started, so it is only used if no other user can change its contents.
@@ -649,6 +653,30 @@ internal static class PersistentStorageHelper
     }
 
 #if NET
+    /// <summary>
+    /// Creates a directory, and every directory in its path that does not exist, accessible to the current user only.
+    /// </summary>
+    /// <remarks>
+    /// <see cref="Directory.CreateDirectory(string, UnixFileMode)"/> only applies the mode to the last directory of the
+    /// path, and creates any missing parent directories with the default permissions, which leave them accessible to
+    /// whichever other users the umask of the process allows. Each directory that does not exist is therefore created
+    /// on its own, starting with the first one that is missing. The permissions of directories that already exist
+    /// are left unchanged.
+    /// </remarks>
+    /// <param name="path">The path of the directory.</param>
+    [UnsupportedOSPlatform("windows")]
+    private static void CreatePrivateDirectory(string path)
+    {
+        var parent = Path.GetDirectoryName(path);
+
+        if (!string.IsNullOrEmpty(parent) && !Directory.Exists(parent))
+        {
+            CreatePrivateDirectory(parent);
+        }
+
+        Directory.CreateDirectory(path, OwnerOnly);
+    }
+
     /// <summary>
     /// Ensures that no user other than the current user (or root) can change the contents of a directory.
     /// </summary>

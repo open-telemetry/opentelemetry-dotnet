@@ -939,10 +939,11 @@ public class FileBlobProviderTests
 
         using var root = new TemporaryDirectory();
 
-        var path = Path.Combine(root.Path, "traces");
+        var signal = Path.Combine(root.Path, "traces");
+        var path = Path.Combine(signal, "destination");
         using var provider = new FileBlobProvider(path, maintenancePeriodInMilliseconds: 50);
 
-        Directory.Delete(path);
+        Directory.Delete(signal, recursive: true);
 
         var timeout = TimeSpan.FromSeconds(30);
         var stopwatch = System.Diagnostics.Stopwatch.StartNew();
@@ -953,6 +954,7 @@ public class FileBlobProviderTests
         }
 
         Assert.True(Directory.Exists(path), "The storage directory was not recreated.");
+        Assert.Equal(UnixFileMode.None, File.GetUnixFileMode(signal) & GroupAndOther);
         Assert.Equal(UnixFileMode.None, File.GetUnixFileMode(path) & GroupAndOther);
     }
 
@@ -971,15 +973,49 @@ public class FileBlobProviderTests
 
         using var root = new TemporaryDirectory();
 
-        var path = Path.Combine(root.Path, "traces");
+        var retry = Path.Combine(root.Path, "retry");
+        var signal = Path.Combine(retry, "traces");
+        var path = Path.Combine(signal, "destination");
         using var provider = new FileBlobProvider(path);
 
         Assert.True(provider.TryCreateBlob([1, 2, 3], out var blob));
 
         var blobPath = Assert.IsType<FileBlob>(blob).FullPath;
 
+        Assert.Equal(UnixFileMode.None, File.GetUnixFileMode(retry) & GroupAndOther);
+        Assert.Equal(UnixFileMode.None, File.GetUnixFileMode(signal) & GroupAndOther);
         Assert.Equal(UnixFileMode.None, File.GetUnixFileMode(path) & GroupAndOther);
         Assert.Equal(UnixFileMode.None, File.GetUnixFileMode(blobPath) & GroupAndOther);
+    }
+
+    [Fact]
+    public void Constructor_DoesNotChangePermissionsOfExistingParentDirectories()
+    {
+        if (OperatingSystem.IsWindows())
+        {
+            Assert.Skip("Unix file modes do not apply on Windows.");
+            return;
+        }
+
+        const UnixFileMode GroupAndOther =
+            UnixFileMode.GroupRead | UnixFileMode.GroupWrite | UnixFileMode.GroupExecute |
+            UnixFileMode.OtherRead | UnixFileMode.OtherWrite | UnixFileMode.OtherExecute;
+
+        const UnixFileMode Shared = OwnerOnly | UnixFileMode.GroupRead | UnixFileMode.GroupExecute | UnixFileMode.OtherRead | UnixFileMode.OtherExecute;
+
+        using var root = new TemporaryDirectory();
+
+        var retry = Path.Combine(root.Path, "retry");
+        CreateDirectory(retry, Shared);
+
+        var signal = Path.Combine(retry, "traces");
+        var path = Path.Combine(signal, "destination");
+
+        using var provider = new FileBlobProvider(path);
+
+        Assert.Equal(Shared, File.GetUnixFileMode(retry));
+        Assert.Equal(UnixFileMode.None, File.GetUnixFileMode(signal) & GroupAndOther);
+        Assert.Equal(UnixFileMode.None, File.GetUnixFileMode(path) & GroupAndOther);
     }
 
     [Theory]
