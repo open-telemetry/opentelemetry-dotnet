@@ -94,8 +94,22 @@ internal sealed partial class SelfDiagnosticsConfigParser
     }
 
     internal bool TryGetConfiguration(out SelfDiagnosticsLegacyConfiguration configuration)
+        => this.TryGetConfiguration(out configuration, out _);
+
+    /// <summary>
+    /// Locates, reads and parses the config file.
+    /// </summary>
+    /// <param name="configuration">The parsed configuration.</param>
+    /// <param name="transientFailure">
+    /// <see langword="true"/> when the file could not be opened or read right now because of an I/O
+    /// error that says nothing about whether it exists or what it contains, for example while another
+    /// process holds a lock on it.
+    /// </param>
+    /// <returns><see langword="true"/> when a valid configuration was read.</returns>
+    internal bool TryGetConfiguration(out SelfDiagnosticsLegacyConfiguration configuration, out bool transientFailure)
     {
         configuration = default;
+        transientFailure = false;
         try
         {
             var configFilePath = this.configFileLocator();
@@ -148,6 +162,16 @@ internal sealed partial class SelfDiagnosticsConfigParser
                 logLevelString,
                 formatMessageSpecified: ContainsFormatMessageKey(configJson));
             return true;
+        }
+        catch (IOException ex) when (ex.GetType() == typeof(IOException))
+        {
+            // Only a plain IOException: the more specific types (file or directory not found, path
+            // too long, drive not found, ...) describe a file that is not usable rather than one that
+            // is momentarily busy. On Unix the runtime takes a shared file lock when it opens a file
+            // and fails this way while another process holds a conflicting one; on Windows a sharing
+            // violation does the same.
+            transientFailure = true;
+            return false;
         }
         catch (Exception)
         {
