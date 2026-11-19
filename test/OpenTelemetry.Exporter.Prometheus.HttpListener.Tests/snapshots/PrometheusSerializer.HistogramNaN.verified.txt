@@ -14,6 +14,6 @@ test_histogram_bucket{otel_scope_name="HistogramNaN",le="2500"} 1
 test_histogram_bucket{otel_scope_name="HistogramNaN",le="5000"} 1
 test_histogram_bucket{otel_scope_name="HistogramNaN",le="7500"} 1
 test_histogram_bucket{otel_scope_name="HistogramNaN",le="10000"} 1
-test_histogram_bucket{otel_scope_name="HistogramNaN",le="+Inf"} 3
-test_histogram_sum{otel_scope_name="HistogramNaN"} NaN
-test_histogram_count{otel_scope_name="HistogramNaN"} 3
+test_histogram_bucket{otel_scope_name="HistogramNaN",le="+Inf"} 1
+test_histogram_sum{otel_scope_name="HistogramNaN"} 18
+test_histogram_count{otel_scope_name="HistogramNaN"} 1

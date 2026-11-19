@@ -23,6 +23,12 @@ Notes](../../RELEASENOTES.md).
   another process is no longer treated as the file having been removed.
   ([#8158](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8158))
 
+* Non-finite histogram measurements (`NaN`, `+Inf`, `-Inf`) are now dropped
+  rather than recorded, so they can no longer permanently corrupt the sum,
+  min, and max of a cumulative histogram stream. This aligns the explicit-bucket
+  and exponential histograms with the metrics SDK specification.
+  ([#7759](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7759))
+
 ## 1.21.0
 
 Released 2026-Nov-11
