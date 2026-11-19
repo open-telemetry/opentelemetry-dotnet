@@ -288,7 +288,15 @@ public class OtlpExporterOptionsExtensionsTests
             TestContext.Current.CancellationToken);
 
         Assert.False(response.Success);
-        Assert.Equal(HttpStatusCode.TemporaryRedirect, Assert.IsType<ExportClientHttpResponse>(response).StatusCode);
+
+        // A response without a status code means that no response was received at all,
+        // so include the reason the request failed instead of only that it did.
+        var httpResponse = Assert.IsType<ExportClientHttpResponse>(response);
+
+        Assert.True(
+            httpResponse.StatusCode == HttpStatusCode.TemporaryRedirect,
+            $"Expected {HttpStatusCode.TemporaryRedirect} but the status code was {httpResponse.StatusCode?.ToString() ?? "(none)"}: {httpResponse.Exception}");
+
         Assert.Equal(["/v1/traces"], requestedPaths);
     }
 

@@ -15,6 +15,8 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests;
 [Collection(EventSourceCollectionDefinition.Name)]
 public class PrometheusHttpListenerAcceptFailureTests
 {
+    private const int MinimumFailures = 2;
+
     [Fact]
     public async Task ScrapesAreStillServedAfterHttpListenerRepeatedlyFailsToGetRequest()
     {
@@ -22,6 +24,32 @@ public class PrometheusHttpListenerAcceptFailureTests
             RuntimeInformation.IsOSPlatform(OSPlatform.Windows),
             "HTTP.sys does not fail the pending GetContextAsync() operation when requests do not pass authentication.");
 
+        // The managed HttpListener can be left with a second pending GetContextAsync() operation
+        // (one that belongs to a failure that has already been reported) by the way that this test
+        // races with the thread that accepts requests. A listener in that state absorbs every burst
+        // of rejected requests one at a time instead of queuing them up, so it never fails again
+        // however many more rounds there are, and which attempt this happens to depends on how fast
+        // the machine is. The state cannot be undone, so start again with a new listener when it is
+        // reached, so that the failures that are counted are always the ones of a single listener,
+        // as only those are consecutive.
+        const int MaximumAttempts = 5;
+
+        var failures = 0;
+
+        for (var attempt = 0; attempt < MaximumAttempts && failures < MinimumFailures; attempt++)
+        {
+            failures = await ExerciseRepeatedFailuresAsync();
+        }
+
+        // Guard against the scenario no longer being reproduced, in which case the
+        // scrapes above would succeed whether or not failures are handled
+        Assert.True(
+            failures >= MinimumFailures,
+            $"HttpListener failed to get a request {failures} time(s) instead of at least {MinimumFailures} in {MaximumAttempts} attempts, so the test did not exercise repeated failures.");
+    }
+
+    private static async Task<int> ExerciseRepeatedFailuresAsync()
+    {
         const int Clients = 32;
 
         // Every rejected request that is queued behind the held one blocks a thread pool thread while
@@ -87,9 +115,16 @@ public class PrometheusHttpListenerAcceptFailureTests
         // repeatedly and exercises the back-off between attempts. A request is then handed to the
         // operation that failed, so only some of the rounds fail the pending operation. How many
         // depends on timing, so keep going after the first few rounds until enough of them have.
+        //
+        // A failure is only logged once the thread pool has delivered it, which can be after the
+        // next round has started, so give up on the listener only after several rounds in a row
+        // without one.
         const int Rounds = 5;
         const int MaximumRounds = 20;
-        const int MinimumFailures = 2;
+        const int MaximumRoundsWithoutFailure = 4;
+
+        var failuresSoFar = 0;
+        var roundsWithoutFailure = 0;
 
         for (var round = 0; round < MaximumRounds && (round < Rounds || eventListener.Count < MinimumFailures); round++)
         {
@@ -151,6 +186,16 @@ public class PrometheusHttpListenerAcceptFailureTests
                     client.Dispose();
                 }
             }
+
+            if (eventListener.Count > failuresSoFar)
+            {
+                failuresSoFar = eventListener.Count;
+                roundsWithoutFailure = 0;
+            }
+            else if (++roundsWithoutFailure >= MaximumRoundsWithoutFailure)
+            {
+                break;
+            }
         }
 
         string? content = null;
@@ -186,11 +231,7 @@ public class PrometheusHttpListenerAcceptFailureTests
         Assert.NotNull(content);
         Assert.Contains("counter_long", content, StringComparison.Ordinal);
 
-        // Guard against the scenario no longer being reproduced, in which case the
-        // scrapes above would succeed whether or not failures are handled
-        Assert.True(
-            eventListener.Count >= MinimumFailures,
-            $"HttpListener failed to get a request {eventListener.Count} time(s) instead of at least {MinimumFailures}, so the test did not exercise repeated failures.");
+        return eventListener.Count;
     }
 
     private static async Task<string> ReadStatusLineAsync(System.Net.Sockets.NetworkStream stream, CancellationToken cancellationToken)
