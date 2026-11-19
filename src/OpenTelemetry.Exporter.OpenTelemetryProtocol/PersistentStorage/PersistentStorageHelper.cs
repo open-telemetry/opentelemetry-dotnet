@@ -357,10 +357,11 @@ internal static class PersistentStorageHelper
             }
             else
             {
-                CreatePrivateDirectory(path);
+                CreatePrivateDirectory(path, checkPermissions);
 
                 // A directory that already exists may have been created by another user before the
-                // application first started, so it is only used if no other user can change its contents.
+                // application first started, so nothing is created in it until it has been verified,
+                // and it is only used if no other user can change its contents.
                 if (checkPermissions)
                 {
                     EnsureDirectoryIsPrivate(path);
@@ -661,20 +662,52 @@ internal static class PersistentStorageHelper
     /// path, and creates any missing parent directories with the default permissions, which leave them accessible to
     /// whichever other users the umask of the process allows. Each directory that does not exist is therefore created
     /// on its own, starting with the first one that is missing. The permissions of directories that already exist
-    /// are left unchanged.
+    /// are left unchanged.<para/>
+    /// The part of the path that already exists may contain directories or symbolic links that were created by another
+    /// user. When the permissions are checked, each directory is therefore only created once the directory it is created
+    /// in has been verified in the same way as the path of the storage directory, so that nothing is created in, or
+    /// through a symbolic link in, a directory that another user could change. Another user that creates one of the
+    /// directories first is detected when the next one is verified.
     /// </remarks>
     /// <param name="path">The path of the directory.</param>
+    /// <param name="checkPermissions">Whether the directory each directory is created in is verified first.</param>
+    /// <exception cref="UnauthorizedAccessException">A directory could be changed by another user.</exception>
     [UnsupportedOSPlatform("windows")]
-    private static void CreatePrivateDirectory(string path)
+    private static void CreatePrivateDirectory(string path, bool checkPermissions)
     {
-        var parent = Path.GetDirectoryName(path);
+        var missing = new Stack<string>();
 
-        if (!string.IsNullOrEmpty(parent) && !Directory.Exists(parent))
+        // The path is normalized the same way that the file system APIs normalize it before they use it
+        var existing = Path.GetFullPath(path);
+
+        // A symbolic link that cannot be followed is not missing, as nothing can be created in its place.
+        // It is left to be refused when the path that contains it is verified.
+        while (!Directory.Exists(existing)
+            && new DirectoryInfo(existing).LinkTarget == null
+            && Path.GetDirectoryName(existing) is { Length: > 0 } parent)
         {
-            CreatePrivateDirectory(parent);
+            missing.Push(existing);
+            existing = parent;
         }
 
-        Directory.CreateDirectory(path, OwnerOnly);
+        if (missing.Count == 0)
+        {
+            return;
+        }
+
+        var userId = checkPermissions ? GetCurrentUserId() : RootUserId;
+
+        foreach (var directory in missing)
+        {
+            if (checkPermissions)
+            {
+                var links = 0;
+
+                ResolveDirectory(Path.GetDirectoryName(directory)!, userId, ref links);
+            }
+
+            Directory.CreateDirectory(directory, OwnerOnly);
+        }
     }
 
     /// <summary>

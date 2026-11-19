@@ -46,6 +46,12 @@ Notes](../../RELEASENOTES.md).
   earlier versions need their permissions restricted manually.
   ([#8162](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8162))
 
+* Fixed the experimental disk retry feature creating the directories in the
+  path of the retry directory before checking the directory they are created in
+  when running on .NET on non-Windows platforms. They are now created one at a
+  time, once the directory above has passed the checks.
+  ([#8162](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8162))
+
 ## 1.21.0
 
 Released 2026-Nov-11

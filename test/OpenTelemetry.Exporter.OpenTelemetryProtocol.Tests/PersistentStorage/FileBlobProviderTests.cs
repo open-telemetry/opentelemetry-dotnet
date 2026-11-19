@@ -1192,7 +1192,62 @@ public class FileBlobProviderTests
         var path = Path.Combine(root.Path, "retry", "traces");
 
         Assert.Throws<UnauthorizedAccessException>(() => new FileBlobProvider(path));
-        Assert.True(Directory.Exists(Path.Combine(shared, "traces")));
+
+        // The directory is refused before it is created, in either directory that "link/.." could refer to
+        Assert.False(Directory.Exists(Path.Combine(shared, "traces")));
+        Assert.False(Directory.Exists(Path.Combine(root.Path, "traces")));
+    }
+
+    [Theory]
+    [InlineData(UnixFileMode.GroupWrite)]
+    [InlineData(UnixFileMode.OtherWrite)]
+    public void Constructor_SymbolicLinkInDirectoryWritableByOtherUsers_DoesNotCreateDirectoriesThroughLink(UnixFileMode mode)
+    {
+        if (OperatingSystem.IsWindows())
+        {
+            Assert.Skip("Unix file modes do not apply on Windows.");
+            return;
+        }
+
+        using var root = new TemporaryDirectory();
+
+        var target = Path.Combine(root.Path, "target");
+        CreateDirectory(target, OwnerOnly);
+
+        // Other users could have placed the link in the directory, to a directory only the current user can write to
+        var retry = Path.Combine(root.Path, "retry");
+        CreateDirectory(retry, OwnerOnly | mode);
+        Directory.CreateSymbolicLink(Path.Combine(retry, "traces"), target);
+
+        var path = Path.Combine(retry, "traces", "destination");
+
+        Assert.Throws<UnauthorizedAccessException>(() => new FileBlobProvider(path));
+        Assert.Empty(Directory.GetFileSystemEntries(target));
+    }
+
+    [Fact]
+    public void Constructor_SymbolicLinkAboveMissingDirectories_DoesNotCreateDirectoriesThroughLink()
+    {
+        if (OperatingSystem.IsWindows())
+        {
+            Assert.Skip("Unix file modes do not apply on Windows.");
+            return;
+        }
+
+        using var root = new TemporaryDirectory();
+
+        var target = Path.Combine(root.Path, "target");
+        CreateDirectory(target, OwnerOnly);
+
+        // The link is in a directory that other users can write to, so every directory below it is missing
+        var shared = Path.Combine(root.Path, "shared");
+        CreateDirectory(shared, OwnerOnly | UnixFileMode.OtherWrite);
+        Directory.CreateSymbolicLink(Path.Combine(shared, "otel"), target);
+
+        var path = Path.Combine(shared, "otel", "retry", "traces", "destination");
+
+        Assert.Throws<UnauthorizedAccessException>(() => new FileBlobProvider(path));
+        Assert.Empty(Directory.GetFileSystemEntries(target));
     }
 
     [Fact]
