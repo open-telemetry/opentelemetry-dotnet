@@ -232,6 +232,83 @@ public sealed class OtlpMetricsExporterTests : IDisposable
         Assert.Contains(instrumentationLibraryMetrics.Scope.Attributes, (kvp) => kvp.Key == "key2" && kvp.Value.StringValue == "value2");
     }
 
+    [Fact]
+    public void MetricsFromMetersWithSameNameAndDifferentVersionsAreExportedAsSeparateScopes()
+    {
+        var name = nameof(this.MetricsFromMetersWithSameNameAndDifferentVersionsAreExportedAsSeparateScopes);
+
+        using var meter1 = new Meter(new MeterOptions(name) { Version = "1.0" });
+        using var meter2 = new Meter(new MeterOptions(name) { Version = "2.0" });
+
+        var resourceMetrics = ExportOneCounterPerMeter(meter1, meter2);
+
+        Assert.Equal(2, resourceMetrics.ScopeMetrics.Count);
+        Assert.Equal("counter-0", Assert.Single(Assert.Single(resourceMetrics.ScopeMetrics, s => s.Scope.Version == "1.0").Metrics).Name);
+        Assert.Equal("counter-1", Assert.Single(Assert.Single(resourceMetrics.ScopeMetrics, s => s.Scope.Version == "2.0").Metrics).Name);
+    }
+
+    [Fact]
+    public void MetricsFromMetersWithSameNameAndDifferentSchemaUrlsAreExportedAsSeparateScopes()
+    {
+        var name = nameof(this.MetricsFromMetersWithSameNameAndDifferentSchemaUrlsAreExportedAsSeparateScopes);
+        const string schemaUrl1 = "https://opentelemetry.io/schemas/1.0.0";
+        const string schemaUrl2 = "https://opentelemetry.io/schemas/2.0.0";
+
+        using var meter1 = new Meter(new MeterOptions(name) { TelemetrySchemaUrl = schemaUrl1 });
+        using var meter2 = new Meter(new MeterOptions(name) { TelemetrySchemaUrl = schemaUrl2 });
+
+        var resourceMetrics = ExportOneCounterPerMeter(meter1, meter2);
+
+        Assert.Equal(2, resourceMetrics.ScopeMetrics.Count);
+        Assert.Equal("counter-0", Assert.Single(Assert.Single(resourceMetrics.ScopeMetrics, s => s.SchemaUrl == schemaUrl1).Metrics).Name);
+        Assert.Equal("counter-1", Assert.Single(Assert.Single(resourceMetrics.ScopeMetrics, s => s.SchemaUrl == schemaUrl2).Metrics).Name);
+    }
+
+    [Fact]
+    public void MetricsFromMetersWithSameNameAndDifferentTagsAreExportedAsSeparateScopes()
+    {
+        var name = nameof(this.MetricsFromMetersWithSameNameAndDifferentTagsAreExportedAsSeparateScopes);
+
+        using var meter1 = new Meter(new MeterOptions(name) { Tags = [new("key", "value1")] });
+        using var meter2 = new Meter(new MeterOptions(name) { Tags = [new("key", "value2")] });
+
+        var resourceMetrics = ExportOneCounterPerMeter(meter1, meter2);
+
+        Assert.Equal(2, resourceMetrics.ScopeMetrics.Count);
+        Assert.Equal("counter-0", Assert.Single(Assert.Single(resourceMetrics.ScopeMetrics, s => s.Scope.Attributes[0].Value.StringValue == "value1").Metrics).Name);
+        Assert.Equal("counter-1", Assert.Single(Assert.Single(resourceMetrics.ScopeMetrics, s => s.Scope.Attributes[0].Value.StringValue == "value2").Metrics).Name);
+    }
+
+    [Fact]
+    public void MetricsFromMetersWithSameTagsInDifferentOrderAreExportedAsTheSameScope()
+    {
+        var name = nameof(this.MetricsFromMetersWithSameTagsInDifferentOrderAreExportedAsTheSameScope);
+
+        using var meter1 = new Meter(new MeterOptions(name) { Tags = [new("key1", "value1"), new("key2", 2)] });
+        using var meter2 = new Meter(new MeterOptions(name) { Tags = [new("key2", 2), new("key1", "value1")] });
+
+        var resourceMetrics = ExportOneCounterPerMeter(meter1, meter2);
+
+        var scopeMetrics = Assert.Single(resourceMetrics.ScopeMetrics);
+        Assert.Equal(2, scopeMetrics.Scope.Attributes.Count);
+        Assert.Equal(["counter-0", "counter-1"], scopeMetrics.Metrics.Select(m => m.Name));
+    }
+
+    [Fact]
+    public void MetricsFromInterleavedMetersAreGroupedByScope()
+    {
+        var name = nameof(this.MetricsFromInterleavedMetersAreGroupedByScope);
+
+        using var meter1 = new Meter(new MeterOptions(name) { Version = "1.0" });
+        using var meter2 = new Meter(new MeterOptions(name) { Version = "2.0" });
+
+        var resourceMetrics = ExportOneCounterPerMeter(meter1, meter2, meter1, meter2);
+
+        Assert.Equal(2, resourceMetrics.ScopeMetrics.Count);
+        Assert.Equal(["counter-0", "counter-2"], Assert.Single(resourceMetrics.ScopeMetrics, s => s.Scope.Version == "1.0").Metrics.Select(m => m.Name));
+        Assert.Equal(["counter-1", "counter-3"], Assert.Single(resourceMetrics.ScopeMetrics, s => s.Scope.Version == "2.0").Metrics.Select(m => m.Name));
+    }
+
     [Theory]
     [InlineData("test_gauge", null, null, 123L, null)]
     [InlineData("test_gauge", null, null, null, 123.45)]
@@ -1606,6 +1683,30 @@ public sealed class OtlpMetricsExporterTests : IDisposable
         {
             Assert.Null(exemplar);
         }
+    }
+
+    private static OtlpMetrics.ResourceMetrics ExportOneCounterPerMeter(params Meter[] meters)
+    {
+        var exportedItems = new List<Metric>();
+
+        using var meterProvider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meters[0].Name)
+            .AddInMemoryExporter(exportedItems)
+            .Build();
+
+        for (var i = 0; i < meters.Length; i++)
+        {
+            meters[i].CreateCounter<long>($"counter-{i}").Add(1);
+        }
+
+        meterProvider.ForceFlush();
+
+        Assert.Equal(meters.Length, exportedItems.Count);
+
+        var batch = new Batch<Metric>([.. exportedItems], exportedItems.Count);
+        var request = CreateMetricExportRequest(batch, Resource.Empty);
+
+        return Assert.Single(request.ResourceMetrics);
     }
 
     private static OtlpCollector.ExportMetricsServiceRequest CreateMetricExportRequest(in Batch<Metric> batch, Resource resource)
