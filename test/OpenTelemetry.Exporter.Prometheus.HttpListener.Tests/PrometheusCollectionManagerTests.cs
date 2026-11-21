@@ -109,7 +109,7 @@ public sealed class PrometheusCollectionManagerTests
             var parallelism = Math.Max((Environment.ProcessorCount + 1) / 2, 2);
 
 #if NET
-            var bag = new System.Collections.Concurrent.ConcurrentBag<Response>();
+            var bag = new ConcurrentBag<Response>();
 
             var parallel = Parallel.ForAsync(
                 0,
@@ -1233,6 +1233,372 @@ public sealed class PrometheusCollectionManagerTests
     }
 
     [Fact]
+    public async Task EnterCollectReleasesBuffersOfProtocolsWhichAreNoLongerRequested()
+    {
+        const int InitialSize = PrometheusExporterOptions.InitialScrapeResponseSizeBytes;
+
+        using var meter = CreateMeter();
+        using var provider = CreateMeterProviderWithCache(meter, scrapeResponseCacheDurationMilliseconds: 300);
+#pragma warning disable CA2000 // MeterProvider owns exporter lifecycle
+        var exporter = GetExporter(provider);
+#pragma warning restore CA2000 // MeterProvider owns exporter lifecycle
+
+        var elapsed = TimeSpan.Zero;
+        UseManualClock(exporter, () => elapsed);
+
+        meter.CreateCounter<int>("counter_int").Add(100);
+
+        var prometheusProtocol = GetProtocol(openMetricsRequested: false);
+        var openMetricsProtocol = GetProtocol(openMetricsRequested: true);
+
+        async Task ScrapeAsync(PrometheusProtocol protocol, TimeSpan at)
+        {
+            elapsed = at;
+            await ScrapeAndExitAsync(exporter, protocol);
+        }
+
+        await ScrapeAsync(prometheusProtocol, TimeSpan.Zero);
+        await ScrapeAsync(openMetricsProtocol, TimeSpan.FromMilliseconds(100));
+
+        Assert.Equal(2 * InitialSize, exporter.CollectionManager.AllocatedBufferSize);
+
+        // A format which was requested less than 5 minutes ago keeps its buffers
+        await ScrapeAsync(prometheusProtocol, TimeSpan.FromMinutes(4));
+        Assert.Equal(2 * InitialSize, exporter.CollectionManager.AllocatedBufferSize);
+
+        // The time is counted from its most recent request
+        await ScrapeAsync(openMetricsProtocol, TimeSpan.FromMinutes(4.5));
+        await ScrapeAsync(prometheusProtocol, TimeSpan.FromMinutes(5.2));
+        Assert.Equal(2 * InitialSize, exporter.CollectionManager.AllocatedBufferSize);
+
+        // Once it has not been requested for 5 minutes, its buffers are released
+        await ScrapeAsync(prometheusProtocol, TimeSpan.FromMinutes(10));
+        Assert.Equal(InitialSize, exporter.CollectionManager.AllocatedBufferSize);
+
+        // The buffers are allocated again if the format is requested again
+        await ScrapeAsync(openMetricsProtocol, TimeSpan.FromMinutes(11));
+        Assert.Equal(2 * InitialSize, exporter.CollectionManager.AllocatedBufferSize);
+    }
+
+    [Fact]
+    public async Task EnterCollectSharesCollectionsAgainAfterProtocolSkippedAnInterval()
+    {
+        const int InitialSize = PrometheusExporterOptions.InitialScrapeResponseSizeBytes;
+
+        using var meter = CreateMeter();
+        using var provider = CreateMeterProviderWithCache(meter, scrapeResponseCacheDurationMilliseconds: 300);
+#pragma warning disable CA2000 // MeterProvider owns exporter lifecycle
+        var exporter = GetExporter(provider);
+#pragma warning restore CA2000 // MeterProvider owns exporter lifecycle
+
+        var elapsed = TimeSpan.Zero;
+        UseManualClock(exporter, () => elapsed);
+
+        var collectCount = CountCollections(exporter);
+
+        meter.CreateCounter<int>("counter_int").Add(100);
+
+        var prometheusProtocol = GetProtocol(openMetricsRequested: false);
+        var openMetricsProtocol = GetProtocol(openMetricsRequested: true);
+
+        async Task<PrometheusCollectionManager.CollectionResponse> ScrapeAsync(PrometheusProtocol protocol, TimeSpan at)
+        {
+            elapsed = at;
+            return await ScrapeAndExitAsync(exporter, protocol);
+        }
+
+        // Two scrapers poll together every 10 minutes, which is longer than the time a format is retained
+        static TimeSpan Interval(int count) => TimeSpan.FromMinutes(10 * count);
+
+        var offset = TimeSpan.FromMilliseconds(1);
+
+        var response = await ScrapeAsync(prometheusProtocol, TimeSpan.Zero);
+        Assert.False(response.FromCache, "Response was served from the cache.");
+
+        response = await ScrapeAsync(openMetricsProtocol, offset);
+        Assert.False(response.FromCache, "Response was served from the cache.");
+        Assert.Equal(2, collectCount());
+
+        response = await ScrapeAsync(prometheusProtocol, Interval(1));
+        Assert.False(response.FromCache, "Response was served from the cache.");
+
+        response = await ScrapeAsync(openMetricsProtocol, Interval(1) + offset);
+        Assert.True(response.FromCache, "Response was not served from the cache.");
+        Assert.Equal(3, collectCount());
+
+        // One of them then does not scrape for an interval, and its response is written once more
+        // for the scrape which requested it last, but not again as nobody has requested it since
+        response = await ScrapeAsync(prometheusProtocol, Interval(2));
+        Assert.False(response.FromCache, "Response was served from the cache.");
+        Assert.Equal(4, collectCount());
+        Assert.Equal(2 * InitialSize, exporter.CollectionManager.AllocatedBufferSize);
+
+        // Having not been requested for longer than it is retained, its buffers are released
+        response = await ScrapeAsync(prometheusProtocol, Interval(3));
+        Assert.False(response.FromCache, "Response was served from the cache.");
+        Assert.Equal(5, collectCount());
+        Assert.Equal(InitialSize, exporter.CollectionManager.AllocatedBufferSize);
+
+        // When it scrapes again it is collected for on its own, as it would have been had its buffers been kept
+        response = await ScrapeAsync(openMetricsProtocol, Interval(3) + offset);
+        Assert.False(response.FromCache, "Response was served from the cache.");
+        Assert.Equal(6, collectCount());
+
+        // After which the two share a collection again
+        response = await ScrapeAsync(prometheusProtocol, Interval(4));
+        Assert.False(response.FromCache, "Response was served from the cache.");
+
+        response = await ScrapeAsync(openMetricsProtocol, Interval(4) + offset);
+        Assert.True(response.FromCache, "Response was not served from the cache.");
+        Assert.Equal(7, collectCount());
+        Assert.Equal(2 * InitialSize, exporter.CollectionManager.AllocatedBufferSize);
+    }
+
+    [Fact]
+    public async Task EnterCollectReleasesSpareBufferWhichOverlappingScrapesNoLongerNeed()
+    {
+        const int InitialSize = PrometheusExporterOptions.InitialScrapeResponseSizeBytes;
+
+        using var meter = CreateMeter();
+        using var provider = CreateMeterProviderWithCache(meter, scrapeResponseCacheDurationMilliseconds: 300);
+#pragma warning disable CA2000 // MeterProvider owns exporter lifecycle
+        var exporter = GetExporter(provider);
+#pragma warning restore CA2000 // MeterProvider owns exporter lifecycle
+
+        var elapsed = TimeSpan.Zero;
+        UseManualClock(exporter, () => elapsed);
+
+        meter.CreateCounter<int>("counter_int").Add(100);
+
+        var protocol = GetProtocol(openMetricsRequested: false);
+
+        // A second scrape collects while the response to the first is still being read
+        var firstResponse = await EnterCollectAsync(exporter, protocol);
+        PrometheusCollectionManager.CollectionResponse secondResponse;
+
+        try
+        {
+            elapsed = TimeSpan.FromSeconds(1);
+            secondResponse = await EnterCollectAsync(exporter, protocol);
+        }
+        finally
+        {
+            exporter.CollectionManager.ExitCollect(firstResponse);
+        }
+
+        exporter.CollectionManager.ExitCollect(secondResponse);
+
+        Assert.True(firstResponse.Succeeded, "The first scrape did not succeed.");
+        Assert.True(secondResponse.Succeeded, "The second scrape did not succeed.");
+        Assert.Equal(2 * InitialSize, exporter.CollectionManager.AllocatedBufferSize);
+
+        // The second buffer is kept for 5 minutes after it was last needed
+        elapsed = TimeSpan.FromMinutes(4);
+        await ScrapeAndExitAsync(exporter, protocol);
+        Assert.Equal(2 * InitialSize, exporter.CollectionManager.AllocatedBufferSize);
+
+        elapsed = TimeSpan.FromMinutes(6);
+        await ScrapeAndExitAsync(exporter, protocol);
+        Assert.Equal(InitialSize, exporter.CollectionManager.AllocatedBufferSize);
+
+        // Scrapes which overlap again allocate it again
+        var thirdResponse = await EnterCollectAsync(exporter, protocol);
+        PrometheusCollectionManager.CollectionResponse fourthResponse;
+
+        try
+        {
+            elapsed = TimeSpan.FromMinutes(7);
+            fourthResponse = await EnterCollectAsync(exporter, protocol);
+        }
+        finally
+        {
+            exporter.CollectionManager.ExitCollect(thirdResponse);
+        }
+
+        exporter.CollectionManager.ExitCollect(fourthResponse);
+
+        Assert.True(thirdResponse.Succeeded, "The third scrape did not succeed.");
+        Assert.True(fourthResponse.Succeeded, "The fourth scrape did not succeed.");
+        Assert.Equal(2 * InitialSize, exporter.CollectionManager.AllocatedBufferSize);
+    }
+
+    [Fact]
+    public async Task EnterCollectDoesNotReleaseBuffersWhichAreStillBeingRead()
+    {
+        const int InitialSize = PrometheusExporterOptions.InitialScrapeResponseSizeBytes;
+
+        using var meter = CreateMeter();
+        using var provider = CreateMeterProviderWithCache(meter, scrapeResponseCacheDurationMilliseconds: 300);
+#pragma warning disable CA2000 // MeterProvider owns exporter lifecycle
+        var exporter = GetExporter(provider);
+#pragma warning restore CA2000 // MeterProvider owns exporter lifecycle
+
+        var elapsed = TimeSpan.Zero;
+        UseManualClock(exporter, () => elapsed);
+
+        meter.CreateCounter<int>("counter_int").Add(100);
+
+        var prometheusProtocol = GetProtocol(openMetricsRequested: false);
+        var openMetricsProtocol = GetProtocol(openMetricsRequested: true);
+        var otherProtocol = PrometheusProtocol.Fallback;
+
+        static string GetPayload(PrometheusCollectionManager.CollectionResponse response)
+            => Encoding.UTF8.GetString(response.View.Array!, response.View.Offset, response.View.Count);
+
+        // The responses of two formats are still being read when the formats have not been requested for longer than they are retained
+        var prometheusResponse = await EnterCollectAsync(exporter, prometheusProtocol);
+
+        elapsed = TimeSpan.FromSeconds(1);
+        var openMetricsResponse = await EnterCollectAsync(exporter, openMetricsProtocol);
+
+        try
+        {
+            elapsed = TimeSpan.FromMinutes(6);
+            await ScrapeAndExitAsync(exporter, otherProtocol);
+
+            // Collecting another format does not release buffers which are being read, and does not overwrite them
+            Assert.Equal(3 * InitialSize, exporter.CollectionManager.AllocatedBufferSize);
+            Assert.Equal(2, exporter.CollectionManager.ActiveReaderCount);
+            Assert.Contains("counter_int_total", GetPayload(prometheusResponse), StringComparison.Ordinal);
+            Assert.Contains("counter_int", GetPayload(openMetricsResponse), StringComparison.Ordinal);
+        }
+        finally
+        {
+            exporter.CollectionManager.ExitCollect(prometheusResponse);
+            exporter.CollectionManager.ExitCollect(openMetricsResponse);
+        }
+
+        Assert.Equal(0, exporter.CollectionManager.ActiveReaderCount);
+
+        // Once they are no longer being read, the next collection releases them
+        elapsed = TimeSpan.FromMinutes(6) + TimeSpan.FromSeconds(1);
+        await ScrapeAndExitAsync(exporter, otherProtocol);
+
+        Assert.Equal(InitialSize, exporter.CollectionManager.AllocatedBufferSize);
+    }
+
+    [Fact]
+    public async Task EnterCollectDoesNotReleaseSpareBufferWhichIsStillBeingRead()
+    {
+        const int InitialSize = PrometheusExporterOptions.InitialScrapeResponseSizeBytes;
+
+        using var meter = CreateMeter();
+        using var provider = CreateMeterProviderWithCache(meter, scrapeResponseCacheDurationMilliseconds: 300);
+#pragma warning disable CA2000 // MeterProvider owns exporter lifecycle
+        var exporter = GetExporter(provider);
+#pragma warning restore CA2000 // MeterProvider owns exporter lifecycle
+
+        var elapsed = TimeSpan.Zero;
+        UseManualClock(exporter, () => elapsed);
+
+        meter.CreateCounter<int>("counter_int").Add(100);
+
+        var protocol = GetProtocol(openMetricsRequested: false);
+        var otherProtocol = GetProtocol(openMetricsRequested: true);
+
+        // A second scrape collects while the response to the first is still being read, so two buffers are in use
+        var firstResponse = await EnterCollectAsync(exporter, protocol);
+
+        elapsed = TimeSpan.FromSeconds(1);
+        var secondResponse = await EnterCollectAsync(exporter, protocol);
+
+        var secondResponseExited = false;
+
+        try
+        {
+            Assert.Equal(2 * InitialSize, exporter.CollectionManager.AllocatedBufferSize);
+
+            // Both are still being read when the second buffer has not been needed to collect for longer than it is retained
+            elapsed = TimeSpan.FromMinutes(6);
+            await ScrapeAndExitAsync(exporter, otherProtocol);
+
+            Assert.Equal(3 * InitialSize, exporter.CollectionManager.AllocatedBufferSize);
+            Assert.Equal(2, exporter.CollectionManager.ActiveReaderCount);
+
+            // The scrape which was reading it is done, so the time it is kept for counts from when it was last read
+            exporter.CollectionManager.ExitCollect(firstResponse);
+
+            elapsed = TimeSpan.FromMinutes(6) + TimeSpan.FromSeconds(1);
+            await ScrapeAndExitAsync(exporter, otherProtocol);
+
+            Assert.Equal(3 * InitialSize, exporter.CollectionManager.AllocatedBufferSize);
+            Assert.Equal(1, exporter.CollectionManager.ActiveReaderCount);
+
+            exporter.CollectionManager.ExitCollect(secondResponse);
+            secondResponseExited = true;
+        }
+        finally
+        {
+            if (!secondResponseExited)
+            {
+                exporter.CollectionManager.ExitCollect(secondResponse);
+            }
+        }
+
+        // Once nothing is reading either, the format has not been requested for long enough to be released
+        elapsed = TimeSpan.FromMinutes(12);
+        await ScrapeAndExitAsync(exporter, otherProtocol);
+
+        Assert.Equal(InitialSize, exporter.CollectionManager.AllocatedBufferSize);
+    }
+
+    [Fact]
+    public async Task EnterCollectDoesNotReleaseBuffersWhileTheirResponseIsStillCached()
+    {
+        const int InitialSize = PrometheusExporterOptions.InitialScrapeResponseSizeBytes;
+
+        using var meter = CreateMeter();
+        using var provider = CreateMeterProviderWithCache(meter, scrapeResponseCacheDurationMilliseconds: 600_000);
+#pragma warning disable CA2000 // MeterProvider owns exporter lifecycle
+        var exporter = GetExporter(provider);
+#pragma warning restore CA2000 // MeterProvider owns exporter lifecycle
+
+        var elapsed = TimeSpan.Zero;
+        UseManualClock(exporter, () => elapsed);
+
+        var collectCount = CountCollections(exporter);
+
+        meter.CreateCounter<int>("counter_int").Add(100);
+
+        var protocol = GetProtocol(openMetricsRequested: false);
+        var otherProtocol = GetProtocol(openMetricsRequested: true);
+
+        async Task<PrometheusCollectionManager.CollectionResponse> ScrapeAsync(PrometheusProtocol protocol, TimeSpan at)
+        {
+            elapsed = at;
+            return await ScrapeAndExitAsync(exporter, protocol);
+        }
+
+        var response = await ScrapeAsync(protocol, TimeSpan.Zero);
+        Assert.False(response.FromCache, "Response was served from the cache.");
+        Assert.Equal(1, collectCount());
+
+        // The format has not been requested for longer than it is retained, but its response is still cached
+        response = await ScrapeAsync(otherProtocol, TimeSpan.FromMinutes(6));
+        Assert.False(response.FromCache, "Response was served from the cache.");
+        Assert.Equal(2, collectCount());
+        Assert.Equal(2 * InitialSize, exporter.CollectionManager.AllocatedBufferSize);
+
+        // So its buffers are still there to serve it without collecting again
+        response = await ScrapeAsync(protocol, TimeSpan.FromMinutes(7));
+        Assert.True(response.FromCache, "Response was not served from the cache.");
+        Assert.Equal(2, collectCount());
+
+        // The scrape which requested it most recently arrived near a collection, so it is written once more
+        // when the other format is collected for again, which is when its response is no longer cached
+        response = await ScrapeAsync(otherProtocol, TimeSpan.FromMinutes(30));
+        Assert.False(response.FromCache, "Response was served from the cache.");
+        Assert.Equal(3, collectCount());
+        Assert.Equal(2 * InitialSize, exporter.CollectionManager.AllocatedBufferSize);
+
+        // Once that response is no longer cached either, and has not been requested since, the buffers are released
+        response = await ScrapeAsync(otherProtocol, TimeSpan.FromMinutes(41));
+        Assert.False(response.FromCache, "Response was served from the cache.");
+        Assert.Equal(4, collectCount());
+        Assert.Equal(InitialSize, exporter.CollectionManager.AllocatedBufferSize);
+    }
+
+    [Fact]
     public async Task EnterCollectServesCachedResponseWhileCollectingAnotherProtocol()
     {
         const int ScrapeResponseCacheDurationMilliseconds = 15_000;
@@ -2278,6 +2644,306 @@ public sealed class PrometheusCollectionManagerTests
     [Theory]
     [InlineData(false)]
     [InlineData(true)]
+    public async Task EnterCollectOmitsOnlyTheMetricsWhichDoNotFitInTheResponse(bool openMetricsRequested)
+    {
+        var prefix = nameof(this.EnterCollectOmitsOnlyTheMetricsWhichDoNotFitInTheResponse);
+
+        using var firstMeter = new Meter(prefix + ".first");
+        using var secondMeter = new Meter(prefix + ".second");
+
+        using var listener = new DroppedListener(eventId: 18, "b_counter", countIndex: 1, nameIndex: 0);
+
+#pragma warning disable CA2000 // Dispose objects before losing scope
+        var exporter = new PrometheusExporter(new PrometheusExporterOptions
+        {
+            TargetInfoEnabled = false,
+            ScrapeResponseCacheDurationMilliseconds = 0,
+            MaxScrapeResponseSizeBytes = PrometheusExporterOptions.InitialScrapeResponseSizeBytes,
+        });
+
+        var reader = new BaseExportingMetricReader(exporter)
+        {
+            TemporalityPreference = MetricReaderTemporalityPreference.Cumulative,
+        };
+#pragma warning restore CA2000 // Dispose objects before losing scope
+
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(firstMeter.Name)
+            .AddMeter(secondMeter.Name)
+            .AddReader(reader)
+            .Build();
+
+        firstMeter.CreateCounter<long>("a_counter").Add(1);
+
+        // Neither of these fit in the response. The tags of a histogram are written with each of its
+        // buckets, so a tag value which is much shorter than the maximum is enough for it not to fit.
+        firstMeter.CreateCounter<long>("b_counter").Add(1, new KeyValuePair<string, object?>("label", new string('x', 90_000)));
+        firstMeter.CreateHistogram<double>("c_histogram").Record(1, new KeyValuePair<string, object?>("label", new string('x', 8_000)));
+
+        // The metadata of a family is written with its first metric, which can be one that does not fit.
+        firstMeter.CreateCounter<long>("d_counter", unit: "By", description: "Help text.").Add(1, new KeyValuePair<string, object?>("label", new string('x', 90_000)));
+        secondMeter.CreateCounter<long>("d_counter", unit: "By", description: "Help text.").Add(2);
+
+        firstMeter.CreateCounter<long>("e_counter").Add(3);
+
+        var response = await exporter.CollectionManager.EnterCollect(GetProtocol(openMetricsRequested), TestContext.Current.CancellationToken);
+
+        string output;
+
+        try
+        {
+            Assert.True(response.Succeeded, "The metrics which fit were not served.");
+            output = Encoding.UTF8.GetString(response.View.Array!, response.View.Offset, response.View.Count);
+        }
+        finally
+        {
+            exporter.CollectionManager.ExitCollect(response);
+        }
+
+        var lines = output.Split('\n');
+
+        Assert.Single(lines, line => line.StartsWith("a_counter_total{", StringComparison.Ordinal));
+        Assert.Single(lines, line => line.StartsWith("e_counter_total{", StringComparison.Ordinal));
+
+        Assert.DoesNotContain("b_counter", output, StringComparison.Ordinal);
+        Assert.DoesNotContain("c_histogram", output, StringComparison.Ordinal);
+
+        var sample = Assert.Single(lines, line => line.StartsWith("d_counter_bytes_total{", StringComparison.Ordinal));
+        Assert.Contains(secondMeter.Name, sample, StringComparison.Ordinal);
+        Assert.EndsWith(" 2", sample, StringComparison.Ordinal);
+
+        // The name in the metadata has the '_total' suffix in the Prometheus text format, but not in OpenMetrics.
+        Assert.Single(lines, line => line.StartsWith("# TYPE d_counter_bytes", StringComparison.Ordinal));
+        Assert.Single(lines, line => line.StartsWith("# HELP d_counter_bytes", StringComparison.Ordinal));
+        Assert.Equal(openMetricsRequested ? 1 : 0, lines.Count(line => line.StartsWith("# UNIT d_counter_bytes", StringComparison.Ordinal)));
+
+        if (openMetricsRequested)
+        {
+            Assert.EndsWith("# EOF\n", output, StringComparison.Ordinal);
+        }
+
+        Assert.Equal([3], listener.Counts);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task EnterCollectOmitsTheMetricsWhichFollowOnceTheResponseIsFull(bool openMetricsRequested)
+    {
+        const int MetricCount = 1_000; // The most metrics that the SDK collects for a provider.
+        const string MetricNamePrefix = "response_full_counter_";
+
+        using var meter = CreateMeter();
+
+        using var listener = new DroppedListener(eventId: 18, MetricNamePrefix, countIndex: 1, nameIndex: 0);
+
+#pragma warning disable CA2000 // Dispose objects before losing scope
+        var exporter = new PrometheusExporter(new PrometheusExporterOptions
+        {
+            TargetInfoEnabled = false,
+            ScrapeResponseCacheDurationMilliseconds = 0,
+            MaxScrapeResponseSizeBytes = PrometheusExporterOptions.InitialScrapeResponseSizeBytes,
+        });
+
+        var reader = new BaseExportingMetricReader(exporter)
+        {
+            TemporalityPreference = MetricReaderTemporalityPreference.Cumulative,
+        };
+#pragma warning restore CA2000 // Dispose objects before losing scope
+
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddReader(reader)
+            .Build();
+
+        // Each of the metrics fits in the response, but together they do not.
+        for (var i = 0; i < MetricCount; i++)
+        {
+            meter.CreateCounter<long>($"{MetricNamePrefix}{i:D4}", description: "Help text.").Add(1);
+        }
+
+        var response = await exporter.CollectionManager.EnterCollect(GetProtocol(openMetricsRequested), TestContext.Current.CancellationToken);
+
+        string output;
+
+        try
+        {
+            Assert.True(response.Succeeded, "The metrics which fit were not served.");
+            Assert.True(response.View.Count <= PrometheusExporterOptions.InitialScrapeResponseSizeBytes, $"The response is {response.View.Count} bytes.");
+            output = Encoding.UTF8.GetString(response.View.Array!, response.View.Offset, response.View.Count);
+        }
+        finally
+        {
+            exporter.CollectionManager.ExitCollect(response);
+        }
+
+        if (openMetricsRequested)
+        {
+            Assert.EndsWith("# EOF\n", output, StringComparison.Ordinal);
+        }
+
+        var lines = output.Split('\n');
+
+        // Every family in the response has its metadata and at least one sample, in the same order.
+        var familiesWithMetadata = lines
+            .Where(line => line.StartsWith("# TYPE ", StringComparison.Ordinal))
+            .Select(line => GetFamilyName(line.Split(' ')[2]))
+            .ToList();
+
+        var familiesWithSamples = lines
+            .Where(line => line.Length > 0 && line[0] != '#')
+            .Select(line => GetFamilyName(line.Split('{')[0]))
+            .Distinct()
+            .ToList();
+
+        Assert.Equal(familiesWithMetadata, familiesWithSamples);
+        Assert.Equal(familiesWithMetadata.Count, familiesWithMetadata.Distinct().Count());
+        Assert.Equal(lines.Count(line => line.StartsWith("# HELP ", StringComparison.Ordinal)), familiesWithMetadata.Count);
+
+        // The metrics are served in order of their names until the response is full, and the rest are dropped.
+        Assert.InRange(familiesWithSamples.Count, 1, MetricCount - 1);
+        Assert.Equal(Enumerable.Range(0, familiesWithSamples.Count).Select(i => $"{MetricNamePrefix}{i:D4}"), familiesWithSamples);
+        Assert.Equal([MetricCount - familiesWithSamples.Count], listener.Counts);
+
+        static string GetFamilyName(string name) =>
+            name.EndsWith("_total", StringComparison.Ordinal) ? name.Substring(0, name.Length - "_total".Length) :
+            name.EndsWith("_created", StringComparison.Ordinal) ? name.Substring(0, name.Length - "_created".Length) :
+            name;
+    }
+
+    [Fact]
+    public async Task EnterCollectOmitsTheMetricWhichLeavesNoRoomForTheEndOfTheResponse()
+    {
+        const int MaxScrapeResponseSizeBytes = PrometheusExporterOptions.InitialScrapeResponseSizeBytes;
+
+        // The response is ASCII, so each character of the tag value is one byte of it, and the
+        // tag value which makes the response exactly as large as it may be follows from any other.
+        var (succeeded, output) = await ScrapeAsync(tagLength: 1);
+
+        Assert.True(succeeded);
+
+        var largestTagLength = 1 + MaxScrapeResponseSizeBytes - output.Length;
+
+        for (var tagLength = largestTagLength - 8; tagLength <= largestTagLength + 2; tagLength++)
+        {
+            (succeeded, output) = await ScrapeAsync(tagLength);
+
+            Assert.True(succeeded, $"The scrape failed for a tag value of {tagLength} characters.");
+            Assert.Contains("a_gauge{", output, StringComparison.Ordinal);
+            Assert.EndsWith("# EOF\n", output, StringComparison.Ordinal);
+            Assert.Equal(tagLength <= largestTagLength, output.Contains("b_gauge{", StringComparison.Ordinal));
+        }
+
+        async Task<(bool Succeeded, string Output)> ScrapeAsync(int tagLength)
+        {
+            using var meter = new Meter(nameof(this.EnterCollectOmitsTheMetricWhichLeavesNoRoomForTheEndOfTheResponse));
+
+#pragma warning disable CA2000 // Dispose objects before losing scope
+            var exporter = new PrometheusExporter(new PrometheusExporterOptions
+            {
+                TargetInfoEnabled = false,
+                ScrapeResponseCacheDurationMilliseconds = 0,
+                MaxScrapeResponseSizeBytes = MaxScrapeResponseSizeBytes,
+            });
+
+            var reader = new BaseExportingMetricReader(exporter)
+            {
+                TemporalityPreference = MetricReaderTemporalityPreference.Cumulative,
+            };
+#pragma warning restore CA2000 // Dispose objects before losing scope
+
+            using var provider = Sdk.CreateMeterProviderBuilder()
+                .AddMeter(meter.Name)
+                .AddReader(reader)
+                .Build();
+
+            meter.CreateUpDownCounter<long>("a_gauge").Add(1);
+            meter.CreateUpDownCounter<long>("b_gauge").Add(1, new KeyValuePair<string, object?>("label", new string('x', tagLength)));
+
+            var response = await exporter.CollectionManager.EnterCollect(GetProtocol(openMetricsRequested: true), TestContext.Current.CancellationToken);
+
+            try
+            {
+                return response.Succeeded
+                    ? (true, Encoding.UTF8.GetString(response.View.Array!, response.View.Offset, response.View.Count))
+                    : (false, string.Empty);
+            }
+            finally
+            {
+                exporter.CollectionManager.ExitCollect(response);
+            }
+        }
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task EnterCollectOmitsOnlyTheHistogramWhichHasTagsTooLargeToSerialize(bool openMetricsRequested)
+    {
+        // The tags of a histogram point are serialized in a scratch buffer of their own, which doubles in size
+        // for as long as the result is no more than 100 MiB, so it is 64 MiB at the most. A tag value which
+        // is larger than that cannot be serialized, however large the response is allowed to be.
+        var tagValue = new string('x', 72 * 1024 * 1024);
+
+        using var meter = CreateMeter();
+
+        using var listener = new DroppedListener(eventId: 18, "b_histogram", countIndex: 1, nameIndex: 0);
+
+#pragma warning disable CA2000 // Dispose objects before losing scope
+        var exporter = new PrometheusExporter(new PrometheusExporterOptions
+        {
+            TargetInfoEnabled = false,
+            ScrapeResponseCacheDurationMilliseconds = 0,
+        });
+
+        var reader = new BaseExportingMetricReader(exporter)
+        {
+            TemporalityPreference = MetricReaderTemporalityPreference.Cumulative,
+        };
+#pragma warning restore CA2000 // Dispose objects before losing scope
+
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddReader(reader)
+            .Build();
+
+        meter.CreateCounter<long>("a_counter", description: "Help text.").Add(1);
+        meter.CreateHistogram<double>("b_histogram", description: "Help text.").Record(1, new KeyValuePair<string, object?>("label", tagValue));
+        meter.CreateCounter<long>("c_counter", description: "Help text.").Add(2);
+
+        var response = await exporter.CollectionManager.EnterCollect(GetProtocol(openMetricsRequested), TestContext.Current.CancellationToken);
+
+        string output;
+
+        try
+        {
+            Assert.True(response.Succeeded, "The metrics which fit were not served.");
+            output = Encoding.UTF8.GetString(response.View.Array!, response.View.Offset, response.View.Count);
+        }
+        finally
+        {
+            exporter.CollectionManager.ExitCollect(response);
+        }
+
+        var lines = output.Split('\n');
+
+        Assert.Single(lines, line => line.StartsWith("a_counter_total{", StringComparison.Ordinal));
+        Assert.Single(lines, line => line.StartsWith("c_counter_total{", StringComparison.Ordinal));
+        Assert.Single(lines, line => line.StartsWith("# TYPE a_counter", StringComparison.Ordinal));
+        Assert.Single(lines, line => line.StartsWith("# TYPE c_counter", StringComparison.Ordinal));
+        Assert.DoesNotContain("b_histogram", output, StringComparison.Ordinal);
+
+        if (openMetricsRequested)
+        {
+            Assert.EndsWith("# EOF\n", output, StringComparison.Ordinal);
+        }
+
+        Assert.Equal([1], listener.Counts);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
     public async Task EnterCollectDoesNotWriteTheSameSeriesMoreThanOnce(bool openMetricsRequested)
     {
         var prefix = nameof(this.EnterCollectDoesNotWriteTheSameSeriesMoreThanOnce);
@@ -2437,6 +3103,17 @@ public sealed class PrometheusCollectionManagerTests
         reservedHistogram.Record(1, new KeyValuePair<string, object?>("le", "5000"));
         reservedHistogram.Record(2);
 
+        // A counter with points that only differ by a tag with an empty or no value, which is written as the same series
+        var emptyCounter = meter.CreateCounter<int>("empty_counter");
+        emptyCounter.Add(2, new KeyValuePair<string, object?>("method", "password"), new KeyValuePair<string, object?>("app.build", string.Empty));
+        emptyCounter.Add(5, new KeyValuePair<string, object?>("method", "password"));
+        emptyCounter.Add(11, new KeyValuePair<string, object?>("method", "password"), new KeyValuePair<string, object?>("app.build", null));
+
+        // A counter with points that only differ by a tag that is not written, as it is the label of the name of the metric
+        var reservedCounter = meter.CreateCounter<int>("reserved_counter");
+        reservedCounter.Add(1, new KeyValuePair<string, object?>("__name__", "up"));
+        reservedCounter.Add(2, new KeyValuePair<string, object?>("__name__", "down"));
+
         // A histogram without any buckets, which only has a sum and a count
         var histogram = meter.CreateHistogram<double>("empty_histogram");
         histogram.Record(1, new KeyValuePair<string, object?>("a.b", "value"));
@@ -2490,10 +3167,13 @@ public sealed class PrometheusCollectionManagerTests
         Assert.Single(samples, s => s.StartsWith("surrogate_gauge", StringComparison.Ordinal));
         Assert.Single(samples, s => s.StartsWith("character_gauge", StringComparison.Ordinal));
         Assert.Single(samples, s => s.StartsWith("bytes_gauge", StringComparison.Ordinal));
-        Assert.Single(samples, s => s.StartsWith("ordered_counter_total", StringComparison.Ordinal));
+        Assert.Single(samples, s => s.StartsWith("ordered_counter_total", StringComparison.Ordinal) && s.EndsWith(" 3", StringComparison.Ordinal));
+        Assert.Single(samples, s => s.StartsWith("empty_counter_total", StringComparison.Ordinal) && s.EndsWith(" 18", StringComparison.Ordinal));
         Assert.Single(samples, s => s.StartsWith("reserved_histogram_sum", StringComparison.Ordinal));
-        Assert.Single(samples, s => s.StartsWith("empty_histogram_sum", StringComparison.Ordinal));
-        Assert.Single(samples, s => s.StartsWith("empty_histogram_count", StringComparison.Ordinal));
+        Assert.Single(samples, s => s.StartsWith("reserved_counter_total", StringComparison.Ordinal) && s.EndsWith(" 3", StringComparison.Ordinal));
+        Assert.DoesNotContain(samples, s => s.Contains("__name__", StringComparison.Ordinal));
+        Assert.Single(samples, s => s.StartsWith("empty_histogram_sum", StringComparison.Ordinal) && s.EndsWith(" 3", StringComparison.Ordinal));
+        Assert.Single(samples, s => s.StartsWith("empty_histogram_count", StringComparison.Ordinal) && s.EndsWith(" 2", StringComparison.Ordinal));
     }
 
     [Theory]
@@ -2635,7 +3315,7 @@ public sealed class PrometheusCollectionManagerTests
         const int SeriesCount = 600; // Fewer than the default limit of the metric points of a metric
         const int UniqueSeriesCount = 600;
 
-        using var listener = new DuplicateSeriesListener("expanding_counter");
+        using var listener = new DroppedListener(eventId: 15, "expanding_counter");
 
         using var firstMeter = new Meter(nameof(this.EnterCollectDoesNotWriteTheSameSeriesMoreThanOnceWhenTheBufferHasToBeExpanded) + ".first");
         using var secondMeter = new Meter(nameof(this.EnterCollectDoesNotWriteTheSameSeriesMoreThanOnceWhenTheBufferHasToBeExpanded) + ".second");
@@ -2750,6 +3430,56 @@ public sealed class PrometheusCollectionManagerTests
         finally
         {
             exporter.CollectionManager.ExitCollect(response);
+        }
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task EnterCollectIgnoresTagValueWhichCannotBeConvertedToString(bool openMetricsRequested)
+    {
+        using var meter = CreateMeter();
+        using var provider = CreateMeterProviderWithCache(meter, scrapeResponseCacheDurationMilliseconds: 0);
+
+#pragma warning disable CA2000 // MeterProvider owns exporter lifecycle
+        var exporter = GetExporter(provider);
+#pragma warning restore CA2000 // MeterProvider owns exporter lifecycle
+
+        var counter = meter.CreateCounter<long>("test_counter");
+
+        counter.Add(1, new KeyValuePair<string, object?>("key", "value"));
+
+        // ArgumentException is also how the serializer signals that the response buffer is full
+        counter.Add(2, new KeyValuePair<string, object?>("key", new CallbackLabelValue(static () => throw new ArgumentException("Nope."))));
+
+        // A point without the attribute is written as the same series as the one whose value could not be converted
+        counter.Add(4);
+
+        var protocol = GetProtocol(openMetricsRequested);
+
+        // The metric point is cumulative, so it is written by every scrape
+        for (var i = 0; i < 2; i++)
+        {
+            var response = await EnterCollectAsync(exporter, protocol);
+
+            try
+            {
+                Assert.True(response.Succeeded);
+
+                // The exception must not be taken for a full buffer either
+                Assert.Equal(PrometheusExporterOptions.InitialScrapeResponseSizeBytes, response.View.Array!.Length);
+
+                var output = Encoding.UTF8.GetString(response.View.Array, response.View.Offset, response.View.Count);
+
+                Assert.Contains($"test_counter_total{{key=\"value\",otel_scope_name=\"{meter.Name}\"}} 1\n", output, StringComparison.Ordinal);
+
+                // A label with an empty value is the same as one that does not exist, so the two points are one series
+                Assert.Equal(1, CountOccurrences(output, $"test_counter_total{{otel_scope_name=\"{meter.Name}\"}}"));
+            }
+            finally
+            {
+                exporter.CollectionManager.ExitCollect(response);
+            }
         }
     }
 
@@ -2878,7 +3608,15 @@ public sealed class PrometheusCollectionManagerTests
     }
 #endif
 
-    private sealed class DuplicateSeriesListener(string metricName) : EventListener
+    /// <summary>
+    /// Collects the counts of the events which report dropping something of a metric, which have
+    /// the count and the name of the first metric affected in their payload at the given indexes.
+    /// </summary>
+    /// <remarks>
+    /// The events of the other tests which run at the same time are received too, so only those
+    /// whose metric name starts with <paramref name="metricNamePrefix"/> are collected.
+    /// </remarks>
+    private sealed class DroppedListener(int eventId, string metricNamePrefix, int countIndex = 0, int nameIndex = 1) : EventListener
     {
         private readonly ConcurrentQueue<int> counts = [];
 
@@ -2895,11 +3633,12 @@ public sealed class PrometheusCollectionManagerTests
 
         protected override void OnEventWritten(EventWrittenEventArgs eventData)
         {
-            if (eventData.EventId == 15 &&
-                eventData.Payload is { Count: 2 } payload &&
-                string.Equals(payload[1] as string, metricName, StringComparison.Ordinal))
+            if (eventData.EventId == eventId &&
+                eventData.Payload is { Count: >= 2 } payload &&
+                payload[nameIndex] is string metricName &&
+                metricName.StartsWith(metricNamePrefix, StringComparison.Ordinal))
             {
-                this.counts.Enqueue((int)payload[0]!);
+                this.counts.Enqueue((int)payload[countIndex]!);
             }
         }
     }

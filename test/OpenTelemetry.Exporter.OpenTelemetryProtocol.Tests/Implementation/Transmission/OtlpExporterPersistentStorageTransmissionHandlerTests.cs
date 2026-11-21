@@ -86,7 +86,7 @@ public class OtlpExporterPersistentStorageTransmissionHandlerTests
         Assert.True(transmissionHandler.TrySubmitRequest([0, 0, 0, 0, 0], contentLength: 5));
         Assert.Equal(1, handler.RequestCount);
         Assert.Null(persistentBlobProvider.LastBuffer);
-        Assert.Single(listener.Messages, e => e.EventId == (rejected > 0 ? 45 : 46));
+        Assert.Single(listener.Messages, e => e.EventId == (rejected > 0 ? 46 : 47));
     }
 
     [Fact]
@@ -173,12 +173,33 @@ public class OtlpExporterPersistentStorageTransmissionHandlerTests
         Assert.Empty(Directory.EnumerateFiles(temp.Path));
     }
 
+    [Fact]
+    public void RetryStoredRequests_SuppressesInstrumentation()
+    {
+        // The retry thread sends stored requests outside of the exporter's Export() call, so
+        // it must suppress instrumentation itself. Otherwise the exporter's own requests are
+        // traced and the resulting telemetry is exported (and possibly stored) again.
+        var exportClient = new RecordingExportClient();
+        var blobProvider = new QueueBlobProvider();
+        var blob = new TrackingBlob([1, 2, 3]);
+        blobProvider.Enqueue(blob);
+
+        using var handler = new OtlpExporterPersistentStorageTransmissionHandler(blobProvider, exportClient, timeoutMilliseconds: 10_000);
+
+        Assert.True(handler.InitiateAndWaitForRetryProcess(5_000));
+        Assert.True(blob.WasDeleted, "The stored request was not sent.");
+        Assert.True(exportClient.SuppressInstrumentation, "The stored request was sent without suppressing instrumentation.");
+    }
+
     private sealed class RecordingExportClient : IExportClient
     {
         public byte[]? LastRequest { get; private set; }
 
+        public bool SuppressInstrumentation { get; private set; }
+
         public ExportClientResponse SendExportRequest(byte[] buffer, int contentLength, DateTime deadlineUtc, CancellationToken cancellationToken = default)
         {
+            this.SuppressInstrumentation = Sdk.SuppressInstrumentation;
             this.LastRequest = buffer.AsSpan(0, contentLength).ToArray();
             return new ExportClientHttpResponse(success: true, deadlineUtc: deadlineUtc, response: null, exception: null);
         }

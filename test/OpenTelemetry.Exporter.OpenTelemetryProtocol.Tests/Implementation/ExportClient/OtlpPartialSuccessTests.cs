@@ -17,8 +17,8 @@ public class OtlpPartialSuccessTests
 {
     private const int ExportSuccessEventId = 21;
     private const int ResponseDiscardedEventId = 40;
-    private const int ExportPartiallySucceededEventId = 45;
-    private const int ExportSucceededWithWarningEventId = 46;
+    private const int ExportPartiallySucceededEventId = 46;
+    private const int ExportSucceededWithWarningEventId = 47;
 
     private const int MaxResponseSizeBytes = 1024;
 

@@ -100,11 +100,12 @@ internal sealed class PeriodicExportingMetricReaderThreadWorker : PeriodicExport
     {
         var triggers = new WaitHandle[] { this.exportTrigger, this.shutdownTrigger };
         var startedAt = Stopwatch.GetTimestamp();
+        var schedule = new PeriodicExportingMetricReaderSchedule(this.ExportIntervalMilliseconds);
 
         while (true)
         {
             var elapsedMilliseconds = Stopwatch.GetElapsedTime(startedAt).Ticks / TimeSpan.TicksPerMillisecond;
-            var timeout = this.ExportIntervalMilliseconds - (int)(elapsedMilliseconds % this.ExportIntervalMilliseconds);
+            var timeout = schedule.GetTimeout(elapsedMilliseconds);
             int index;
 
             try
@@ -127,6 +128,7 @@ internal sealed class PeriodicExportingMetricReaderThreadWorker : PeriodicExport
                     this.MetricReader.Collect(this.CollectTimeoutMilliseconds);
                     return;
                 case WaitHandle.WaitTimeout: // timer
+                    schedule.OnExportIntervalElapsed();
                     OpenTelemetrySdkEventSource.Log.MetricReaderEvent("PeriodicExportingMetricReader calling MetricReader.Collect because the export interval has elapsed.");
                     this.MetricReader.Collect(this.CollectTimeoutMilliseconds);
                     break;

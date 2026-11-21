@@ -498,9 +498,8 @@ The console sink writes entries only; it has no preamble.
 
 ### Log entries
 
-Each entry is one line, plus additional lines for an exception when one is
-attached. The prefix is fixed-width and padded so that messages line up under
-the column header:
+Each entry starts on a new line with a prefix. The prefix is fixed-width and
+padded so that messages line up under the column header:
 
 ```text
 [<timestamp>][<threadId>][<spanId>][<level>]  <message> {EventId} <traceparent>
@@ -537,6 +536,15 @@ it, which tells you which component to look at: `OpenTelemetry-Sdk` for the SDK,
 When an entry carries a .NET exception object rather than a pre-formatted
 message, the full `Exception.ToString()` - message, stack trace, and inner
 exceptions - follows on the lines after the entry.
+
+An entry is usually one line, but its message can contain line breaks (for
+example a response received from a backend) and an attached exception adds more.
+Every non-empty line of an entry after its first is indented by four spaces, so
+only a line which starts with the prefix begins a new entry. Line breaks (CR, LF
+or CRLF) are written as the platform's line ending, and line breaks at the end of
+the text are dropped. Tab is written as-is. Every other control character, and
+the Unicode line and paragraph separators (U+2028 and U+2029), is written as its
+`\uXXXX` escape.
 
 ### File naming and rollover
 
@@ -771,7 +779,9 @@ without a restart. Deleting it disables this source.
   `Information`, `Verbose` becomes `Debug`, and `LogAlways` becomes `Trace`.
 
 `LogDirectory`, `FileSize`, and `LogLevel` are required. Missing, unreadable, or
-invalid configuration disables this source.
+invalid configuration disables this source. A file that cannot be read right
+now because another process holds a lock on it does not: the configuration
+already applied is kept and the file is read again at the next poll.
 
 `FormatMessage` is now ignored; messages are always formatted. Output uses the
 standard [entry format](#log-entries), [preamble](#file-preamble), and

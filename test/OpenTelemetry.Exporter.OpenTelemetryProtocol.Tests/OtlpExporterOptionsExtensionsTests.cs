@@ -288,8 +288,60 @@ public class OtlpExporterOptionsExtensionsTests
             TestContext.Current.CancellationToken);
 
         Assert.False(response.Success);
-        Assert.Equal(HttpStatusCode.TemporaryRedirect, Assert.IsType<ExportClientHttpResponse>(response).StatusCode);
+
+        // A response without a status code means that no response was received at all,
+        // so include the reason the request failed instead of only that it did.
+        var httpResponse = Assert.IsType<ExportClientHttpResponse>(response);
+
+        Assert.True(
+            httpResponse.StatusCode == HttpStatusCode.TemporaryRedirect,
+            $"Expected {HttpStatusCode.TemporaryRedirect} but the status code was {httpResponse.StatusCode?.ToString() ?? "(none)"}: {httpResponse.Exception}");
+
         Assert.Equal(["/v1/traces"], requestedPaths);
+    }
+
+    [Fact]
+    public void DefaultHttpClientFactory_CreatesHttpClientThatDoesNotUseCookies()
+    {
+        var cookieHeaders = new ConcurrentQueue<string?>();
+
+        using var server = TestHttpServer.RunServer(
+            context =>
+            {
+                cookieHeaders.Enqueue(context.Request.Headers["Cookie"]);
+                context.Request.InputStream.CopyTo(Stream.Null);
+
+                // Every response tries to set a cookie. If the client stores
+                // it, the next request would carry a Cookie header.
+                context.Response.Headers["Set-Cookie"] = "session=abc123";
+                context.Response.OutputStream.Close();
+            },
+            out var host,
+            out var port);
+
+        var options = new OtlpExporterOptions
+        {
+            Endpoint = new Uri($"http://{host}:{port}/v1/traces"),
+            Protocol = OtlpExportProtocol.HttpProtobuf,
+        };
+
+        using var httpClient = options.DefaultHttpClientFactory();
+
+        var exportClient = new OtlpHttpExportClient(options, httpClient, string.Empty);
+
+        for (var i = 0; i < 3; i++)
+        {
+            var response = exportClient.SendExportRequest(
+                "hello world"u8.ToArray(),
+                11,
+                DateTime.UtcNow.AddMinutes(1),
+                TestContext.Current.CancellationToken);
+
+            Assert.True(response.Success);
+        }
+
+        Assert.Equal(3, cookieHeaders.Count);
+        Assert.All(cookieHeaders, cookie => Assert.Null(cookie));
     }
 
     [Theory]

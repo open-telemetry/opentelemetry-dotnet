@@ -8,6 +8,8 @@ using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 
+// Any redaction here is best-effort only - we do not guarantee that any exception will be free of potentially sensitive information
+
 [EventSource(Name = "OpenTelemetry-Exporter-OpenTelemetryProtocol")]
 internal sealed class OpenTelemetryProtocolExporterEventSource : EventSource, IConfigurationExtensionsLogger
 {
@@ -394,6 +396,35 @@ internal sealed class OpenTelemetryProtocolExporterEventSource : EventSource, IC
         => this.WriteEvent(44, grpcStatusCode, detailsStatusCode);
 
     [NonEvent]
+    internal void LogRecordDataReadFailed(string dataName, Exception ex)
+    {
+        if (Log.IsEnabled(EventLevel.Warning, EventKeywords.All))
+        {
+            string exception;
+            try
+            {
+                exception = ex.ToInvariantString();
+            }
+            catch (Exception e) when (e is not OutOfMemoryException)
+            {
+                // The exception was thrown by data which could not be read, so it may
+                // not be possible to convert it to a string either. Reporting the
+                // failure must not fail the serialization of the log record.
+                exception = ex.GetType().ToString();
+            }
+
+            this.LogRecordDataReadFailed(dataName, exception);
+        }
+    }
+
+    [Event(
+        45,
+        Message = "Failed to read the {0} of a log record. The log record will be exported without it. Exception: {1}",
+        Level = EventLevel.Warning)]
+    internal void LogRecordDataReadFailed(string dataName, string exception)
+        => this.WriteEvent(45, dataName, exception);
+
+    [NonEvent]
     internal void ExportPartiallySucceeded(Uri endpoint, OtlpSignalType? signalType, long rejectedCount, string? errorMessage)
     {
         if (Log.IsEnabled(EventLevel.Warning, EventKeywords.All))
@@ -403,11 +434,11 @@ internal sealed class OpenTelemetryProtocolExporterEventSource : EventSource, IC
     }
 
     [Event(
-        45,
+        46,
         Message = "The export to {0} partially succeeded. The server rejected {2} {1}, which will not be retried. Error message: '{3}'",
         Level = EventLevel.Warning)]
     internal void ExportPartiallySucceeded(string endpoint, string rejectedItemsName, long rejectedCount, string errorMessage)
-        => this.WriteEvent(45, endpoint, rejectedItemsName, rejectedCount, errorMessage);
+        => this.WriteEvent(46, endpoint, rejectedItemsName, rejectedCount, errorMessage);
 
     [NonEvent]
     internal void ExportSucceededWithWarning(Uri endpoint, string errorMessage)
@@ -419,11 +450,11 @@ internal sealed class OpenTelemetryProtocolExporterEventSource : EventSource, IC
     }
 
     [Event(
-        46,
+        47,
         Message = "The export to {0} succeeded with a warning from the server: '{1}'",
         Level = EventLevel.Warning)]
     internal void ExportSucceededWithWarning(string endpoint, string warningMessage)
-        => this.WriteEvent(46, endpoint, warningMessage);
+        => this.WriteEvent(47, endpoint, warningMessage);
 
     private static string GetRejectedItemsName(OtlpSignalType? signalType) => signalType switch
     {

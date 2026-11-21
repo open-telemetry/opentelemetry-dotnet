@@ -7,11 +7,46 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* **Breaking:** `HttpClient` instances created by the exporter directly no
+  longer automatically store cookies set by responses from the endpoint or
+  send them with later export requests, except in browser environments where
+  cookie handling is unchanged. Explicitly configured `Cookie` headers are
+  still sent. See [Configure HttpClient](README.md#configure-httpclient)
+  to prevent `HttpClient` created by `IHttpClientFactory` from using cookies.
+  ([#8131](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8131))
+
+* Fixed the OTLP/gRPC exporter not exporting again on .NET after a connection
+  to the `https` endpoint was made without HTTP/2 being negotiated. The
+  `HttpClient` created by the exporter is now replaced when this happens. An
+  `HttpClient` supplied through `HttpClientFactory` is not replaced.
+  ([#8144](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8144))
+
+* **Breaking:** `ExportProcessorType.Simple` no longer exports each span or log
+  record on the thread which ended it, which could stall an application under
+  concurrent load. Each is still exported on its own, in order, as soon as it
+  has ended, but by a thread of the processor, so it may not have been exported
+  when the call that ended it returns, and at most 2048 are queued before
+  further ones are dropped. Call `ForceFlush()` and check its result to wait
+  for pending exports. On single-threaded platforms, it triggers export without
+  waiting and returns `false` while exports are still pending.
+  ([#8134](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8134))
+
+* Fixed a whole batch of log records being dropped when the exception, scopes
+  or attributes of one of the log records cannot be read. Only the data which
+  could not be read, and any that follows it in the same scope or attribute
+  list, is now left out of that log record, and is counted as dropped.
+  ([#8143](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8143))
+
+* Fixed the experimental disk retry feature resending stored requests without
+  suppressing instrumentation, so that the exporter's own requests could be
+  traced and exported by the application's exporters.
+  ([#8164](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8164))
+
 * Added support for the `partial_success` field of OTLP export responses, for
   both gRPC and HTTP/protobuf. When the server rejects some of the exported
   spans, data points or log records, the number rejected and the error message
-  are now logged as a warning (event 45), and an error message sent without any
-  rejected items is logged as a warning (event 46). A partial success is still
+  are now logged as a warning (event 46), and an error message sent without any
+  rejected items is logged as a warning (event 47). A partial success is still
   a successful export and is not retried.
   ([#8130](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8130))
 

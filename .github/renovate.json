@@ -27,7 +27,9 @@
       ]
     }
   ],
-  "dependencyDashboard": false,
+  "dependencyDashboard": {
+    "enabled": false
+  },
   "extends": [
     "config:best-practices",
     "customManagers:dockerfileVersions",
@@ -66,7 +68,7 @@
       "addLabels": [".NET"]
     },
     {
-      "matchManagers": ["pypi"],
+      "matchManagers": ["pip_requirements"],
       "addLabels": ["python"]
     },
     {

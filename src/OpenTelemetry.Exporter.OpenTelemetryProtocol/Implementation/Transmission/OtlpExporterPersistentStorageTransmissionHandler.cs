@@ -110,6 +110,11 @@ internal sealed class OtlpExporterPersistentStorageTransmissionHandler : OtlpExp
 
     private void RetryStoredRequests()
     {
+        // Prevents the exporter's gRPC and HTTP operations from being instrumented.
+        // This thread does not run inside the exporter's Export() call, so it is
+        // not covered by the scope which is started there.
+        using var scope = SuppressInstrumentationScope.Begin();
+
         var handles = new WaitHandle[] { this.shutdownEvent, this.exportEvent };
         while (true)
         {
