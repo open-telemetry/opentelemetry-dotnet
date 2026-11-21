@@ -45,7 +45,7 @@ Notes](../../RELEASENOTES.md).
 * Fixed spans and metrics from `ActivitySource` or `Meter` instances which
   share a name but differ by version, schema URL or tags being exported under
   a single instrumentation scope. Each is now exported under its own scope.
-  ([#XXXX](https://github.com/open-telemetry/opentelemetry-dotnet/pull/XXXX))
+  ([#8166](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8166))
 
 ## 1.21.0
 
