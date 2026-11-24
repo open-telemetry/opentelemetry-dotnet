@@ -12,8 +12,8 @@ internal readonly struct Tags : IEquatable<Tags>
 {
     public static readonly Tags EmptyTags = new([]);
 
-    // A per-process random seed for tag values whose own hash discards bits,
-    // and for strings on frameworks without randomized string hashing.
+    // A per-process random seed for mixing tag value hashes and hashing
+    // strings on frameworks without randomized string hashing.
     private static readonly ulong HashSeed = GenerateHashSeed();
 
     private readonly int hashCode;
@@ -68,6 +68,24 @@ internal readonly struct Tags : IEquatable<Tags>
         // values, which carry the entropy, are hashed in full.
         var keyHashCache = ThreadStaticStorage.GetStorage().KeyHashCache;
 #if NET || NETSTANDARD2_1_OR_GREATER
+        // The fixed-arity overloads avoid incremental hashing overhead for short tag sets.
+        if (keyValuePairs.Length == 1)
+        {
+            ref readonly var item = ref keyValuePairs[0];
+            return HashCode.Combine(GetKeyHashCode(keyHashCache, item.Key), GetValueHashCode(item.Value));
+        }
+
+        if (keyValuePairs.Length == 2)
+        {
+            ref readonly var first = ref keyValuePairs[0];
+            ref readonly var second = ref keyValuePairs[1];
+            return HashCode.Combine(
+                GetKeyHashCode(keyHashCache, first.Key),
+                GetValueHashCode(first.Value),
+                GetKeyHashCode(keyHashCache, second.Key),
+                GetValueHashCode(second.Value));
+        }
+
         HashCode hashCode = default;
 
         for (var i = 0; i < keyValuePairs.Length; i++)
@@ -142,7 +160,8 @@ internal readonly struct Tags : IEquatable<Tags>
 #else
             string s => GetSeededStringHashCode(s),
 #endif
-            int or bool => value.GetHashCode(),
+            int i => GetSeededScalarHashCode(unchecked((uint)i)),
+            bool => value.GetHashCode(),
             _ => GetNonStringValueHashCode(value),
         };
 
@@ -155,6 +174,13 @@ internal readonly struct Tags : IEquatable<Tags>
         {
             return value switch
             {
+                uint ui => GetSeededScalarHashCode(ui),
+#if NET || NETSTANDARD2_1_OR_GREATER
+                float f => GetSeededScalarHashCode((uint)f.GetHashCode()),
+#else
+                // .NET Framework gives equal NaN values different hashes.
+                float f => GetSeededScalarHashCode((uint)(float.IsNaN(f) ? float.NaN : f).GetHashCode()),
+#endif
                 long l => GetSeededHashCode((ulong)l),
                 ulong ul => GetSeededHashCode(ul),
                 double d => GetSeededHashCode(d),
@@ -163,8 +189,19 @@ internal readonly struct Tags : IEquatable<Tags>
                 DateTime dateTime => GetSeededHashCode((ulong)dateTime.Ticks),
                 DateTimeOffset dateTimeOffset => GetSeededHashCode((ulong)dateTimeOffset.UtcTicks),
                 TimeSpan timeSpan => GetSeededHashCode((ulong)timeSpan.Ticks),
-                _ => value.GetHashCode(),
+                _ => GetSeededScalarHashCode((uint)value.GetHashCode()),
             };
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static int GetSeededScalarHashCode(uint value)
+    {
+        // Use one mixing round for scalar hashes and two for wide inputs.
+        unchecked
+        {
+            var hash = SplitMix64(HashSeed + value);
+            return (int)hash ^ (int)(hash >> 32);
         }
     }
 
@@ -284,6 +321,9 @@ internal readonly struct Tags : IEquatable<Tags>
 
 #endif
 
+#if !NET && !NETSTANDARD2_1_OR_GREATER
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#endif
     private static ulong SplitMix64(ulong z)
     {
         unchecked

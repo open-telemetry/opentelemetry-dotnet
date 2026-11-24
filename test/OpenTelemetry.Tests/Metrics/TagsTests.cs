@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Globalization;
+using System.Reflection;
 
 namespace OpenTelemetry.Metrics.Tests;
 
@@ -9,8 +10,10 @@ public class TagsTests
 {
     private static readonly long WideValueTicks = new DateTime(2026, 10, 19, 12, 0, 0, DateTimeKind.Utc).Ticks;
 
-    private static readonly Dictionary<string, object[]> EqualWideValues = new()
+    private static readonly Dictionary<string, object[]> EqualValues = new()
     {
+        ["float zero"] = [0.0f, -0.0f],
+        ["float NaN"] = [float.NaN, BitConverter.ToSingle(BitConverter.GetBytes(0x7FC00001), 0)],
         ["double zero"] = [0.0, -0.0],
         ["double NaN"] = [double.NaN, -double.NaN, BitConverter.Int64BitsToDouble(0x7FF0000000000001)],
         ["decimal zero"] = [0m, 0.00m, new decimal(0, 0, 0, true, 0), new decimal(0, 0, 0, true, 28)],
@@ -27,7 +30,7 @@ public class TagsTests
         ],
     };
 
-    public static TheoryData<string> EqualWideValueNames => [.. EqualWideValues.Keys];
+    public static TheoryData<string> EqualValueNames => [.. EqualValues.Keys];
 
     [Fact]
     public void Equals_ReturnsTrue_ForEqualTags()
@@ -281,10 +284,37 @@ public class TagsTests
     }
 
     [Theory]
-    [MemberData(nameof(EqualWideValueNames))]
-    public void ComputeHashCode_EqualWideValuesShareAHashCode(string name)
+    [InlineData(200, 404, -1)]
+    [InlineData(200u, 404u, uint.MaxValue)]
+    [InlineData(0.25f, 1.5f, -2f)]
+    public void GetValueHashCode_MixesScalarHashes(object first, object second, object third)
     {
-        var values = EqualWideValues[name];
+        // Inspect the value hash before the tag combiner adds its own seeding.
+        var method = typeof(Tags).GetMethod("GetValueHashCode", BindingFlags.NonPublic | BindingFlags.Static);
+        Assert.NotNull(method);
+#if NET
+        var getValueHashCode = method.CreateDelegate<Func<object, int>>();
+#else
+        var getValueHashCode = (Func<object, int>)method.CreateDelegate(typeof(Func<object, int>));
+#endif
+
+        object[] values = [first, second, third];
+        Assert.Contains(values, value => getValueHashCode(value) != value.GetHashCode());
+    }
+
+    [Fact]
+    public void ComputeHashCode_MixedIntegerWidthsHaveDistinctHashes()
+    {
+        Assert.Contains(
+            Enumerable.Range(200, 8),
+            value => Tags.ComputeHashCode([new("status", value)]) != Tags.ComputeHashCode([new("status", (long)value)]));
+    }
+
+    [Theory]
+    [MemberData(nameof(EqualValueNames))]
+    public void ComputeHashCode_EqualValuesShareAHashCode(string name)
+    {
+        var values = EqualValues[name];
 
         var expected = new Tags([new("key", values[0])]);
 
