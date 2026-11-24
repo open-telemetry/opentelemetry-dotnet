@@ -153,7 +153,7 @@ internal sealed class PrometheusCollectionManager
     internal ResponseWriter BeginResponseWrite(in CollectionResponse response)
     {
         Debug.Assert(response.Buffer is not null, "Only a leased response can be written.");
-        return new ResponseWriter(this, response.Buffer!);
+        return new ResponseWriter(this, response.Buffer!, response.View.Count);
     }
 
 #if !NET
@@ -322,8 +322,8 @@ internal sealed class PrometheusCollectionManager
                 {
                     // Both buffers are leased and any cached response has expired. Wait for
                     // capacity rather than returning stale metrics or overwriting leased bytes.
-                    // The asynchronous wait can cancel idle response writers, but a buffer only
-                    // becomes reusable after their ExitCollect calls have actually released it.
+                    // The asynchronous wait can cancel idle or slow response writers. A buffer
+                    // becomes reusable after their ExitCollect calls have released it.
                     if (state.GetBufferFreedTask() is { } bufferFreedTask)
                     {
                         return CollectStep.WaitingForBuffer(bufferFreedTask);
@@ -488,23 +488,25 @@ internal sealed class PrometheusCollectionManager
                 }
                 else
                 {
+                    var bufferFreed = step.BufferFreedTask!;
                     if (writerIdleTimeout is { } idleTimeout)
                     {
                         cancellationToken.ThrowIfCancellationRequested();
-                        var delay = this.GetProtocolState(protocol).CancelIdleWriters(this.GetElapsedTime(), idleTimeout);
+                        var delay = this.GetProtocolState(protocol).CheckBlockingWriters(
+                            bufferFreed, this.GetElapsedTime(), idleTimeout);
 
                         try
                         {
 #if NET
-                            await step.BufferFreedTask!.WaitAsync(delay, cancellationToken).ConfigureAwait(false);
+                            await bufferFreed.WaitAsync(delay, cancellationToken).ConfigureAwait(false);
 #else
-                            await WaitForTask(step.BufferFreedTask!, delay, cancellationToken).ConfigureAwait(false);
+                            await WaitForTask(bufferFreed, delay, cancellationToken).ConfigureAwait(false);
 #endif
                         }
                         catch (TimeoutException)
                         {
-                            // Recheck each writer's last completed write, including writers that
-                            // started after this wait. Cancellation never releases their leases.
+                            // Recheck writer progress, including writers that started after this
+                            // wait. Cancellation never releases their leases.
                             continue;
                         }
                     }
@@ -512,9 +514,9 @@ internal sealed class PrometheusCollectionManager
                     {
                         // Non-HTTP callers without a scrape budget only wait for readers to exit.
 #if NET
-                        await step.BufferFreedTask!.WaitAsync(cancellationToken).ConfigureAwait(false);
+                        await bufferFreed.WaitAsync(cancellationToken).ConfigureAwait(false);
 #else
-                        await WaitForTask(step.BufferFreedTask!, cancellationToken).ConfigureAwait(false);
+                        await WaitForTask(bufferFreed, cancellationToken).ConfigureAwait(false);
 #endif
                     }
                 }
@@ -1391,29 +1393,38 @@ internal sealed class PrometheusCollectionManager
 
     internal sealed class ResponseWriter : IDisposable
     {
+        private static readonly TimeSpan ContendedWriteGracePeriod = TimeSpan.FromSeconds(5);
+        private static readonly TimeSpan ContendedWriteBudget = TimeSpan.FromSeconds(10);
+
         private readonly PrometheusCollectionManager manager;
         private readonly ResponseBuffer buffer;
+        private readonly int responseSize;
+        private readonly TimeSpan started;
         private readonly Lock gate = new();
         private readonly CancellationTokenSource cancellation = new();
         private TimeSpan lastProgress;
+        private int bytesWritten;
         private bool cancelling;
         private bool disposed;
 
-        public ResponseWriter(PrometheusCollectionManager manager, ResponseBuffer buffer)
+        public ResponseWriter(PrometheusCollectionManager manager, ResponseBuffer buffer, int responseSize)
         {
             this.manager = manager;
             this.buffer = buffer;
-            this.lastProgress = manager.GetElapsedTime();
+            this.responseSize = responseSize;
+            this.started = manager.GetElapsedTime();
+            this.lastProgress = this.started;
             this.CancellationToken = this.cancellation.Token;
             buffer.AddWriter(this);
         }
 
         public CancellationToken CancellationToken { get; }
 
-        public void RecordProgress()
+        public void RecordProgress(int count)
         {
             lock (this.gate)
             {
+                this.bytesWritten += count;
                 this.lastProgress = this.manager.GetElapsedTime();
             }
         }
@@ -1437,7 +1448,7 @@ internal sealed class PrometheusCollectionManager
             this.buffer.RemoveWriter(this);
         }
 
-        public TimeSpan CancelIfIdle(TimeSpan elapsed, TimeSpan idleTimeout)
+        public TimeSpan CheckForCancellation(TimeSpan elapsed, TimeSpan idleTimeout, bool checkWriteRate)
         {
             lock (this.gate)
             {
@@ -1447,6 +1458,20 @@ internal sealed class PrometheusCollectionManager
                 }
 
                 var remaining = idleTimeout - (elapsed - this.lastProgress);
+                if (checkWriteRate && this.responseSize > 0)
+                {
+                    // Allow startup time for the first writes. After that, compare the fraction
+                    // written with the fraction of the server's write budget already spent.
+                    // This budget is independent of the waiting scrape's requested timeout.
+                    var progressTicks = ContendedWriteBudget.Ticks * this.bytesWritten / this.responseSize;
+                    var allowedTime = TimeSpan.FromTicks(Math.Max(ContendedWriteGracePeriod.Ticks, progressTicks));
+                    var writeTimeRemaining = allowedTime - (elapsed - this.started);
+                    if (writeTimeRemaining < remaining)
+                    {
+                        remaining = writeTimeRemaining;
+                    }
+                }
+
                 if (remaining > TimeSpan.Zero)
                 {
                     return remaining < TimeSpan.FromMilliseconds(1) ? TimeSpan.FromMilliseconds(1) : remaining;
@@ -1525,7 +1550,7 @@ internal sealed class PrometheusCollectionManager
             }
         }
 
-        public TimeSpan CancelIdleWriters(TimeSpan elapsed, TimeSpan idleTimeout)
+        public TimeSpan CheckWriters(TimeSpan elapsed, TimeSpan idleTimeout, bool checkWriteRate)
         {
             ResponseWriter[] activeWriters;
             lock (this.writersGate)
@@ -1536,7 +1561,7 @@ internal sealed class PrometheusCollectionManager
             var nextCheck = idleTimeout;
             foreach (var writer in activeWriters)
             {
-                var delay = writer.CancelIfIdle(elapsed, idleTimeout);
+                var delay = writer.CheckForCancellation(elapsed, idleTimeout, checkWriteRate);
                 if (delay < nextCheck)
                 {
                     nextCheck = delay;
@@ -1820,12 +1845,30 @@ internal sealed class PrometheusCollectionManager
             }
         }
 
-        public TimeSpan CancelIdleWriters(TimeSpan elapsed, TimeSpan idleTimeout)
+        public TimeSpan CheckBlockingWriters(Task<bool> bufferFreed, TimeSpan elapsed, TimeSpan idleTimeout)
         {
             var published = this.published;
             var spare = this.spare;
-            var delay = published.CancelIdleWriters(elapsed, idleTimeout);
-            var spareDelay = spare?.CancelIdleWriters(elapsed, idleTimeout) ?? idleTimeout;
+
+            // The two references can temporarily match while a collection publishes its response.
+            if (bufferFreed.IsCompleted ||
+                spare is null ||
+                ReferenceEquals(published, spare) ||
+                published.ReaderCount == 0 ||
+                spare.ReaderCount == 0)
+            {
+                return idleTimeout;
+            }
+
+            var delay = published.CheckWriters(elapsed, idleTimeout, checkWriteRate: false);
+            if (bufferFreed.IsCompleted || published.ReaderCount == 0)
+            {
+                return delay;
+            }
+
+            // One buffer suffices. The spare has the older response, and no new reader
+            // can join it. Check the write rate only for its remaining readers.
+            var spareDelay = spare.CheckWriters(elapsed, idleTimeout, checkWriteRate: true);
             return delay < spareDelay ? delay : spareDelay;
         }
 

@@ -118,7 +118,7 @@ internal sealed class PrometheusExporterEventSource : EventSource, IConfiguratio
 
     [Event(
         14,
-        Message = "Metrics scrape response abandoned because it made no write progress while another scrape was waiting.",
+        Message = "Metrics scrape response abandoned to free a response buffer for another scrape.",
         Level = EventLevel.Warning)]
     public void ScrapeAbandoned()
         => this.WriteEvent(14);

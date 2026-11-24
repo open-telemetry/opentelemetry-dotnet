@@ -750,21 +750,21 @@ public sealed class PrometheusCollectionManagerTests
             using var stalled = manager.BeginResponseWrite(cachedResponse);
 
             elapsed = TimeSpan.FromSeconds(20);
-            progressing.RecordProgress();
+            progressing.RecordProgress(response.View.Count / 2);
 
             var idleTimeout = TimeSpan.FromSeconds(3);
-            progressing.CancelIfIdle(elapsed + TimeSpan.FromSeconds(2), idleTimeout);
-            stalled.CancelIfIdle(elapsed + TimeSpan.FromSeconds(2), idleTimeout);
+            progressing.CheckForCancellation(elapsed + TimeSpan.FromSeconds(2), idleTimeout, checkWriteRate: false);
+            stalled.CheckForCancellation(elapsed + TimeSpan.FromSeconds(2), idleTimeout, checkWriteRate: false);
 
             Assert.False(progressing.CancellationToken.IsCancellationRequested);
             Assert.True(stalled.CancellationToken.IsCancellationRequested);
 
-            progressing.CancelIfIdle(elapsed + idleTimeout, idleTimeout);
+            progressing.CheckForCancellation(elapsed + idleTimeout, idleTimeout, checkWriteRate: false);
 
             Assert.True(progressing.CancellationToken.IsCancellationRequested);
 
             progressing.Dispose();
-            progressing.CancelIfIdle(elapsed + TimeSpan.FromSeconds(10), idleTimeout);
+            progressing.CheckForCancellation(elapsed + TimeSpan.FromSeconds(10), idleTimeout, checkWriteRate: false);
         }
         finally
         {
@@ -835,6 +835,75 @@ public sealed class PrometheusCollectionManagerTests
         Assert.Equal(0, manager.ActiveReaderCount);
     }
 
+    [Theory]
+    [InlineData(4, 25, false)] // Still within the grace period.
+    [InlineData(6, 75, false)] // On pace to finish.
+    [InlineData(6, 25, true)] // Behind the write budget.
+    public async Task EnterCollectCancelsOnlyOverdueWritersOfTheOlderResponse(
+        int writerAgeSeconds,
+        int completedPercent,
+        bool expectCancellation)
+    {
+        using var meter = CreateMeter();
+        using var provider = CreateMeterProviderWithCache(meter, 0);
+
+#pragma warning disable CA2000 // MeterProvider owns exporter lifecycle
+        var exporter = GetExporter(provider);
+#pragma warning restore CA2000 // MeterProvider owns exporter lifecycle
+
+        var manager = exporter.CollectionManager;
+        var elapsed = TimeSpan.Zero;
+        UseManualClock(exporter, () => elapsed);
+
+        meter.CreateCounter<int>("counter_int").Add(100);
+
+        using var cts = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
+        cts.CancelAfter(TimeSpan.FromSeconds(10));
+        var protocol = GetProtocol(openMetricsRequested: false);
+        var first = await EnterCollectAsync(exporter, protocol, scrapeTimeout: null, cts.Token);
+        PrometheusCollectionManager.CollectionResponse second = default;
+        PrometheusCollectionManager.CollectionResponse fresh = default;
+
+        try
+        {
+            Assert.True(first.Succeeded);
+            using var firstWriter = manager.BeginResponseWrite(first);
+            elapsed = TimeSpan.FromSeconds(1);
+            second = await EnterCollectAsync(exporter, protocol, scrapeTimeout: null, cts.Token);
+            Assert.True(second.Succeeded);
+            using var secondWriter = manager.BeginResponseWrite(second);
+            var secondPayload = second.View.ToArray();
+
+            elapsed = TimeSpan.FromSeconds(writerAgeSeconds);
+            firstWriter.RecordProgress(first.View.Count * completedPercent / 100);
+            secondWriter.RecordProgress(second.View.Count / 4);
+
+            var waiting = EnterCollectAsync(exporter, protocol, TimeSpan.FromSeconds(2), cts.Token);
+            var waitedForReader = !waiting.IsCompleted;
+
+            firstWriter.Dispose();
+            manager.ExitCollect(first);
+            first = default;
+            fresh = await waiting;
+
+            Assert.Equal(expectCancellation, firstWriter.CancellationToken.IsCancellationRequested);
+            Assert.False(secondWriter.CancellationToken.IsCancellationRequested);
+            Assert.True(waitedForReader, "The older buffer must remain leased until its reader exits.");
+            Assert.True(fresh.Succeeded);
+            Assert.False(fresh.FromCache);
+            Assert.NotSame(second.View.Array, fresh.View.Array);
+            Assert.Equal(secondPayload, second.View.ToArray());
+        }
+        finally
+        {
+            manager.ExitCollect(first);
+            manager.ExitCollect(second);
+            manager.ExitCollect(fresh);
+        }
+
+        Assert.Equal(0, manager.ActiveReaderCount);
+    }
+
     [Fact]
     public async Task ResponseWriterCancellationDoesNotHoldLocksWhileInvokingCallbacks()
     {
@@ -863,7 +932,7 @@ public sealed class PrometheusCollectionManagerTests
                 disposedDuringCallback = disposing.Wait(TimeSpan.FromSeconds(5));
             });
 
-            writer.CancelIfIdle(TimeSpan.MaxValue, TimeSpan.FromSeconds(1));
+            writer.CheckForCancellation(TimeSpan.MaxValue, TimeSpan.FromSeconds(1), checkWriteRate: false);
 
             Assert.True(disposedDuringCallback, "Disposing a writer deadlocked with cancellation.");
             Assert.True(writer.CancellationToken.IsCancellationRequested);
