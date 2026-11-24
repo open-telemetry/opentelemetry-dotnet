@@ -24,7 +24,7 @@ Notes](../../RELEASENOTES.md).
   ([#8158](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8158))
 
 * Improved metric recording resilience to hash collisions in numeric tag values.
-  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+  ([#8167](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8167))
 
 ## 1.21.0
 
