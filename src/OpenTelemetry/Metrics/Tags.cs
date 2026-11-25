@@ -1,6 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Globalization;
 using System.Runtime.CompilerServices;
 #if !NET && !NETSTANDARD2_1_OR_GREATER
 using System.Runtime.InteropServices;
@@ -12,9 +13,17 @@ internal readonly struct Tags : IEquatable<Tags>
 {
     public static readonly Tags EmptyTags = new([]);
 
-    // A per-process random seed for mixing tag value hashes and hashing
-    // strings on frameworks without randomized string hashing.
+    // A per-process random seed for hashing tag values and deriving type-specific seeds.
     private static readonly ulong HashSeed = GenerateHashSeed();
+
+    private static readonly ulong Int32HashSeed = GetTypeHashSeed(typeof(int));
+    private static readonly ulong UInt32HashSeed = GetTypeHashSeed(typeof(uint));
+    private static readonly ulong SingleHashSeed = GetTypeHashSeed(typeof(float));
+    private static readonly ulong CustomHashSeed = GetTypeHashSeed(typeof(object));
+
+    // Reserve zero for null and distinct low bits for the two Boolean hashes.
+    private static readonly int FalseHashCode = (GetSeededScalarHashCode<bool>(0) & ~3) | 1;
+    private static readonly int TrueHashCode = (GetSeededScalarHashCode<bool>(1) & ~3) | 2;
 
     private readonly int hashCode;
 
@@ -160,8 +169,8 @@ internal readonly struct Tags : IEquatable<Tags>
 #else
             string s => GetSeededStringHashCode(s),
 #endif
-            int i => GetSeededScalarHashCode(unchecked((uint)i)),
-            bool => value.GetHashCode(),
+            int i => GetSeededScalarHashCode(unchecked((uint)i), Int32HashSeed),
+            bool b => b ? TrueHashCode : FalseHashCode,
             _ => GetNonStringValueHashCode(value),
         };
 
@@ -174,33 +183,56 @@ internal readonly struct Tags : IEquatable<Tags>
         {
             return value switch
             {
-                uint ui => GetSeededScalarHashCode(ui),
+                uint ui => GetSeededScalarHashCode(ui, UInt32HashSeed),
 #if NET || NETSTANDARD2_1_OR_GREATER
-                float f => GetSeededScalarHashCode((uint)f.GetHashCode()),
+                float f => GetSeededScalarHashCode((uint)f.GetHashCode(), SingleHashSeed),
 #else
                 // .NET Framework gives equal NaN values different hashes.
-                float f => GetSeededScalarHashCode((uint)(float.IsNaN(f) ? float.NaN : f).GetHashCode()),
+                float f => GetSeededScalarHashCode(
+                    (uint)(float.IsNaN(f) ? float.NaN : f).GetHashCode(),
+                    SingleHashSeed),
 #endif
-                long l => GetSeededHashCode((ulong)l),
-                ulong ul => GetSeededHashCode(ul),
+                long l => GetSeededHashCode<long>((ulong)l),
+                ulong ul => GetSeededHashCode<ulong>(ul),
                 double d => GetSeededHashCode(d),
                 decimal m => GetSeededHashCode(m),
                 Guid guid => GetSeededHashCode(guid),
-                DateTime dateTime => GetSeededHashCode((ulong)dateTime.Ticks),
-                DateTimeOffset dateTimeOffset => GetSeededHashCode((ulong)dateTimeOffset.UtcTicks),
-                TimeSpan timeSpan => GetSeededHashCode((ulong)timeSpan.Ticks),
-                _ => GetSeededScalarHashCode((uint)value.GetHashCode()),
+                DateTime dateTime => GetSeededHashCode<DateTime>((ulong)dateTime.Ticks),
+                DateTimeOffset dateTimeOffset => GetSeededHashCode<DateTimeOffset>((ulong)dateTimeOffset.UtcTicks),
+                TimeSpan timeSpan => GetSeededHashCode<TimeSpan>((ulong)timeSpan.Ticks),
+                Enum e => GetSeededHashCode(e),
+                byte b => GetSeededScalarHashCode<byte>(b),
+                sbyte sb => GetSeededScalarHashCode<sbyte>((uint)sb),
+                short s => GetSeededScalarHashCode<short>((uint)s),
+                ushort us => GetSeededScalarHashCode<ushort>(us),
+                char c => GetSeededScalarHashCode<char>(c),
+                nint n => GetSeededHashCode<nint>((ulong)n),
+                nuint un => GetSeededHashCode<nuint>((ulong)un),
+#if NET
+                Half h => GetSeededScalarHashCode<Half>((uint)h.GetHashCode()),
+                DateOnly date => GetSeededScalarHashCode<DateOnly>((uint)date.DayNumber),
+                TimeOnly time => GetSeededHashCode<TimeOnly>((ulong)time.Ticks),
+                Int128 i128 => GetSeededHashCode<Int128>((ulong)i128, (ulong)(i128 >> 64)),
+                UInt128 u128 => GetSeededHashCode<UInt128>((ulong)u128, (ulong)(u128 >> 64)),
+#endif
+
+                // Custom values may compare equal across runtime types.
+                _ => GetSeededScalarHashCode((uint)value.GetHashCode(), CustomHashSeed),
             };
         }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static int GetSeededScalarHashCode(uint value)
+    private static int GetSeededScalarHashCode<T>(uint value)
+        => GetSeededScalarHashCode(value, ValueHashSeed<T>.Value);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static int GetSeededScalarHashCode(uint value, ulong seed)
     {
         // Use one mixing round for scalar hashes and two for wide inputs.
         unchecked
         {
-            var hash = SplitMix64(HashSeed + value);
+            var hash = SplitMix64(seed + value);
             return (int)hash ^ (int)(hash >> 32);
         }
     }
@@ -217,7 +249,7 @@ internal readonly struct Tags : IEquatable<Tags>
             value = double.NaN;
         }
 
-        return GetSeededHashCode(unchecked((ulong)BitConverter.DoubleToInt64Bits(value)));
+        return GetSeededHashCode<double>(unchecked((ulong)BitConverter.DoubleToInt64Bits(value)));
     }
 
     private static int GetSeededHashCode(decimal value)
@@ -240,7 +272,7 @@ internal readonly struct Tags : IEquatable<Tags>
             // Equals ignores the sign and scale of zero, and trailing zeros.
             if ((low | mid | high) == 0)
             {
-                return GetSeededHashCode(0UL);
+                return GetSeededHashCode<decimal>(0UL);
             }
 
             while (scale > 0 && (low & 1) == 0)
@@ -261,7 +293,7 @@ internal readonly struct Tags : IEquatable<Tags>
                 scale--;
             }
 
-            return GetSeededHashCode(
+            return GetSeededHashCode<decimal>(
                 ((ulong)mid << 32) | low,
                 ((ulong)((scale << 1) | (negative ? 1u : 0u)) << 32) | high);
         }
@@ -273,21 +305,36 @@ internal readonly struct Tags : IEquatable<Tags>
         Span<byte> bytes = stackalloc byte[16];
         _ = value.TryWriteBytes(bytes);
 
-        return GetSeededHashCode(BitConverter.ToUInt64(bytes), BitConverter.ToUInt64(bytes.Slice(8)));
+        return GetSeededHashCode<Guid>(BitConverter.ToUInt64(bytes), BitConverter.ToUInt64(bytes.Slice(8)));
 #else
         var storage = new GuidHashCodeStorage { Value = value };
 
-        return GetSeededHashCode(storage.Low, storage.High);
+        return GetSeededHashCode<Guid>(storage.Low, storage.High);
 #endif
     }
 
-    private static int GetSeededHashCode(ulong low, ulong high = 0)
+    private static int GetSeededHashCode(Enum value)
+    {
+        var seed = GetTypeHashSeed(value.GetType());
+        return value.GetTypeCode() switch
+        {
+            TypeCode.Int64 => GetSeededHashCode(seed, unchecked((ulong)((IConvertible)value).ToInt64(CultureInfo.InvariantCulture))),
+            TypeCode.UInt64 => GetSeededHashCode(seed, ((IConvertible)value).ToUInt64(CultureInfo.InvariantCulture)),
+            _ => GetSeededScalarHashCode(unchecked((uint)value.GetHashCode()), seed),
+        };
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static int GetSeededHashCode<T>(ulong low, ulong high = 0)
+        => GetSeededHashCode(ValueHashSeed<T>.Value, low, high);
+
+    private static int GetSeededHashCode(ulong seed, ulong low, ulong high = 0)
     {
         // Mix before reducing the words; adding their 32-bit halves directly to
         // System.HashCode still allows one word's contribution to cancel another.
         unchecked
         {
-            var hash = SplitMix64(SplitMix64(HashSeed + low) + high);
+            var hash = SplitMix64(SplitMix64(seed + low) + high);
             return (int)hash ^ (int)(hash >> 32);
         }
     }
@@ -345,6 +392,10 @@ internal readonly struct Tags : IEquatable<Tags>
 
         return BitConverter.ToUInt64(seed, 0);
     }
+
+    // Mix the runtime type's full identity into the seed before hashing the value.
+    private static ulong GetTypeHashSeed(Type type)
+        => SplitMix64(HashSeed ^ unchecked((ulong)type.TypeHandle.Value.ToInt64()));
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static bool SequenceEqual(
@@ -461,4 +512,9 @@ internal readonly struct Tags : IEquatable<Tags>
         public ulong High;
     }
 #endif
+
+    private static class ValueHashSeed<T>
+    {
+        public static readonly ulong Value = GetTypeHashSeed(typeof(T));
+    }
 }
