@@ -467,7 +467,7 @@ internal sealed class PrometheusCollectionManager
         TimeSpan? writerIdleTimeout,
         CancellationToken cancellationToken)
     {
-        for (var attempt = 0; attempt < MaxCollectAttempts; attempt++)
+        for (var attempt = 0; attempt < MaxCollectAttempts;)
         {
             CollectionResult collectionResult = default;
 
@@ -505,8 +505,8 @@ internal sealed class PrometheusCollectionManager
                         }
                         catch (TimeoutException)
                         {
-                            // Recheck writer progress, including writers that started after this
-                            // wait. Cancellation never releases their leases.
+                            // The caller's cancellation token bounds the progress checks on
+                            // this buffer wait. A retry is counted when collection is re-entered.
                             continue;
                         }
                     }
@@ -571,6 +571,7 @@ internal sealed class PrometheusCollectionManager
             // EnterCollect: when the awaited task completes synchronously the
             // continuation runs inline, so a recursive retry would grow the stack on
             // every iteration and eventually overflow under contention.
+            attempt++;
             step = this.TryEnterCollect(protocol);
 
             if (step.IsCompleted)

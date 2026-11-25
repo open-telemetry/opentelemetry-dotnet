@@ -835,6 +835,71 @@ public sealed class PrometheusCollectionManagerTests
         Assert.Equal(0, manager.ActiveReaderCount);
     }
 
+    [Fact]
+    public async Task BufferProgressChecksDoNotUseCollectionRetries()
+    {
+        using var meter = CreateMeter();
+        using var provider = CreateMeterProviderWithCache(meter, 0);
+
+#pragma warning disable CA2000 // MeterProvider owns exporter lifecycle
+        var exporter = GetExporter(provider);
+#pragma warning restore CA2000 // MeterProvider owns exporter lifecycle
+
+        var manager = exporter.CollectionManager;
+        UseManualClock(exporter, static () => TimeSpan.Zero);
+        meter.CreateCounter<int>("counter_int").Add(100);
+
+        using var cts = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
+        cts.CancelAfter(TimeSpan.FromMinutes(1));
+        var protocol = GetProtocol(openMetricsRequested: false);
+        var first = await EnterCollectAsync(exporter, protocol, scrapeTimeout: null, cts.Token);
+        PrometheusCollectionManager.CollectionResponse second = default;
+        PrometheusCollectionManager.CollectionResponse fresh = default;
+
+        try
+        {
+            Assert.True(first.Succeeded);
+            using var writer = manager.BeginResponseWrite(first);
+            writer.RecordProgress(first.View.Count / 2);
+            second = await EnterCollectAsync(exporter, protocol, scrapeTimeout: null, cts.Token);
+            Assert.True(second.Succeeded);
+
+            var checks = 0;
+            var checkedProgress = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+            manager.GetElapsedTime = () =>
+            {
+                // Wait for more progress checks than the collection retry budget allows.
+                if (Interlocked.Increment(ref checks) == 1100)
+                {
+                    checkedProgress.TrySetResult(true);
+                }
+
+                // Hold the manual clock just before the one-second idle deadline.
+                return TimeSpan.FromMilliseconds(999);
+            };
+
+            var waiting = EnterCollectAsync(exporter, protocol, TimeSpan.FromSeconds(2), cts.Token);
+            var completed = await Task.WhenAny(checkedProgress.Task, waiting);
+
+            writer.Dispose();
+            manager.ExitCollect(first);
+            first = default;
+            fresh = await waiting;
+
+            Assert.Same(checkedProgress.Task, completed);
+            Assert.False(writer.CancellationToken.IsCancellationRequested);
+            Assert.True(fresh.Succeeded);
+        }
+        finally
+        {
+            manager.ExitCollect(first);
+            manager.ExitCollect(second);
+            manager.ExitCollect(fresh);
+        }
+
+        Assert.Equal(0, manager.ActiveReaderCount);
+    }
+
     [Theory]
     [InlineData(4, 25, false)] // Still within the grace period.
     [InlineData(6, 75, false)] // On pace to finish.
