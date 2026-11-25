@@ -444,7 +444,7 @@ internal sealed class PrometheusHttpListener : IDisposable
 #endif
 
                                 writeCancelled.Token.ThrowIfCancellationRequested();
-                                writer.RecordProgress();
+                                writer.RecordProgress(count);
 
                                 offset += count;
                             }
@@ -461,9 +461,8 @@ internal sealed class PrometheusHttpListener : IDisposable
             catch (Exception) when ((requestCancelled.IsCancellationRequested || writerCancellation.IsCancellationRequested) &&
                 !this.disposed && !cancellationToken.IsCancellationRequested)
             {
-                // The request exceeded its deadline, or a waiting scrape cancelled its idle write.
-                // The response may already have been aborted to unblock a stalled write,
-                // so setting a status code can fail; that is fine, the client is no longer reading.
+                // The request exceeded its deadline, or its write was cancelled to free a buffer.
+                // The response may have been aborted to unblock the write, so setting a status code can fail.
                 if (requestCancelled.IsCancellationRequested)
                 {
                     PrometheusExporterEventSource.Log.ScrapeTimedOut(scrapeTimeout.TotalSeconds);

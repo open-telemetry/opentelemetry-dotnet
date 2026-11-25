@@ -160,8 +160,8 @@ internal sealed class PrometheusExporterMiddleware
             }
             catch (Exception) when (linkedCts.IsCancellationRequested || writerCancellation.IsCancellationRequested)
             {
-                // The request exceeded its deadline, or a waiting scrape cancelled its idle write.
-                // Aborting a stalled response can also surface an IO exception.
+                // The request exceeded its deadline, or its write was cancelled to free a buffer.
+                // Aborting a response can also surface an IO exception.
                 if (requestCancelled.IsCancellationRequested)
                 {
                     PrometheusExporterEventSource.Log.ScrapeTimedOut(scrapeTimeout.TotalSeconds);
@@ -392,7 +392,7 @@ internal sealed class PrometheusExporterMiddleware
                 await gzip.WriteAsync(content[..count], cancellationToken);
                 await gzip.FlushAsync(cancellationToken);
 
-                writer.RecordProgress();
+                writer.RecordProgress(count);
 
                 content = content[count..];
             }
@@ -418,7 +418,7 @@ internal sealed class PrometheusExporterMiddleware
                 }
 
                 cancellationToken.ThrowIfCancellationRequested();
-                writer.RecordProgress();
+                writer.RecordProgress(slice.Length);
 
                 content = content[slice.Length..];
             }

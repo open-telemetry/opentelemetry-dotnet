@@ -48,6 +48,10 @@ Notes](../../RELEASENOTES.md).
   are now added together.
   ([#8156](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8156))
 
+* The exporter can now cancel slow writes of an older scrape response when
+  another scrape is waiting for a response buffer.
+  ([#8168](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8168))
+
 ## 1.21.0-beta.1
 
 Released 2026-Nov-11
