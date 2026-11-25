@@ -367,7 +367,7 @@ jobs:
       concurrency-tests
       ]
     if: always()
-    runs-on: ubuntu-26.04
+    runs-on: ubuntu-slim
     steps:
     - name: Report CI status
       shell: bash
