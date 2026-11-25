@@ -14,16 +14,17 @@ public sealed class GeneratorsTests
     [InlineData(10)]
     public void ActivityArbitraryGeneratesAtRequestedSize(int size)
     {
+        var activitySource = Generators.TestActivitySource;
         using var listener = new ActivityListener
         {
-            ShouldListenTo = source => ReferenceEquals(source, Generators.TestActivitySource),
+            ShouldListenTo = source => ReferenceEquals(source, activitySource),
             Sample = (ref ActivityCreationOptions<ActivityContext> options) => ActivitySamplingResult.AllDataAndRecorded,
         };
         ActivitySource.AddActivityListener(listener);
 
         using var activity = Assert.Single(Generators.ActivityArbitrary().Generator.Sample(numberOfSamples: 1, size: size));
 
-        Assert.Same(Generators.TestActivitySource, activity.Source);
+        Assert.Same(activitySource, activity.Source);
         Assert.Equal(size, activity.TagObjects.Count());
         Assert.Equal(size / 10, activity.Events.Count());
         Assert.Equal(size / 10, activity.Links.Count());
