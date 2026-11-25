@@ -71,7 +71,7 @@ own. The directory is created if it does not exist. The process must have
 permission to create and write files there.
 
 On Linux and macOS the SDK creates the directory and the log files owner-only
-(`0700` and `0600`) on .NET 8+, because the preamble and the logged events can
+(`0700` and `0600`) on .NET 10+, because the preamble and the logged events can
 contain sensitive details. Another account that needs to read the files, such as
 a log shipper, must be granted access explicitly. Directories that already
 exist keep their permissions.
