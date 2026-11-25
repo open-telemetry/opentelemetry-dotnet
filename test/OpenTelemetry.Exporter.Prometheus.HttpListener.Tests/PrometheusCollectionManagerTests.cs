@@ -946,8 +946,15 @@ public sealed class PrometheusCollectionManagerTests
             using var secondWriter = manager.BeginResponseWrite(second);
             var secondPayload = second.View.ToArray();
 
+            // Complete each slice separately, with the last one inside the idle window.
+            var lastWriteMilliseconds = writerAgeMilliseconds - 500;
+            for (var slice = 1; slice <= completedSlices; slice++)
+            {
+                elapsed = TimeSpan.FromMilliseconds(lastWriteMilliseconds * slice / completedSlices);
+                firstWriter.RecordProgress(sliceSize);
+            }
+
             elapsed = TimeSpan.FromMilliseconds(writerAgeMilliseconds);
-            firstWriter.RecordProgress(completedSlices * sliceSize);
             secondWriter.RecordProgress(sliceSize);
 
             var waiting = EnterCollectAsync(exporter, protocol, TimeSpan.FromSeconds(2), cts.Token);
