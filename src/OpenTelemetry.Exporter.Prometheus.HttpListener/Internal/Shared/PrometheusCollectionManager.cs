@@ -1461,10 +1461,12 @@ internal sealed class PrometheusCollectionManager
                 var remaining = idleTimeout - (elapsed - this.lastProgress);
                 if (checkWriteRate && this.responseSize > 0)
                 {
-                    // Allow startup time for the first writes. After that, compare the fraction
-                    // written with the fraction of the server's write budget already spent.
-                    // This budget is independent of the waiting scrape's requested timeout.
-                    var progressTicks = ContendedWriteBudget.Ticks * this.bytesWritten / this.responseSize;
+                    // Progress is reported after each write completes. Give the next slice
+                    // time to finish, up to the server's total write budget.
+                    var bytesIncludingNextSlice = Math.Min(
+                        (long)this.bytesWritten + PrometheusExporter.MaximumResponseWriteSize,
+                        this.responseSize);
+                    var progressTicks = ContendedWriteBudget.Ticks * bytesIncludingNextSlice / this.responseSize;
                     var allowedTime = TimeSpan.FromTicks(Math.Max(ContendedWriteGracePeriod.Ticks, progressTicks));
                     var writeTimeRemaining = allowedTime - (elapsed - this.started);
                     if (writeTimeRemaining < remaining)

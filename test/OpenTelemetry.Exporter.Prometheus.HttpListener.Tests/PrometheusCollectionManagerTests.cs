@@ -901,12 +901,14 @@ public sealed class PrometheusCollectionManagerTests
     }
 
     [Theory]
-    [InlineData(4, 25, false)] // Still within the grace period.
-    [InlineData(6, 75, false)] // On pace to finish.
-    [InlineData(6, 25, true)] // Behind the write budget.
+    [InlineData(4_000, 1, false)] // Still within the grace period.
+    [InlineData(6_000, 4, false)] // On pace with completed slices.
+    [InlineData(5_800, 3, false)] // On pace with one more slice in flight.
+    [InlineData(6_000, 1, true)] // Behind the write budget.
+    [InlineData(10_000, 5, true)] // The total write budget has elapsed.
     public async Task EnterCollectCancelsOnlyOverdueWritersOfTheOlderResponse(
-        int writerAgeSeconds,
-        int completedPercent,
+        int writerAgeMilliseconds,
+        int completedSlices,
         bool expectCancellation)
     {
         using var meter = CreateMeter();
@@ -920,7 +922,11 @@ public sealed class PrometheusCollectionManagerTests
         var elapsed = TimeSpan.Zero;
         UseManualClock(exporter, () => elapsed);
 
-        meter.CreateCounter<int>("counter_int").Add(100);
+        var sliceSize = PrometheusExporter.MaximumResponseWriteSize;
+        var payloadSize = (5 * sliceSize) + (sliceSize / 2);
+        meter.CreateCounter<int>("counter_int").Add(
+            100,
+            new KeyValuePair<string, object?>("label", new string('x', payloadSize)));
 
         using var cts = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
         cts.CancelAfter(TimeSpan.FromSeconds(10));
@@ -932,6 +938,7 @@ public sealed class PrometheusCollectionManagerTests
         try
         {
             Assert.True(first.Succeeded);
+            Assert.InRange(first.View.Count, payloadSize, 6 * sliceSize);
             using var firstWriter = manager.BeginResponseWrite(first);
             elapsed = TimeSpan.FromSeconds(1);
             second = await EnterCollectAsync(exporter, protocol, scrapeTimeout: null, cts.Token);
@@ -939,9 +946,9 @@ public sealed class PrometheusCollectionManagerTests
             using var secondWriter = manager.BeginResponseWrite(second);
             var secondPayload = second.View.ToArray();
 
-            elapsed = TimeSpan.FromSeconds(writerAgeSeconds);
-            firstWriter.RecordProgress(first.View.Count * completedPercent / 100);
-            secondWriter.RecordProgress(second.View.Count / 4);
+            elapsed = TimeSpan.FromMilliseconds(writerAgeMilliseconds);
+            firstWriter.RecordProgress(completedSlices * sliceSize);
+            secondWriter.RecordProgress(sliceSize);
 
             var waiting = EnterCollectAsync(exporter, protocol, TimeSpan.FromSeconds(2), cts.Token);
             var waitedForReader = !waiting.IsCompleted;
