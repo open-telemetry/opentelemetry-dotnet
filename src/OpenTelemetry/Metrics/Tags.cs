@@ -1,7 +1,6 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-using System.Globalization;
 using System.Runtime.CompilerServices;
 #if !NET && !NETSTANDARD2_1_OR_GREATER
 using System.Runtime.InteropServices;
@@ -200,7 +199,7 @@ internal readonly struct Tags : IEquatable<Tags>
                 DateTime dateTime => GetSeededHashCode<DateTime>((ulong)dateTime.Ticks),
                 DateTimeOffset dateTimeOffset => GetSeededHashCode<DateTimeOffset>((ulong)dateTimeOffset.UtcTicks),
                 TimeSpan timeSpan => GetSeededHashCode<TimeSpan>((ulong)timeSpan.Ticks),
-                Enum e => GetSeededHashCode(e),
+                Enum e => GetSeededEnumHashCode(value, e.GetTypeCode()),
                 byte b => GetSeededScalarHashCode<byte>(b),
                 sbyte sb => GetSeededScalarHashCode<sbyte>((uint)sb),
                 short s => GetSeededScalarHashCode<short>((uint)s),
@@ -313,13 +312,14 @@ internal readonly struct Tags : IEquatable<Tags>
 #endif
     }
 
-    private static int GetSeededHashCode(Enum value)
+    private static int GetSeededEnumHashCode(object value, TypeCode underlyingTypeCode)
     {
         var seed = GetTypeHashSeed(value.GetType());
-        return value.GetTypeCode() switch
+
+        return underlyingTypeCode switch
         {
-            TypeCode.Int64 => GetSeededHashCode(seed, unchecked((ulong)((IConvertible)value).ToInt64(CultureInfo.InvariantCulture))),
-            TypeCode.UInt64 => GetSeededHashCode(seed, ((IConvertible)value).ToUInt64(CultureInfo.InvariantCulture)),
+            TypeCode.Int64 => GetSeededHashCode(seed, unchecked((ulong)(long)value)),
+            TypeCode.UInt64 => GetSeededHashCode(seed, (ulong)value),
             _ => GetSeededScalarHashCode(unchecked((uint)value.GetHashCode()), seed),
         };
     }
