@@ -9,8 +9,14 @@ public class TagsTests
 {
     private static readonly long WideValueTicks = new DateTime(2026, 10, 19, 12, 0, 0, DateTimeKind.Utc).Ticks;
 
-    private static readonly Dictionary<string, object[]> EqualWideValues = new()
+    private static readonly Dictionary<string, object[]> EqualValues = new()
     {
+        ["float zero"] = [0.0f, -0.0f],
+        ["float NaN"] = [float.NaN, BitConverter.ToSingle(BitConverter.GetBytes(0x7FC00001), 0)],
+#if NET
+        ["half zero"] = [(Half)0.0f, (Half)(-0.0f)],
+        ["half NaN"] = [Half.NaN, BitConverter.Int16BitsToHalf(0x7E01)],
+#endif
         ["double zero"] = [0.0, -0.0],
         ["double NaN"] = [double.NaN, -double.NaN, BitConverter.Int64BitsToDouble(0x7FF0000000000001)],
         ["decimal zero"] = [0m, 0.00m, new decimal(0, 0, 0, true, 0), new decimal(0, 0, 0, true, 28)],
@@ -25,9 +31,21 @@ public class TagsTests
             new DateTimeOffset(WideValueTicks, TimeSpan.Zero),
             new DateTimeOffset(WideValueTicks + TimeSpan.FromHours(2).Ticks, TimeSpan.FromHours(2)),
         ],
+        ["64-bit signed enum"] = [SignedEnumTag.Minimum, SignedEnumTag.Minimum],
+        ["64-bit unsigned enum"] = [UnsignedEnumTag.Maximum, UnsignedEnumTag.Maximum],
     };
 
-    public static TheoryData<string> EqualWideValueNames => [.. EqualWideValues.Keys];
+    private enum SignedEnumTag : long
+    {
+        Minimum = long.MinValue,
+    }
+
+    private enum UnsignedEnumTag : ulong
+    {
+        Maximum = ulong.MaxValue,
+    }
+
+    public static TheoryData<string> EqualValueNames => [.. EqualValues.Keys];
 
     [Fact]
     public void Equals_ReturnsTrue_ForEqualTags()
@@ -281,10 +299,115 @@ public class TagsTests
     }
 
     [Theory]
-    [MemberData(nameof(EqualWideValueNames))]
-    public void ComputeHashCode_EqualWideValuesShareAHashCode(string name)
+    [InlineData(0, 200, -1)]
+    [InlineData(0u, 200u, uint.MaxValue)]
+    [InlineData(0.0f, 1.5f, -2.0f)]
+    public void ComputeHashCode_ScalarValuesDistributeAcrossTagSets(object zero, object first, object second)
     {
-        var values = EqualWideValues[name];
+        const int AttemptCount = 4;
+
+        // Null and zero are distinct tag values even though both had a zero hash before mixing.
+        object?[] values = [null, zero, first, second];
+        var hashes = new HashSet<int>();
+        for (var attempt = 1; attempt <= AttemptCount; attempt++)
+        {
+            foreach (var value in values)
+            {
+                hashes.Add(Tags.ComputeHashCode([new("attempt", attempt), new("value", value)]));
+            }
+        }
+
+        var tagSetCount = AttemptCount * values.Length;
+        Assert.True(hashes.Count >= tagSetCount - 1, $"Only {hashes.Count} distinct hashes for {tagSetCount} tag sets.");
+    }
+
+    [Theory]
+    [InlineData(typeof(int), typeof(uint))]
+    [InlineData(typeof(int), typeof(long))]
+    [InlineData(typeof(long), typeof(ulong))]
+    [InlineData(typeof(byte), typeof(sbyte))]
+    [InlineData(typeof(short), typeof(ushort))]
+    public void ComputeHashCode_IntegerTypesDistributeAcrossHashes(Type firstType, Type secondType)
+    {
+        Assert.Contains(
+            Enumerable.Range(1, 8),
+            value =>
+            {
+                var first = Convert.ChangeType(value, firstType, CultureInfo.InvariantCulture);
+                var second = Convert.ChangeType(value, secondType, CultureInfo.InvariantCulture);
+                return Tags.ComputeHashCode([new("method", "GET"), new("value", first)])
+                    != Tags.ComputeHashCode([new("method", "GET"), new("value", second)]);
+            });
+    }
+
+    [Fact]
+    public void ComputeHashCode_BooleanAndNullValuesHaveDistinctHashes()
+    {
+        object?[] values = [null, false, true];
+        var hashes = values.Select(value => Tags.ComputeHashCode([new("enabled", value)]));
+
+        Assert.Equal(values.Length, hashes.Distinct().Count());
+    }
+
+    [Fact]
+    public void ComputeHashCode_DefaultValuesOfDifferentTypesAreDistributed()
+    {
+        object[] values =
+        [
+            string.Empty, (char)0, (byte)0, (sbyte)0, (short)0, (ushort)0, 0, 0u, 0L, 0UL,
+            (nint)0, (nuint)0, 0.0f, 0.0, 0m, Guid.Empty, TimeSpan.Zero,
+#if NET
+            (Half)0, Int128.Zero, UInt128.Zero, TimeOnly.MinValue,
+#endif
+        ];
+
+        var distinct = values.Select(value => Tags.ComputeHashCode([new("value", value)])).Distinct().Count();
+
+        Assert.True(distinct >= values.Length - 1, $"Only {distinct} distinct hashes for {values.Length} value types.");
+    }
+
+    [Fact]
+    public void ComputeHashCode_DifferentDateAndTimeTypesDistributeAcrossHashes()
+    {
+        Assert.Contains(
+            Enumerable.Range(0, 8),
+            value =>
+            {
+                var date = new DateTime(WideValueTicks, DateTimeKind.Utc).AddMinutes(value);
+                var dateHash = Tags.ComputeHashCode([new("time", date)]);
+                var offsetHash = Tags.ComputeHashCode([new("time", new DateTimeOffset(date))]);
+                var durationHash = Tags.ComputeHashCode([new("time", TimeSpan.FromTicks(date.Ticks))]);
+
+                return dateHash != offsetHash && dateHash != durationHash && offsetHash != durationHash;
+            });
+    }
+
+    [Fact]
+    public void ComputeHashCode_DifferentEnumTypesDistributeAcrossHashes()
+    {
+        Assert.Contains(
+            Enumerable.Range(0, 7),
+            value => Tags.ComputeHashCode([new("value", (DayOfWeek)value)])
+                != Tags.ComputeHashCode([new("value", (ConsoleColor)value)]));
+    }
+
+    [Fact]
+    public void ComputeHashCode_EqualCustomValuesOfDifferentTypesShareAHashCode()
+    {
+        var value = new CustomTagValue(42);
+        var derivedValue = new DerivedTagValue(42);
+        var first = new Tags([new("value", value)]);
+        var second = new Tags([new("value", derivedValue)]);
+
+        Assert.True(first.Equals(second));
+        Assert.Equal(first.GetHashCode(), second.GetHashCode());
+    }
+
+    [Theory]
+    [MemberData(nameof(EqualValueNames))]
+    public void ComputeHashCode_EqualValuesShareAHashCode(string name)
+    {
+        var values = EqualValues[name];
 
         var expected = new Tags([new("key", values[0])]);
 
@@ -401,6 +524,19 @@ public class TagsTests
             _ when type == typeof(TimeSpan) => new TimeSpan((long)bits),
             _ => throw new NotSupportedException(),
         };
+    }
+
+    private class CustomTagValue(int value)
+    {
+        private int Value { get; } = value;
+
+        public override bool Equals(object? obj) => obj is CustomTagValue other && this.Value == other.Value;
+
+        public override int GetHashCode() => this.Value;
+    }
+
+    private sealed class DerivedTagValue(int value) : CustomTagValue(value)
+    {
     }
 
     private sealed class CountingTagsComparer : IEqualityComparer<Tags>

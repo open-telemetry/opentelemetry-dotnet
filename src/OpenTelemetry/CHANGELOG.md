@@ -27,6 +27,9 @@ Notes](../../RELEASENOTES.md).
   `TextMapPropagator`.
   ([#8129](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8129))
 
+* Improved metric recording resilience to hash collisions between tag values.
+  ([#8167](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8167))
+
 ## 1.21.0
 
 Released 2026-Nov-11
