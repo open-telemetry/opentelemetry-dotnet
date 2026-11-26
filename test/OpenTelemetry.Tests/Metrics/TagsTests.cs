@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Globalization;
-using System.Reflection;
 
 namespace OpenTelemetry.Metrics.Tests;
 
@@ -300,22 +299,26 @@ public class TagsTests
     }
 
     [Theory]
-    [InlineData(200, 404, -1)]
-    [InlineData(200u, 404u, uint.MaxValue)]
-    [InlineData(0.25f, 1.5f, -2f)]
-    public void GetValueHashCode_MixesScalarHashes(object first, object second, object third)
+    [InlineData(0, 200, -1)]
+    [InlineData(0u, 200u, uint.MaxValue)]
+    [InlineData(0.0f, 1.5f, -2.0f)]
+    public void ComputeHashCode_ScalarValuesDistributeAcrossTagSets(object zero, object first, object second)
     {
-        // Inspect the value hash before the tag combiner adds its own seeding.
-        var method = typeof(Tags).GetMethod("GetValueHashCode", BindingFlags.NonPublic | BindingFlags.Static);
-        Assert.NotNull(method);
-#if NET
-        var getValueHashCode = method.CreateDelegate<Func<object, int>>();
-#else
-        var getValueHashCode = (Func<object, int>)method.CreateDelegate(typeof(Func<object, int>));
-#endif
+        const int AttemptCount = 4;
 
-        object[] values = [first, second, third];
-        Assert.Contains(values, value => getValueHashCode(value) != value.GetHashCode());
+        // Null and zero are distinct tag values even though both had a zero hash before mixing.
+        object?[] values = [null, zero, first, second];
+        var hashes = new HashSet<int>();
+        for (var attempt = 1; attempt <= AttemptCount; attempt++)
+        {
+            foreach (var value in values)
+            {
+                hashes.Add(Tags.ComputeHashCode([new("attempt", attempt), new("value", value)]));
+            }
+        }
+
+        var tagSetCount = AttemptCount * values.Length;
+        Assert.True(hashes.Count >= tagSetCount - 1, $"Only {hashes.Count} distinct hashes for {tagSetCount} tag sets.");
     }
 
     [Theory]
