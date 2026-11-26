@@ -371,16 +371,32 @@ and which sources are selected. A warning is logged when the files differ.
 
 The configuration file is expected to conform to the YAML 1.2 specification.
 
-Mappings and sequences may be nested up to depth 128, with the document root at
-depth zero. This applies to the whole document, including custom sections and
-paths through YAML aliases.
-
-An alias used as a mapping key must refer to an anchor already defined in the
-same document. Invalid alias keys are rejected during parsing.
+Mapping keys must resolve to YAML strings. An alias used as a mapping key must
+refer to an anchor already defined in the same document. Unresolved alias keys
+and collection-valued keys, including aliases to collections, are rejected
+during parsing.
 
 YAML 1.1 merge keys (`<<: *defaults`) are rejected before any configuration
 is interpreted. Quoted or explicitly string-tagged `<<` keys remain ordinary
 property names under the YAML 1.2 core schema.
+
+### Limits
+
+The package limits authored YAML size, collection nesting, alias expansion and
+expanded tag length. A file that exceeds a limit is rejected with a
+`DeclarativeConfigurationException`, except the path length limit, which only
+shortens messages.
+
+| Limit | Value | Applies to |
+| --- | --- | --- |
+| File size | 1 MiB (1,048,576 bytes) | The configuration file, checked before parsing. A source whose length is not known in advance, such as a pipe, is not checked. |
+| Node count | 5,000 | Mappings, sequences and scalars, including keys, each count as one node. In the first document, which is the only one processed, an alias counts every node it refers to. In later documents, an alias counts as one node. |
+| Nesting depth | 128 | Mappings and sequences in every document while parsing, and in the first document after alias resolution, including custom sections. The document root is at depth zero. |
+| Expanded tag length | 1,024 characters | Node tags after expanding `%TAG` shorthand, in every document while parsing. An overlong tag is rejected at its first occurrence. |
+| Path length | 1,024 characters | Document paths in diagnostic and exception messages. A longer path is truncated and ends with `...`. Where available, the line and column identify the node. |
+
+These limits are not a total memory budget. They do not limit the output of
+environment-variable substitution or the memory allocated by components.
 
 ### Property names
 

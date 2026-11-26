@@ -135,6 +135,29 @@ public sealed class DeclarativeConfigurationReaderTests
         Assert.Throws<DeclarativeConfigurationException>(() => ReadConfiguration(yaml));
     }
 
+    [Theory]
+    [InlineData(0, true)]
+    [InlineData(1, false)]
+    public void Read_FileSize_RespectsTheLimit(int extraBytes, bool accepted)
+    {
+        // A comment adds bytes without adding nodes.
+        const string header = "file_format: \"1.2\"\n#";
+        var size = DeclarativeConfigurationReader.MaximumFileSize + extraBytes;
+        using var factory = new DeclarativeYamlTestFileFactory();
+        var path = factory.CreateYamlFile(header + new string('x', size - header.Length));
+        Assert.Equal(size, new FileInfo(path).Length);
+
+        if (accepted)
+        {
+            _ = DeclarativeConfigurationReader.Read(new FilePath(path));
+        }
+        else
+        {
+            var exception = Assert.Throws<DeclarativeConfigurationException>(() => DeclarativeConfigurationReader.Read(new FilePath(path)));
+            Assert.Equal("The configuration file is 1048577 bytes, which exceeds the maximum of 1048576 bytes.", exception.Message);
+        }
+    }
+
     [Fact]
     public void Translate_MissingFileFormat_Throws()
     {

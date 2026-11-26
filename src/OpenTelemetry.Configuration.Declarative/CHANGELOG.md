@@ -84,3 +84,9 @@ Notes](../../RELEASENOTES.md).
   `always_on`, `always_off`, `always_record`, `trace_id_ratio_based` and
   `parent_based`, nested to any depth.
   ([#8117](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8117))
+
+* Limits configuration files to 1 MiB and the processed document to 5,000 YAML
+  nodes, counting each alias's expanded nodes. Rejects collection-valued mapping
+  keys during parsing and expanded YAML tags longer than 1,024 characters.
+  Truncates diagnostic paths to 1,024 characters.
+  ([#TBD](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TBD))

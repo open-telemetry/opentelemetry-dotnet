@@ -98,8 +98,6 @@ internal static class SupportManifest
         property.Stability == SchemaStability.Stable
         && property.Path.StartsWith(TracerProviderPrefix, StringComparison.Ordinal);
 
-    private static string Child(string parent, string key) => parent.Length == 0 ? key : YamlPath.Child(parent, key);
-
     private sealed class Walk
     {
         private readonly HashSet<string> covered;
@@ -155,7 +153,7 @@ internal static class SupportManifest
                 }
 
                 // entryPath is matched against the manifest (items as "[]"); path is reported to the user (items as "[0]").
-                var childEntryPath = Child(entryPath, key);
+                var childEntryPath = YamlPath.Child(entryPath, key);
                 if (this.covered.Contains(childEntryPath))
                 {
                     continue;
@@ -165,7 +163,7 @@ internal static class SupportManifest
                 var childStability = stability == SchemaStability.Experimental || ConfigurationSchema.IsExperimentalPropertyName(key)
                     ? SchemaStability.Experimental
                     : SchemaStability.Stable;
-                var childPath = Child(path, key);
+                var childPath = YamlPath.Child(path, key);
 
                 if (this.containers.Contains(childEntryPath))
                 {

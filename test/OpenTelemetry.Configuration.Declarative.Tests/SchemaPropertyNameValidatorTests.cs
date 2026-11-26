@@ -572,6 +572,27 @@ public sealed class SchemaPropertyNameValidatorTests
         Assert.Equal("<empty>", evt.Payload![0]);
     }
 
+    [Theory]
+    [InlineData(1024)]
+    [InlineData(2000)]
+    public void Read_LongRootKey_TruncatesOnlyTheDiagnosticPath(int keyLength)
+    {
+        var key = new string('k', keyLength);
+        var yaml = $"file_format: \"1.2\"\n? {key}\n: 1\n";
+        using var listener = CreateListener();
+
+        var document = Read(yaml);
+
+        Assert.True(document.Properties.GetLong(key).TryGetValue(out var value), "Failed to get the original root key from document properties.");
+        Assert.Equal(1L, value);
+
+        var expectedPath = keyLength <= YamlPath.MaximumLength
+            ? key
+            : new string('k', YamlPath.MaximumLength - YamlPath.Ellipsis.Length) + YamlPath.Ellipsis;
+        var evt = Assert.Single(Events(listener, UndefinedRootPropertyEventId));
+        Assert.Equal(expectedPath, evt.Payload![0]);
+    }
+
     [Fact]
     public void Read_ExtensionKeysWhereTheSchemaPermitsThem_LoadWithoutEvents()
     {
@@ -622,7 +643,7 @@ public sealed class SchemaPropertyNameValidatorTests
     [Fact]
     public void Read_SharedMappingAliasedManyTimes_ReportsAnUndefinedKeyOnce()
     {
-        const int copies = 1_000;
+        const int copies = 100;
         var yaml = new StringBuilder()
             .AppendLine("file_format: \"1.2\"")
             .AppendLine("tracer_provider:")
