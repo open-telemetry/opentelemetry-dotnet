@@ -149,16 +149,16 @@ internal static class OtlpExporterOptionsExtensions
         return otlpSignalType switch
         {
             OtlpSignalType.Traces => isGrpc
-                ? new OtlpGrpcExportClient(options, httpClient, TraceGrpcServicePath)
-                : new OtlpHttpExportClient(options, httpClient, TraceHttpServicePath),
+                ? new OtlpGrpcExportClient(options, httpClient, TraceGrpcServicePath, otlpSignalType)
+                : new OtlpHttpExportClient(options, httpClient, TraceHttpServicePath, otlpSignalType),
 
             OtlpSignalType.Metrics => isGrpc
-                ? new OtlpGrpcExportClient(options, httpClient, MetricsGrpcServicePath)
-                : new OtlpHttpExportClient(options, httpClient, MetricsHttpServicePath),
+                ? new OtlpGrpcExportClient(options, httpClient, MetricsGrpcServicePath, otlpSignalType)
+                : new OtlpHttpExportClient(options, httpClient, MetricsHttpServicePath, otlpSignalType),
 
             OtlpSignalType.Logs => isGrpc
-                ? new OtlpGrpcExportClient(options, httpClient, LogsGrpcServicePath)
-                : new OtlpHttpExportClient(options, httpClient, LogsHttpServicePath),
+                ? new OtlpGrpcExportClient(options, httpClient, LogsGrpcServicePath, otlpSignalType)
+                : new OtlpHttpExportClient(options, httpClient, LogsHttpServicePath, otlpSignalType),
 
             _ => throw new NotSupportedException($"OtlpSignalType {otlpSignalType} is not supported."),
         };

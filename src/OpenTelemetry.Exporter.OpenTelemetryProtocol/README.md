@@ -867,6 +867,17 @@ batching is enabled, so limit the number of metric points in each batch with
 be reduced by dropping instruments or attribute keys using views, or by lowering
 the cardinality of the attributes being recorded.
 
+### Partially rejected exports
+
+An OTLP server can accept an export but reject some of the items in it, for
+example because they are invalid. The export still counts as successful and is
+not retried, so the rejected items are lost. `ExportPartiallySucceeded` (event
+ID 46) reports how many spans, data points or log records were rejected,
+together with the error message sent by the server. A server can also send an
+error message without rejecting anything, which is reported as a warning by
+`ExportSucceededWithWarning` (event ID 47). Error messages longer than 4096
+characters are truncated.
+
 ## References
 
 * [OpenTelemetry

@@ -15,8 +15,8 @@ internal sealed class OtlpHttpExportClient : OtlpExportClient
     internal static readonly MediaTypeHeaderValue MediaHeaderValue = new("application/x-protobuf");
     private static readonly ExportClientHttpResponse SuccessExportResponse = new(success: true, deadlineUtc: default, response: null, exception: null);
 
-    internal OtlpHttpExportClient(OtlpExporterOptions options, HttpClient httpClient, string signalPath)
-        : base(options, httpClient, signalPath)
+    internal OtlpHttpExportClient(OtlpExporterOptions options, HttpClient httpClient, string signalPath, OtlpSignalType? signalType = null)
+        : base(options, httpClient, signalPath, signalType)
     {
     }
 
@@ -64,6 +64,9 @@ internal sealed class OtlpHttpExportClient : OtlpExportClient
             }
 
             OpenTelemetryProtocolExporterEventSource.Log.ExportSuccess(this.Endpoint, "Export completed successfully.");
+
+            this.TryReportPartialSuccess(httpResponse, deadlineUtc, cancellationToken);
+
             return SuccessExportResponse;
         }
         catch (HttpRequestException ex)
@@ -100,4 +103,43 @@ internal sealed class OtlpHttpExportClient : OtlpExportClient
         this.CompressionEnabled
             ? new GZipHttpContent(buffer, contentLength, this.MediaTypeHeader)
             : base.CreateHttpContent(buffer, contentLength);
+
+    private static bool IsProtobufResponse(HttpContentHeaders headers)
+    {
+        // A response without a media type is assumed to be the protobuf the request was sent as.
+        var mediaType = headers.ContentType?.MediaType;
+        return mediaType is null || string.Equals(mediaType, MediaHeaderValue.MediaType, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private void TryReportPartialSuccess(HttpResponseMessage httpResponse, DateTime deadlineUtc, CancellationToken cancellationToken)
+    {
+        if (!IsPartialSuccessReportingEnabled()
+            || httpResponse.Content is not { } content
+            || content.Headers.ContentLength == 0
+            || !IsProtobufResponse(content.Headers))
+        {
+            return;
+        }
+
+        var client = this;
+
+        // A response without a declared size that is still too large is not read beyond the limit.
+        TryReadResponseBody(
+            httpResponse,
+            this.MaxResponseSizeBytes,
+            deadlineUtc,
+            static (byte[] buffer, int length, bool truncated, ref OtlpHttpExportClient client) =>
+            {
+                if (truncated)
+                {
+                    OpenTelemetryProtocolExporterEventSource.Log.ResponseDiscardedDueToSizeLimit(client.Endpoint, null, client.MaxResponseSizeBytes);
+                }
+                else
+                {
+                    client.ReportPartialSuccess(buffer, 0, length);
+                }
+            },
+            ref client,
+            cancellationToken);
+    }
 }
