@@ -24,7 +24,7 @@ internal static class ProtobufOtlpMetricSerializer
     [ThreadStatic]
     private static Stack<List<Metric>>? metricListPool;
     [ThreadStatic]
-    private static Dictionary<string, List<Metric>>? scopeMetricsList;
+    private static Dictionary<MeterInstrumentationScope, List<Metric>>? scopeMetricsList;
 
     private delegate int WriteExemplarFunc(byte[] buffer, int writePosition, in Exemplar exemplar);
 
@@ -46,13 +46,23 @@ internal static class ProtobufOtlpMetricSerializer
         // would merge it into the next export on this thread.
         try
         {
+            // Note: Consecutive metrics very often come from the same meter, so
+            // the previous lookup is reused while the meter stays the same.
+            MeterInstrumentationScope lastScope = default;
+            List<Metric>? metrics = null;
+
             foreach (var metric in batch)
             {
-                var metricName = metric.MeterName;
-                if (!scopeMetricsList.TryGetValue(metricName, out var metrics))
+                var scope = new MeterInstrumentationScope(metric);
+                if (metrics == null || !scope.IsSameMeterAs(in lastScope))
                 {
-                    metrics = metricListPool.Count > 0 ? metricListPool.Pop() : [];
-                    scopeMetricsList[metricName] = metrics;
+                    if (!scopeMetricsList.TryGetValue(scope, out metrics))
+                    {
+                        metrics = metricListPool.Count > 0 ? metricListPool.Pop() : [];
+                        scopeMetricsList[scope] = metrics;
+                    }
+
+                    lastScope = scope;
                 }
 
                 metrics.Add(metric);
@@ -72,7 +82,7 @@ internal static class ProtobufOtlpMetricSerializer
         ref byte[] buffer,
         int writePosition,
         Resources.Resource? resource,
-        Dictionary<string, List<Metric>> scopeMetrics,
+        Dictionary<MeterInstrumentationScope, List<Metric>> scopeMetrics,
         ref int dirtyLength,
         int maxBufferSize = ProtobufSerializer.MaxBufferSize)
     {
@@ -125,7 +135,7 @@ internal static class ProtobufOtlpMetricSerializer
         byte[] buffer,
         int writePosition,
         Resources.Resource? resource,
-        Dictionary<string, List<Metric>> scopeMetrics,
+        Dictionary<MeterInstrumentationScope, List<Metric>> scopeMetrics,
         int maxBufferSize,
         ref int dirtyLength)
     {
@@ -143,7 +153,7 @@ internal static class ProtobufOtlpMetricSerializer
     private static int WriteScopeMetrics(
         byte[] buffer,
         int writePosition,
-        Dictionary<string, List<Metric>> scopeMetrics,
+        Dictionary<MeterInstrumentationScope, List<Metric>> scopeMetrics,
         int maxBufferSize,
         ref int dirtyLength)
     {
@@ -155,7 +165,7 @@ internal static class ProtobufOtlpMetricSerializer
                 var resourceMetricsScopeMetricsLengthPosition = writePosition;
                 writePosition += ReserveSizeForLength;
 
-                writePosition = WriteScopeMetric(buffer, writePosition, entry.Key, entry.Value, maxBufferSize, ref dirtyLength);
+                writePosition = WriteScopeMetric(buffer, writePosition, entry.Key.Name, entry.Value, maxBufferSize, ref dirtyLength);
 
                 ProtobufSerializer.WriteReservedLength(buffer, resourceMetricsScopeMetricsLengthPosition, writePosition - (resourceMetricsScopeMetricsLengthPosition + ReserveSizeForLength));
             }
