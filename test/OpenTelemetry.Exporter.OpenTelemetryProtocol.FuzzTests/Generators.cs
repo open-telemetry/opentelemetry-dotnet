@@ -126,12 +126,12 @@ internal static class Generators
                 var context = new ActivityContext(
                     ActivityTraceId.CreateRandom(),
                     ActivitySpanId.CreateRandom(),
-                    traceFlagsGenerator.Sample(0, 1).First());
+                    traceFlagsGenerator.Sample(numberOfSamples: 1, size: 0).First());
 
                 activity.AddLink(new ActivityLink(context, linkTags));
             }
 
-            activity.SetStatus(status ?? ActivityStatusCodes.Sample(size, 1).First());
+            activity.SetStatus(status ?? ActivityStatusCodes.Sample(numberOfSamples: 1, size: size).First());
 
             return Gen.Constant(activity);
         });
@@ -151,7 +151,7 @@ internal static class Generators
                 attributes[$"resource.attr.{i}"] = $"value_{i}";
             }
 
-            var schemaUrl = SchemaUrls.Sample(size, 1).First();
+            var schemaUrl = SchemaUrls.Sample(numberOfSamples: 1, size: size).First();
 
             return Gen.Constant(Resource.Empty.Merge(new Resource(attributes, schemaUrl)));
         });
@@ -238,7 +238,7 @@ internal static class Generators
         {
             var logRecord = LogRecordSharedPool.Current.Rent();
 
-            logRecord.Severity = severity ?? LogRecordSeverities.Sample(size, 1).First();
+            logRecord.Severity = severity ?? LogRecordSeverities.Sample(numberOfSamples: 1, size: size).First();
             logRecord.Timestamp = DateTime.UtcNow;
 
             // Add attributes
