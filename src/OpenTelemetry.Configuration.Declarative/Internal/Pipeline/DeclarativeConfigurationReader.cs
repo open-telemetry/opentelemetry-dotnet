@@ -10,6 +10,11 @@ namespace OpenTelemetry.Configuration.Declarative;
 internal static class DeclarativeConfigurationReader
 {
     /// <summary>
+    /// The maximum size of a configuration file, in bytes.
+    /// </summary>
+    internal const int MaximumFileSize = 1024 * 1024;
+
+    /// <summary>
     /// Opens <paramref name="filePath"/>, validates <c>file_format</c>, parses the typed model,
     /// and returns a <see cref="DeclarativeConfigurationDocument"/>.
     /// </summary>
@@ -17,8 +22,9 @@ internal static class DeclarativeConfigurationReader
     /// <exception cref="DeclarativeConfigurationException">
     /// Thrown when <c>file_format</c> is missing or unsupported, when an invalid <c>${...}</c>
     /// substitution reference is encountered, when the document root is not a YAML mapping, or when
-    /// any part of the document is not representable in the configuration data model, or collection
-    /// nesting exceeds the depth limit.
+    /// any part of the document is not representable in the configuration data model, collection
+    /// nesting exceeds the depth limit, the document exceeds the node count limit, an expanded
+    /// tag exceeds the length limit, or the file exceeds <see cref="MaximumFileSize"/>.
     /// </exception>
     /// <exception cref="YamlException">
     /// Thrown when the input is not valid YAML (propagates from <see cref="YamlStream.Load(IParser)"/>).
@@ -40,6 +46,13 @@ internal static class DeclarativeConfigurationReader
         var data = new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase);
 
         using var fileStream = File.OpenRead(filePath.Path);
+        if (fileStream.CanSeek && fileStream.Length > MaximumFileSize)
+        {
+            throw new DeclarativeConfigurationException(
+                FormattableString.Invariant(
+                    $"The configuration file is {fileStream.Length} bytes, which exceeds the maximum of {MaximumFileSize} bytes."));
+        }
+
         using var reader = new StreamReader(fileStream);
 
         var stream = new YamlStream();
@@ -70,7 +83,7 @@ internal static class DeclarativeConfigurationReader
 
         root.EnsureCoreCollectionTag(YamlPath.Root);
 
-        YamlDepthValidator.ThrowIfExceeded(root);
+        YamlLimitsValidator.ThrowIfExceeded(root);
 
         // Reject unsupported YAML 1.1 syntax before interpreting any part of the document.
         YamlMergeKeyValidator.ThrowIfPresent(root);

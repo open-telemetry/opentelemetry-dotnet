@@ -94,7 +94,7 @@ internal static class SchemaPropertyNameValidator
     private static string Child(string parent, string key)
     {
         var name = key.Length == 0 ? "<empty>" : key;
-        return parent.Length == 0 ? name : YamlPath.Child(parent, name);
+        return YamlPath.Child(parent, name);
     }
 
     private readonly record struct VisitKey(object Instance, SchemaNode Node, SchemaStability Stability);
