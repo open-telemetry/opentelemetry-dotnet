@@ -89,4 +89,4 @@ Notes](../../RELEASENOTES.md).
   nodes, counting each alias's expanded nodes. Rejects collection-valued mapping
   keys during parsing and expanded YAML tags longer than 1,024 characters.
   Truncates diagnostic paths to 1,024 characters.
-  ([#TBD](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TBD))
+  ([#8191](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8191))
