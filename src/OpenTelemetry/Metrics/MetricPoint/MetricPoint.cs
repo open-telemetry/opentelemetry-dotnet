@@ -122,10 +122,11 @@ public struct MetricPoint
     /// <summary>
     /// Gets the tags associated with the metric point.
     /// </summary>
-    public readonly ReadOnlyTagCollection Tags
+    public ReadOnlyTagCollection Tags
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        get;
+        readonly get;
+        private set;
     }
 
     /// <summary>
@@ -1000,11 +1001,11 @@ public struct MetricPoint
     }
 
     /// <summary>
-    /// This method sets the member object references of MetricPoint to `null`.
-    /// This is done to have them collected faster by GC.
+    /// Releases the object references held by a reclaimed metric point.
     /// </summary>
     internal void NullifyMetricPointState()
     {
+        this.Tags = new ReadOnlyTagCollection(null);
         this.LookupData = null;
         this.mpComponents = null;
     }

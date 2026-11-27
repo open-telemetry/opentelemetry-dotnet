@@ -13,6 +13,81 @@ public class MetricPointReclaimTests
 {
     [Theory]
     [InlineData(false, false)]
+    [InlineData(false, true)]
+    [InlineData(true, false)]
+    [InlineData(true, true)]
+    public void ReclaimedMetricPointsReleaseTagsAndCanBeReused(bool useHistogram, bool useMultipleDimensions)
+    {
+        using var meter = new Meter(new MeterOptions(Utils.GetCurrentMethodName()));
+        Instrument<long> instrument = useHistogram
+            ? meter.CreateHistogram<long>("ReclaimedTags")
+            : meter.CreateCounter<long>("ReclaimedTags");
+
+        var exportedItems = new List<Metric>();
+        using var meterProvider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddView("ReclaimedTags", new MetricStreamConfiguration { CardinalityLimit = 1 })
+            .AddInMemoryExporter(exportedItems, options => options.TemporalityPreference = MetricReaderTemporalityPreference.Delta)
+            .Build();
+
+        KeyValuePair<string, object?>[] tags = useMultipleDimensions
+            ? [new("key", new string('x', 8192)), new("other", new object())]
+            : [new("key", new string('x', 8192))];
+        Record(10, tags);
+        Assert.True(meterProvider.ForceFlush());
+
+        var metric = Assert.Single(exportedItems);
+        var enumerator = metric.GetMetricPoints().GetEnumerator();
+        Assert.True(enumerator.MoveNext());
+        ref readonly var metricPoint = ref enumerator.Current;
+        Assert.Equal(tags, metricPoint.Tags.KeyAndValues);
+        Assert.False(enumerator.MoveNext());
+
+        for (var i = 0; i < 3; i++)
+        {
+            Assert.True(meterProvider.ForceFlush());
+        }
+
+        Assert.Null(metricPoint.LookupData);
+        Assert.Empty(metric.AggregatorStore.TagsToMetricPointIndexDictionaryDelta!);
+        Assert.Equal(0, metricPoint.Tags.Count);
+        Assert.False(metricPoint.Tags.GetEnumerator().MoveNext());
+
+        KeyValuePair<string, object?>[] newTags = [new("key", "reused")];
+        Record(25, newTags);
+        Assert.True(meterProvider.ForceFlush());
+        enumerator = metric.GetMetricPoints().GetEnumerator();
+        Assert.True(enumerator.MoveNext());
+        ref readonly var reusedMetricPoint = ref enumerator.Current;
+        Assert.Equal(newTags, metricPoint.Tags.KeyAndValues);
+        Assert.Equal(newTags, reusedMetricPoint.Tags.KeyAndValues);
+        if (useHistogram)
+        {
+            Assert.Equal(1, reusedMetricPoint.GetHistogramCount());
+            Assert.Equal(25, reusedMetricPoint.GetHistogramSum());
+        }
+        else
+        {
+            Assert.Equal(25, reusedMetricPoint.GetSumLong());
+        }
+
+        Assert.False(enumerator.MoveNext());
+
+        void Record(long value, KeyValuePair<string, object?>[] dimensions)
+        {
+            if (instrument is Histogram<long> histogram)
+            {
+                histogram.Record(value, dimensions);
+            }
+            else
+            {
+                ((Counter<long>)instrument).Add(value, dimensions);
+            }
+        }
+    }
+
+    [Theory]
+    [InlineData(false, false)]
     [InlineData(true, false)]
     [InlineData(false, true)]
     [InlineData(true, true)]

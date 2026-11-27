@@ -30,6 +30,8 @@ Notes](../../RELEASENOTES.md).
 * Improved metric recording resilience to hash collisions between tag values.
   ([#8167](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8167))
 
+* Release tag references when inactive delta metric points are reclaimed.
+
 ## 1.21.0
 
 Released 2026-Nov-11

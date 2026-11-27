@@ -596,7 +596,7 @@ internal sealed class AggregatorStore
     {
         /*
          This method does three things:
-          1. Set `metricPoint.LookupData` and `metricPoint.mpComponents` to `null` to have them collected faster by GC.
+          1. Clear `metricPoint.Tags`, `metricPoint.LookupData` and `metricPoint.mpComponents` to release their object references.
           2. Tries to remove the entry for this MetricPoint from the lookup dictionary. An update thread which retrieves this
              MetricPoint would realize that the MetricPoint is not valid for use since its reference count would have been set to a negative number.
              When that happens, the update thread would also try to remove the entry for this MetricPoint from the lookup dictionary.
