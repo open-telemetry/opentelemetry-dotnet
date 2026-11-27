@@ -3,10 +3,8 @@
 
 using System.Net;
 using System.Net.Http.Headers;
-#if NET
-using System.Security.Cryptography;
-#endif
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient.Grpc;
+using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
 
@@ -50,10 +48,6 @@ internal static class OtlpRetry
 
     private static readonly TimeSpan MinThrottleDelay = TimeSpan.FromMilliseconds(MinThrottleDelayMilliseconds);
 
-#if !NET
-    private static readonly Random Random = new();
-#endif
-
     public static bool TryGetHttpRetryResult(ExportClientHttpResponse response, int retryDelayInMilliSeconds, out RetryResult retryResult)
     {
         if (response.StatusCode is { } statusCode)
@@ -77,15 +71,7 @@ internal static class OtlpRetry
                 return false;
             }
 
-            var delay = TimeSpan.FromMilliseconds(GetRandomNumber(0, retryDelayInMilliSeconds));
-            if (!WouldExceedDeadline(response.DeadlineUtc, delay))
-            {
-                retryResult = new RetryResult(false, delay, CalculateNextRetryDelay(retryDelayInMilliSeconds));
-                return true;
-            }
-
-            retryResult = default;
-            return false;
+            return TryCreateRetryResult(response.DeadlineUtc, throttleDelay: null, retryDelayInMilliSeconds, out retryResult);
         }
     }
 
@@ -133,8 +119,6 @@ internal static class OtlpRetry
 
         if (response.Status != null)
         {
-            var nextRetryDelayMilliseconds = retryDelayMilliseconds;
-
             if (IsDeadlineExceeded(response.DeadlineUtc))
             {
                 return false;
@@ -148,29 +132,7 @@ internal static class OtlpRetry
                 return false;
             }
 
-            var delayDuration = throttleDelay ?? TimeSpan.FromMilliseconds(GetRandomNumber(0, nextRetryDelayMilliseconds));
-
-            if (WouldExceedDeadline(response.DeadlineUtc, delayDuration))
-            {
-                return false;
-            }
-
-            if (throttleDelay is { } throttleDelayValue)
-            {
-                try
-                {
-                    // TODO: Consider making nextRetryDelayMilliseconds a double to avoid the need for convert/overflow handling
-                    nextRetryDelayMilliseconds = Convert.ToInt32(throttleDelayValue.TotalMilliseconds);
-                }
-                catch (OverflowException)
-                {
-                    nextRetryDelayMilliseconds = MaxBackoffMilliseconds;
-                }
-            }
-
-            nextRetryDelayMilliseconds = CalculateNextRetryDelay(nextRetryDelayMilliseconds);
-            retryResult = new RetryResult(throttleDelay.HasValue, delayDuration, nextRetryDelayMilliseconds);
-            return true;
+            return TryCreateRetryResult(response.DeadlineUtc, throttleDelay, retryDelayMilliseconds, out retryResult);
         }
 
         return false;
@@ -205,28 +167,24 @@ internal static class OtlpRetry
             return false;
         }
 
+        return TryCreateRetryResult(deadline, throttleDelay, nextRetryDelayMilliseconds, out retryResult);
+    }
+
+    private static bool TryCreateRetryResult(DateTime? deadline, TimeSpan? throttleDelay, int nextRetryDelayMilliseconds, out RetryResult retryResult)
+    {
         var delayDuration = throttleDelay ?? TimeSpan.FromMilliseconds(GetRandomNumber(0, nextRetryDelayMilliseconds));
 
         if (WouldExceedDeadline(deadline, delayDuration))
         {
+            retryResult = default;
             return false;
         }
 
-        if (throttleDelay.HasValue)
-        {
-            try
-            {
-                // TODO: Consider making nextRetryDelayMilliseconds a double to avoid the need for convert/overflow handling
-                nextRetryDelayMilliseconds = Convert.ToInt32(throttleDelay.Value.TotalMilliseconds);
-            }
-            catch (OverflowException)
-            {
-                nextRetryDelayMilliseconds = MaxBackoffMilliseconds;
-            }
-        }
+        var nextRetryDelay = throttleDelay is { } throttleDelayValue
+            ? CalculateNextRetryDelay(throttleDelayValue)
+            : CalculateNextRetryDelay(nextRetryDelayMilliseconds);
 
-        nextRetryDelayMilliseconds = CalculateNextRetryDelay(nextRetryDelayMilliseconds);
-        retryResult = new RetryResult(throttleDelay.HasValue, delayDuration, nextRetryDelayMilliseconds);
+        retryResult = new RetryResult(throttleDelay.HasValue, delayDuration, nextRetryDelay);
         return true;
     }
 
@@ -256,13 +214,30 @@ internal static class OtlpRetry
     private static TimeSpan? ClampThrottleDelay(TimeSpan? throttleDelay)
         => throttleDelay is { } delay && delay < MinThrottleDelay ? MinThrottleDelay : throttleDelay;
 
+    private static int CalculateNextRetryDelay(TimeSpan throttleDelay)
+    {
+        var throttleDelayMilliseconds = throttleDelay.TotalMilliseconds;
+        if (throttleDelayMilliseconds >= MaxBackoffMilliseconds)
+        {
+            return MaxBackoffMilliseconds;
+        }
+
+        if (throttleDelayMilliseconds <= 0)
+        {
+            return MinThrottleDelayMilliseconds;
+        }
+
+        return CalculateNextRetryDelay(Convert.ToInt32(throttleDelayMilliseconds));
+    }
+
     private static int CalculateNextRetryDelay(int nextRetryDelayMilliseconds)
     {
-        var nextMilliseconds = nextRetryDelayMilliseconds * BackoffMultiplier;
-        nextMilliseconds = Math.Min(nextMilliseconds, MaxBackoffMilliseconds);
+        var nextMilliseconds = Math.Min(nextRetryDelayMilliseconds * BackoffMultiplier, MaxBackoffMilliseconds);
 
         // Clamp to a non-zero minimum so the backoff cannot collapse to zero
-        return Math.Max(Convert.ToInt32(nextMilliseconds), MinThrottleDelayMilliseconds);
+        return nextMilliseconds <= MinThrottleDelayMilliseconds
+            ? MinThrottleDelayMilliseconds
+            : Convert.ToInt32(nextMilliseconds);
     }
 
     private static TimeSpan? TryGetHttpRetryDelay(HttpStatusCode statusCode, HttpResponseHeaders? responseHeaders)
@@ -365,18 +340,7 @@ internal static class OtlpRetry
             return min;
         }
 
-#if NET
-        return RandomNumberGenerator.GetInt32(min, max);
-#else
-        // TODO: Implement this better to minimize lock contention.
-        // Consider pulling in Random.Shared implementation.
-        lock (Random)
-        {
-#pragma warning disable CA5394 // Do not use insecure randomness
-            return Random.Next(min, max);
-#pragma warning restore CA5394 // Do not use insecure randomness
-        }
-#endif
+        return ThreadSafeRandom.Next(min, max);
     }
 
     public readonly struct RetryResult

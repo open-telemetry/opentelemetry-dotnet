@@ -1,9 +1,11 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-#if NET
 using System.Net;
+#if NETFRAMEWORK
+using System.Net.Http;
 #endif
+using System.Net.Http.Headers;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient.Grpc;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Transmission;
 
@@ -182,6 +184,74 @@ public class OtlpRetryTests
 
         Assert.Null(Record.Exception(
             () => OtlpRetry.TryGetGrpcRetryResult(response, retryDelayMilliseconds: 0, out _)));
+    }
+
+    [Fact]
+    public void LargeGrpcThrottleDelayExceedingIntMaxMillisecondsClampsToMaxBackoff()
+    {
+        var throttleDelay = TimeSpan.FromDays(30);
+        var response = new ExportClientGrpcResponse(
+            success: false,
+            deadlineUtc: DateTime.UtcNow.AddDays(60),
+            exception: null,
+            status: new Status(StatusCode.ResourceExhausted, "Throttled"),
+            grpcStatusDetailsHeader: GrpcRetryTestCase.GetThrottleDelayString(
+                Google.Protobuf.WellKnownTypes.Duration.FromTimeSpan(throttleDelay),
+                StatusCode.ResourceExhausted));
+
+        Assert.True(OtlpRetry.TryGetGrpcRetryResult(response, OtlpRetry.InitialBackoffMilliseconds, out var retryResult));
+        Assert.True(retryResult.Throttled);
+        Assert.Equal(throttleDelay, retryResult.RetryDelay);
+        Assert.Equal(5000, retryResult.NextRetryDelayMilliseconds);
+    }
+
+    [Fact]
+    public void LargeHttpThrottleDelayExceedingIntMaxMillisecondsClampsToMaxBackoff()
+    {
+        var throttleDelay = TimeSpan.FromDays(30);
+        using var httpResponse = new HttpResponseMessage(HttpStatusCode.ServiceUnavailable);
+        httpResponse.Headers.RetryAfter = new RetryConditionHeaderValue(throttleDelay);
+
+        var response = new ExportClientHttpResponse(
+            success: false,
+            deadlineUtc: DateTime.UtcNow.AddDays(60),
+            response: httpResponse,
+            exception: null);
+
+        Assert.True(OtlpRetry.TryGetHttpRetryResult(response, OtlpRetry.InitialBackoffMilliseconds, out var retryResult));
+        Assert.True(retryResult.Throttled);
+        Assert.Equal(throttleDelay, retryResult.RetryDelay);
+        Assert.Equal(5000, retryResult.NextRetryDelayMilliseconds);
+    }
+
+    [Fact]
+    public async Task ConcurrentRetryDelayCalculationProducesValidJitter()
+    {
+        var response = new ExportClientGrpcResponse(
+            success: false,
+            deadlineUtc: DateTime.UtcNow.AddHours(1),
+            exception: null,
+            status: new Status(StatusCode.Unavailable, "Unavailable"),
+            grpcStatusDetailsHeader: null);
+
+        var tasks = new Task[8];
+        for (var i = 0; i < tasks.Length; i++)
+        {
+            tasks[i] = Task.Run(
+                () =>
+                {
+                    for (var j = 0; j < 200; j++)
+                    {
+                        Assert.True(OtlpRetry.TryGetGrpcRetryResult(response, OtlpRetry.InitialBackoffMilliseconds, out var retryResult));
+                        Assert.False(retryResult.Throttled);
+                        Assert.InRange(retryResult.RetryDelay, TimeSpan.Zero, TimeSpan.FromMilliseconds(OtlpRetry.InitialBackoffMilliseconds - 1));
+                        Assert.Equal(1500, retryResult.NextRetryDelayMilliseconds);
+                    }
+                },
+                TestContext.Current.CancellationToken);
+        }
+
+        await Task.WhenAll(tasks);
     }
 
     private sealed class AlwaysThrottledExportClient(string grpcStatusDetailsHeader) : IExportClient
