@@ -33,6 +33,12 @@ Description: ExemplarReservoir Support
 
 Details: [OTEL1004](./OTEL1004.md)
 
+### OTEL1006
+
+Description: Process Context Sharing
+
+Details: [OTEL1006](./OTEL1006.md)
+
 ## Inactive
 
 Experimental APIs which have been released stable or removed:

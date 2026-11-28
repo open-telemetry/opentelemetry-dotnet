@@ -1,0 +1,21 @@
+#nullable enable
+[OTEL1006]OpenTelemetry.Logs.ProcessContextLoggerProviderBuilderExtensions
+[OTEL1006]OpenTelemetry.Metrics.ProcessContextMeterProviderBuilderExtensions
+[OTEL1006]OpenTelemetry.ProcessContextOptions
+[OTEL1006]OpenTelemetry.ProcessContextOptions.Enabled.get -> bool
+[OTEL1006]OpenTelemetry.ProcessContextOptions.Enabled.set -> void
+[OTEL1006]OpenTelemetry.ProcessContextOptions.ProcessContextOptions() -> void
+[OTEL1006]OpenTelemetry.ProcessContextOptions.Resource.get -> OpenTelemetry.Resources.Resource?
+[OTEL1006]OpenTelemetry.ProcessContextOptions.Resource.set -> void
+[OTEL1006]OpenTelemetry.ProcessContextPublisher
+[OTEL1006]OpenTelemetry.Trace.ProcessContextTracerProviderBuilderExtensions
+[OTEL1006]static OpenTelemetry.Logs.ProcessContextLoggerProviderBuilderExtensions.AddProcessContext(this OpenTelemetry.Logs.LoggerProviderBuilder! builder) -> OpenTelemetry.Logs.LoggerProviderBuilder!
+[OTEL1006]static OpenTelemetry.Logs.ProcessContextLoggerProviderBuilderExtensions.AddProcessContext(this OpenTelemetry.Logs.LoggerProviderBuilder! builder, System.Action<OpenTelemetry.ProcessContextOptions!>? configure) -> OpenTelemetry.Logs.LoggerProviderBuilder!
+[OTEL1006]static OpenTelemetry.Metrics.ProcessContextMeterProviderBuilderExtensions.AddProcessContext(this OpenTelemetry.Metrics.MeterProviderBuilder! builder) -> OpenTelemetry.Metrics.MeterProviderBuilder!
+[OTEL1006]static OpenTelemetry.Metrics.ProcessContextMeterProviderBuilderExtensions.AddProcessContext(this OpenTelemetry.Metrics.MeterProviderBuilder! builder, System.Action<OpenTelemetry.ProcessContextOptions!>? configure) -> OpenTelemetry.Metrics.MeterProviderBuilder!
+[OTEL1006]static OpenTelemetry.ProcessContextPublisher.IsSupported.get -> bool
+[OTEL1006]static OpenTelemetry.ProcessContextPublisher.Publish(OpenTelemetry.Resources.Resource! resource) -> bool
+[OTEL1006]static OpenTelemetry.ProcessContextPublisher.Publish(OpenTelemetry.Resources.Resource! resource, System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string!, object?>>? attributes) -> bool
+[OTEL1006]static OpenTelemetry.ProcessContextPublisher.Unpublish() -> void
+[OTEL1006]static OpenTelemetry.Trace.ProcessContextTracerProviderBuilderExtensions.AddProcessContext(this OpenTelemetry.Trace.TracerProviderBuilder! builder) -> OpenTelemetry.Trace.TracerProviderBuilder!
+[OTEL1006]static OpenTelemetry.Trace.ProcessContextTracerProviderBuilderExtensions.AddProcessContext(this OpenTelemetry.Trace.TracerProviderBuilder! builder, System.Action<OpenTelemetry.ProcessContextOptions!>? configure) -> OpenTelemetry.Trace.TracerProviderBuilder!

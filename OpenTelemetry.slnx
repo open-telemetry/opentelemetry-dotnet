@@ -148,6 +148,7 @@
     <Project Path="examples/EnvironmentVariables/Examples.EnvironmentVariables.csproj" />
     <Project Path="examples/FSharp/Examples.FSharp.fsproj" />
     <Project Path="examples/GrpcService/Examples.GrpcService.csproj" />
+    <Project Path="examples/ProcessContext/Examples.ProcessContext.csproj" />
   </Folder>
   <Folder Name="/examples/MicroserviceExample/">
     <File Path="examples/MicroserviceExample/.dockerignore" />
@@ -232,6 +233,7 @@
   <Project Path="src/OpenTelemetry.Exporter.Prometheus.HttpListener/OpenTelemetry.Exporter.Prometheus.HttpListener.csproj" />
   <Project Path="src/OpenTelemetry.Exporter.Zipkin/OpenTelemetry.Exporter.Zipkin.csproj" />
   <Project Path="src/OpenTelemetry.Extensions.Hosting/OpenTelemetry.Extensions.Hosting.csproj" />
+  <Project Path="src/OpenTelemetry.Extensions.ProcessContext/OpenTelemetry.Extensions.ProcessContext.csproj" />
   <Project Path="src/OpenTelemetry.Extensions.Propagators/OpenTelemetry.Extensions.Propagators.csproj" />
   <Project Path="src/OpenTelemetry.Shims.OpenTracing/OpenTelemetry.Shims.OpenTracing.csproj" />
   <Project Path="src/OpenTelemetry/OpenTelemetry.csproj" />
@@ -250,6 +252,7 @@
   <Project Path="test/OpenTelemetry.Exporter.Prometheus.HttpListener.Tests/OpenTelemetry.Exporter.Prometheus.HttpListener.Tests.csproj" />
   <Project Path="test/OpenTelemetry.Exporter.Zipkin.Tests/OpenTelemetry.Exporter.Zipkin.Tests.csproj" />
   <Project Path="test/OpenTelemetry.Extensions.Hosting.Tests/OpenTelemetry.Extensions.Hosting.Tests.csproj" />
+  <Project Path="test/OpenTelemetry.Extensions.ProcessContext.Tests/OpenTelemetry.Extensions.ProcessContext.Tests.csproj" />
   <Project Path="test/OpenTelemetry.Extensions.Propagators.FuzzTests/OpenTelemetry.Extensions.Propagators.FuzzTests.csproj" />
   <Project Path="test/OpenTelemetry.Extensions.Propagators.Tests/OpenTelemetry.Extensions.Propagators.Tests.csproj" />
   <Project Path="test/OpenTelemetry.FuzzTests/OpenTelemetry.FuzzTests.csproj" />
