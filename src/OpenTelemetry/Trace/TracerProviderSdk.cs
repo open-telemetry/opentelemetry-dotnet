@@ -129,6 +129,7 @@ internal sealed class TracerProviderSdk : TracerProvider
                 if (instrumentation.Instance is not null)
                 {
                     this.Instrumentations.Add(instrumentation.Instance);
+                    (instrumentation.Instance as IProviderBuiltCallback)?.OnProviderBuilt(this);
                 }
 
                 instrumentationFactoriesAdded.Append(instrumentation.Name);
