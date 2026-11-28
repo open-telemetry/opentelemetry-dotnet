@@ -10,6 +10,7 @@ internal static class DiagnosticDefinitions
     public const string LoggerProviderExperimentalApi = "OTEL1000";
     public const string LogsExperimentalApi = "OTEL1001";
     public const string ExemplarReservoirExperimentalApi = "OTEL1004";
+    public const string ProcessContextExperimentalApi = "OTEL1006";
 
     /* Definitions which have been released stable:
     public const string ExemplarExperimentalApi = "OTEL1002";

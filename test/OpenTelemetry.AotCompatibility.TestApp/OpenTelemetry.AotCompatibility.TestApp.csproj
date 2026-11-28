@@ -19,6 +19,7 @@
     <TrimmerRootAssembly Include="OpenTelemetry.Exporter.Prometheus.HttpListener" />
     <TrimmerRootAssembly Include="OpenTelemetry.Exporter.Zipkin" />
     <TrimmerRootAssembly Include="OpenTelemetry.Extensions.Hosting" />
+    <TrimmerRootAssembly Include="OpenTelemetry.Extensions.ProcessContext" />
     <TrimmerRootAssembly Include="OpenTelemetry.Extensions.Propagators" />
     <TrimmerRootAssembly Include="OpenTelemetry.Shims.OpenTracing" />
     <TrimmerRootAssembly Include="OpenTelemetry" />
