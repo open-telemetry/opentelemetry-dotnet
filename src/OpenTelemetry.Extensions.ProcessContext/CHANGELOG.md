@@ -12,4 +12,4 @@ announcements covering all components see: [Release Notes](../../RELEASENOTES.md
   `MeterProviderBuilder` and `LoggerProviderBuilder`, `ProcessContextOptions`
   and `ProcessContextPublisher`, enabled with
   `OTEL_EXPERIMENTAL_PROCESS_CONTEXT_ENABLED`. Linux (x64, arm64) only.
-  ([#TBD](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TBD))
+  ([#8193](https://github.com/open-telemetry/opentelemetry-dotnet/pull/8193))
