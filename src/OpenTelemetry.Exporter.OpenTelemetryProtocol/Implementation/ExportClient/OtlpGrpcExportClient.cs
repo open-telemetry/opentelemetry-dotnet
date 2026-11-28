@@ -17,6 +17,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClie
 internal sealed class OtlpGrpcExportClient : OtlpExportClient
 {
     public const string GrpcStatusDetailsHeader = "grpc-status-details-bin";
+    public const string GrpcAcceptEncodingHeader = "grpc-accept-encoding";
 
     // A gRPC message frame header is 5 bytes:
     //   byte 0     - Compression flag (0 = not compressed, 1 = compressed).
@@ -50,22 +51,22 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
 #endif
 
     /// <inheritdoc/>
-    public override ExportClientResponse SendExportRequest(byte[] buffer, int contentLength, DateTime deadlineUtc, CancellationToken cancellationToken = default)
+    protected override ExportClientResponse SendExportRequest(byte[] buffer, int contentLength, OtlpExportCompression compression, DateTime deadlineUtc, CancellationToken cancellationToken)
     {
         HttpResponseMessage? httpResponse = null;
 
         try
         {
-            using var httpRequest = this.CreateHttpRequest(buffer, contentLength);
+            using var httpRequest = this.CreateHttpRequest(buffer, contentLength, compression);
 
             // TE is required by some servers, e.g. C Core.
             // A missing TE header results in servers aborting the gRPC call.
             httpRequest.Headers.TryAddWithoutValidation("TE", "trailers");
 
-            if (this.CompressionEnabled)
+            if (compression != OtlpExportCompression.None)
             {
                 httpRequest.Headers.Remove("grpc-encoding");
-                httpRequest.Headers.TryAddWithoutValidation("grpc-encoding", "gzip");
+                httpRequest.Headers.TryAddWithoutValidation("grpc-encoding", GetEncodingName(compression));
             }
 
             httpResponse = this.SendHttpRequest(httpRequest, deadlineUtc, cancellationToken);
@@ -152,6 +153,20 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
                 grpcStatusDetailsHeader = GrpcProtocolHelpers.GetHeaderValue(trailingHeaders, GrpcStatusDetailsHeader);
             }
 
+            // The encodings the server supports are only needed to decide whether a request that
+            // was rejected as UNIMPLEMENTED should be sent again with a different compression, and
+            // the response is disposed of before that decision is made.
+            string? grpcAcceptEncodingHeader = null;
+            if (status.StatusCode == StatusCode.Unimplemented)
+            {
+                // The header may be sent as more than one field, so the values are joined rather
+                // than using GetHeaderValue(), which throws for repeated fields and would cause
+                // the UNIMPLEMENTED status to be replaced by a retryable Unavailable one.
+                grpcAcceptEncodingHeader =
+                    GrpcProtocolHelpers.GetListHeaderValue(httpResponse.Headers, GrpcAcceptEncodingHeader) ??
+                    GrpcProtocolHelpers.GetListHeaderValue(trailingHeaders, GrpcAcceptEncodingHeader);
+            }
+
             OpenTelemetryProtocolExporterEventSource.Log.ExportFailure(this.Endpoint, "Export failed due to unexpected status code.", status);
 
             return new ExportClientGrpcResponse(
@@ -159,7 +174,8 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
                 deadlineUtc: deadlineUtc,
                 exception: null,
                 status: status,
-                grpcStatusDetailsHeader: grpcStatusDetailsHeader);
+                grpcStatusDetailsHeader: grpcStatusDetailsHeader,
+                grpcAcceptEncodingHeader: grpcAcceptEncodingHeader);
         }
         catch (HttpRequestException ex) when (ex.InnerException is TimeoutException || IsTransientNetworkError(ex))
         {
@@ -232,20 +248,54 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
         }
     }
 
-    protected override HttpContent CreateHttpContent(byte[] buffer, int contentLength) =>
-        this.CompressionEnabled
-            ? this.CreateGZipHttpContent(buffer, contentLength)
-            : base.CreateHttpContent(buffer, contentLength);
+    /// <inheritdoc/>
+    /// <remarks>
+    /// Servers that do not support a grpc-encoding return UNIMPLEMENTED and may list the encodings
+    /// they do support in grpc-accept-encoding. If that lists zstd, the error is unrelated to the
+    /// compression used. Many servers (such as grpc-go and so the OpenTelemetry Collector) do not
+    /// send the header, so its absence is treated as the encoding not being supported.
+    /// See https://github.com/grpc/grpc/blob/master/doc/compression.md.
+    /// </remarks>
+    protected override bool IsCompressionRejected(ExportClientResponse response) =>
+        response is ExportClientGrpcResponse { Status.StatusCode: StatusCode.Unimplemented } grpcResponse &&
+        !AcceptsEncoding(grpcResponse.GrpcAcceptEncodingHeader, "zstd");
+
+    protected override HttpContent CreateHttpContent(byte[] buffer, int contentLength, OtlpExportCompression compression) =>
+        compression != OtlpExportCompression.None
+            ? this.CreateCompressedHttpContent(buffer, contentLength, compression)
+            : base.CreateHttpContent(buffer, contentLength, compression);
+
+    private static string GetEncodingName(OtlpExportCompression compression) =>
+        compression == OtlpExportCompression.Zstd ? "zstd" : "gzip";
+
+    private static bool AcceptsEncoding(string? acceptEncodingHeader, string encoding)
+    {
+        if (acceptEncodingHeader is not { Length: > 0 })
+        {
+            return false;
+        }
+
+        // The value is a comma-separated list of encodings, such as "identity,deflate,gzip".
+        foreach (var candidate in acceptEncodingHeader.Split(','))
+        {
+            if (string.Equals(candidate.Trim(), encoding, StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
 
     private static bool IsTransientNetworkError(HttpRequestException ex) =>
         ex.InnerException is SocketException { SocketErrorCode: SocketError.TimedOut or SocketError.ConnectionReset or SocketError.HostUnreachable or SocketError.ConnectionRefused };
 
-    private StreamContent CreateGZipHttpContent(byte[] buffer, int contentLength)
+    private StreamContent CreateCompressedHttpContent(byte[] buffer, int contentLength, OtlpExportCompression compression)
     {
-        // Build a gzip-compressed gRPC message frame:
-        //   byte 0     - Compression flag = 1 (gzip).
+        // Build a compressed gRPC message frame:
+        //   byte 0     - Compression flag = 1 (compressed with the grpc-encoding).
         //   bytes 1-4  - Compressed payload length in big-endian format.
-        //   bytes 5+   - Gzip-compressed protobuf payload.
+        //   bytes 5+   - Compressed protobuf payload.
 #if NET
         var compressedStream = new PooledBufferStream();
 #else
@@ -259,8 +309,15 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
         compressedStream.Write(GrpcFrameHeader, 0, GrpcFrameHeader.Length);
 #endif
 
-        using (var gzipStream = new GZipStream(compressedStream, CompressionLevel.Fastest, leaveOpen: true))
+#if NET11_0_OR_GREATER
+        if (compression == OtlpExportCompression.Zstd)
         {
+            this.GetZstdCompressor().Compress(buffer.AsSpan(GrpcMessageHeaderSize, contentLength - GrpcMessageHeaderSize), compressedStream);
+        }
+        else
+#endif
+        {
+            using var gzipStream = new GZipStream(compressedStream, CompressionLevel.Fastest, leaveOpen: true);
             gzipStream.Write(buffer, GrpcMessageHeaderSize, contentLength - GrpcMessageHeaderSize);
         }
 
@@ -286,7 +343,7 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
 
         if (OpenTelemetryProtocolExporterEventSource.Log.IsEnabled(EventLevel.Verbose, EventKeywords.All))
         {
-            OpenTelemetryProtocolExporterEventSource.Log.CompressedGrpcPayload("gzip", contentLength, compressedStream.Length);
+            OpenTelemetryProtocolExporterEventSource.Log.CompressedGrpcPayload(GetEncodingName(compression), contentLength, compressedStream.Length);
         }
 
         var content = new StreamContent(compressedStream);

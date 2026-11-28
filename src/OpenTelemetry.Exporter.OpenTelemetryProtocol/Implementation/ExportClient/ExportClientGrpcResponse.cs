@@ -12,14 +12,21 @@ internal sealed class ExportClientGrpcResponse : ExportClientResponse
         DateTime deadlineUtc,
         Exception? exception,
         Status? status,
-        string? grpcStatusDetailsHeader)
+        string? grpcStatusDetailsHeader,
+        string? grpcAcceptEncodingHeader = null)
         : base(success, deadlineUtc, exception)
     {
         this.Status = status;
         this.GrpcStatusDetailsHeader = grpcStatusDetailsHeader;
+        this.GrpcAcceptEncodingHeader = grpcAcceptEncodingHeader;
     }
 
     public Status? Status { get; }
 
     public string? GrpcStatusDetailsHeader { get; }
+
+    /// <summary>
+    /// Gets the value of the <c>grpc-accept-encoding</c> header of the response, if it was captured.
+    /// </summary>
+    public string? GrpcAcceptEncodingHeader { get; }
 }
